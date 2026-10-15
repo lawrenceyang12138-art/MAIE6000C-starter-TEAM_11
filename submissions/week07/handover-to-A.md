@@ -49,6 +49,20 @@ It never raises for a document problem, so the dispatch loop can call it in a
 `try` and move on. The intended call shape is the one used in
 `tests/integration/test_extraction_regression.py`.
 
+Outcomes it records on the version, so a route or an operator page can show
+them without inventing a vocabulary:
+
+| Outcome | Version status | `error_code` | Retryable |
+| --- | --- | --- | --- |
+| parsed | `basic_ready` | none | - |
+| we cannot handle this document | `unsupported` | `encrypted`, `corrupt`, `no_text_layer`, `unsupported_format` | no |
+| the bytes changed under us | `failed` | `source_changed` | on a fresh scan |
+| the file is gone | `failed` | `file_missing` | yes, if it comes back |
+
+The last row is newer than the rest: a deleted file used to escape the handler
+as `FileNotFoundError`, which left the version sitting in `extracting` with the
+worker's failed job as the only explanation. It is a version outcome now.
+
 Two things A needs to supply:
 
 - **The source path.** The handler needs a resolved filesystem path for the
@@ -168,7 +182,7 @@ exactly the kind of silent data creation this system should not do.
 
 | Thing | Result |
 | --- | --- |
-| Whole suite | 87 passed, 2 skipped |
+| Whole suite | 90 passed, 2 skipped |
 | Static analysis | clean |
 | Page attribution against an independent PDF library | 12/12 |
 | 12 normal, 3 abnormal, 1 unsupported | passing |

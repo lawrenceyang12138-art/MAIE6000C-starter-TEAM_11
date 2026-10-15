@@ -27,7 +27,7 @@ from sqlalchemy.orm import Session
 
 from services.common.models import FileVersion, VersionStatus
 from services.parsing.chunking import chunk_document
-from services.parsing.pdf import UnsupportedDocument, extract_document
+from services.parsing.pdf import SourceMissing, UnsupportedDocument, extract_document
 from services.parsing.persist import persist_chunks
 
 # Stamped onto every version this handler processes, so chunks can be traced
@@ -70,6 +70,15 @@ def handle_extract_file(db: Session, version_id: str, source_path: str | Path) -
     except UnsupportedDocument as exc:
         return _finish(
             db, version_id, VersionStatus.UNSUPPORTED.value, exc.reason_code
+        )
+    except SourceMissing as exc:
+        # The file was there when it was scanned and has gone since. That is a
+        # property of the folder, not of the document, and it is retryable, so
+        # it is failed rather than unsupported. Without this the exception
+        # escapes, the version stays "extracting" forever, and the job's error
+        # message is the only trace of why.
+        return _finish(
+            db, version_id, VersionStatus.FAILED.value, exc.reason_code
         )
 
     if document.content_sha256 != expected_sha256:

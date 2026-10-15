@@ -13,7 +13,9 @@ import pytest
 from services.parsing.pdf import (
     REASON_CORRUPT,
     REASON_ENCRYPTED,
+    REASON_FILE_MISSING,
     REASON_NO_TEXT_LAYER,
+    SourceMissing,
     UnsupportedDocument,
     extract_document,
     file_identity,
@@ -72,3 +74,26 @@ def test_abnormal_documents_are_rejected_with_a_specific_reason(
 
     assert excinfo.value.reason_code == expected_reason
     assert excinfo.value.message
+
+
+def test_a_missing_file_is_not_reported_as_a_bad_document():
+    """Not the same failure, and not the same fix either.
+
+    "We cannot handle this kind of document" and "the file is not there" lead
+    the reader in different directions, so a missing file gets its own
+    exception rather than another unsupported-document reason.
+    """
+    missing = FIXTURES / "definitely-not-here.pdf"
+
+    with pytest.raises(SourceMissing) as excinfo:
+        extract_document(missing)
+
+    assert excinfo.value.reason_code == REASON_FILE_MISSING
+    assert "No such file" in excinfo.value.message
+
+
+def test_identifying_a_missing_file_says_so():
+    with pytest.raises(SourceMissing) as excinfo:
+        file_identity(FIXTURES / "definitely-not-here.pdf")
+
+    assert excinfo.value.reason_code == REASON_FILE_MISSING

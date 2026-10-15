@@ -18,8 +18,13 @@ from services.parsing.handler import (
     REASON_SOURCE_CHANGED,
     handle_extract_file,
 )
-from services.parsing.pdf import REASON_CORRUPT, REASON_ENCRYPTED, REASON_NO_TEXT_LAYER
-from services.parsing.pdf import file_identity
+from services.parsing.pdf import (
+    REASON_CORRUPT,
+    REASON_ENCRYPTED,
+    REASON_FILE_MISSING,
+    REASON_NO_TEXT_LAYER,
+    file_identity,
+)
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "parsing"
 
@@ -99,6 +104,28 @@ def test_a_version_whose_file_changed_is_not_published(
 def test_unknown_version_is_a_programming_error(db_session: Session):
     with pytest.raises(LookupError):
         handle_extract_file(db_session, "00000000-0000-0000-0000-000000000000", FIXTURES)
+
+
+def test_a_file_deleted_between_scan_and_parse_is_recorded_not_raised(
+    db_session: Session, make_file_version
+):
+    """A file can vanish between being scanned and being read.
+
+    That used to raise out of the handler, leaving the version stuck in
+    "extracting" with the worker's failed job as the only trace of why.
+    """
+    version_id = make_file_version(sha256="e" * 64)
+
+    status = handle_extract_file(
+        db_session, version_id, FIXTURES / "not-there.pdf"
+    )
+
+    assert status == VersionStatus.FAILED.value
+
+    version = db_session.get(FileVersion, version_id)
+    assert version.status == VersionStatus.FAILED.value
+    assert version.error_code == REASON_FILE_MISSING
+    assert _chunks(db_session, version_id) == []
 
 
 def test_one_bad_file_does_not_stop_the_next_one(

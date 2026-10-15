@@ -44,6 +44,23 @@ This is the schedule's requirement in miniature: a normal document reaches
 `basic_ready` with chunks attached, each abnormal document is recorded with its
 own reason, and a failure is isolated to its file.
 
+There is a fifth outcome, added on 2026-10-15 because it was found to be
+missing rather than because it was planned: **the file was deleted between the
+scan and the parse.**
+
+| File | Version status | error_code | Chunks |
+| --- | --- | --- | --- |
+| a path that does not exist | failed | `file_missing` | 0 |
+
+It raises nothing, and the version does not stay in `extracting`. Before this
+was fixed, the `FileNotFoundError` escaped the handler, the worker marked the
+job failed, and the version row was left claiming to be mid-extraction with no
+error code on it - a stuck record whose only explanation was a worker log line.
+
+It is recorded as **failed** rather than **unsupported** on purpose. A missing
+file is not a document we cannot handle, it is a folder that changed under us,
+and it is retryable once the file is back.
+
 ## Automated verification
 
 Command:
@@ -60,6 +77,8 @@ Covered:
   reason code and no chunks
 - a version whose file changed underneath it is marked failed with
   `source_changed` and stores nothing
+- a file that no longer exists is marked failed with `file_missing`, rather
+  than raising and leaving the version stuck in `extracting`
 - an unknown version id raises, because that is a programming error rather
   than a property of a document
 - **one bad file does not stop the next one** - a corrupt file followed by a
@@ -73,6 +92,12 @@ Full suite at this commit: **40 passed, 1 skipped**. `ruff check .` clean.
 `file_identity` accepted only `Path` while `extract_document` accepted either a
 string or a `Path`. That inconsistency surfaced the moment the two were used
 together. `file_identity` now accepts both, like its sibling.
+
+A second fix, made later and recorded here for the same reason: a missing file
+used to escape as `FileNotFoundError`. It now raises `SourceMissing` with the
+reason code `file_missing`, which the handler records on the version instead of
+letting it escape. The docstring at the top of the handler says a bad document
+must not raise; a missing file now obeys that too.
 
 ## What is still not here
 

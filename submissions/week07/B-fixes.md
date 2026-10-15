@@ -23,6 +23,22 @@ broken", which are different things to tell a user.
 This also matters for the acceptance criterion "1 unsupported file keeps a
 record": previously such a file was recorded with a misleading reason.
 
+## A second defect, found later and fixed the same way
+
+Feeding the handler a path that does not exist - a file deleted between the
+scan and the parse - raised `FileNotFoundError` straight out of the handler.
+
+Two things made that worse than it looks. The handler's own docstring promises
+that a bad document does not raise, and the version row had already been
+committed as `extracting` before extraction started. So the file was recorded
+as permanently mid-extraction, with the worker's failed job as the only trace
+of why, and a retry would not necessarily clear it.
+
+A missing file now raises `SourceMissing` with the reason `file_missing`, and
+the handler records it as **failed** - not `unsupported`. It is a folder that
+changed under us rather than a document we cannot read, and it is retryable
+once the file is back.
+
 ## Regression: 12 normal, 3 abnormal, 1 unsupported
 
 The official fixture corpus is D's deliverable and has not landed yet, so this

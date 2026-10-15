@@ -27,6 +27,19 @@ REASON_CORRUPT = "corrupt"
 REASON_NO_TEXT_LAYER = "no_text_layer"
 REASON_UNREADABLE = "unreadable"
 REASON_UNSUPPORTED_FORMAT = "unsupported_format"
+# The path is not there at all. This is not a property of the document - it
+# means the file moved or was deleted between the scan and the parse - so it is
+# a separate exception rather than another "unsupported document" reason.
+REASON_FILE_MISSING = "file_missing"
+
+
+class SourceMissing(Exception):
+    """The file could not be read because it is no longer at that path."""
+
+    def __init__(self, reason_code: str, message: str) -> None:
+        super().__init__(message)
+        self.reason_code = reason_code
+        self.message = message
 
 _CHUNK_SIZE = 1024 * 1024
 _PDF_MAGIC = b"%PDF-"
@@ -72,7 +85,22 @@ def file_identity(path: str | Path) -> tuple[str, int]:
     path = Path(path)
     digest = hashlib.sha256()
     size = 0
-    with path.open("rb") as handle:
+    try:
+        handle = path.open("rb")
+    except FileNotFoundError as exc:
+        raise SourceMissing(
+            REASON_FILE_MISSING, f"No such file: {path}"
+        ) from exc
+    except IsADirectoryError as exc:
+        raise SourceMissing(
+            REASON_FILE_MISSING, f"Not a file: {path}"
+        ) from exc
+    except PermissionError as exc:
+        raise SourceMissing(
+            REASON_UNREADABLE, f"Cannot read file: {path}"
+        ) from exc
+
+    with handle:
         while True:
             block = handle.read(_CHUNK_SIZE)
             if not block:
@@ -86,6 +114,8 @@ def _read_pages(path: Path) -> list[str]:
     """Return the raw extracted text of each page in document order."""
     try:
         reader = PdfReader(str(path))
+    except FileNotFoundError as exc:
+        raise SourceMissing(REASON_FILE_MISSING, f"No such file: {path}") from exc
     except FileNotDecryptedError as exc:
         raise UnsupportedDocument(REASON_ENCRYPTED, "PDF is encrypted") from exc
     except PdfReadError as exc:
@@ -127,7 +157,15 @@ def extract_document(path: str | Path) -> ExtractedDocument:
     # Distinguish "we do not handle this kind of file" from "this PDF is
     # broken". Both stop processing, but only one of them is a bug report about
     # the document.
-    with pdf_path.open("rb") as handle:
+    try:
+        handle = pdf_path.open("rb")
+    except FileNotFoundError as exc:
+        # The file was there a moment ago, when it was hashed. It is gone now.
+        raise SourceMissing(
+            REASON_FILE_MISSING, f"No such file: {pdf_path}"
+        ) from exc
+
+    with handle:
         if not handle.read(len(_PDF_MAGIC)).startswith(_PDF_MAGIC):
             raise UnsupportedDocument(
                 REASON_UNSUPPORTED_FORMAT,
