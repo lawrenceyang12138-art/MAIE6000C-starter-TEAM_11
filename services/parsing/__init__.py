@@ -5,6 +5,7 @@ into located pieces of text that the rest of the system can index and cite.
 """
 
 from services.parsing.pdf import (
+    REASON_UNSUPPORTED_FORMAT,
     ExtractedDocument,
     PageText,
     UnsupportedDocument,
@@ -53,6 +54,7 @@ __all__ = [
     "REASON_VERSION_SUPERSEDED",
     "SourceUnavailable",
     "UnsupportedDocument",
+    "REASON_UNSUPPORTED_FORMAT",
     "chunk_document",
     "clean_page_text",
     "extract_document",

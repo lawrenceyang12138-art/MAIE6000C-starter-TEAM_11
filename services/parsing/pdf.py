@@ -26,8 +26,10 @@ REASON_ENCRYPTED = "encrypted"
 REASON_CORRUPT = "corrupt"
 REASON_NO_TEXT_LAYER = "no_text_layer"
 REASON_UNREADABLE = "unreadable"
+REASON_UNSUPPORTED_FORMAT = "unsupported_format"
 
 _CHUNK_SIZE = 1024 * 1024
+_PDF_MAGIC = b"%PDF-"
 
 
 class UnsupportedDocument(Exception):
@@ -121,6 +123,16 @@ def extract_document(path: str | Path) -> ExtractedDocument:
     """
     pdf_path = Path(path)
     content_sha256, byte_size = file_identity(pdf_path)
+
+    # Distinguish "we do not handle this kind of file" from "this PDF is
+    # broken". Both stop processing, but only one of them is a bug report about
+    # the document.
+    with pdf_path.open("rb") as handle:
+        if not handle.read(len(_PDF_MAGIC)).startswith(_PDF_MAGIC):
+            raise UnsupportedDocument(
+                REASON_UNSUPPORTED_FORMAT,
+                "Not a PDF file; only PDF documents are supported",
+            )
 
     raw_pages = _read_pages(pdf_path)
     pages = tuple(
