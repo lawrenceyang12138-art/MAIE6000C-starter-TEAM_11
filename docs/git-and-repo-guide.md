@@ -36,7 +36,7 @@ immediately; the model call or the PDF parsing happens afterwards.
 | Workstream | Owns |
 | --- | --- |
 | A - files and infrastructure | `services/worker/app/main.py` (the dispatch loop), the shared schema decisions, the API routes |
-| B - reading files | `services/parsing/`, `scripts/verify_page_attribution.py` |
+| B - reading files | `services/parsing/`, the four evidence scripts in `scripts/`, the parsing and relation migrations, `tests/` for that slice, `evidence/`, `submissions/week07/` |
 | C - retrieval and models | `services/ai/`, the search path |
 | D - interface and acceptance | the browser pages, `submissions/`, the demo script |
 
@@ -146,6 +146,13 @@ purpose:** it deletes uncommitted work with no recovery.
 7. tag          tag main, and only then
 ```
 
+**CI runs on pull requests, not on pushes to a branch.** `.github/workflows/ci.yml`
+triggers on `push` to `main` and on every `pull_request`. So a branch that has
+been pushed but has no pull request shows no green tick, and that is not a
+failure - it just has not been checked yet. Opening the pull request is what
+starts the three checks CI runs: `ruff check .`, `alembic upgrade head` against
+an empty PostgreSQL, and `pytest -q tests/unit tests/integration`.
+
 **Why the tag goes last.** A tag is a promise that says "this exact state is
 what I want reviewed". If you tag before you finish, a reviewer looks at
 something you have already moved on from. The course states this directly:
@@ -154,21 +161,28 @@ never assume the latest state will be reviewed when a tag exists.
 **Why the tag is on main, not on the branch.** The branch may be deleted after
 the merge. Main is what the team continues from.
 
+**The team repository is not a fork of this one.** The two repositories were
+both started from the course starter, so they have no common ancestor and
+`git merge` refuses with "unrelated histories". Work moves between them by
+replaying the commits, not by merging. The verified recipe is in
+`submissions/week07/port-to-team-repo.md`.
+
 ---
 
 ## Part 5 - The mistakes you will make, and the fixes
 
-**"I committed to main by accident."** Move the commit to a branch, then put
-main back:
+**"I committed to main by accident."** If main has not been pushed, move the
+commit onto a branch and put the label back where the remote says it belongs:
 
 ```
-git switch -c my-feature      # the commit comes with you
-git switch main
-git reset --hard origin/main  # only safe if nothing you need is on main
+git switch -c my-feature       # the commit comes with you
+git branch -f main origin/main # move the label only; nothing is deleted
+git switch my-feature
 ```
 
-The safer variant, if main has already been pushed: leave it, and make the fix
-in a following commit.
+`git branch -f` moves a branch label. It does not touch your working files the
+way `git reset --hard` does, which is why it is the recipe here. If main has
+already been pushed, leave it alone and fix forward with a new commit.
 
 **"I am on the wrong branch."** This actually happened in this project. Work
 was done on a temporary branch, then the file being looked for appeared to be
@@ -198,6 +212,9 @@ delete the markers, then `git add` and `git commit`.
 
 **"It asks for a username and password."** See Part 6.
 
+**"My pushed branch has no green tick."** Continuous integration runs when a
+pull request is opened, not when a branch is pushed. See Part 4.
+
 ---
 
 ## Part 6 - Authentication
@@ -224,32 +241,32 @@ in a file in the repository.
 ## Part 7 - This repository right now
 
 ```
-main                              ff4e718  the shared line, pushed
-readiness/w03-fix-test-collection 93accfd  the W03 branch, pushed
-feat/w7-data-layer                9e04f89  B's work, NOT pushed yet
+main                                  ff4e718  the shared line, pushed
+readiness/w03-fix-test-collection     93accfd  the W03 branch, pushed
+feat/w7-data-layer                    1e9ff79  B's work, pushed, no pull request yet
 ```
 
 Tags: `w03-readiness`.
 
-`feat/w7-data-layer` carries twenty commits, thirteen of them from the
-read-files workstream. Nothing on it is visible to anyone else until it is
-pushed.
+`feat/w7-data-layer` carries thirty-one commits and is on GitHub. Nothing is
+merged into `main` yet, and because no pull request has been opened, CI has
+not run on it. The commands CI would run were checked locally instead:
+`ruff check .` clean, `alembic upgrade head` from an empty database reaching
+`445f908b73b4`, and `pytest -q tests/unit tests/integration` at 86 passed,
+1 skipped.
 
-To see what is on it without pushing:
+To see what is on it:
 
 ```
 git log --oneline main..feat/w7-data-layer     # the commits not on main
 git diff --stat main..feat/w7-data-layer       # the files they touch
 ```
 
-To share it, once the token is configured:
+To open the pull request that starts CI:
 
 ```
-git switch feat/w7-data-layer
-git push -u origin feat/w7-data-layer
+https://github.com/Exile-Zhang-T/MAIE6000C-starter-jintong-zhang/compare/main...feat/w7-data-layer
 ```
-
-Then open a pull request on GitHub and let CI run before merging.
 
 ---
 

@@ -13,6 +13,8 @@ Run inside the api container, at the commit that contains this file.
 | Check | Command | Result |
 | --- | --- | --- |
 | Whole suite | `pytest -q` | **86 passed, 2 skipped** |
+| Migrations from an empty database | `alembic upgrade head` against a freshly created PostgreSQL database | four migrations apply in order and reach `445f908b73b4` |
+| The commands CI runs | `ruff check .`, the migration step, `pytest -q tests/unit tests/integration` | clean, head reached, **86 passed, 1 skipped** |
 | Static analysis | `ruff check .` | clean |
 | Independent page attribution | `scripts/verify_page_attribution.py` | **12/12 agree** |
 | Parsing quality on three real decks | `scripts/check_parsing_quality.py` | 66 pages, 0 corrupt characters, **20/20** fragments found on their page |
