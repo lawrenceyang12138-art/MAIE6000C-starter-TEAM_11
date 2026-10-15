@@ -15,7 +15,12 @@ together must fit three minutes of speaking.
   checked independently.
 - Three numbers: **12/12** passages agreed with an independent extractor across
   66 pages; **0** dropped glyphs; **0** mojibake.
-- One screenshot: a stored passage shown beside the page it claims.
+- One picture, already produced: `artifacts/page-6-passage.jpg` and
+  `artifacts/api-deck-page-13-passage.jpg`. Each is the real slide render with
+  our stored passage highlighted on it, and a strip underneath giving the
+  page, the chunk ordinal, the file and the content hash. Generate with
+  `scripts/render_evidence_card.py`; it refuses to draw a card if the passage
+  is not found on the page it claims.
 
 **Speaker notes (about 55 seconds)**
 

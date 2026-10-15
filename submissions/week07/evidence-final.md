@@ -12,11 +12,12 @@ Run inside the api container, at the commit that contains this file.
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Whole suite | `pytest -q` | **83 passed, 2 skipped** |
+| Whole suite | `pytest -q` | **86 passed, 2 skipped** |
 | Static analysis | `ruff check .` | clean |
 | Independent page attribution | `scripts/verify_page_attribution.py` | **12/12 agree** |
 | Parsing quality on three real decks | `scripts/check_parsing_quality.py` | 66 pages, 0 corrupt characters, **20/20** fragments found on their page |
 | Entity candidate counts and the bounding steps | `scripts/check_relation_candidates.py` | 47/44/36 before the line-initial rule, 39/38/33 after, **10** bounded, on all three decks |
+| Slide 4's picture, produced rather than screenshotted | `scripts/render_evidence_card.py` | `artifacts/page-6-passage.jpg`, `artifacts/api-deck-page-13-passage.jpg` - the real page rendered, our passage highlighted, provenance printed underneath |
 | 12 normal / 3 abnormal / 1 unsupported | `pytest -q tests/integration/test_extraction_regression.py` | **7 passed** |
 | Relation and review end to end | `scripts/demo_relation_review.py` | 3 candidates, review revisions 1 and 2, and a correction that carries the entity it points at |
 | Port to the team repository | rebase onto the team's `main`, then `pytest -q` in that tree | **every commit replays, zero conflicts**; 81 passed, 2 skipped there against 83 and 2 here, the two-test gap traced to the team's uncorrected Week 3 filename (`submissions/week07/port-to-team-repo.md`) |
@@ -40,6 +41,7 @@ where PyMuPDF is not installed. Neither is an extraction test.
 | At least three relation candidates, one of each entity type, each with page and quote | `evidence/relation-candidates.md` | met, exactly three on the controlled fixture |
 | One of each review decision, at least two rejections | `submissions/week07/review-check.md` | met |
 | A correction carries the entity it points at | `evidence/relation-review.md`, `submissions/week07/handover-to-A.md` | met |
+| AI Use Statement in the milestone submission | `submissions/week07/ai-use-statement.md` | B's part supplied, A/C/D still blank |
 | B section, at least 700 words | `submissions/week07/sections/B.md` | met, 1300 words excluding code blocks |
 | Three slide pages | `submissions/week07/slides/B-slides.md` | met |
 | Cross review of D | `submissions/week07/B-review-of-D.md` | prepared, not yet run |

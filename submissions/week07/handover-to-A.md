@@ -146,7 +146,7 @@ exactly the kind of silent data creation this system should not do.
 
 | Thing | Result |
 | --- | --- |
-| Whole suite | 83 passed, 2 skipped |
+| Whole suite | 86 passed, 2 skipped |
 | Static analysis | clean |
 | Page attribution against an independent PDF library | 12/12 |
 | 12 normal, 3 abnormal, 1 unsupported | passing |
