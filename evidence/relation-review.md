@@ -82,7 +82,7 @@ Result: **7 passed**.
 - a confirmation that tries to carry a replacement is refused
 - a correction pointing at an entity that does not exist is refused
 
-Full suite: **76 passed, 1 skipped**. `ruff check .` clean.
+Full suite: **78 passed, 2 skipped**. `ruff check .` clean.
 
 ## What is still missing
 

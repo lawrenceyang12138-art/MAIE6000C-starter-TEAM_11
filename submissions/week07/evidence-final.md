@@ -12,15 +12,16 @@ Run inside the api container, at the commit that contains this file.
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Whole suite | `pytest -q` | **76 passed, 1 skipped** |
+| Whole suite | `pytest -q` | **78 passed, 2 skipped** |
 | Static analysis | `ruff check .` | clean |
 | Independent page attribution | `scripts/verify_page_attribution.py` | **12/12 agree** |
 | 12 normal / 3 abnormal / 1 unsupported | `pytest -q tests/integration/test_extraction_regression.py` | **7 passed** |
 | Relation and review end to end | `scripts/demo_relation_review.py` | 3 candidates, review revisions 1 and 2, and a correction that carries the entity it points at |
 | Port to the team repository | rebase onto the team's `main`, then `pytest -q` in that tree | **every commit replays, zero conflicts**; 74 passed, 1 skipped there, the two-test gap traced to the team's uncorrected Week 3 filename (`submissions/week07/port-to-team-repo.md`) |
 
-The skipped test is the starter's smoke test, which needs a running stack and
-`SMOKE_BASE_URL`. It is not an extraction test.
+The skipped tests are the starter's smoke test, which needs a running stack and
+`SMOKE_BASE_URL`, and the page check's independent-reader case, which skips
+where PyMuPDF is not installed. Neither is an extraction test.
 
 ## Requirement to evidence
 

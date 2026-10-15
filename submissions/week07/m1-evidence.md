@@ -29,28 +29,40 @@ docker compose run --rm --no-deps \
          python scripts/verify_page_attribution.py /fixtures/*.pdf --per-file 4"
 ```
 
+The script now **refuses to run without a second reader** rather than falling
+back to the pipeline's own extractor. That fallback existed and was silent: on
+a machine without PyMuPDF the check would have compared our extraction with
+itself and still printed a pass. `--allow-self-check` runs it anyway and labels
+the output `NOT independent`.
+
 ## Result: 12 of 12 agree
 
 Three real documents, 66 pages in total, four sampled passages from each.
 
-| # | File | Page | Version | Result |
-| --- | --- | --- | --- | --- |
-| 1 | Week 5 - Lab | 1 | 19132907 | agrees |
-| 2 | Week 5 - Lab | 6 | 19132907 | agrees |
-| 3 | Week 5 - Lab | 11 | 19132907 | agrees |
-| 4 | Week 5 - Lab | 17 | 19132907 | agrees |
-| 5 | Week 4 - Data Persistence and Schema Design | 1 | 14ba4726 | agrees |
-| 6 | Week 4 - Data Persistence and Schema Design | 7 | 14ba4726 | agrees |
-| 7 | Week 4 - Data Persistence and Schema Design | 13 | 14ba4726 | agrees |
-| 8 | Week 4 - Data Persistence and Schema Design | 17 | 14ba4726 | agrees |
-| 9 | Week 5 - APIs and Network Communication | 1 | 967a0d66 | agrees |
-| 10 | Week 5 - APIs and Network Communication | 6 | 967a0d66 | agrees |
-| 11 | Week 5 - APIs and Network Communication | 11 | 967a0d66 | agrees |
-| 12 | Week 5 - APIs and Network Communication | 16 | 967a0d66 | agrees |
+| # | File | Page | Version | Content | Result |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Week 5 - Lab | 1 | 0f27cd30 | c4341d1d | agrees |
+| 2 | Week 5 - Lab | 6 | 0f27cd30 | c4341d1d | agrees |
+| 3 | Week 5 - Lab | 11 | 0f27cd30 | c4341d1d | agrees |
+| 4 | Week 5 - Lab | 17 | 0f27cd30 | c4341d1d | agrees |
+| 5 | Week 4 - Data Persistence and Schema Design | 1 | 1c7974a2 | 89fec97a | agrees |
+| 6 | Week 4 - Data Persistence and Schema Design | 7 | 1c7974a2 | 89fec97a | agrees |
+| 7 | Week 4 - Data Persistence and Schema Design | 13 | 1c7974a2 | 89fec97a | agrees |
+| 8 | Week 4 - Data Persistence and Schema Design | 17 | 1c7974a2 | 89fec97a | agrees |
+| 9 | Week 5 - APIs and Network Communication | 1 | 4c98b9ce | 0fa0b475 | agrees |
+| 10 | Week 5 - APIs and Network Communication | 6 | 4c98b9ce | 0fa0b475 | agrees |
+| 11 | Week 5 - APIs and Network Communication | 11 | 4c98b9ce | 0fa0b475 | agrees |
+| 12 | Week 5 - APIs and Network Communication | 16 | 4c98b9ce | 0fa0b475 | agrees |
 
-Each passage also carries the version it came from, and each version carries
-the SHA-256 of the bytes it was extracted from, so "which passage, from which
-content, on which page" is answerable for every row.
+**Content** is the first eight characters of the SHA-256 of the exact bytes the
+passage was read from; that is the column a reader can check against their own
+copy of the file. **Version** is the database row, which is created fresh on
+every run, so it differs each time - the first version of this table showed
+only that column, which meant nobody could reproduce it. Both are printed now.
+
+The three decks as they stand hash to `c4341d1d`, `89fec97a` and `0fa0b475`.
+If a deck is replaced, these change, and the honest reading is that the check
+applies to the bytes listed here rather than to "the Week 5 slides" as a name.
 
 The M1 criterion asks for 10 of 10; this run gives 12 of 12.
 

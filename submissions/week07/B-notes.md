@@ -76,7 +76,7 @@ Cut in this order:
 
 ## Questions we should expect
 
-Nine answers, all short enough to say in twenty seconds. Each one is a fact in
+Ten answers, all short enough to say in twenty seconds. Each one is a fact in
 `evidence-final.md` or in a file named beside it.
 
 **"How accurate is the entity finding?"** About three in four on the bounded
@@ -86,6 +86,12 @@ because the schedule asked for candidates rather than a graph.
 **"Is the page number verified?"** Yes, against a different PDF library than
 the one we use, twelve of twelve. The script that does it is in the repository,
 so it can be re-run rather than believed.
+
+**"How do we know the check itself is honest?"** The script refuses to run
+without a second PDF library installed, because the fallback would have
+compared our own extraction with itself and still printed a pass. Each row
+also prints the hash of the exact bytes the passage came from, so a reader can
+check it against their own copy of the file.
 
 **"Is this connected to the API?"** Not yet. These are handlers; the routes and
 the worker dispatch are A's work, and we say so on the slide rather than
