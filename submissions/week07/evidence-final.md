@@ -12,11 +12,11 @@ Run inside the api container, at the commit that contains this file.
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Whole suite | `pytest -q` | **72 passed, 1 skipped** |
+| Whole suite | `pytest -q` | **76 passed, 1 skipped** |
 | Static analysis | `ruff check .` | clean |
 | Independent page attribution | `scripts/verify_page_attribution.py` | **12/12 agree** |
 | 12 normal / 3 abnormal / 1 unsupported | `pytest -q tests/integration/test_extraction_regression.py` | **7 passed** |
-| Relation and review end to end | `scripts/demo_relation_review.py` | 3 candidates, review revisions 1 and 2 |
+| Relation and review end to end | `scripts/demo_relation_review.py` | 3 candidates, review revisions 1 and 2, and a correction that carries the entity it points at |
 
 The skipped test is the starter's smoke test, which needs a running stack and
 `SMOKE_BASE_URL`. It is not an extraction test.
@@ -35,7 +35,8 @@ The skipped test is the starter's smoke test, which needs a running stack and
 | 12 normal, 3 abnormal, 1 unsupported | `submissions/week07/B-fixes.md` | met |
 | At least three relation candidates, one of each entity type, each with page and quote | `evidence/relation-candidates.md` | met, exactly three on the controlled fixture |
 | One of each review decision, at least two rejections | `submissions/week07/review-check.md` | met |
-| B section, at least 700 words | `submissions/week07/sections/B.md` | met, 1147 words |
+| A correction carries the entity it points at | `evidence/relation-review.md`, `submissions/week07/handover-to-A.md` | met |
+| B section, at least 700 words | `submissions/week07/sections/B.md` | met, 1300 words excluding code blocks |
 | Three slide pages | `submissions/week07/slides/B-slides.md` | met |
 | Cross review of D | `submissions/week07/B-review-of-D.md` | prepared, not yet run |
 
@@ -52,6 +53,8 @@ The skipped test is the starter's smoke test, which needs a running stack and
   with the line-initial rule disabled, 39, 38 and 33 with it, 10 after ranking.
 - Review revisions **1 and 2** both retained after the second decision; a stale
   reviewer refused rather than allowed to overwrite.
+- A correction that names no replacement is refused, so a `corrected` row can
+  never mean "wrong, but nobody wrote down what was right".
 
 ## Open items, and whose they are
 
@@ -63,7 +66,7 @@ The skipped test is the starter's smoke test, which needs a running stack and
 | The four relation tables are a proposal, not an agreed schema | A | The migration works; A owns the final decision |
 | Official fixture corpus has not landed | D | The 12/3/1 regression used a rehearsal corpus and should be re-run |
 | Cleaning rules never fired on the real corpus | D/B | Worth a five-minute check against the official fixtures |
-| A `corrected` decision carries no corrected value yet | B | The schema has room; the handler does not fill it |
+| A correction cannot create an entity, only point at one | A/B | Creating an entity from a review is a separate decision, so a new label takes two steps |
 
 ## Two questions B should be able to answer in the Q and A
 

@@ -13,7 +13,9 @@ The pipeline, in the order the worker drives it:
     persist_relations(db, version, …) -> store entities, relations and evidence
     read_evidence(db, chunk_id)     -> serve a passage, or refuse if stale
     read_relationships(db, version) -> bounded relation list for display
-    record_review(db, relation, …)  -> append a human decision with a revision
+    record_review(db, relation, …)  -> append a human decision with a revision;
+                                       a correction also names the entity it
+                                       points to instead
 """
 
 from services.parsing.chunking import (
@@ -36,6 +38,9 @@ from services.parsing.evidence import (
 )
 from services.parsing.graph import (
     MAX_RELATIONSHIPS,
+    REASON_CORRECTED_ENTITY_NOT_FOUND,
+    REASON_CORRECTION_TARGET_NOT_ALLOWED,
+    REASON_CORRECTION_WITHOUT_TARGET,
     REASON_INVALID_DECISION,
     REASON_RELATIONSHIP_NOT_FOUND,
     REASON_REVIEW_CONFLICT,
@@ -84,6 +89,9 @@ __all__ = [
     "PARSER_REVISION",
     "PRODUCER_REVISION",
     "REASON_CHUNK_NOT_FOUND",
+    "REASON_CORRECTED_ENTITY_NOT_FOUND",
+    "REASON_CORRECTION_TARGET_NOT_ALLOWED",
+    "REASON_CORRECTION_WITHOUT_TARGET",
     "REASON_FILE_MISSING",
     "REASON_INVALID_DECISION",
     "REASON_RELATIONSHIP_NOT_FOUND",

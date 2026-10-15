@@ -76,15 +76,20 @@ Result: **7 passed**.
 - reviews are append-only: both decisions are retained, in revision order
 - an invalid decision value is refused and nothing is written
 - reviewing an unknown relation is refused
+- a correction stores the entity it points at, and that pointer is served back
+  with the relation
+- a correction that names no replacement is refused
+- a confirmation that tries to carry a replacement is refused
+- a correction pointing at an entity that does not exist is refused
 
-Full suite: **71 passed, 1 skipped**. `ruff check .` clean.
+Full suite: **76 passed, 1 skipped**. `ruff check .` clean.
 
 ## What is still missing
 
 - **No HTTP endpoints.** Both the read and the review exist as handlers; the
   routes belong to A.
-- **No correction payload.** A `corrected` decision currently records the
-  decision and a reason but cannot yet carry the corrected entity or relation
-  type. The schema has room for it; the API does not.
+- **A correction cannot create an entity.** `corrected_entity_id` must point at
+  a row that already exists, so correcting towards something the extractor
+  never produced is a two-step job: create the entity, then point at it.
 - **Nothing calls any of this from the worker.** The whole chain so far is
   driven by tests and scripts.

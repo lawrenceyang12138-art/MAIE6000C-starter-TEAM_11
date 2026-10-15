@@ -79,27 +79,43 @@ decision. The migration applies and downgrades cleanly on PostgreSQL. If A
 changes a column, B's code needs to follow, so please say what changes rather
 than editing silently.
 
-One gap worth knowing before the route is written: a `corrected` decision
-currently records the decision and a reason but **cannot carry the corrected
-label or relation type**. The architecture proposal wants corrections to select
-or create a distinct entity. Adding a `corrected_entity_id` column is a small
-change; it is deliberately not done yet because it is a schema decision.
+A `corrected` decision now has to name the entity it points to instead. The
+`reviews` table carries `corrected_entity_id`, and `record_review` refuses a
+correction that names no replacement, a confirmation or rejection that names
+one, and a replacement that is not an entity. So the route takes one optional
+field, `corrected_entity_id`, and passes it through:
+
+| Decision | `corrected_entity_id` |
+| --- | --- |
+| `confirmed` | must be absent |
+| `rejected` | must be absent |
+| `corrected` | **required**, must be an existing `entities.id` |
+
+Three reason codes come back for the route to map:
+`correction_without_target` and `correction_target_not_allowed` to `422`,
+`corrected_entity_not_found` to `404`. The column was added after the rest of
+the tables, so the migration `445f908b73b4` must run with the others.
+
+That closes the last known gap in B's slice. What a correction still cannot
+express is a **new** entity that does not exist yet: the correction points at
+an entity row, so creating one first is the caller's job. That is a deliberate
+boundary rather than an oversight — inventing entities from a review is
+exactly the kind of silent data creation this system should not do.
 
 ## 5. What is already verified, so it does not need re-checking
 
 | Thing | Result |
 | --- | --- |
-| Whole suite | 72 passed, 1 skipped |
+| Whole suite | 76 passed, 1 skipped |
 | Static analysis | clean |
 | Page attribution against an independent PDF library | 12/12 |
 | 12 normal, 3 abnormal, 1 unsupported | passing |
-| Relation and review end to end | 3 candidates, revisions 1 and 2 |
+| Relation and review end to end | 3 candidates, revisions 1 and 2, one correction carrying its replacement entity |
 
 Evidence for each is indexed in `submissions/week07/evidence-final.md`.
 
 ## 6. What B still owes
 
-- A correction payload, pending the schema decision above.
 - Re-running the 12/3/1 regression against the official fixture corpus once D
   delivers it; the current run used a rehearsal corpus.
 

@@ -41,14 +41,17 @@ overwritten silently.
 docker compose run --rm --no-deps api pytest -q tests/unit/test_parsing_graph.py
 ```
 
-Result: **8 passed**, including the three-decision case above, the stale
-revision refusal, the append-only history assertion, and the refusals for an
-invalid decision value and an unknown relation.
+Result: **12 passed**, including the three-decision case above, the stale
+revision refusal, the append-only history assertion, the refusals for an
+invalid decision value and an unknown relation, and the four correction cases:
+a correction storing its replacement entity, a correction with no target, a
+confirmation that tries to carry a target, and a target that is not an entity.
 
 ## What this does not cover
 
 - The reviews here were recorded by calling the handler directly. No HTTP
   endpoint exists yet, so nothing has been exercised through the API or the
   browser.
-- A `corrected` decision records the decision and a reason but cannot yet carry
-  the corrected label or relation type. The schema has room; the API does not.
+- A `corrected` decision has to point at an entity that already exists. It
+  cannot create one, so correcting towards a brand-new entity is a two-step
+  job until someone decides otherwise.

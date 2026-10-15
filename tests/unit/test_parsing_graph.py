@@ -12,10 +12,13 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from services.common.models import Review, ReviewDecision
+from services.common.models import Entity, Review, ReviewDecision
 from services.parsing.chunking import chunk_document
 from services.parsing.graph import (
     MAX_RELATIONSHIPS,
+    REASON_CORRECTED_ENTITY_NOT_FOUND,
+    REASON_CORRECTION_TARGET_NOT_ALLOWED,
+    REASON_CORRECTION_WITHOUT_TARGET,
     REASON_INVALID_DECISION,
     REASON_RELATIONSHIP_NOT_FOUND,
     REASON_REVIEW_CONFLICT,
@@ -37,6 +40,17 @@ def _version_with_relations(db: Session, make_file_version) -> str:
     persist_chunks(db, version_id, chunks)
     persist_relations(db, version_id, candidate_relations(chunks))
     return version_id
+
+
+def _an_entity_id_other_than(db: Session, label: str) -> str:
+    """A real entity the reviewer could point at instead of ``label``."""
+    entity = (
+        db.execute(select(Entity).where(Entity.display_label != label).limit(1))
+        .scalars()
+        .first()
+    )
+    assert entity is not None, "fixture has no second entity to correct towards"
+    return entity.id
 
 
 def test_relations_are_read_back_with_their_evidence(
@@ -201,6 +215,7 @@ def test_all_three_decision_types_are_recorded_independently(
         expected_revision=0,
         reason="label should be the full name",
         actor="reviewer-a",
+        corrected_entity_id=_an_entity_id_other_than(db_session, second.label),
     )
     record_review(
         db_session,
@@ -239,3 +254,112 @@ def test_all_three_decision_types_are_recorded_independently(
     assert decisions.count("rejected") == 2
     assert "confirmed" in decisions
     assert "corrected" in decisions
+
+
+def test_a_correction_keeps_what_the_reviewer_said_instead(
+    db_session: Session, make_file_version
+):
+    """A correction is only useful if it names the replacement."""
+    version_id = _version_with_relations(db_session, make_file_version)
+    view = read_relationships(db_session, version_id)[0]
+    replacement = _an_entity_id_other_than(db_session, view.label)
+
+    record_review(
+        db_session,
+        view.relationship_id,
+        ReviewDecision.CORRECTED.value,
+        expected_revision=0,
+        reason="this relation points at the wrong project",
+        actor="reviewer-a",
+        corrected_entity_id=replacement,
+    )
+
+    stored = (
+        db_session.execute(
+            select(Review).where(Review.relationship_id == view.relationship_id)
+        )
+        .scalars()
+        .one()
+    )
+    assert stored.decision == "corrected"
+    assert stored.corrected_entity_id == replacement
+
+    refreshed = {v.relationship_id: v for v in read_relationships(db_session, version_id)}
+    assert refreshed[view.relationship_id].corrected_entity_id == replacement
+
+    # A later confirmation clears the pointer: the review is append-only, so
+    # the correction stays in history while the effective one moves on.
+    record_review(
+        db_session,
+        view.relationship_id,
+        ReviewDecision.CONFIRMED.value,
+        expected_revision=1,
+        actor="reviewer-b",
+    )
+    refreshed = {v.relationship_id: v for v in read_relationships(db_session, version_id)}
+    assert refreshed[view.relationship_id].decision == "confirmed"
+    assert refreshed[view.relationship_id].corrected_entity_id is None
+
+
+def test_a_correction_without_a_target_is_refused(
+    db_session: Session, make_file_version
+):
+    version_id = _version_with_relations(db_session, make_file_version)
+    view = read_relationships(db_session, version_id)[0]
+
+    with pytest.raises(ReviewRefused) as excinfo:
+        record_review(
+            db_session,
+            view.relationship_id,
+            ReviewDecision.CORRECTED.value,
+            expected_revision=0,
+            reason="wrong, but the reviewer did not say what it should be",
+        )
+
+    assert excinfo.value.reason_code == REASON_CORRECTION_WITHOUT_TARGET
+    assert (
+        db_session.execute(
+            select(Review).where(Review.relationship_id == view.relationship_id)
+        )
+        .scalars()
+        .all()
+        == []
+    )
+
+
+def test_only_a_correction_may_name_a_replacement(
+    db_session: Session, make_file_version
+):
+    version_id = _version_with_relations(db_session, make_file_version)
+    view = read_relationships(db_session, version_id)[0]
+    replacement = _an_entity_id_other_than(db_session, view.label)
+
+    with pytest.raises(ReviewRefused) as excinfo:
+        record_review(
+            db_session,
+            view.relationship_id,
+            ReviewDecision.CONFIRMED.value,
+            expected_revision=0,
+            actor="reviewer-a",
+            corrected_entity_id=replacement,
+        )
+
+    assert excinfo.value.reason_code == REASON_CORRECTION_TARGET_NOT_ALLOWED
+
+
+def test_a_correction_to_an_entity_that_does_not_exist_is_refused(
+    db_session: Session, make_file_version
+):
+    version_id = _version_with_relations(db_session, make_file_version)
+    view = read_relationships(db_session, version_id)[0]
+
+    with pytest.raises(ReviewRefused) as excinfo:
+        record_review(
+            db_session,
+            view.relationship_id,
+            ReviewDecision.CORRECTED.value,
+            expected_revision=0,
+            corrected_entity_id="00000000-0000-0000-0000-000000000000",
+        )
+
+    assert excinfo.value.reason_code == REASON_CORRECTED_ENTITY_NOT_FOUND

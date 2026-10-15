@@ -6,7 +6,8 @@ Run inside the api container:
 
 Shows: the candidates a document produces, each with its page and quote; a
 first review becoming revision 1; a second reviewer holding a stale view being
-refused instead of overwriting the first.
+refused instead of overwriting the first; and a correction that names the
+entity it points to instead.
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ from sqlalchemy import select
 from services.common.db import get_session_factory
 from services.common.models import (
     AuthorizedRoot,
+    Entity,
     FilePresence,
     FileRecord,
     FileVersion,
@@ -126,6 +128,48 @@ def main(argv: list[str] | None = None) -> int:
             actor="reviewer-b",
         )
         print(f"reviewer B re-reads and rejects: revision {revision}")
+
+        # A correction has to name the replacement. Reviewer A says the second
+        # candidate points at the wrong entity and says which one is right.
+        second = views[1]
+        replacement = (
+            db.execute(
+                select(Entity).where(Entity.display_label != second.label).limit(1)
+            )
+            .scalars()
+            .first()
+        )
+        if replacement is not None:
+            revision = record_review(
+                db,
+                second.relationship_id,
+                ReviewDecision.CORRECTED.value,
+                expected_revision=second.decision_revision,
+                reason="points at the wrong entity",
+                actor="reviewer-a",
+                corrected_entity_id=replacement.id,
+            )
+            print(
+                f"reviewer A corrects {second.label} -> {replacement.display_label}:"
+                f" revision {revision}"
+            )
+
+            try:
+                record_review(
+                    db,
+                    second.relationship_id,
+                    ReviewDecision.CORRECTED.value,
+                    expected_revision=revision,
+                    reason="corrected without saying what it should be",
+                    actor="reviewer-c",
+                )
+                print("a correction without a target was allowed through")
+                return 1
+            except ReviewRefused as exc:
+                print(
+                    "a correction that names no replacement is refused: "
+                    f"{exc.reason_code}"
+                )
         print()
 
         final = {v.relationship_id: v for v in read_relationships(db, version.id)}
@@ -133,6 +177,12 @@ def main(argv: list[str] | None = None) -> int:
         print(
             f"effective decision for {effective.label}: "
             f"{effective.decision} at revision {effective.decision_revision}"
+        )
+        corrected = final[second.relationship_id]
+        print(
+            f"effective decision for {corrected.label}: "
+            f"{corrected.decision} at revision {corrected.decision_revision}"
+            f", pointing at entity {corrected.corrected_entity_id}"
         )
     return 0
 

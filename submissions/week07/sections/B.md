@@ -71,6 +71,13 @@ the other's decision. Human decisions are the only thing in this system that
 reprocessing never regenerates, so they are stored to outlive everything
 derived from them.
 
+**A correction has to say what it should be instead.** A `corrected` decision
+carries the entity it points at; a correction that names no replacement is
+refused, and so is a confirmation or rejection that tries to carry one. Without
+that rule a correction is only a rejection with a different word on it, and the
+record would show that something was wrong without ever showing what the
+reviewer believed instead.
+
 ## 4. Problems found and fixed
 
 **A false alarm worth recording.** An early read of the course slides showed
@@ -114,6 +121,11 @@ is worth a five-minute check when it lands.
 **A person's title is not part of their label.** `Dr. Chen` is stored as
 `Chen`; the quote preserves the title. Titles are used for classification, not
 for the label.
+
+**A correction cannot invent an entity.** It points at a row that already
+exists, so correcting towards something the extractor never produced takes two
+steps: create the entity, then point at it. Letting a review create entities
+would put invented data into the same table as extracted data.
 
 **No layout reconstruction.** Text inside tables keeps whatever order the PDF
 produced, and a wrapped slide title stays on several lines. Order and content

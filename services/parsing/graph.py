@@ -45,6 +45,9 @@ VALID_DECISIONS = {
 REASON_REVIEW_CONFLICT = "review_conflict"
 REASON_INVALID_DECISION = "invalid_decision"
 REASON_RELATIONSHIP_NOT_FOUND = "relationship_not_found"
+REASON_CORRECTION_WITHOUT_TARGET = "correction_without_target"
+REASON_CORRECTION_TARGET_NOT_ALLOWED = "correction_target_not_allowed"
+REASON_CORRECTED_ENTITY_NOT_FOUND = "corrected_entity_not_found"
 
 
 class ReviewRefused(Exception):
@@ -71,13 +74,14 @@ class RelationshipView:
     quote: str
     # The latest human decision, or None while the candidate is unreviewed.
     decision: str | None
+    # What a "corrected" decision points to instead, when one is recorded.
+    corrected_entity_id: str | None
     # The revision a caller must quote back when reviewing.
     decision_revision: int
 
 
-def effective_decision(db: Session, relationship_id: str) -> tuple[str | None, int]:
-    """Return (latest decision, latest revision). No reviews means revision 0."""
-    latest = (
+def _latest_review(db: Session, relationship_id: str) -> Review | None:
+    return (
         db.execute(
             select(Review)
             .where(Review.relationship_id == relationship_id)
@@ -87,6 +91,11 @@ def effective_decision(db: Session, relationship_id: str) -> tuple[str | None, i
         .scalars()
         .first()
     )
+
+
+def effective_decision(db: Session, relationship_id: str) -> tuple[str | None, int]:
+    """Return (latest decision, latest revision). No reviews means revision 0."""
+    latest = _latest_review(db, relationship_id)
     if latest is None:
         return None, 0
     return latest.decision, latest.decision_revision
@@ -122,7 +131,7 @@ def read_relationships(
             .limit(1)
         ).first()
 
-        decision, revision = effective_decision(db, relationship.id)
+        latest = _latest_review(db, relationship.id)
         views.append(
             RelationshipView(
                 relationship_id=relationship.id,
@@ -134,8 +143,9 @@ def read_relationships(
                 producer_revision=relationship.producer_revision,
                 page_number=evidence[1].page_number if evidence else None,
                 quote=evidence[0].quote if evidence else "",
-                decision=decision,
-                decision_revision=revision,
+                decision=latest.decision if latest else None,
+                corrected_entity_id=latest.corrected_entity_id if latest else None,
+                decision_revision=latest.decision_revision if latest else 0,
             )
         )
     return views
@@ -148,11 +158,17 @@ def record_review(
     expected_revision: int,
     reason: str | None = None,
     actor: str | None = None,
+    corrected_entity_id: str | None = None,
 ) -> int:
     """Append a decision and return the new revision number.
 
     ``expected_revision`` is what the caller last saw. If someone else has
     reviewed the relation since, this raises rather than overwriting them.
+
+    A ``corrected`` decision has to name the entity it points to instead. That
+    is the whole difference between "this is wrong" and "this is what it should
+    be" — without the replacement, a correction is only a rejection with a
+    different word on it. Confirmations and rejections must not carry one.
     """
     if decision not in VALID_DECISIONS:
         raise ReviewRefused(
@@ -164,6 +180,22 @@ def record_review(
     if relationship is None:
         raise ReviewRefused(
             REASON_RELATIONSHIP_NOT_FOUND, "No such relationship"
+        )
+
+    is_correction = decision == ReviewDecision.CORRECTED.value
+    if is_correction and corrected_entity_id is None:
+        raise ReviewRefused(
+            REASON_CORRECTION_WITHOUT_TARGET,
+            "a corrected decision must name the entity it points to",
+        )
+    if not is_correction and corrected_entity_id is not None:
+        raise ReviewRefused(
+            REASON_CORRECTION_TARGET_NOT_ALLOWED,
+            f"only a corrected decision may name a replacement, not {decision}",
+        )
+    if corrected_entity_id is not None and db.get(Entity, corrected_entity_id) is None:
+        raise ReviewRefused(
+            REASON_CORRECTED_ENTITY_NOT_FOUND, "No such corrected entity"
         )
 
     _, current_revision = effective_decision(db, relationship_id)
@@ -178,6 +210,7 @@ def record_review(
         relationship_id=relationship_id,
         decision_revision=current_revision + 1,
         decision=decision,
+        corrected_entity_id=corrected_entity_id,
         reason=reason,
         actor=actor,
     )

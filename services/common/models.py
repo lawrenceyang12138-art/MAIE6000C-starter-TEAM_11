@@ -471,6 +471,11 @@ class Review(Base):
     )
     decision_revision: Mapped[int] = mapped_column(Integer, nullable=False)
     decision: Mapped[str] = mapped_column(String(20), nullable=False)
+    # When the decision is "corrected", what the reviewer says it should be.
+    # Null for confirmations and rejections, which do not name a replacement.
+    corrected_entity_id: Mapped[str | None] = mapped_column(
+        ForeignKey("entities.id", ondelete="SET NULL"), nullable=True
+    )
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     actor: Mapped[str | None] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(

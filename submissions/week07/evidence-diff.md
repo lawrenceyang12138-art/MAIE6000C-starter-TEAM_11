@@ -24,6 +24,15 @@ reproduced was changed rather than explained away.
 | 9 | Review revisions 1 and 2 are retained | `demo_relation_review.py` | **agrees** |
 | 10 | 16 W7 commits, 8 parsing modules, 10 week07 files | `git rev-list`, directory listing | **all agree** |
 
+Two of those numbers have since moved. Both moves are recorded here rather
+than quietly edited into the table above, because a table of reproduced numbers
+is worthless if it is silently kept up to date.
+
+| # | At the check | Now | Why it moved |
+| --- | --- | --- | --- |
+| 2 | 72 passed | **76 passed** | The missing `corrected` payload was closed, which added four tests |
+| 4 | 1147 words | **1300 words** | `sections/B.md` gained three short paragraphs during that fix |
+
 ## The one difference that was found
 
 **Claim 8 was wrong in three files.**
