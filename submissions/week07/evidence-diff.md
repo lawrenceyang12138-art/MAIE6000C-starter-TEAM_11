@@ -32,7 +32,7 @@ is worthless if it is silently kept up to date.
 | --- | --- | --- | --- |
 | 2 | 72 passed | **76 passed** | The missing `corrected` payload was closed, which added four tests |
 | 4 | 1147 words | **1300 words** | `sections/B.md` gained three short paragraphs during that fix |
-| 10 | 16 commits, 10 week 7 files | **19 commits, 12 week 7 files** | The review payload, the port note, and the corrections to the materials they touched |
+| 10 | 16 commits, 10 week 7 files | **20 commits, 12 week 7 files**, at the time of writing | The review payload, the port note, and the corrections to the materials they touched |
 
 ## The one difference that was found
 
