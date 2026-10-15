@@ -33,7 +33,7 @@ calls it from the worker. Those two are A's.
 
 ## Section 6 - Testing and verification (B's part)
 
-- Full suite: **100 passed, 1 skipped**; `ruff check .` clean. The one skip needs
+- Full suite: **103 passed, 1 skipped**; `ruff check .` clean. The one skip needs
   a running stack.
 - Migrations apply from an empty database, not only over an existing one.
 - Page attribution was judged by a **different PDF library** than the pipeline

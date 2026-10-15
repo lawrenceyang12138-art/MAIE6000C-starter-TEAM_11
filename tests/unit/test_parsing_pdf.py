@@ -15,6 +15,8 @@ from services.parsing.pdf import (
     REASON_ENCRYPTED,
     REASON_FILE_MISSING,
     REASON_NO_TEXT_LAYER,
+    REASON_SOURCE_CHANGED,
+    SourceChanged,
     SourceMissing,
     UnsupportedDocument,
     extract_document,
@@ -97,3 +99,32 @@ def test_identifying_a_missing_file_says_so():
         file_identity(FIXTURES / "definitely-not-here.pdf")
 
     assert excinfo.value.reason_code == REASON_FILE_MISSING
+
+
+def test_a_file_written_while_it_is_read_is_refused(tmp_path, monkeypatch):
+    """Hashing the bytes and parsing them are two reads of the file.
+
+    A write landing between them used to be invisible: the text of the new
+    bytes was published under the hash of the old ones. An independent reviewer
+    reproduced that window and this test pins it shut.
+    """
+    import shutil
+
+    from services.parsing import pdf as pdf_module
+
+    target = tmp_path / "doc.pdf"
+    shutil.copy(FIXTURES / "normal.pdf", target)
+    real_read_pages = pdf_module._read_pages
+
+    def read_then_write(path):
+        pages = real_read_pages(path)
+        with target.open("ab") as handle:  # a write during the read
+            handle.write(b"\n% a late edit\n")
+        return pages
+
+    monkeypatch.setattr(pdf_module, "_read_pages", read_then_write)
+
+    with pytest.raises(SourceChanged) as excinfo:
+        extract_document(target)
+
+    assert excinfo.value.reason_code == REASON_SOURCE_CHANGED

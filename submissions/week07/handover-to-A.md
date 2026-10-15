@@ -56,12 +56,18 @@ them without inventing a vocabulary:
 | --- | --- | --- | --- |
 | parsed | `basic_ready` | none | - |
 | we cannot handle this document | `unsupported` | `encrypted`, `corrupt`, `no_text_layer`, `unsupported_format` | no |
-| the bytes changed under us | `failed` | `source_changed` | on a fresh scan |
+| the bytes changed under us, before or during the read | `failed` | `source_changed` | on a fresh scan |
 | the file is gone | `failed` | `file_missing` | yes, if it comes back |
+| the work failed, not the document | `failed` | `processing_failed` | the worker decides |
 
 The last row is newer than the rest: a deleted file used to escape the handler
 as `FileNotFoundError`, which left the version sitting in `extracting` with the
 worker's failed job as the only explanation. It is a version outcome now.
+
+The same reasoning produced two more rows, both after an independent audit:
+a write that lands *during* the read is now caught (the hash and the text have
+to come from the same bytes), and a failure while storing no longer leaves the
+version saying it is still extracting.
 
 **Re-processing a version and the relation step.** `handle_extract_file`
 replaces a version's chunks. Unchanged chunks keep their rows, so a retry with
@@ -191,7 +197,7 @@ exactly the kind of silent data creation this system should not do.
 
 | Thing | Result |
 | --- | --- |
-| Whole suite | 100 passed, 1 skipped |
+| Whole suite | 103 passed, 1 skipped |
 | Static analysis | clean |
 | Page attribution against an independent PDF library | 12/12 |
 | 12 normal, 3 abnormal, 1 unsupported | passing |

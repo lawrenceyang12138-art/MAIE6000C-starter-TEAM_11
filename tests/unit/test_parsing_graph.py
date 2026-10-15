@@ -12,7 +12,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from services.common.models import Entity, Review, ReviewDecision
+from services.common.models import Entity, RelationshipEvidence, Review, ReviewDecision
 from services.parsing import graph
 from services.parsing.chunking import Chunk, chunk_document
 from services.parsing.graph import (
@@ -101,9 +101,20 @@ def test_a_relation_whose_passage_was_replaced_says_so(
 def test_rerunning_the_relation_step_restores_the_evidence(
     db_session: Session, make_file_version
 ):
-    """This is what the pipeline should do after re-processing a version."""
+    """This is what the pipeline should do after re-processing a version.
+
+    It also pins a database behaviour the suite could not see before: the
+    evidence rows are removed by ON DELETE CASCADE, which PostgreSQL enforces
+    and SQLite only enforces with foreign keys switched on. Without that, the
+    rows were left dangling and the other assertions still passed - green
+    tests over an unverified behaviour.
+    """
     version_id = _version_with_relations(db_session, make_file_version)
     view = read_relationships(db_session, version_id)[0]
+
+    assert (
+        db_session.execute(select(RelationshipEvidence)).scalars().all()
+    ), "the fixture stored no evidence to begin with"
 
     persist_chunks(
         db_session,
@@ -111,6 +122,11 @@ def test_rerunning_the_relation_step_restores_the_evidence(
         [Chunk(ordinal=1, page_number=1, text="a completely different passage")],
     )
     assert read_relationships(db_session, version_id)[0].evidence_missing
+
+    db_session.expire_all()
+    assert (
+        db_session.execute(select(RelationshipEvidence)).scalars().all() == []
+    ), "evidence citing a replaced chunk must be removed, not left dangling"
 
     chunks = chunk_document(extract_document(FIXTURES / "entities.pdf"))
     persist_chunks(db_session, version_id, chunks)

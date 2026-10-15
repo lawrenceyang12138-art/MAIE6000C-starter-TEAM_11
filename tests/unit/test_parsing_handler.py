@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from services.common.models import FileVersion, SourceChunk, VersionStatus
 from services.parsing.handler import (
     PARSER_REVISION,
+    REASON_PROCESSING_FAILED,
     REASON_SOURCE_CHANGED,
     handle_extract_file,
 )
@@ -126,6 +127,63 @@ def test_a_file_deleted_between_scan_and_parse_is_recorded_not_raised(
     assert version.status == VersionStatus.FAILED.value
     assert version.error_code == REASON_FILE_MISSING
     assert _chunks(db_session, version_id) == []
+
+
+def test_a_file_written_during_the_read_is_recorded_not_published(
+    db_session: Session, make_file_version, tmp_path, monkeypatch
+):
+    """The version's hash and the text must come from the same bytes.
+
+    The check below the extraction only compares the version row with the file
+    before the read; this covers a write that lands during the read itself.
+    """
+    import shutil
+
+    from services.parsing import pdf as pdf_module
+
+    target = tmp_path / "doc.pdf"
+    shutil.copy(FIXTURES / "normal.pdf", target)
+    real_hash, _ = file_identity(target)
+    version_id = make_file_version(sha256=real_hash)
+
+    real_read_pages = pdf_module._read_pages
+
+    def read_then_write(path):
+        pages = real_read_pages(path)
+        with target.open("ab") as handle:
+            handle.write(b"\n% a late edit\n")
+        return pages
+
+    monkeypatch.setattr(pdf_module, "_read_pages", read_then_write)
+
+    status = handle_extract_file(db_session, version_id, target)
+
+    assert status == VersionStatus.FAILED.value
+    version = db_session.get(FileVersion, version_id)
+    assert version.error_code == REASON_SOURCE_CHANGED
+    assert _chunks(db_session, version_id) == []
+
+
+def test_a_failure_while_storing_does_not_leave_the_version_extracting(
+    db_session: Session, make_file_version, monkeypatch
+):
+    """A row stuck in "extracting" is indistinguishable from one still running."""
+    import services.parsing.handler as handler_module
+
+    real_hash, _ = file_identity(FIXTURES / "normal.pdf")
+    version_id = make_file_version(sha256=real_hash)
+
+    def explode(*args, **kwargs):
+        raise RuntimeError("the database said no")
+
+    monkeypatch.setattr(handler_module, "persist_chunks", explode)
+
+    with pytest.raises(RuntimeError):
+        handle_extract_file(db_session, version_id, FIXTURES / "normal.pdf")
+
+    version = db_session.get(FileVersion, version_id)
+    assert version.status == VersionStatus.FAILED.value
+    assert version.error_code == REASON_PROCESSING_FAILED
 
 
 def test_one_bad_file_does_not_stop_the_next_one(

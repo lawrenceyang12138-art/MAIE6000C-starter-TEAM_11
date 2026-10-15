@@ -12,9 +12,14 @@ Run inside the api container, at the commit that contains this file.
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Whole suite | `pytest -q` | **100 passed, 1 skipped** |
+| Whole suite | `pytest -q` | **103 passed, 1 skipped** |
 | Migrations from an empty database | `alembic upgrade head` against a freshly created PostgreSQL database | four migrations apply in order and reach `445f908b73b4` |
-| The commands CI runs | `ruff check .`, the migration step, `pytest -q tests/unit tests/integration` | clean, head reached, **100 passed, none skipped** |
+| The commands CI runs | `ruff check .`, the migration step, `pytest -q tests/unit tests/integration` | clean, head reached, **103 passed, none skipped** |
+| Independent audit by two blank-context reviewers | materials verified by re-running their own commands; the code attacked with adversarial inputs | every claim reproduced except four stale statements (fixed); the code audit found and reproduced four real defects, all now fixed and pinned by tests (`submissions/week07/B-fixes.md`) |
+| A file written while it is being read | `pytest -q tests/unit/test_parsing_pdf.py -k written` | refused with `source_changed`; the window was reproduced by an independent reviewer before the fix |
+| A failure while storing | `pytest -q tests/unit/test_parsing_handler.py -k extracting` | the version is recorded `failed` with `processing_failed` instead of staying `extracting` |
+| Foreign keys in the test database | `pytest -q tests/unit/test_parsing_graph.py -k restores` | SQLite now enforces them, and the test asserts the cascade really removes the evidence rows |
+| Downgrading with a generalised job present | `alembic downgrade 20260713_0001` | succeeds; it deletes jobs the old schema cannot represent |
 | B's three minutes, driven live | `submissions/week07/demo-runbook-B.md` | four commands, **3.2 s** of command time, each printing its own numbers |
 | The starter's own case flow, after the schema changes | stack up, `pytest -q tests/smoke`, then `POST /cases` on the live API | smoke **1 passed**; the case went `queued` to `triaged` with label `billing` and confidence 0.63, triaged by the worker |
 | The same flow driven through a browser | Swagger UI at `/docs` in the in-app browser: expand `POST /cases`, Try it out, fill the body, Execute | **201** with the created case and job; the worker then triaged it (`general`, 0.45). Screenshot: `artifacts/swagger-created-case.png` |

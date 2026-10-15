@@ -63,6 +63,27 @@ The module's stated rule is that a relation cannot be stored without its
 evidence. Until this was fixed, re-processing a version quietly broke that rule
 for every relation in it.
 
+## Then an independent audit ran, and found four more
+
+Two reviewers with no prior context and no knowledge of these documents were
+asked to falsify the work. One checked the materials' numbers, one attacked the
+code. Between them they reproduced everything the materials claim, and found
+four things that were not true or not tested:
+
+| # | What was wrong | How it was found | Fix |
+| --- | --- | --- | --- |
+| 4 | The file was hashed and then **read again**; a write landing between the two reads was invisible, so text from one set of bytes could be published under the hash of another. Reproduced at a 2 ms write into a ~44 ms window on a 1 MB document | the audit wrote to the file mid-read and watched `basic_ready` come back with the new text | the file is hashed again after the read and the two must agree, or the version is failed with `source_changed`; pinned by a test that writes during the read |
+| 5 | A failure while storing left the version saying `extracting` forever, with no error code | the audit made `persist_chunks` raise and read the row back | the outcome is recorded as `failed` with `processing_failed` before the error goes up for the worker to retry |
+| 6 | Every test ran on SQLite, which **ignores foreign keys unless switched on**, so the cascade the chunk replacement depends on was never exercised by the suite | the audit compared PostgreSQL with SQLite on the same scenario | the test engine switches foreign keys on, and the graph test now asserts the evidence rows are actually removed rather than left dangling |
+| 7 | `alembic downgrade` failed with a not-null violation as soon as one generalised job existed | the audit inserted a job with no case, then downgraded | the downgrade deletes jobs the old schema cannot represent, and says so |
+
+None of the four could have been found by re-reading the documents, which is the
+point of asking someone else to attack the work. The audit also confirmed what
+it could not break: page boundaries, chunk sizes and overlap, the candidate cap
+under absurd limits, every evidence refusal, the write-back transaction, the
+review guard under two real concurrent threads, and migrations from an empty
+database.
+
 ## Regression: 12 normal, 3 abnormal, 1 unsupported
 
 The official fixture corpus is D's deliverable and has not landed yet, so this

@@ -31,10 +31,21 @@ REASON_UNSUPPORTED_FORMAT = "unsupported_format"
 # means the file moved or was deleted between the scan and the parse - so it is
 # a separate exception rather than another "unsupported document" reason.
 REASON_FILE_MISSING = "file_missing"
+# The bytes on disk are no longer the bytes this version was created from.
+REASON_SOURCE_CHANGED = "source_changed"
 
 
 class SourceMissing(Exception):
     """The file could not be read because it is no longer at that path."""
+
+    def __init__(self, reason_code: str, message: str) -> None:
+        super().__init__(message)
+        self.reason_code = reason_code
+        self.message = message
+
+
+class SourceChanged(Exception):
+    """The file was written while it was being read."""
 
     def __init__(self, reason_code: str, message: str) -> None:
         super().__init__(message)
@@ -173,6 +184,19 @@ def extract_document(path: str | Path) -> ExtractedDocument:
             )
 
     raw_pages = _read_pages(pdf_path)
+
+    # Hashing the bytes and parsing them are two separate reads of the file, and
+    # a write can land between them. Without this check the text of the new
+    # bytes would be published under the hash of the old ones - exactly what
+    # this module promises never happens. An independent reviewer reproduced
+    # that window at roughly 44 ms on a 1 MB document.
+    after_sha256, _ = file_identity(pdf_path)
+    if after_sha256 != content_sha256:
+        raise SourceChanged(
+            REASON_SOURCE_CHANGED,
+            "The file was written while it was being read",
+        )
+
     pages = tuple(
         PageText(page_number=index, text=text)
         for index, text in enumerate(raw_pages, start=1)

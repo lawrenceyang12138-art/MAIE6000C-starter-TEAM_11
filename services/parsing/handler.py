@@ -27,7 +27,13 @@ from sqlalchemy.orm import Session
 
 from services.common.models import FileVersion, VersionStatus
 from services.parsing.chunking import chunk_document
-from services.parsing.pdf import SourceMissing, UnsupportedDocument, extract_document
+from services.parsing.pdf import (
+    REASON_SOURCE_CHANGED,
+    SourceChanged,
+    SourceMissing,
+    UnsupportedDocument,
+    extract_document,
+)
 from services.parsing.persist import persist_chunks
 
 # Stamped onto every version this handler processes, so chunks can be traced
@@ -35,8 +41,10 @@ from services.parsing.persist import persist_chunks
 # changes, otherwise a re-parse is indistinguishable from the first parse.
 PARSER_REVISION = "parsing-v1"
 
-# Recorded when the bytes on disk no longer match the version.
-REASON_SOURCE_CHANGED = "source_changed"
+# Recorded when the work itself fails rather than the document: a database
+# error while storing, for instance. The version must not be left saying it is
+# still being extracted.
+REASON_PROCESSING_FAILED = "processing_failed"
 
 
 def _finish(db: Session, version_id: str, status: str, error_code: str | None) -> str:
@@ -80,6 +88,13 @@ def handle_extract_file(db: Session, version_id: str, source_path: str | Path) -
         return _finish(
             db, version_id, VersionStatus.FAILED.value, exc.reason_code
         )
+    except SourceChanged as exc:
+        # Caught here as well as checked below: the check below compares the
+        # version row against the file, while this one fires when the file was
+        # written during the read itself.
+        return _finish(
+            db, version_id, VersionStatus.FAILED.value, exc.reason_code
+        )
 
     if document.content_sha256 != expected_sha256:
         # The file changed underneath us. Publishing now would attach text from
@@ -88,8 +103,16 @@ def handle_extract_file(db: Session, version_id: str, source_path: str | Path) -
             db, version_id, VersionStatus.FAILED.value, REASON_SOURCE_CHANGED
         )
 
-    chunks = chunk_document(document)
-    persist_chunks(db, version_id, chunks)
+    try:
+        chunks = chunk_document(document)
+        persist_chunks(db, version_id, chunks)
+    except Exception:
+        # The version was committed as "extracting" before any of this ran. If
+        # the work fails, leaving the row mid-extraction makes it
+        # indistinguishable from one that is still running, so the outcome is
+        # recorded before the error goes up for the worker to retry.
+        _finish(db, version_id, VersionStatus.FAILED.value, REASON_PROCESSING_FAILED)
+        raise
 
     version = db.get(FileVersion, version_id)
     if version is None:
