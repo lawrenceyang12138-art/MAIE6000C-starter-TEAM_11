@@ -175,3 +175,67 @@ def test_reviewing_an_unknown_relationship_is_refused(db_session: Session):
         )
 
     assert excinfo.value.reason_code == REASON_RELATIONSHIP_NOT_FOUND
+
+
+def test_all_three_decision_types_are_recorded_independently(
+    db_session: Session, make_file_version
+):
+    """The check the schedule asks for: one of each decision, two rejections."""
+    version_id = _version_with_relations(db_session, make_file_version)
+    views = read_relationships(db_session, version_id)
+    assert len(views) >= 3, "need three relations to record three decisions"
+
+    first, second, third = views[0], views[1], views[2]
+
+    record_review(
+        db_session,
+        first.relationship_id,
+        ReviewDecision.CONFIRMED.value,
+        expected_revision=0,
+        actor="reviewer-a",
+    )
+    record_review(
+        db_session,
+        second.relationship_id,
+        ReviewDecision.CORRECTED.value,
+        expected_revision=0,
+        reason="label should be the full name",
+        actor="reviewer-a",
+    )
+    record_review(
+        db_session,
+        third.relationship_id,
+        ReviewDecision.REJECTED.value,
+        expected_revision=0,
+        reason="not an entity",
+        actor="reviewer-b",
+    )
+    # A second rejection, on a relation already confirmed, taken with the
+    # revision the reviewer actually saw.
+    record_review(
+        db_session,
+        first.relationship_id,
+        ReviewDecision.REJECTED.value,
+        expected_revision=1,
+        reason="changed my mind",
+        actor="reviewer-b",
+    )
+
+    effective = {v.relationship_id: v for v in read_relationships(db_session, version_id)}
+    assert effective[first.relationship_id].decision == "rejected"
+    assert effective[first.relationship_id].decision_revision == 2
+    assert effective[second.relationship_id].decision == "corrected"
+    assert effective[third.relationship_id].decision == "rejected"
+
+    # Both rejections, the confirmation and the correction are all still stored.
+    decisions = [
+        row.decision
+        for row in db_session.execute(
+            select(Review).order_by(Review.relationship_id, Review.decision_revision)
+        )
+        .scalars()
+        .all()
+    ]
+    assert decisions.count("rejected") == 2
+    assert "confirmed" in decisions
+    assert "corrected" in decisions
