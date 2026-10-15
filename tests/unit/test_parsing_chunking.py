@@ -134,6 +134,22 @@ def test_cleaning_keeps_meaningful_english_spacing():
     assert cleaned == "the quick brown fox"
 
 
+def test_unmappable_glyphs_are_marked_rather_than_left_as_control_codes():
+    """A symbol whose font encoding has no Unicode mapping arrives as a control
+    code. Nothing renders it and no search matches it, so it is marked."""
+    cleaned = clean_page_text("IDF(t)= log\n\x10\ntotal documents\x11\n= 0.176")
+
+    assert "\x10" not in cleaned
+    assert "\x11" not in cleaned
+    assert cleaned.count("\ufffd") == 2
+    assert "total documents" in cleaned
+
+
+def test_newlines_survive_cleaning_while_tabs_become_spaces():
+    cleaned = clean_page_text("first line\nsecond\tline")
+    assert cleaned == "first line\nsecond line"
+
+
 # --------------------------------------------------------------------------
 # Running headers and footers
 # --------------------------------------------------------------------------

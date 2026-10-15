@@ -12,15 +12,16 @@ Run inside the api container, at the commit that contains this file.
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Whole suite | `pytest -q` | **97 passed, 1 skipped** |
+| Whole suite | `pytest -q` | **99 passed, 1 skipped** |
 | Migrations from an empty database | `alembic upgrade head` against a freshly created PostgreSQL database | four migrations apply in order and reach `445f908b73b4` |
-| The commands CI runs | `ruff check .`, the migration step, `pytest -q tests/unit tests/integration` | clean, head reached, **97 passed, none skipped** |
+| The commands CI runs | `ruff check .`, the migration step, `pytest -q tests/unit tests/integration` | clean, head reached, **99 passed, none skipped** |
 | B's three minutes, driven live | `submissions/week07/demo-runbook-B.md` | four commands, **3.2 s** of command time, each printing its own numbers |
 | The starter's own case flow, after the schema changes | stack up, `pytest -q tests/smoke`, then `POST /cases` on the live API | smoke **1 passed**; the case went `queued` to `triaged` with label `billing` and confidence 0.63, triaged by the worker |
 | Rebuilding after a migration change | `docker compose up -d` then `docker compose up -d --build` | without the rebuild the api container exits with `Can't locate revision identified by '445f908b73b4'`; with it, every service is healthy |
 | Static analysis | `ruff check .` | clean |
 | Independent page attribution | `scripts/verify_page_attribution.py` | **12/12 agree** |
 | Parsing quality on three real decks | `scripts/check_parsing_quality.py` | 66 pages, 0 corrupt characters, **20/20** fragments found on their page |
+| 38 documents the parser had never seen | `scripts/sweep_corpus.py` | **1,723 pages read, 0 crashes, 0 refusals**; 19 unreadable symbols found, now marked instead of emitted as control codes (`evidence/real-corpus-sweep.md`) |
 | Entity candidate counts and the bounding steps | `scripts/check_relation_candidates.py` | 47/44/36 before the line-initial rule, 39/38/33 after, **10** bounded, on all three decks |
 | Slide 4's picture, produced rather than screenshotted | `scripts/render_evidence_card.py` | `artifacts/page-6-passage.jpg`, `artifacts/api-deck-page-13-passage.jpg` - the real page rendered, our passage highlighted, provenance printed underneath |
 | 12 normal / 3 abnormal / 1 unsupported | `pytest -q tests/integration/test_extraction_regression.py` | **7 passed** |

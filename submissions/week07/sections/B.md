@@ -131,6 +131,18 @@ would put invented data into the same table as extracted data.
 produced, and a wrapped slide title stays on several lines. Order and content
 are correct; reflowing them is out of scope.
 
+**Some symbols cannot be read at all.** A font can map a radical sign or a
+stretched bracket to a code with no Unicode meaning. Nineteen such characters
+turned up across two of the thirty-eight documents swept from this machine, and
+no dependency fixes them. They are now marked with U+FFFD where they occur
+rather than left as invisible control characters.
+
+**A near-scan can look like a success.** One 32-page deck in that sweep carries
+only 382 characters of text, because it is images with a thin text layer. It is
+not refused - the text-layer check is per document, not per page - so the
+parser reports success and the user gets almost nothing. A full scan with no
+text at all *is* refused, with `no_text_layer`.
+
 ## 6. What is not done
 
 - No HTTP endpoints. Every capability above exists as a handler only.

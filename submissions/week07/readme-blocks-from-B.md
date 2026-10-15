@@ -33,7 +33,7 @@ calls it from the worker. Those two are A's.
 
 ## Section 6 - Testing and verification (B's part)
 
-- Full suite: **97 passed, 1 skipped**; `ruff check .` clean. The one skip needs
+- Full suite: **99 passed, 1 skipped**; `ruff check .` clean. The one skip needs
   a running stack.
 - Migrations apply from an empty database, not only over an existing one.
 - Page attribution was judged by a **different PDF library** than the pipeline
@@ -42,6 +42,11 @@ calls it from the worker. Those two are A's.
   control characters, **20/20** sampled fragments found on the page they claim.
 - The entity candidate counts quoted in the section and on the slides are
   re-measured by a script that fails if they stop matching.
+- The parser was run over **38 documents it had never seen** (1,723 pages of
+  other courses' notes, slides and syllabi): **no crashes, no refusals**. Two
+  of them contained symbols whose font encoding has no Unicode mapping; those
+  are now marked where they occur instead of being emitted as invisible
+  control characters.
 - The starter's own case flow still works after the schema changes: smoke test
   passes, and a posted case reaches `triaged` with a label and a confidence.
 - The work replays onto the team repository's `main` with **zero conflicts**

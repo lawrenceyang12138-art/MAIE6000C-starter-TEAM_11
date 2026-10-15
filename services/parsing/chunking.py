@@ -37,6 +37,11 @@ _HEADER_FOOTER_MAX_CHARS = 120
 
 _CJK = r"\u4e00-\u9fff\u3400-\u4dbf"
 
+# C0 control characters that are not layout. They arrive when a font maps a
+# symbol to a code with no Unicode meaning, and they are invisible and
+# unsearchable in the stored text.
+_UNMAPPABLE_GLYPH = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+
 
 @dataclass(frozen=True)
 class Chunk:
@@ -53,8 +58,19 @@ def clean_page_text(text: str) -> str:
     Handles the noise that PDF text extraction reliably produces: carriage
     returns, words split across a line break with a hyphen, runs of spaces,
     spaces inserted between Chinese characters, and excess blank lines.
+
+    It also marks glyphs that could not be decoded. Some fonts map a symbol -
+    a radical sign, a stretched bracket - to a control code with no Unicode
+    meaning, and the text arrives carrying that code. Nothing renders it and no
+    search matches it, so it is replaced with U+FFFD: the passage then says
+    that something was there and could not be read, which is better than a
+    character that looks like nothing at all.
     """
     cleaned = text.replace("\r\n", "\n").replace("\r", "\n")
+
+    # Glyphs with no Unicode mapping arrive as C0 control characters. Tabs and
+    # newlines are real layout and stay.
+    cleaned = _UNMAPPABLE_GLYPH.sub("\ufffd", cleaned)
 
     # "informa-\ntion" -> "information"
     cleaned = re.sub(r"([A-Za-z])-\n([a-z])", r"\1\2", cleaned)
