@@ -49,7 +49,10 @@ non-zero exit code has.
 
 Two documents - `05_Vector_Space_Models.pdf` and `notes_03.pdf`, both from
 another course - arrived with **19 C0 control characters** in their text, where
-a radical sign and stretched brackets belong:
+a radical sign and stretched brackets belong. Neither file is in this
+repository: they are other courses' teaching materials sitting in the
+presenter's own folder tree, and the script names every file it reads so the
+list is reproducible on the machine that has them rather than invented:
 
 ```
 IDF(t)= log

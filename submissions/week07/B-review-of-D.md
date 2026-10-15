@@ -56,8 +56,8 @@ itself, not from memory.
   video?
 - Is the video the same version as the frozen materials, and does it play with
   the network off?
-- Does `release-manifest-final.md` point at a single SHA, and does that SHA
-  match the repository?
+- Does the release manifest D is to produce (`release-manifest-final.md`, not
+  written yet) point at a single SHA, and does that SHA match the repository?
 
 ## What B offers in return
 
