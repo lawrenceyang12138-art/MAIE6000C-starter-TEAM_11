@@ -3,6 +3,14 @@
 Owner: B. D assembles the deck; these three pages are B's contribution and
 together must fit three minutes of speaking.
 
+**The three pages also exist as a real deck: `B-slides.pptx` in this folder.**
+It carries the same content plus the speaker notes, so it can be dropped into
+the team deck or projected for rehearsal. It was built with the bundled
+presentation tool and passed its structural and layout validation (3 slides,
+16:9, one font family across all 27 text runs, no findings). The markdown below
+remains the source of truth for the wording; if the two ever disagree, the
+markdown is what B intended.
+
 ---
 
 ## Slide 4 - Parsing and page evidence

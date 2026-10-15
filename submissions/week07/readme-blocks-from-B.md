@@ -72,6 +72,7 @@ calls it from the worker. Those two are A's.
 | --- | --- |
 | Module report | `submissions/week07/sections/B.md` |
 | Slides 4-6 content | `submissions/week07/slides/B-slides.md` |
+| Slides 4-6 as a real deck, with speaker notes | `submissions/week07/slides/B-slides.pptx` |
 | Three-minute script | `submissions/week07/B-notes.md` |
 | Live demo runbook, four commands | `submissions/week07/demo-runbook-B.md` |
 | Evidence cards for slide 4 | `submissions/week07/artifacts/` |
