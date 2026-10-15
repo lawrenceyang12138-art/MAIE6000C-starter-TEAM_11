@@ -59,7 +59,8 @@ an empty document.
 docker compose run --rm --no-deps api pytest -q tests/unit/test_parsing_pdf.py
 ```
 
-Result: **6 passed**. The tests assert page-number preservation, file identity
+Result: **8 passed** (the count grows as cases are added; the command above is
+the authority). The tests assert page-number preservation, file identity
 (sha256 and byte size), the three abnormal reason codes, and that parsing does
 not modify the source file - the last one is the "originals unchanged"
 acceptance criterion in miniature.

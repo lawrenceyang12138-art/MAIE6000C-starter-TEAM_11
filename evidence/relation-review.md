@@ -79,7 +79,8 @@ Command:
 docker compose run --rm --no-deps api pytest -q tests/unit/test_parsing_graph.py
 ```
 
-Result: **7 passed**.
+Result: **15 passed** (the count grows as cases are added; the command above is
+the authority).
 
 - relations come back with their quote, page, origin and producer revision
 - an unreviewed relation reports decision `None` at revision 0

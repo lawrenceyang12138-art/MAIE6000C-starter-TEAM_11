@@ -71,8 +71,8 @@ merged without either one disturbing the other.
 
 ## A second route, if the team prefers one commit
 
-If the team lead would rather not add eighteen commits to review, the same
-content can land as a single commit:
+If the team lead would rather not review a whole branch's worth of commits, the
+same content can land as a single commit:
 
 ```
 # in the personal repository
@@ -90,8 +90,17 @@ relation tables are still listed as a proposal for A in
 
 ## What has been done, and what has not
 
-The branch **is now on the team repository**: `w7-parsing`, 51 commits, top
-commit `6555056`. Two properties make it cheap for the team to deal with:
+The branch **is now on the team repository**: `w7-parsing`. Its size and its
+tip are deliberately not written down here - both change with every commit, and
+an earlier version of this section quoted a commit that a later rewrite made
+unfindable. Ask the repository instead:
+
+```
+git ls-remote origin | grep w7-parsing
+git rev-list --count origin/main..origin/w7-parsing
+```
+
+Two properties make it cheap for the team to deal with:
 
 - **`main` is untouched** - it is still `abacacd`, the starter, exactly as the
   team agreed: nobody commits to `main`, everyone pushes a branch and the merge

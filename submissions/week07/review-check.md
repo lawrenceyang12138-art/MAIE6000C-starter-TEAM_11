@@ -41,7 +41,8 @@ overwritten silently.
 docker compose run --rm --no-deps api pytest -q tests/unit/test_parsing_graph.py
 ```
 
-Result: **12 passed**, including the three-decision case above, the stale
+Result: **15 passed** (the count grows as cases are added; the command above is
+the authority), including the three-decision case above, the stale
 revision refusal, the append-only history assertion, the refusals for an
 invalid decision value and an unknown relation, and the four correction cases:
 a correction storing its replacement entity, a correction with no target, a

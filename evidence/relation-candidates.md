@@ -117,7 +117,8 @@ Command:
 docker compose run --rm --no-deps api pytest -q tests/unit/test_parsing_relations.py
 ```
 
-Result: **10 passed**, covering all three entity types, that every candidate's
+Result: **11 passed** (the count grows as cases are added; the command above is
+the authority), covering all three entity types, that every candidate's
 offset really points at its label inside its chunk, that the page matches, that
 quoting is real text, that sentence openers are not treated as names, that a
 second run does not duplicate relationships, and that evidence cannot be stored

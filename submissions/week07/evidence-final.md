@@ -18,7 +18,7 @@ Run inside the api container, at the commit that contains this file.
 | B's three minutes, driven live | `submissions/week07/demo-runbook-B.md` | four commands, **3.2 s** of command time, each printing its own numbers |
 | The starter's own case flow, after the schema changes | stack up, `pytest -q tests/smoke`, then `POST /cases` on the live API | smoke **1 passed**; the case went `queued` to `triaged` with label `billing` and confidence 0.63, triaged by the worker |
 | The same flow driven through a browser | Swagger UI at `/docs` in the in-app browser: expand `POST /cases`, Try it out, fill the body, Execute | **201** with the created case and job; the worker then triaged it (`general`, 0.45). Screenshot: `artifacts/swagger-created-case.png` |
-| Rebuilding after a migration change | `docker compose up -d` then `docker compose up -d --build` | without the rebuild the api container exits with `Can't locate revision identified by '445f908b73b4'`; with it, every service is healthy |
+| Rebuilding after a migration change (observed once, on 2026-10-15) | `docker compose up -d` then `docker compose up -d --build` | at the time, without the rebuild the api container exited with `Can't locate revision identified by '445f908b73b4'`; with it, every service was healthy. It no longer reproduces, because the image has since been rebuilt - the row records what happened, not a step to repeat |
 | Static analysis | `ruff check .` | clean |
 | Independent page attribution | `scripts/verify_page_attribution.py` | **12/12 agree** |
 | Parsing quality on three real decks | `scripts/check_parsing_quality.py` | 66 pages, 0 corrupt characters, **20/20** fragments found on their page |
@@ -50,7 +50,7 @@ the skip count went from two to one.
 | One of each review decision, at least two rejections | `submissions/week07/review-check.md` | met |
 | A correction carries the entity it points at | `evidence/relation-review.md`, `submissions/week07/handover-to-A.md` | met |
 | AI Use Statement in the milestone submission | `submissions/week07/ai-use-statement.md` | B's part supplied, A/C/D still blank |
-| B section, at least 700 words | `submissions/week07/sections/B.md` | met, 1300 words excluding code blocks |
+| B section, at least 700 words | `submissions/week07/sections/B.md` | met, 1427 words excluding fenced code blocks; the requirement is 700, so the exact count is not load-bearing |
 | Three slide pages | `submissions/week07/slides/B-slides.md` | met |
 | Cross review of D | `submissions/week07/B-review-of-D.md` | prepared, not yet run |
 

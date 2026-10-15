@@ -69,7 +69,8 @@ check, because the page texts do not share long passages.
 docker compose run --rm --no-deps api pytest -q tests/unit/test_parsing_chunking.py
 ```
 
-Result: **13 passed**. The tests cover page attribution, the no-crossing rule,
+Result: **15 passed** (the count grows as cases are added; the command above is
+the authority). The tests cover page attribution, the no-crossing rule,
 the configured overlap, the size bound, ordinal sequencing, each cleaning rule,
 and header/footer removal including the negative case (a line that does not
 repeat is kept).

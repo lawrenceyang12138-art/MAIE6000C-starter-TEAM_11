@@ -279,20 +279,26 @@ in a file in the repository.
 
 ## Part 7 - This repository right now
 
+**This part deliberately does not pin commit hashes or counts.** An earlier
+version of it did, and every commit afterwards made it wrong - which a reader
+then has to notice for themselves. Ask the repository instead; the answers are
+always current:
+
 ```
-main                                  ff4e718  the shared line, pushed
-readiness/w03-fix-test-collection     93accfd  the W03 branch, pushed
-feat/w7-data-layer                    1e9ff79  B's work, pushed, no pull request yet
+git branch -vv                      # local branches and what they track
+git log --oneline -1 origin/main    # where the shared line is
+git rev-list --count origin/main..feat/w7-data-layer   # how far ahead the work is
+git tag -l                          # the checkpoint tags
 ```
 
-Tags: `w03-readiness`.
+Branches: `main` (the shared line), `readiness/w03-fix-test-collection` (the
+Week 3 fix), and `feat/w7-data-layer` (the read-files work). A team copy of the
+same work sits on the team repository as `w7-parsing`. Tags: `w03-readiness`.
 
-`feat/w7-data-layer` carries thirty-one commits and is on GitHub. Nothing is
-merged into `main` yet, and because no pull request has been opened, CI has
-not run on it. The commands CI would run were checked locally instead:
-`ruff check .` clean, `alembic upgrade head` from an empty database reaching
-`445f908b73b4`, and `pytest -q tests/unit tests/integration` at 86 passed,
-1 skipped.
+Nothing is merged into `main` on either repository yet. Because no pull request
+has been opened, CI has never run on the branch; the commands CI would run were
+checked locally instead, and `submissions/week07/evidence-final.md` lists them
+with their results.
 
 To see what is on it:
 
