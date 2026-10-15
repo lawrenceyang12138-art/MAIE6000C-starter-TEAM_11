@@ -78,6 +78,8 @@ calls it from the worker. Those two are A's.
 | Evidence records, eight files | `evidence/` |
 | Handover to A | `submissions/week07/handover-to-A.md` |
 | How this lands in the team repository | `submissions/week07/port-to-team-repo.md` |
+| Every technical decision, its alternatives and the trade-offs | `docs/technical-decisions-and-alternatives.md` |
+| How to verify this work without reading code | `docs/how-to-review-and-verify.md` |
 
 ## Section 10 - AI Use Statement (B's part)
 
