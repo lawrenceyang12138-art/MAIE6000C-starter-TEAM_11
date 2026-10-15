@@ -53,6 +53,23 @@ begin a sentence or a bullet. (Re-measured at this commit by disabling the
 line-initial rule and counting every candidate; the earlier draft of this file
 quoted 45 for the third deck, which was wrong.)
 
+This is reproducible rather than retold. The finder takes
+`skip_line_initial=False` for exactly this measurement, and the script runs
+both ways over the same documents:
+
+```
+docker compose run --rm --no-deps \
+  -v "$PWD/services:/app/services" -v "$PWD/scripts:/app/scripts" \
+  -v "/path/to/pdfs:/fixtures:ro" api \
+  python scripts/check_relation_candidates.py /fixtures/*.pdf
+```
+
+It prints the count before the rule, after it, and after bounding, and exits
+non-zero if any of the three decks stops matching the numbers recorded here.
+A candidate is counted as a distinct **(entity type, label) pair**, because
+that is what the bounded list contains; counting mentions instead would report
+the same name many times.
+
 Two changes followed, and both are measured rather than assumed:
 
 - skipping line-initial single words took them to **39, 38 and 33**

@@ -149,8 +149,17 @@ def _is_line_initial(text: str, start: int) -> bool:
     return start == 0 or text[start - 1] == "\n"
 
 
-def find_mentions(chunks: Sequence[Chunk]) -> list[CandidateRelation]:
-    """Return every mention that passes the rules, in reading order."""
+def find_mentions(
+    chunks: Sequence[Chunk], *, skip_line_initial: bool = True
+) -> list[CandidateRelation]:
+    """Return every mention that passes the rules, in reading order.
+
+    ``skip_line_initial`` turns off the rule that drops a single capitalised
+    word at the start of a line. It exists so the effect of that rule can be
+    measured rather than asserted: the numbers in
+    `evidence/relation-candidates.md` are produced by running the finder both
+    ways over the same documents. Leaving it on is the shipped behaviour.
+    """
     # First pass: how many distinct chunks does each capitalised run appear in?
     chunks_per_run: dict[str, set[int]] = {}
     for chunk in chunks:
@@ -173,7 +182,11 @@ def find_mentions(chunks: Sequence[Chunk]) -> list[CandidateRelation]:
             # a sentence or bullet opener ("Observe", "Create", "Session"),
             # not a name. Multi-word runs are kept because real names and
             # project titles typically have more than one word.
-            if len(run.split()) == 1 and _is_line_initial(chunk.text, start):
+            if (
+                skip_line_initial
+                and len(run.split()) == 1
+                and _is_line_initial(chunk.text, start)
+            ):
                 continue
 
             entity_type = _classify(

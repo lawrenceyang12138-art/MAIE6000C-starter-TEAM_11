@@ -12,10 +12,11 @@ Run inside the api container, at the commit that contains this file.
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Whole suite | `pytest -q` | **80 passed, 2 skipped** |
+| Whole suite | `pytest -q` | **83 passed, 2 skipped** |
 | Static analysis | `ruff check .` | clean |
 | Independent page attribution | `scripts/verify_page_attribution.py` | **12/12 agree** |
 | Parsing quality on three real decks | `scripts/check_parsing_quality.py` | 66 pages, 0 corrupt characters, **20/20** fragments found on their page |
+| Entity candidate counts and the bounding steps | `scripts/check_relation_candidates.py` | 47/44/36 before the line-initial rule, 39/38/33 after, **10** bounded, on all three decks |
 | 12 normal / 3 abnormal / 1 unsupported | `pytest -q tests/integration/test_extraction_regression.py` | **7 passed** |
 | Relation and review end to end | `scripts/demo_relation_review.py` | 3 candidates, review revisions 1 and 2, and a correction that carries the entity it points at |
 | Port to the team repository | rebase onto the team's `main`, then `pytest -q` in that tree | **every commit replays, zero conflicts**; 78 passed, 2 skipped there against 80 and 2 here, the two-test gap traced to the team's uncorrected Week 3 filename (`submissions/week07/port-to-team-repo.md`) |
