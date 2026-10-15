@@ -55,8 +55,8 @@ docker compose run --rm --no-deps \
   api pytest -q
 ```
 
-Measured side by side in the same minute (last run): **100 passed, 1 skipped in
-the personal repository against 98 passed, 1 skipped in the team tree.** The
+Measured side by side in the same minute (last run): **103 passed, 1 skipped in
+the personal repository against 101 passed, 1 skipped in the team tree.** The
 gap of two is not a judgement call: the team repository still
 contains `tests/integration/test_api_integration.py python`, the filename with
 a space and no extension, so pytest never collects those two tests. Renaming

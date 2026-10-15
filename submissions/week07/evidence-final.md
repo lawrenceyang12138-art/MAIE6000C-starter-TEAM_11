@@ -33,7 +33,7 @@ Run inside the api container, at the commit that contains this file.
 | Slide 4's picture, produced rather than screenshotted | `scripts/render_evidence_card.py` | `artifacts/page-6-passage.jpg`, `artifacts/api-deck-page-13-passage.jpg` - the real page rendered, our passage highlighted, provenance printed underneath |
 | 12 normal / 3 abnormal / 1 unsupported | `pytest -q tests/integration/test_extraction_regression.py` | **7 passed** |
 | Relation and review end to end | `scripts/demo_relation_review.py` | 3 candidates, review revisions 1 and 2, and a correction that carries the entity it points at |
-| Port to the team repository | the branch is **pushed** (`w7-parsing`), a descendant of `main` so the merge is a fast-forward; `pytest -q` there collects 98 tests against 100 here | 98 passed, 1 skipped there against 100 and 1 here; the gap is the two tests the team's uncorrected Week 3 filename hides (`submissions/week07/port-to-team-repo.md`) |
+| Port to the team repository | the branch is **pushed** (`w7-parsing`), a descendant of `main` so the merge is a fast-forward | 101 passed, 1 skipped in the team tree against 103 and 1 here; the gap of two is the tests the team's uncorrected Week 3 filename hides (`submissions/week07/port-to-team-repo.md`) |
 
 The one skipped test is the starter's smoke test, which needs a running stack
 and `SMOKE_BASE_URL`. The page check's independent-reader case used to skip for
