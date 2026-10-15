@@ -38,7 +38,7 @@ git checkout -b w7-parsing origin/main
 git rebase --onto origin/main personal/main personal/feat/w7-data-layer
 ```
 
-Result: **18 commits replayed, zero conflicts.** The commits are re-created
+Result: **19 commits replayed, zero conflicts.** The commits are re-created
 with new hashes, which is expected when the history underneath them changes;
 the content is identical.
 
