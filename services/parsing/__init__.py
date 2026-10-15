@@ -20,6 +20,7 @@ from services.parsing.chunking import (
     clean_page_text,
     strip_running_headers_footers,
 )
+from services.parsing.persist import InvalidChunkSet, persist_chunks
 
 __all__ = [
     "CHUNK_OVERLAP_CHARS",
@@ -27,11 +28,13 @@ __all__ = [
     "MIN_CHUNK_CHARS",
     "Chunk",
     "ExtractedDocument",
+    "InvalidChunkSet",
     "PageText",
     "UnsupportedDocument",
     "chunk_document",
     "clean_page_text",
     "extract_document",
     "file_identity",
+    "persist_chunks",
     "strip_running_headers_footers",
 ]
