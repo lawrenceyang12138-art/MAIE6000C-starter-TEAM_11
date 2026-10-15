@@ -217,6 +217,12 @@ def candidate_relations(
     Keeping a single row per entity is what stops this becoming a dumping
     ground of every occurrence; bounding the count is what stops it becoming a
     graph. Later mentions are still available through ``find_mentions``.
+
+    ``limit`` is clamped to ``MAX_CANDIDATES``, so the bound holds even when a
+    caller asks for more. Asking for a thousand used to return a
+    thousand-or-so candidates, which contradicted the one property this
+    function exists to provide; ``find_mentions`` is there for callers who
+    genuinely want every mention.
     """
     mentions = find_mentions(chunks)
     counts = Counter((mention.entity_type, mention.normalized_label) for mention in mentions)
@@ -237,4 +243,4 @@ def candidate_relations(
             candidate.start_offset,
         )
     )
-    return candidates[:limit]
+    return candidates[: max(0, min(limit, MAX_CANDIDATES))]

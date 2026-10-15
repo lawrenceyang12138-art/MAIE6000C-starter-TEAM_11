@@ -69,10 +69,37 @@ def _scan(path: Path) -> dict[str, object]:
         ),
         "line_end_hyphens": len(LINE_END_HYPHEN.findall(joined)),
         "headers_removed": headers_removed,
+        "max_chunk": max((len(chunk.text) for chunk in chunks), default=0),
+        "overlap": _overlap_floor(chunks),
         "chunks": len(chunks),
         "raw_pages": raw_pages,
         "chunks_list": chunks,
     }
+
+
+def _overlap_floor(chunks) -> int:
+    """Smallest overlap between adjacent chunks that share a page, or 0.
+
+    The splitter starts the next chunk a fixed number of characters back, but
+    each stored chunk is stripped, so the overlap measured in stored text lands
+    a character or two under the configured value. Reporting the measured floor
+    is more useful than repeating the constant.
+    """
+    by_page: dict[int | None, list] = {}
+    for chunk in chunks:
+        by_page.setdefault(chunk.page_number, []).append(chunk)
+
+    floor: int | None = None
+    for group in by_page.values():
+        group.sort(key=lambda chunk: chunk.ordinal)
+        for earlier, later in zip(group, group[1:]):
+            overlap = 0
+            for size in range(min(len(earlier.text), len(later.text)), 9, -1):
+                if earlier.text[-size:] == later.text[:size]:
+                    overlap = size
+                    break
+            floor = overlap if floor is None else min(floor, overlap)
+    return floor or 0
 
 
 def _fragments(scanned: dict[str, object], count: int) -> list[tuple]:
@@ -112,21 +139,25 @@ def main(argv: list[str] | None = None) -> int:
     print("character scan")
     print(
         f"{'file':<40}{'pages':<7}{'chars':<8}{'repl':<6}{'ctrl':<6}"
-        f"{'hyphens':<9}{'headers':<9}chunks"
+        f"{'hyphens':<9}{'headers':<9}{'max':<6}{'overlap':<9}chunks"
     )
-    print("-" * 92)
+    print("-" * 106)
     for row in scanned:
         print(
             f"{str(row['name'])[:38]:<40}{row['pages']:<7}{row['chars']:<8}"
             f"{row['replacement']:<6}{row['control']:<6}"
             f"{row['line_end_hyphens']:<9}{row['headers_removed']:<9}"
-            f"{row['chunks']}"
+            f"{row['max_chunk']:<6}{row['overlap']:<9}{row['chunks']}"
         )
     print()
     print("chars counts the raw per-page text joined with newlines, before cleaning")
     print(
         "headers counts pages whose text the running-header rule changed, "
         "measured after cleaning"
+    )
+    print(
+        "max is the longest stored chunk; overlap is the smallest measured "
+        "overlap between adjacent chunks on one page"
     )
 
     rows = _fragments(scanned[0], args.fragments)

@@ -16,6 +16,14 @@ those two things.
 | --- | --- | --- |
 | Maximum chunk size | 700 characters | Large enough to hold a complete idea, small enough to stay readable in a result list. |
 | Overlap between neighbours | 120 characters (~17%) | A sentence cut at a boundary is still complete in at least one of the two chunks. |
+
+Both numbers are measured, not asserted: `scripts/check_parsing_quality.py`
+prints the longest stored chunk and the smallest observed overlap per file. On
+the three real decks the longest chunks are 699, 639 and 692 characters, so the
+maximum holds, and the measured overlaps are 118, 119 and 119 - a character or
+two under 120 because each stored chunk is stripped at its edges. The
+configured overlap is applied to the source text; the measured one is what a
+reader can see.
 | Minimum chunk size | 80 characters | Prevents a stub at the end of a page from becoming its own chunk; it is folded into the previous one. |
 | Break search window | 220 characters | How far back from the hard limit we will look for a nicer place to cut. |
 | Page crossing | **Never** | See below. |

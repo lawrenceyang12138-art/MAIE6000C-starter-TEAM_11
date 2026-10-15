@@ -49,7 +49,7 @@ loop. In the form the repository keeps:
 
 ## Verification performed
 
-**Correctness checks.** The full suite is run in the container: 96 passed, 1
+**Correctness checks.** The full suite is run in the container: 97 passed, 1
 skipped, `ruff check .` clean. The migration set was applied, reverted and
 re-applied against PostgreSQL rather than reasoned about. Three claims that
 the documents make are produced by scripts that fail loudly rather than

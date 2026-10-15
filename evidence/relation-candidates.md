@@ -70,6 +70,13 @@ A candidate is counted as a distinct **(entity type, label) pair**, because
 that is what the bounded list contains; counting mentions instead would report
 the same name many times.
 
+`candidate_relations` clamps its `limit` to `MAX_CANDIDATES`, so the bound is a
+property of the module rather than a default a caller can talk their way past.
+It previously returned however many were asked for, which meant a caller
+requesting a thousand candidates got a thousand - the opposite of what this
+step is for. `find_mentions` is there for callers who genuinely want every
+mention.
+
 Two changes followed, and both are measured rather than assumed:
 
 - skipping line-initial single words took them to **39, 38 and 33**

@@ -13,13 +13,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from services.common.models import Entity, Relationship, RelationshipEvidence, SourceChunk
-from services.parsing.chunking import chunk_document
+from services.parsing.chunking import Chunk, chunk_document
 from services.parsing.pdf import extract_document, file_identity
 from services.parsing.persist import InvalidChunkSet, persist_chunks, persist_relations
 from services.parsing.relations import (
     ENTITY_PERSON,
     ENTITY_PROJECT,
     ENTITY_TOPIC,
+    MAX_CANDIDATES,
     PRODUCER_REVISION,
     candidate_relations,
     find_mentions,
@@ -93,6 +94,21 @@ def test_candidates_are_deduplicated_to_one_row_per_entity():
     # The project is mentioned on both pages, so there are more mentions than
     # candidates - which is the point of keeping only the first.
     assert len(mentions) >= len(candidates)
+
+
+def test_the_candidate_list_stays_bounded_even_when_more_are_asked_for():
+    """The schedule's point is a bounded candidate list, not a graph."""
+    chunks = [
+        Chunk(
+            ordinal=index,
+            page_number=index,
+            text=f"{chr(65 + index)}q Project was chosen\nsecond line of the page",
+        )
+        for index in range(20)
+    ]
+
+    assert len(find_mentions(chunks)) > MAX_CANDIDATES, "the fixture is too small"
+    assert len(candidate_relations(chunks, limit=1000)) == MAX_CANDIDATES
 
 
 def test_sentence_openers_are_not_treated_as_names():
