@@ -97,6 +97,31 @@ git commit -m "message"         save a snapshot locally
 
 Write the commit message as what the change does and why, not "update".
 
+The lead asked for messages specific enough that a reader can tell what each
+commit changed. Measured on this branch afterwards: 54 commits, 39 with a
+subject *and* a body, 15 with a subject only - and fourteen of those fifteen
+are the same shape, `Re-measure the port after ...`, written while chasing a
+number that a previous commit had moved.
+
+Two lessons, both worth more than the tidier history they cost:
+
+- **A number that a change moves belongs in that change.** Those fourteen are
+  bookkeeping commits: each one updates a table in a document after the commit
+  before it changed a test count. They should have been folded in, and one
+  clear commit would have said more than two.
+- **A body is where the reason lives.** The subject says what changed; the body
+  says why, what was measured, and what was rejected. A reader six days later
+  only has the body.
+
+Those messages were then rewritten, on the owner's request, into bilingual
+messages with a fuller body - while the branch was minutes old, unreviewed, and
+with nobody standing on it. That window is the only reason it was safe, and it
+is now closed: a branch that a teammate has pulled must be corrected by adding
+commits, not by moving the commits they already have. **Rewriting published
+history is acceptable exactly once, immediately, and never again.** If the
+history should look tidier than that, the person merging can squash it, which
+changes nothing for anyone who already has the branch.
+
 ### Branches
 
 ```
