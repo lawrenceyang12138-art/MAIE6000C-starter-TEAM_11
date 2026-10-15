@@ -11,50 +11,9 @@ from sqlalchemy.orm import Session
 
 import pytest
 
-from services.common.models import (
-    AuthorizedRoot,
-    FilePresence,
-    FileRecord,
-    FileVersion,
-    RootStatus,
-    SourceChunk,
-    VersionStatus,
-)
+from services.common.models import SourceChunk
 from services.parsing.chunking import Chunk
 from services.parsing.persist import InvalidChunkSet, persist_chunks
-
-
-def _make_version(db: Session, sha256: str = "a" * 64) -> str:
-    """Create the root -> file -> version chain a chunk row has to hang off."""
-    # Root paths are unique per mount, so key them off the content hash to keep
-    # this helper reusable for more than one version in a single test.
-    key = sha256[:8]
-    root = AuthorizedRoot(
-        mount_id=f"collection-{key}",
-        relative_path=f"reports-{key}",
-        status=RootStatus.ACTIVE.value,
-    )
-    db.add(root)
-    db.flush()
-
-    file_record = FileRecord(
-        root_id=root.id,
-        relative_path=f"reports-{key}/invoice.pdf",
-        name="invoice.pdf",
-        presence_status=FilePresence.PRESENT.value,
-    )
-    db.add(file_record)
-    db.flush()
-
-    version = FileVersion(
-        file_id=file_record.id,
-        content_sha256=sha256,
-        byte_size=1234,
-        status=VersionStatus.DISCOVERED.value,
-    )
-    db.add(version)
-    db.commit()
-    return version.id
 
 
 def _stored(db: Session, version_id: str) -> list[SourceChunk]:
@@ -73,8 +32,10 @@ SAMPLE = [
 ]
 
 
-def test_persist_chunks_writes_ordinals_pages_and_text(db_session: Session):
-    version_id = _make_version(db_session)
+def test_persist_chunks_writes_ordinals_pages_and_text(
+    db_session: Session, make_file_version
+):
+    version_id = make_file_version()
 
     written = persist_chunks(db_session, version_id, SAMPLE)
 
@@ -86,8 +47,10 @@ def test_persist_chunks_writes_ordinals_pages_and_text(db_session: Session):
     assert all(row.id for row in rows)
 
 
-def test_persisting_the_same_version_twice_does_not_duplicate(db_session: Session):
-    version_id = _make_version(db_session)
+def test_persisting_the_same_version_twice_does_not_duplicate(
+    db_session: Session, make_file_version
+):
+    version_id = make_file_version()
 
     persist_chunks(db_session, version_id, SAMPLE)
     persist_chunks(db_session, version_id, SAMPLE)
@@ -97,8 +60,10 @@ def test_persisting_the_same_version_twice_does_not_duplicate(db_session: Sessio
     assert [row.ordinal for row in rows] == [1, 2, 3]
 
 
-def test_reprocessing_replaces_the_previous_chunk_set(db_session: Session):
-    version_id = _make_version(db_session)
+def test_reprocessing_replaces_the_previous_chunk_set(
+    db_session: Session, make_file_version
+):
+    version_id = make_file_version()
     persist_chunks(db_session, version_id, SAMPLE)
 
     # A parser revision produces a different chunk set for the same version.
@@ -112,8 +77,10 @@ def test_reprocessing_replaces_the_previous_chunk_set(db_session: Session):
     assert [row.text for row in rows] == ["revised chunk one", "revised chunk two"]
 
 
-def test_failed_write_rolls_back_and_keeps_the_previous_chunks(db_session: Session):
-    version_id = _make_version(db_session)
+def test_failed_write_rolls_back_and_keeps_the_previous_chunks(
+    db_session: Session, make_file_version
+):
+    version_id = make_file_version()
     persist_chunks(db_session, version_id, SAMPLE)
 
     # Second chunk has no text, which the database rejects on insert. This is a
@@ -131,8 +98,10 @@ def test_failed_write_rolls_back_and_keeps_the_previous_chunks(db_session: Sessi
     assert [row.text for row in rows] == [chunk.text for chunk in SAMPLE]
 
 
-def test_session_is_still_usable_after_a_failed_write(db_session: Session):
-    version_id = _make_version(db_session)
+def test_session_is_still_usable_after_a_failed_write(
+    db_session: Session, make_file_version
+):
+    version_id = make_file_version()
     persist_chunks(db_session, version_id, SAMPLE)
 
     with pytest.raises(Exception):
@@ -147,8 +116,10 @@ def test_session_is_still_usable_after_a_failed_write(db_session: Session):
     assert len(_stored(db_session, version_id)) == 3
 
 
-def test_duplicate_ordinals_are_rejected_before_writing(db_session: Session):
-    version_id = _make_version(db_session)
+def test_duplicate_ordinals_are_rejected_before_writing(
+    db_session: Session, make_file_version
+):
+    version_id = make_file_version()
 
     with pytest.raises(InvalidChunkSet):
         persist_chunks(
@@ -163,9 +134,11 @@ def test_duplicate_ordinals_are_rejected_before_writing(db_session: Session):
     assert _stored(db_session, version_id) == []
 
 
-def test_chunks_of_different_versions_are_independent(db_session: Session):
-    first = _make_version(db_session, sha256="a" * 64)
-    second = _make_version(db_session, sha256="b" * 64)
+def test_chunks_of_different_versions_are_independent(
+    db_session: Session, make_file_version
+):
+    first = make_file_version(sha256="a" * 64)
+    second = make_file_version(sha256="b" * 64)
 
     persist_chunks(db_session, first, SAMPLE)
     persist_chunks(

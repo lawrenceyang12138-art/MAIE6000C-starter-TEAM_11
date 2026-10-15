@@ -61,12 +61,13 @@ class ExtractedDocument:
     pages: tuple[PageText, ...]
 
 
-def file_identity(path: Path) -> tuple[str, int]:
+def file_identity(path: str | Path) -> tuple[str, int]:
     """Return (sha256, byte size) for a file, read in bounded chunks.
 
     The hash is what lets us say "this text came from these exact bytes" and
     detect that a file changed underneath us.
     """
+    path = Path(path)
     digest = hashlib.sha256()
     size = 0
     with path.open("rb") as handle:
