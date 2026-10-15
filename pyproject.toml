@@ -24,6 +24,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+  "PyMuPDF==1.28.2",
   "pytest==8.4.1",
   "pytest-cov==6.2.1",
   "ruff==0.12.4",

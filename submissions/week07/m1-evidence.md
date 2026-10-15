@@ -25,13 +25,16 @@ The check is reproducible:
 ```
 docker compose run --rm --no-deps \
   -v "$PWD/scripts:/app/scripts" -v "/path/to/pdfs:/fixtures:ro" api \
-  sh -c "pip install --quiet PyMuPDF; \
-         python scripts/verify_page_attribution.py /fixtures/*.pdf --per-file 4"
+  python scripts/verify_page_attribution.py /fixtures/*.pdf --per-file 4
 ```
 
-The script now **refuses to run without a second reader** rather than falling
-back to the pipeline's own extractor. That fallback existed and was silent: on
-a machine without PyMuPDF the check would have compared our extraction with
+PyMuPDF is in the `dev` extras now, so the command needs no install step of its
+own: it used to spend twenty-seven seconds on `pip install` while someone was
+supposed to be talking, which is twenty-seven seconds too many on stage.
+
+The script **refuses to run without a second reader** rather than falling back
+to the pipeline's own extractor. That fallback existed and was silent: on a
+machine without PyMuPDF the check would have compared our extraction with
 itself and still printed a pass. `--allow-self-check` runs it anyway and labels
 the output `NOT independent`.
 

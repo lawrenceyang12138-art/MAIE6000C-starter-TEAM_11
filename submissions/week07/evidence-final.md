@@ -12,9 +12,10 @@ Run inside the api container, at the commit that contains this file.
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Whole suite | `pytest -q` | **94 passed, 2 skipped** |
+| Whole suite | `pytest -q` | **95 passed, 1 skipped** |
 | Migrations from an empty database | `alembic upgrade head` against a freshly created PostgreSQL database | four migrations apply in order and reach `445f908b73b4` |
-| The commands CI runs | `ruff check .`, the migration step, `pytest -q tests/unit tests/integration` | clean, head reached, **94 passed, 1 skipped** |
+| The commands CI runs | `ruff check .`, the migration step, `pytest -q tests/unit tests/integration` | clean, head reached, **95 passed, none skipped** |
+| B's three minutes, driven live | `submissions/week07/demo-runbook-B.md` | four commands, **3.2 s** of command time, each printing its own numbers |
 | The starter's own case flow, after the schema changes | stack up, `pytest -q tests/smoke`, then `POST /cases` on the live API | smoke **1 passed**; the case went `queued` to `triaged` with label `billing` and confidence 0.63, triaged by the worker |
 | Rebuilding after a migration change | `docker compose up -d` then `docker compose up -d --build` | without the rebuild the api container exits with `Can't locate revision identified by '445f908b73b4'`; with it, every service is healthy |
 | Static analysis | `ruff check .` | clean |
@@ -26,9 +27,10 @@ Run inside the api container, at the commit that contains this file.
 | Relation and review end to end | `scripts/demo_relation_review.py` | 3 candidates, review revisions 1 and 2, and a correction that carries the entity it points at |
 | Port to the team repository | rebase onto the team's `main`, then `pytest -q` in that tree | **every commit replays, zero conflicts**; 92 passed, 2 skipped there against 94 and 2 here, the gap being the two tests the team's uncorrected Week 3 filename hides (`submissions/week07/port-to-team-repo.md`) |
 
-The skipped tests are the starter's smoke test, which needs a running stack and
-`SMOKE_BASE_URL`, and the page check's independent-reader case, which skips
-where PyMuPDF is not installed. Neither is an extraction test.
+The one skipped test is the starter's smoke test, which needs a running stack
+and `SMOKE_BASE_URL`. The page check's independent-reader case used to skip for
+want of PyMuPDF; now that the library is a dev dependency it runs, which is why
+the skip count went from two to one.
 
 ## Requirement to evidence
 
