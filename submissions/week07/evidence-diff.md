@@ -30,7 +30,7 @@ is worthless if it is silently kept up to date.
 
 | # | At the check | Now | Why it moved |
 | --- | --- | --- | --- |
-| 2 | 72 passed | **95 passed, 1 skipped** | The missing `corrected` payload was closed, the evidence scripts gained checks that stop them reporting a pass they did not earn, a refusal that named the wrong cause was split in two, a deleted file stopped escaping the handler, re-processing stopped stripping the evidence off relations, and the independent page check started running in the image instead of skipping |
+| 2 | 72 passed | **96 passed, 1 skipped** | The missing `corrected` payload was closed, the evidence scripts gained checks that stop them reporting a pass they did not earn, a refusal that named the wrong cause was split in two, a deleted file stopped escaping the handler, re-processing stopped stripping the evidence off relations, the independent page check started running in the image instead of skipping, and two reviewers colliding on the same revision now get the conflict the module promises |
 | 3 | 12/12 page attribution | **12/12, now with the content hash of each file** | The table showed only the version row id, which is created fresh on every run, so no reader could check it; the script also quietly fell back to a self-check when PyMuPDF was absent |
 | 4 | 1147 words | **1300 words** | `sections/B.md` gained three short paragraphs during that fix |
 | 10 | 16 commits, 10 week 7 files | **20 commits, 12 week 7 files**, at the time of writing | The review payload, the port note, and the corrections to the materials they touched |

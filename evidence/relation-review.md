@@ -17,6 +17,13 @@ current. Two people reviewing the same relation at the same moment therefore
 produce a visible conflict instead of one silently discarding the other's
 decision.
 
+The guard is a read followed by a write, so on its own it cannot stop two
+requests that interleave between those steps. The unique constraint on
+`(relationship_id, decision_revision)` is what actually stops the second write,
+and a violation is now translated into the same `review_conflict` refusal the
+sequential case produces - otherwise the loser of that race would receive a
+database error instead of the answer the interface is written to show.
+
 **A relation never arrives without saying whether its evidence is there.**
 Each view carries `evidence_missing`, which is true when the passage that
 justified the relation is gone - most often because the version was
@@ -90,7 +97,7 @@ Result: **7 passed**.
 - a confirmation that tries to carry a replacement is refused
 - a correction pointing at an entity that does not exist is refused
 
-Full suite: **95 passed, 1 skipped**. `ruff check .` clean.
+Full suite: **96 passed, 1 skipped**. `ruff check .` clean.
 
 ## What is still missing
 

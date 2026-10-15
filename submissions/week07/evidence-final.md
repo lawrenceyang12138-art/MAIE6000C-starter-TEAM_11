@@ -12,9 +12,9 @@ Run inside the api container, at the commit that contains this file.
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Whole suite | `pytest -q` | **95 passed, 1 skipped** |
+| Whole suite | `pytest -q` | **96 passed, 1 skipped** |
 | Migrations from an empty database | `alembic upgrade head` against a freshly created PostgreSQL database | four migrations apply in order and reach `445f908b73b4` |
-| The commands CI runs | `ruff check .`, the migration step, `pytest -q tests/unit tests/integration` | clean, head reached, **95 passed, none skipped** |
+| The commands CI runs | `ruff check .`, the migration step, `pytest -q tests/unit tests/integration` | clean, head reached, **96 passed, none skipped** |
 | B's three minutes, driven live | `submissions/week07/demo-runbook-B.md` | four commands, **3.2 s** of command time, each printing its own numbers |
 | The starter's own case flow, after the schema changes | stack up, `pytest -q tests/smoke`, then `POST /cases` on the live API | smoke **1 passed**; the case went `queued` to `triaged` with label `billing` and confidence 0.63, triaged by the worker |
 | Rebuilding after a migration change | `docker compose up -d` then `docker compose up -d --build` | without the rebuild the api container exits with `Can't locate revision identified by '445f908b73b4'`; with it, every service is healthy |

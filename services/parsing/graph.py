@@ -22,6 +22,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from services.common.models import (
@@ -221,5 +222,18 @@ def record_review(
         actor=actor,
     )
     db.add(review)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        # Two reviewers who submit at the same instant both read the same
+        # expected revision, so both pass the guard above and both try to
+        # write the next one. The unique constraint on
+        # (relationship_id, decision_revision) is what actually stops the
+        # second write; without this branch that arrives as a database error
+        # rather than the conflict the caller is written to expect.
+        db.rollback()
+        raise ReviewRefused(
+            REASON_REVIEW_CONFLICT,
+            "another decision reached this revision first; re-read and retry",
+        ) from exc
     return review.decision_revision

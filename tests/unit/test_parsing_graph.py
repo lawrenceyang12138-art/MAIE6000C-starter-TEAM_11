@@ -13,6 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from services.common.models import Entity, Review, ReviewDecision
+from services.parsing import graph
 from services.parsing.chunking import Chunk, chunk_document
 from services.parsing.graph import (
     MAX_RELATIONSHIPS,
@@ -149,6 +150,48 @@ def test_first_review_is_revision_one(db_session: Session, make_file_version):
     refreshed = {v.relationship_id: v for v in read_relationships(db_session, version_id)}
     assert refreshed[view.relationship_id].decision == "confirmed"
     assert refreshed[view.relationship_id].decision_revision == 1
+
+
+def test_two_reviewers_writing_the_same_revision_collide_cleanly(
+    db_session: Session, make_file_version, monkeypatch
+):
+    """The guard reads and then writes, so it cannot stop two interleaved
+    requests on its own. The unique constraint does - and the caller should see
+    the same conflict it sees when the guard fires, not a database error."""
+    version_id = _version_with_relations(db_session, make_file_version)
+    view = read_relationships(db_session, version_id)[0]
+
+    record_review(
+        db_session,
+        view.relationship_id,
+        ReviewDecision.CONFIRMED.value,
+        expected_revision=0,
+        actor="reviewer-a",
+    )
+
+    # A second request read the revision before the first one committed.
+    monkeypatch.setattr(graph, "effective_decision", lambda db, rid: (None, 0))
+
+    with pytest.raises(ReviewRefused) as excinfo:
+        record_review(
+            db_session,
+            view.relationship_id,
+            ReviewDecision.REJECTED.value,
+            expected_revision=0,
+            actor="reviewer-b",
+        )
+
+    assert excinfo.value.reason_code == REASON_REVIEW_CONFLICT
+
+    stored = (
+        db_session.execute(
+            select(Review).where(Review.relationship_id == view.relationship_id)
+        )
+        .scalars()
+        .all()
+    )
+    assert [row.decision_revision for row in stored] == [1]
+    assert stored[0].decision == "confirmed", "the first decision must stand"
 
 
 def test_a_stale_revision_is_refused_rather_than_overwritten(
