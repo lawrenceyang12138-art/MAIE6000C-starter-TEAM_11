@@ -10,6 +10,20 @@ scripts instead. **Total command time is under four seconds**; everything else
 is the talking. If the demo machine misbehaves, the recording of these same
 commands is the backup.
 
+## Timing budget, measured
+
+| Part | Time |
+| --- | --- |
+| Spoken script (`B-notes.md`, about 388 words at ~150 wpm) | **about 2 min 35 s** |
+| Four commands, run back to back, container start included | **3 s** (1 + 1 + 1 + 0) |
+| Showing the card, switching windows, pointing at the output | budget 15 s |
+| **Total** | about **2 min 53 s**, leaving roughly 20 seconds of slack |
+
+The slack is the point: if a command is slower on the day, or someone asks a
+question mid-flow, there is room. If it is running long, cut in the order
+`B-notes.md` gives rather than skipping a command - an unrun command removes
+the evidence the sentence is about.
+
 ## Before the session (five minutes, not on stage)
 
 ```
