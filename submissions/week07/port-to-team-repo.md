@@ -38,7 +38,7 @@ git checkout -b w7-parsing origin/main
 git rebase --onto origin/main personal/main personal/feat/w7-data-layer
 ```
 
-Result: **every commit on the branch replayed, zero conflicts** - twenty-three
+Result: **every commit on the branch replayed, zero conflicts** - twenty-six
 of them on the last run, and the replay was repeated after each addition. The
 commits are re-created with new hashes, which is expected when the history
 underneath them changes; the content is identical.
@@ -53,8 +53,8 @@ docker compose run --rm --no-deps \
   api pytest -q
 ```
 
-Measured side by side in the same minute: **76 passed, 2 skipped in the team
-tree against 78 passed, 2 skipped in the personal repository.** The two-test
+Measured side by side in the same minute: **78 passed, 2 skipped in the team
+tree against 80 passed, 2 skipped in the personal repository.** The two-test
 gap was tracked down rather than waved away. The team repository still
 contains `tests/integration/test_api_integration.py python`, the filename with
 a space and no extension, so pytest never collects those two tests. Renaming

@@ -18,7 +18,7 @@ Run inside the api container, at the commit that contains this file.
 | Parsing quality on three real decks | `scripts/check_parsing_quality.py` | 66 pages, 0 corrupt characters, **20/20** fragments found on their page |
 | 12 normal / 3 abnormal / 1 unsupported | `pytest -q tests/integration/test_extraction_regression.py` | **7 passed** |
 | Relation and review end to end | `scripts/demo_relation_review.py` | 3 candidates, review revisions 1 and 2, and a correction that carries the entity it points at |
-| Port to the team repository | rebase onto the team's `main`, then `pytest -q` in that tree | **every commit replays, zero conflicts**; 76 passed, 2 skipped there against 78 and 2 here, the two-test gap traced to the team's uncorrected Week 3 filename (`submissions/week07/port-to-team-repo.md`) |
+| Port to the team repository | rebase onto the team's `main`, then `pytest -q` in that tree | **every commit replays, zero conflicts**; 78 passed, 2 skipped there against 80 and 2 here, the two-test gap traced to the team's uncorrected Week 3 filename (`submissions/week07/port-to-team-repo.md`) |
 
 The skipped tests are the starter's smoke test, which needs a running stack and
 `SMOKE_BASE_URL`, and the page check's independent-reader case, which skips
