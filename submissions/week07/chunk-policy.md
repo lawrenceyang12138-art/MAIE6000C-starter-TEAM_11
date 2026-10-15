@@ -87,6 +87,14 @@ a page are candidates, and only when the identical line appears on **at least
 three pages** and is under 120 characters. A repeated sentence inside the body
 of a page is never removed.
 
+**Stripping a header is never allowed to empty a page.** A repeated line is
+only a header *because the page has other text*; if removing it would leave the
+page with nothing, the line is the page's content and stays. An independent
+reviewer found the case that motivated the rule: four pages each containing
+nothing but "Signature Page" were being stripped to nothing, and the document
+was stored as `basic_ready` with **zero chunks** - a successful parse of an
+empty document.
+
 ## What this policy does not do
 
 - **No semantic splitting.** The cut is chosen by text shape, not by meaning.

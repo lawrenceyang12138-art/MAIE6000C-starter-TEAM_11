@@ -12,9 +12,9 @@ Run inside the api container, at the commit that contains this file.
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Whole suite | `pytest -q` | **99 passed, 1 skipped** |
+| Whole suite | `pytest -q` | **100 passed, 1 skipped** |
 | Migrations from an empty database | `alembic upgrade head` against a freshly created PostgreSQL database | four migrations apply in order and reach `445f908b73b4` |
-| The commands CI runs | `ruff check .`, the migration step, `pytest -q tests/unit tests/integration` | clean, head reached, **99 passed, none skipped** |
+| The commands CI runs | `ruff check .`, the migration step, `pytest -q tests/unit tests/integration` | clean, head reached, **100 passed, none skipped** |
 | B's three minutes, driven live | `submissions/week07/demo-runbook-B.md` | four commands, **3.2 s** of command time, each printing its own numbers |
 | The starter's own case flow, after the schema changes | stack up, `pytest -q tests/smoke`, then `POST /cases` on the live API | smoke **1 passed**; the case went `queued` to `triaged` with label `billing` and confidence 0.63, triaged by the worker |
 | The same flow driven through a browser | Swagger UI at `/docs` in the in-app browser: expand `POST /cases`, Try it out, fill the body, Execute | **201** with the created case and job; the worker then triaged it (`general`, 0.45). Screenshot: `artifacts/swagger-created-case.png` |
@@ -24,10 +24,11 @@ Run inside the api container, at the commit that contains this file.
 | Parsing quality on three real decks | `scripts/check_parsing_quality.py` | 66 pages, 0 corrupt characters, **20/20** fragments found on their page |
 | 38 documents the parser had never seen | `scripts/sweep_corpus.py` | **1,723 pages read, 0 crashes, 0 refusals**; 19 unreadable symbols found, now marked instead of emitted as control codes (`evidence/real-corpus-sweep.md`) |
 | Entity candidate counts and the bounding steps | `scripts/check_relation_candidates.py` | 47/44/36 before the line-initial rule, 39/38/33 after, **10** bounded, on all three decks |
+| A document whose every page is one repeated line | `pytest -q tests/unit/test_parsing_chunking.py` | storing it as ready with **zero chunks** was possible; the header rule can no longer empty a page, and the case has a test |
 | Slide 4's picture, produced rather than screenshotted | `scripts/render_evidence_card.py` | `artifacts/page-6-passage.jpg`, `artifacts/api-deck-page-13-passage.jpg` - the real page rendered, our passage highlighted, provenance printed underneath |
 | 12 normal / 3 abnormal / 1 unsupported | `pytest -q tests/integration/test_extraction_regression.py` | **7 passed** |
 | Relation and review end to end | `scripts/demo_relation_review.py` | 3 candidates, review revisions 1 and 2, and a correction that carries the entity it points at |
-| Port to the team repository | the branch is **pushed** (`w7-parsing`), a descendant of `main` so the merge is a fast-forward; `pytest -q` there collects 98 tests against 100 here | 97 passed, 1 skipped there against 99 and 1 here; the gap is the two tests the team's uncorrected Week 3 filename hides (`submissions/week07/port-to-team-repo.md`) |
+| Port to the team repository | the branch is **pushed** (`w7-parsing`), a descendant of `main` so the merge is a fast-forward; `pytest -q` there collects 98 tests against 100 here | 98 passed, 1 skipped there against 100 and 1 here; the gap is the two tests the team's uncorrected Week 3 filename hides (`submissions/week07/port-to-team-repo.md`) |
 
 The one skipped test is the starter's smoke test, which needs a running stack
 and `SMOKE_BASE_URL`. The page check's independent-reader case used to skip for

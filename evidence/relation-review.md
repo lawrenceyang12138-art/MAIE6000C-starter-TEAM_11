@@ -98,7 +98,7 @@ the authority).
 - a confirmation that tries to carry a replacement is refused
 - a correction pointing at an entity that does not exist is refused
 
-Full suite: **99 passed, 1 skipped**. `ruff check .` clean.
+Full suite: **100 passed, 1 skipped**. `ruff check .` clean.
 
 ## What is still missing
 

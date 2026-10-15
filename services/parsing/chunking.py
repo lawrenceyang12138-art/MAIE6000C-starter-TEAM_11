@@ -133,10 +133,18 @@ def strip_running_headers_footers(pages: list[str]) -> list[str]:
             lines.pop(0)
         while lines and not lines[-1].strip():
             lines.pop()
+        before = list(lines)
         if lines and lines[0].strip() in common_first:
             lines.pop(0)
         if lines and lines[-1].strip() in common_last:
             lines.pop()
+        # A line is only a running header because the page has other text. If
+        # stripping it would leave the page empty, the line *is* the content -
+        # four pages that each say only "Signature Page" are four signature
+        # pages, not a document with no text. Without this the rule could empty
+        # every page and the document would be stored as ready with no chunks.
+        if before and not any(line.strip() for line in lines):
+            lines = before
         result.append("\n".join(lines).strip())
     return result
 

@@ -186,3 +186,18 @@ def test_short_document_headers_are_left_alone():
     cleaned = strip_running_headers_footers(pages)
 
     assert all("Same line" in page for page in cleaned)
+
+
+def test_stripping_a_header_cannot_empty_a_page():
+    """A repeated line is only a header because the page has other text.
+
+    Four pages that each contain nothing but "Signature Page" are four
+    signature pages, not a document with no content. An independent reviewer
+    found that this case produced zero chunks - a document stored as ready with
+    nothing in it.
+    """
+    pages = ["Signature Page"] * 4
+
+    cleaned = strip_running_headers_footers(pages)
+
+    assert cleaned == pages
