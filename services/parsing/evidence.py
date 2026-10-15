@@ -14,6 +14,11 @@ Checked in this order, cheapest first:
 2. its file still points at this version as the current one
 3. the file is still present on disk
 4. the authorised root has not been revoked
+
+"The file has newer content" and "no version of this file has been marked
+current yet" are different situations with different fixes, so they carry
+different reason codes. Collapsing them would send whoever is debugging a
+working extraction pipeline looking for a newer version that does not exist.
 """
 
 from __future__ import annotations
@@ -32,6 +37,7 @@ from services.common.models import (
 )
 
 REASON_CHUNK_NOT_FOUND = "chunk_not_found"
+REASON_NO_CURRENT_VERSION = "no_current_version"
 REASON_VERSION_SUPERSEDED = "version_superseded"
 REASON_FILE_MISSING = "file_missing"
 REASON_ROOT_REVOKED = "root_revoked"
@@ -80,6 +86,13 @@ def read_evidence(db: Session, chunk_id: str) -> Evidence:
     file_record = db.get(FileRecord, version.file_id)
     if file_record is None:
         raise SourceUnavailable(REASON_FILE_MISSING, "The file record is gone")
+
+    if file_record.current_version_id is None:
+        raise SourceUnavailable(
+            REASON_NO_CURRENT_VERSION,
+            "No version of this file has been marked current, so nothing from "
+            "it can be served yet",
+        )
 
     if file_record.current_version_id != version.id:
         raise SourceUnavailable(

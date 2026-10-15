@@ -20,6 +20,17 @@ Each refusal carries a reason code, because "no such passage" and "this passage
 used to be valid" are different situations and the interface has to say which
 one happened.
 
+Check 2 has two ways to fail, and they are not the same thing:
+
+- the file points at a **different** version: this passage is historical ->
+  `version_superseded`
+- the file points at **nothing**: no version has been marked current yet ->
+  `no_current_version`
+
+Those were one code until 2026-10-15. Reporting the second as the first told
+whoever was debugging that "the file has newer content" when there was no newer
+content, which sends them looking for a version that does not exist.
+
 ## End-to-end run against real PostgreSQL
 
 A real 22-page PDF was parsed, chunked and stored, then passages were read back
@@ -45,12 +56,13 @@ Command:
 docker compose run --rm --no-deps api pytest -q tests/unit/test_parsing_evidence.py
 ```
 
-Result: **7 passed**.
+Result: **8 passed**.
 
 - a current passage comes back with its page, ordinal, path and content hash
 - an unknown chunk id is refused with `chunk_not_found`
 - a superseded version is refused with `version_superseded`
-- a file with no current version at all is treated as stale
+- a file with no current version at all is refused with `no_current_version`,
+  and the two messages are asserted to differ
 - a missing file is refused with `file_missing`
 - a revoked folder is refused with `root_revoked`
 - **ten passages resolve to the page they were stored on**, which is the
@@ -69,10 +81,12 @@ Who sets `current_version_id` needs to be agreed:
 - the scan step, when it observes new content, or
 - the extraction handler, once a version reaches `basic_ready`
 
-Until it is set, `read_evidence` correctly refuses everything, because no
-version is current. The end-to-end run above set it by hand to exercise the
-path. This is a boundary to settle with A before the search endpoint is wired
-up, otherwise every search result will look stale.
+Until it is set, `read_evidence` correctly refuses everything, and it now says
+why in terms that name the actual problem: `no_current_version`, not
+"superseded". The end-to-end run above set it by hand to exercise the path.
+This is a boundary to settle with A before the search endpoint is wired up,
+otherwise every search result will look expired - and, with the old collapsed
+code, would have blamed content that does not exist.
 
 ## What is still not here
 

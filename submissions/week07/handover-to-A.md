@@ -18,7 +18,10 @@ its version against `files.current_version_id`. Nothing in B's code sets that
 column, and it is not set anywhere else either.
 
 **Consequence today:** every passage reads as stale, so every search result
-would look expired. It will not throw an error; it will just look wrong.
+would look expired. It will not throw an error; it will just look wrong. As of
+2026-10-15 it also says which of the two situations it is: the refusal code is
+`no_current_version`, not `version_superseded`, because "nobody has marked a
+current version" and "this passage is historical" have different fixes.
 
 Two options:
 
@@ -121,7 +124,7 @@ Three handlers are ready. B has not written routes because they are A's.
 
 | Handler | Suggest route | Notes |
 | --- | --- | --- |
-| `read_evidence(db, chunk_id)` | `GET /evidence/{chunk_id}` | Returns text, page, path and content hash. Raises `SourceUnavailable` with a reason code when stale; those map naturally to `409` (superseded) and `404` (missing) |
+| `read_evidence(db, chunk_id)` | `GET /evidence/{chunk_id}` | Returns text, page, path and content hash. Raises `SourceUnavailable` with a reason code: `version_superseded` maps to `409`, `chunk_not_found` and `file_missing` to `404`, `root_revoked` to `403`, and `no_current_version` to `503` - that last one is not the caller's fault, it means the pipeline has not marked anything current yet |
 | `read_relationships(db, version_id)` | `GET /versions/{version_id}/relations` | Already bounded in code, so the route cannot return an unbounded graph |
 | `record_review(db, relationship_id, decision, expected_revision, …)` | `POST /relations/{id}/reviews` | `ReviewRefused` with `review_conflict` maps to `409`; `invalid_decision` to `422` |
 
@@ -165,7 +168,7 @@ exactly the kind of silent data creation this system should not do.
 
 | Thing | Result |
 | --- | --- |
-| Whole suite | 86 passed, 2 skipped |
+| Whole suite | 87 passed, 2 skipped |
 | Static analysis | clean |
 | Page attribution against an independent PDF library | 12/12 |
 | 12 normal, 3 abnormal, 1 unsupported | passing |
