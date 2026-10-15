@@ -22,6 +22,128 @@ the wider industry does. Code paths are named so a reader can check any claim.*
 
 ---
 
+## 0.5 先看图：系统的形状
+
+文字之前先看四张图。**看图时只注意一件事**：数据从哪里进、在哪里停、谁能改它。
+
+（这几张图是 mermaid 源码：在 GitHub 上、以及任何支持 mermaid 的编辑器里会自动
+渲染成图；在纯文本里看到的是源码。四张图都用 mermaid 的解析器验过语法——写这份
+报告时专门装了解析器，因为"图画错了渲染不出来"正是我一直在抓的那类问题。）
+
+### 图 1：一次上传要经过什么（括号里是负责人）
+
+```mermaid
+flowchart LR
+    U["用户/界面<br/>(D)"] -->|"提交"| API["API 服务<br/>(A)"]
+    API -->|"立刻返回：写一行 + 排一个任务"| DB[("PostgreSQL")]
+    W["worker<br/>(A)"] -->|"每 2 秒看有没有待办"| DB
+    W -->|"领到任务"| P["解析与切块<br/>(B)"]
+    P -->|"带页码的片段"| DB
+    W -->|"需要分类时"| AI["AI 服务<br/>(占位实现)"]
+    C["检索<br/>(C，未实现)"] -->|"读片段、查向量"| DB
+    U -->|"查状态 / 看原文"| API
+    DB -.->|"状态：排队 → 处理中 → 就绪"| U
+```
+
+**要看出**：慢的事情（解析、模型）全都发生在右边，**用户请求里只写一行数据、排一个任务**。
+所以网页不会转圈，失败也能重试。
+
+### 图 2：数据长什么样（表与关系）
+
+```mermaid
+erDiagram
+    authorized_roots ||--o{ files : "被授权的目录里有文件"
+    files ||--o{ file_versions : "同一路径可以有多份内容"
+    file_versions ||--o{ source_chunks : "一份内容切成多个片段"
+    file_versions ||--o{ relationships : "关系属于某个版本"
+    entities ||--o{ relationships : "关系指向一个实体"
+    source_chunks ||--o{ relationship_evidence : "证据引用片段"
+    relationships ||--o{ relationship_evidence : "关系必须有证据"
+    relationships ||--o{ reviews : "人工复核只追加"
+
+    authorized_roots {
+        string id
+        string relative_path
+        string status "active/paused/revoked"
+    }
+    files {
+        string id
+        string relative_path
+        string current_version_id "谁算当前版本"
+        string presence_status
+    }
+    file_versions {
+        string id
+        string content_sha256 "身份=内容哈希"
+        string status
+        string parser_revision
+        string error_code
+    }
+    source_chunks {
+        string id
+        int ordinal
+        int page_number "引用单位"
+        text text
+    }
+    entities {
+        string id
+        string entity_type
+        string display_label
+    }
+    relationship_evidence {
+        string relationship_id
+        string chunk_id
+        text quote "那段原文"
+    }
+    reviews {
+        string id
+        int decision_revision "防覆盖"
+        string decision
+        string corrected_entity_id
+    }
+```
+
+**要看出**三件事：`file_versions.content_sha256` 是版本的身份；`relationship_evidence`
+把"结论"和"原文"钉在一起；`reviews.decision_revision` 是防止两个人互相覆盖的机关。
+
+### 图 3：一份文件的结局只有这几种
+
+```mermaid
+stateDiagram-v2
+    [*] --> discovered : 扫描发现
+    discovered --> extracting : 开始解析
+    extracting --> basic_ready : 文本与片段已入库
+    extracting --> unsupported : 加密/损坏/无文字层/非 PDF
+    extracting --> failed : 内容变了/文件没了/处理失败
+    basic_ready --> enriched : 后续加工（预留）
+    unsupported --> [*] : 需要人看原件
+    failed --> [*] : 其中一部分可重试
+```
+
+**要看出**：`unsupported` 与 `failed` 是**两种不同的结局**——前者"我们看不懂这种文档"，
+后者"这次没成功，但可以再试"。界面据此决定给用户看什么按钮。
+
+### 图 4：两个人同时复核时会发生什么
+
+```mermaid
+sequenceDiagram
+    participant A as 复核员 A
+    participant S as 系统
+    participant B as 复核员 B
+    A->>S: 确认（我看到的是第 0 版）
+    S-->>A: 记录为第 1 版
+    B->>S: 否决（我看到的是第 0 版）
+    S-->>B: 拒绝：review_conflict（请重新读取）
+    B->>S: 重新读取后再否决（这次我看到第 1 版）
+    S-->>B: 记录为第 2 版
+    Note over S: 第 1 版与第 2 版都留在历史里，A 的决定没有被抹掉
+```
+
+**要看出**：系统**宁可让人看到一次冲突**，也不让人以为自己保存成功——这是"人工决定
+不可再生"的直接后果。
+
+---
+
 ## 1. 为什么 AI 处理放在后台 worker，而不是放在用户请求里
 
 **我们怎么做。** 用户提交东西时，API 只做三件事：校验、写一行数据库、**写一个
