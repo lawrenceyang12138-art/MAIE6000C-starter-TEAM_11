@@ -21,11 +21,20 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from services.common.models import SourceChunk
+from services.common.models import (
+    Entity,
+    RelationKind,
+    RelationOrigin,
+    RelationType,
+    Relationship,
+    RelationshipEvidence,
+    SourceChunk,
+)
 from services.parsing.chunking import Chunk
+from services.parsing.relations import CandidateRelation
 
 
 class InvalidChunkSet(ValueError):
@@ -73,3 +82,99 @@ def persist_chunks(db: Session, version_id: str, chunks: Sequence[Chunk]) -> int
         raise
 
     return len(chunks)
+
+
+def persist_relations(
+    db: Session, version_id: str, candidates: Sequence[CandidateRelation]
+) -> int:
+    """Store entity candidates and the evidence that supports each one.
+
+    Entities and relationships are found-or-created rather than replaced, so a
+    relationship keeps its row id across re-runs. That matters later: a human
+    review points at a relationship, and replacing the row would silently throw
+    the review away.
+
+    Evidence rows are refreshed for each relationship, because they carry
+    offsets into chunk text and a parser change moves them.
+
+    The chunks must already be stored: evidence is attached to a stored chunk,
+    and the chunk is resolved by its ordinal within this version.
+    """
+    written = 0
+    for candidate in candidates:
+        entity = (
+            db.execute(
+                select(Entity).where(
+                    Entity.entity_type == candidate.entity_type,
+                    Entity.normalized_label == candidate.normalized_label,
+                )
+            )
+            .scalars()
+            .first()
+        )
+        if entity is None:
+            entity = Entity(
+                entity_type=candidate.entity_type,
+                display_label=candidate.label,
+                normalized_label=candidate.normalized_label,
+            )
+            db.add(entity)
+            db.flush()
+
+        relationship = (
+            db.execute(
+                select(Relationship).where(
+                    Relationship.source_version_id == version_id,
+                    Relationship.object_entity_id == entity.id,
+                    Relationship.relation_type == RelationType.MENTIONS.value,
+                )
+            )
+            .scalars()
+            .first()
+        )
+        if relationship is None:
+            relationship = Relationship(
+                source_version_id=version_id,
+                object_entity_id=entity.id,
+                relation_type=RelationType.MENTIONS.value,
+                kind=RelationKind.SOURCE_SUPPORTED.value,
+                origin=RelationOrigin.RULE.value,
+                producer_revision=candidate.producer_revision,
+            )
+            db.add(relationship)
+            db.flush()
+
+        chunk = (
+            db.execute(
+                select(SourceChunk).where(
+                    SourceChunk.version_id == version_id,
+                    SourceChunk.ordinal == candidate.chunk_ordinal,
+                )
+            )
+            .scalars()
+            .first()
+        )
+        if chunk is None:
+            raise InvalidChunkSet(
+                f"chunk {candidate.chunk_ordinal} is not stored for {version_id}; "
+                "store the chunks before the relations that cite them"
+            )
+
+        db.execute(
+            delete(RelationshipEvidence).where(
+                RelationshipEvidence.relationship_id == relationship.id
+            )
+        )
+        db.add(
+            RelationshipEvidence(
+                relationship_id=relationship.id,
+                chunk_id=chunk.id,
+                start_offset=candidate.start_offset,
+                end_offset=candidate.end_offset,
+                quote=candidate.quote,
+            )
+        )
+        written += 1
+
+    db.commit()
+    return written

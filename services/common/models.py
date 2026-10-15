@@ -323,3 +323,162 @@ class SourceChunk(Base):
     __table_args__ = (
         UniqueConstraint("version_id", "ordinal", name="uq_chunk_version_ordinal"),
     )
+
+
+# ---------------------------------------------------------------------------
+# W7 minimal relations and review.
+#
+# Proposal from the read-files workstream for A to review: the schedule gives A
+# ownership of the shared schema, so this is written to be adopted, changed, or
+# rejected rather than treated as settled.
+#
+# Scope is deliberately small. A relation is only stored when the source text
+# supports it, and every relation carries the passage that justifies it. This
+# is a candidate for a human to confirm, not a claim of fact.
+# ---------------------------------------------------------------------------
+
+
+class EntityType(StrEnum):
+    PERSON = "person"
+    PROJECT = "project"
+    TOPIC = "topic"
+
+
+class RelationType(StrEnum):
+    MENTIONS = "mentions"
+
+
+class RelationKind(StrEnum):
+    SOURCE_SUPPORTED = "source_supported"
+
+
+class RelationOrigin(StrEnum):
+    RULE = "rule"
+    USER = "user"
+
+
+class ReviewDecision(StrEnum):
+    CONFIRMED = "confirmed"
+    CORRECTED = "corrected"
+    REJECTED = "rejected"
+
+
+class Entity(Base):
+    """One candidate identity, e.g. a person or a project name.
+
+    Names are not unique keys: two people can share a name, so the identity is
+    the row, not the label.
+    """
+
+    __tablename__ = "entities"
+
+    id: Mapped[str] = mapped_column(
+        String(36),
+        primary_key=True,
+        default=lambda: str(uuid.uuid4()),
+    )
+    entity_type: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
+    display_label: Mapped[str] = mapped_column(String(200), nullable=False)
+    normalized_label: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint("entity_type", "normalized_label", name="uq_entity_type_label"),
+    )
+
+
+class Relationship(Base):
+    """A candidate link between a file version and an entity it mentions."""
+
+    __tablename__ = "relationships"
+
+    id: Mapped[str] = mapped_column(
+        String(36),
+        primary_key=True,
+        default=lambda: str(uuid.uuid4()),
+    )
+    source_version_id: Mapped[str] = mapped_column(
+        ForeignKey("file_versions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    object_entity_id: Mapped[str] = mapped_column(
+        ForeignKey("entities.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    relation_type: Mapped[str] = mapped_column(
+        String(30), nullable=False, default=RelationType.MENTIONS.value
+    )
+    kind: Mapped[str] = mapped_column(
+        String(30), nullable=False, default=RelationKind.SOURCE_SUPPORTED.value
+    )
+    origin: Mapped[str] = mapped_column(
+        String(20), nullable=False, default=RelationOrigin.RULE.value
+    )
+    # What produced this candidate, so a rule can be told apart from a model
+    # run and both can be revisited.
+    producer_revision: Mapped[str] = mapped_column(String(50), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "source_version_id",
+            "object_entity_id",
+            "relation_type",
+            name="uq_relationship_version_entity_type",
+        ),
+    )
+
+
+class RelationshipEvidence(Base):
+    """The passage that justifies a relationship.
+
+    A relation without evidence is a claim the user cannot check, so storing
+    the quote and its location is not optional.
+    """
+
+    __tablename__ = "relationship_evidence"
+
+    relationship_id: Mapped[str] = mapped_column(
+        ForeignKey("relationships.id", ondelete="CASCADE"), primary_key=True
+    )
+    chunk_id: Mapped[str] = mapped_column(
+        ForeignKey("source_chunks.id", ondelete="CASCADE"), primary_key=True
+    )
+    start_offset: Mapped[int] = mapped_column(Integer, primary_key=True)
+    end_offset: Mapped[int] = mapped_column(Integer, primary_key=True)
+    quote: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+
+
+class Review(Base):
+    """A human decision about a relationship. Append-only, latest wins."""
+
+    __tablename__ = "reviews"
+
+    id: Mapped[str] = mapped_column(
+        String(36),
+        primary_key=True,
+        default=lambda: str(uuid.uuid4()),
+    )
+    relationship_id: Mapped[str] = mapped_column(
+        ForeignKey("relationships.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    decision_revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    decision: Mapped[str] = mapped_column(String(20), nullable=False)
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    actor: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "relationship_id", "decision_revision", name="uq_review_relationship_revision"
+        ),
+    )
