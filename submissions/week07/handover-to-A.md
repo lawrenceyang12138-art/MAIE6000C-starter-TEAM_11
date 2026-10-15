@@ -56,6 +56,46 @@ Two things A needs to supply:
 After the call, marking the job completed or failed is A's transaction. The
 handler only records the outcome on the file version.
 
+The change to A's dispatch loop is small, so here it is as a proposal rather
+than as an edit - `services/worker/app/main.py` is A's file and B has not
+touched it:
+
+```
+# services/worker/app/main.py
+from services.common.models import RootJobType
+from services.parsing import handle_extract_file
+
+HANDLED_JOB_TYPES = {
+    JobType.TRIAGE_CASE.value,
+    RootJobType.EXTRACT_FILE.value,   # otherwise the job stays pending forever
+}
+
+def process_job(job_id: int) -> None:
+    ...
+    with session_factory() as db:
+        job = db.get(Job, job_id)
+        if job is None:
+            return
+
+        # This branch has to come before the case lookup: an extract_file job
+        # has no case_id, and the existing code raises "Case not found" for it.
+        if job.job_type == RootJobType.EXTRACT_FILE.value:
+            source_path = resolve_source_path(db, job.version_id)  # A's resolver
+            handle_extract_file(db, job.version_id, source_path)
+            job.status = JobStatus.COMPLETED.value
+            job.completed_at = utcnow()
+            db.commit()
+            return
+
+        case = db.get(Case, job.case_id)
+        ...
+```
+
+Without the branch, an `extract_file` job does not fail quietly: the existing
+code raises `Case not found for job N`, the job is marked failed, and the
+error looks like a data problem rather than a missing dispatch case. That is
+worth knowing before someone spends an afternoon on it.
+
 ## 3. Routes to expose
 
 Three handlers are ready. B has not written routes because they are A's.

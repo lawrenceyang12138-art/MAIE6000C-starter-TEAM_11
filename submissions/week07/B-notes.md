@@ -74,17 +74,54 @@ Cut in this order:
 2. The last paragraph of slide 5, keeping only "about three in four".
 3. Nothing on slide 6 - the conflict demonstration is the part worth watching.
 
-## If we are challenged
+## Questions we should expect
+
+Nine answers, all short enough to say in twenty seconds. Each one is a fact in
+`evidence-final.md` or in a file named beside it.
 
 **"How accurate is the entity finding?"** About three in four on the bounded
 list, measured on real slides. It is a rule set, and we bounded it to ten
 because the schedule asked for candidates rather than a graph.
 
 **"Is the page number verified?"** Yes, against a different PDF library than
-the one we use, twelve of twelve.
+the one we use, twelve of twelve. The script that does it is in the repository,
+so it can be re-run rather than believed.
 
-**"Is this connected to the API?"** Not yet. These are handlers; the routes are
-A's work and we say so on the slide.
+**"Is this connected to the API?"** Not yet. These are handlers; the routes and
+the worker dispatch are A's work, and we say so on the slide rather than
+implying it is live.
+
+**"What happens to a file we cannot read?"** It is recorded with a reason -
+encrypted, damaged, no text layer, unreadable, unsupported format - and the
+scan continues. We proved the isolation by running a corrupt file and then a
+good one through the same handler; the good file still completes.
+
+**"Why not store the whole page instead of chunks?"** Because the citation unit
+is a passage, and a passage needs a size. Seven hundred characters with a
+hundred and twenty of overlap, and a chunk never crosses a page boundary, so
+"page seven" is exactly true for everything stored against page seven.
+
+**"What if the file changes while it is being read?"** Extraction returns the
+hash of the bytes it actually read. If that differs from the hash the version
+was created with, the chunks are thrown away and the version is marked failed
+with `source_changed`, because publishing them would attach text from one set
+of bytes to a record claiming another.
+
+**"When is a passage refused?"** When the chunk no longer exists, when the file
+is gone, when the folder's authorisation was revoked, or when the version has
+been superseded by a newer one. Each has its own reason code so the interface
+can say which. The honest caveat: nothing sets `current_version_id` yet, so
+until A wires that, every read would report itself as stale.
+
+**"What stops two reviewers overwriting each other?"** A decision is appended
+with a revision number and the caller must quote the revision it saw. A stale
+one is refused with `review_conflict` instead of quietly winning. The demo
+shows exactly that: reviewer A at revision one, reviewer B refused, then
+allowed at revision two.
+
+**"What does a correction store?"** The decision, the reason, and now the
+entity it points at instead. A correction that names no replacement is
+refused, because otherwise it is only a rejection with a different word on it.
 
 ## Do not say
 
