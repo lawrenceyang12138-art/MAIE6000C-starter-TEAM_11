@@ -42,11 +42,12 @@ calls it from the worker. Those two are A's.
   control characters, **20/20** sampled fragments found on the page they claim.
 - The entity candidate counts quoted in the section and on the slides are
   re-measured by a script that fails if they stop matching.
-- The parser was run over **38 documents it had never seen** (1,723 pages of
-  other courses' notes, slides and syllabi): **no crashes, no refusals**. Two
-  of them contained symbols whose font encoding has no Unicode mapping; those
-  are now marked where they occur instead of being emitted as invisible
-  control characters.
+- The parser was run over every PDF on the machine, documents it had never
+  seen (38 of them, 1,723 pages, when this was measured; the folder has since
+  grown and a re-run reads more): **no crashes, no refusals**. Some of them
+  contained symbols whose font encoding has no Unicode mapping; those are now
+  marked where they occur instead of being emitted as invisible control
+  characters.
 - The starter's own case flow still works after the schema changes: smoke test
   passes, and a posted case reaches `triaged` with a label and a confidence.
 - The work replays onto the team repository's `main` with **zero conflicts**

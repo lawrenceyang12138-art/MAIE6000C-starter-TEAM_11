@@ -27,7 +27,7 @@ Run inside the api container, at the commit that contains this file.
 | Static analysis | `ruff check .` | clean |
 | Independent page attribution | `scripts/verify_page_attribution.py` | **12/12 agree** |
 | Parsing quality on three real decks | `scripts/check_parsing_quality.py` | 66 pages, 0 corrupt characters, **20/20** fragments found on their page |
-| 38 documents the parser had never seen | `scripts/sweep_corpus.py` | **1,723 pages read, 0 crashes, 0 refusals**; 19 unreadable symbols found, now marked instead of emitted as control codes (`evidence/real-corpus-sweep.md`) |
+| Documents the parser had never seen | `scripts/sweep_corpus.py` | **0 crashes, 0 refusals, 0 control characters stored** on a folder that has since grown from 38 documents and 1,723 pages to 40 and 1,822; unreadable symbols are marked instead of emitted as control codes. The totals track the folder, so the exit code is the evidence (`evidence/real-corpus-sweep.md`) |
 | Entity candidate counts and the bounding steps | `scripts/check_relation_candidates.py` | 47/44/36 before the line-initial rule, 39/38/33 after, **10** bounded, on all three decks |
 | A document whose every page is one repeated line | `pytest -q tests/unit/test_parsing_chunking.py` | storing it as ready with **zero chunks** was possible; the header rule can no longer empty a page, and the case has a test |
 | Slide 4's picture, produced rather than screenshotted | `scripts/render_evidence_card.py` | `artifacts/page-6-passage.jpg`, `artifacts/api-deck-page-13-passage.jpg` - the real page rendered, our passage highlighted, provenance printed underneath |

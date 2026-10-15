@@ -44,6 +44,10 @@ its picture without waiting
 (`artifacts/page-6-passage.jpg`, `artifacts/api-deck-page-13-passage.jpg`), and
 keep the recorded backup one click away.
 
+Open `slides/B-slides.pptx` and turn on the speaker-notes view: it carries the
+same three pages with the script in the notes field, so the timing table below
+can be rehearsed against the real slides rather than against this document.
+
 ## On stage
 
 ### Show the card (no command)

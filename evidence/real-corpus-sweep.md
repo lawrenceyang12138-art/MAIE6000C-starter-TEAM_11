@@ -1,4 +1,4 @@
-# Real corpus sweep: the parser against 38 documents it has never seen
+# Real corpus sweep: the parser against documents it has never seen
 
 Owner: B (read files). Run on 2026-10-15.
 
@@ -31,6 +31,17 @@ docker compose run --rm --no-deps \
 1723 pages without a single unexpected exception is the point of the sweep: a
 file that makes the extractor raise would make the worker fail the whole job
 instead of recording why that one document could not be read. None did.
+
+**The totals belong to the folder as it was that afternoon, not to a fixed
+corpus.** The sweep reads whatever PDFs are on the machine, so adding two
+documents changes the page count without anything in the parser changing. Re-run
+two documents later, on 40 files: **1,822 pages, 40 read, 0 refused, 0
+unexpected, 49 unreadable glyphs, 0 control characters stored** - the same
+outcome, larger totals. What the script actually asserts is the last column of
+that sentence, not the size of the pile: **no crashes, no unrefused documents,
+nothing unreadable left as a control character.** A reader who re-runs it and
+sees different totals has not found a contradiction; a reader who sees a
+non-zero exit code has.
 
 ## What the sweep found
 
