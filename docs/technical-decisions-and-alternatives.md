@@ -766,3 +766,35 @@ PostgreSQL + pgvector**，因为它省掉一整套运维；数据量大或要求
    那次"候选数字串了"的纠正一样。
 2. 报告里凡是**没有**给出核对方式的段落，都应被视为"作者的观点"而不是"事实"。
    主要集中在"行业里通常怎么做"那几句——那些是行业经验，不是本项目测量出来的。
+
+---
+
+## 20. 附录：文中"行业通常怎么做"的出处
+
+第 19 节说明了本文有两类陈述："本项目测量出来的"和"作者对行业的了解"。下表是**第二
+类的出处**，让读者能自己去看，而不是只能相信我。**所有链接在写作时都验证过可访问
+（HTTP 200）**，但文章内容可能随时间变化，以你打开时看到的为准。
+
+| 文中说法 | 出处 |
+|---|---|
+| 数据库当队列、`SELECT ... FOR UPDATE SKIP LOCKED` 让每个 worker 各拿一条 | [PostgreSQL: SELECT](https://www.postgresql.org/docs/current/sql-select.html) |
+| 数据库全文检索（`tsvector`）、中文需要额外分词插件 | [PostgreSQL: Full Text Search](https://www.postgresql.org/docs/current/textsearch.html)、[zhparser](https://github.com/amutu/zhparser) |
+| 三元组索引支持模糊匹配（拼写错误） | [PostgreSQL: pg_trgm](https://www.postgresql.org/docs/current/pgtrgm.html) |
+| 向量存进 PostgreSQL、与业务同库 | [pgvector](https://github.com/pgvector/pgvector) |
+| PyMuPDF 是 AGPL/商业双授权（与 pypdf 的许可差别） | [PyMuPDF: About](https://pymupdf.readthedocs.io/en/latest/about.html) |
+| 纯 Python 解析库的定位 | [pypdf 文档](https://pypdf.readthedocs.io/en/stable/)、[pdfplumber](https://github.com/jsvine/pdfplumber) |
+| OCR 处理扫描件 | [Tesseract](https://github.com/tesseract-ocr/tesseract) |
+| 商业文档 AI（表格/表单识别） | [AWS Textract](https://aws.amazon.com/textract/)、[Google Document AI](https://cloud.google.com/document-ai) |
+| 统一解析层（多格式接入） | [Unstructured](https://github.com/Unstructured-IO/unstructured) |
+| 混合检索用 RRF 融合两种召回 | [Cormack et al. 2009, Reciprocal Rank Fusion (PDF)](https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf) |
+| 递归切分是 RAG 的常见默认 | [LangChain: Text splitters](https://python.langchain.com/docs/concepts/text_splitters/) |
+| 测试用与生产同一种数据库（容器化测试） | [Testcontainers](https://testcontainers.com/) |
+| 配置与代码分离、显式依赖 | [The Twelve-Factor App](https://12factor.net/) |
+| liveness 与 readiness 分离 | [Kubernetes: 探针](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/) |
+| 路径逃逸、检查与使用之间的时间差（TOCTOU） | [OWASP: Path Traversal](https://owasp.org/www-community/attacks/Path_Traversal)、[CWE-367](https://cwe.mitre.org/data/definitions/367.html) |
+| 乐观并发：写入时带上"我看到的是哪一版" | [Kubernetes API 的 resourceVersion](https://kubernetes.io/docs/reference/using-api/api-concepts/)、[Elasticsearch: 乐观并发控制](https://www.elastic.co/guide/en/elasticsearch/reference/current/optimistic-concurrency-control.html) |
+| 按内容标识对象（content-addressable） | [Git 内部原理：对象](https://git-scm.com/book/en/v2/Git-Internals-Git-Objects)、[S3 版本控制](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html) |
+
+**怎么用这张表**：如果老师或队友质疑"为什么你们要这么做，别人也这样吗"，你可以
+打开对应链接让对方自己看，而不是说"我记得是这样"。**能给出来源的行业判断，才算
+判断；给不出来源的，就明说那是你的观点。** 这也适用于你以后写的任何材料。
