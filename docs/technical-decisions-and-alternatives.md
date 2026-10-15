@@ -598,3 +598,49 @@ PostgreSQL + pgvector**，因为它省掉一整套运维；数据量大或要求
 最能体现成熟度的是**第三句**——愿意说清自己的代价，比声称自己都做对了更可信。
 这份报告里的每一条代价，都能在 `evidence/` 与 `submissions/week07/` 里找到对应的
 测量或被明确写下的限制。
+
+---
+
+## 19. 附录：本文的每条断言去哪里核对
+
+这份报告是**散文**，散文容易变成"听起来对但没人验过"。所以每一条能核对的断言都列
+在下面。**如果某条与代码或测量不符，以代码和测量为准**，并把这一行改掉。
+
+| # | 断言（摘要） | 怎么核对 |
+|---|---|---|
+| 1 | AI 处理在 worker 里，请求只写 job | 读 `services/api/app/main.py` 的提交路径与 `services/worker/app/main.py` 的 `claim_next_pending_job` |
+| 1 | worker 轮询间隔 2 秒 | `grep worker_poll_seconds services/common/config.py` |
+| 1 | 抢任务没有 `SKIP LOCKED` | 同上文件：`SELECT ... where status=pending` 后直接 UPDATE |
+| 1 | 端到端确实这样跑 | 起全栈后 `pytest -q tests/smoke`，或 `POST /cases` 再查状态（排队 → 已分类） |
+| 2 | 版本以内容哈希标识 | `services/common/models.py` 的 `FileVersion.content_sha256`；`services/parsing/pdf.py` 的 `file_identity` |
+| 2 | 解析器版本也记录在版本行上 | 同上文件的 `parser_revision`，以及 `handler.py` 的 `PARSER_REVISION` |
+| 3 | 抽取用 pypdf | `grep -n "pypdf" services/parsing/pdf.py pyproject.toml` |
+| 3 | 校验用另一个库且会拒绝自检 | 跑 `scripts/verify_page_attribution.py`，看首行是否 `PyMuPDF (independent)` |
+| 3 | 19 个不可读字形、现标为 U+FFFD | 跑 `scripts/sweep_corpus.py /corpus`；说明见 `evidence/real-corpus-sweep.md` |
+| 4 | 700/120、不跨页 | `services/parsing/chunking.py` 的常量与 `_chunk_page_text`；实测见 `scripts/check_parsing_quality.py` 的 max/overlap 两列 |
+| 4 | "每页只有一行"的边界 | `pytest -q tests/unit/test_parsing_chunking.py -k empty` |
+| 5 | 关系必须带证据，且证据是快照 | `services/parsing/persist.py`；`relationship_evidence` 表定义 |
+| 6 | 五种失败状态与理由码 | `pytest -q tests/unit/test_parsing_handler.py`；或读 `submissions/week07/handover-to-A.md` 的结果表 |
+| 6 | "读之中被改"会被拒绝 | `pytest -q tests/unit/test_parsing_pdf.py -k written` |
+| 7 | 复核只追加 + 版本号 + 唯一约束 | `pytest -q tests/unit/test_parsing_graph.py`；约束在 `services/common/models.py` 的 `__table_args__` |
+| 8 | 候选 47/44/36 → 39/38/33 → 10 | 跑 `scripts/check_relation_candidates.py`（数字对不上会报错退出） |
+| 8 | 规则准确率约四分之三 | `evidence/relation-candidates.md` 与 `submissions/week07/sections/B.md` 的限制段 |
+| 9 | 测试库默认不开外键，现已打开 | `services/common/db.py` 的 `PRAGMA foreign_keys=ON`；断言在 `test_parsing_graph.py` |
+| 9 | 降级曾经会失败、现已修好 | `alembic/versions/20261012_*.py` 的 `downgrade`；在真实库上 `alembic downgrade 20260713_0001` |
+| 10 | 路由 / 分发 / `current_version_id` 都还空着 | `services/api/app/main.py`、`services/worker/app/main.py` 的 `HANDLED_JOB_TYPES`；`handover-to-A.md` 第 1 节 |
+| 11 | live 与 ready 是两个端点 | `services/api/app/main.py`；断库后 `ready` 会失败而 `live` 不会 |
+| 11 | `/metrics` 存在 | 起服务后访问 `/metrics` |
+| 12 | 四条命令合计约 3 秒 | `submissions/week07/demo-runbook-B.md` 的计时表 |
+| 12 | 证据卡是从真实 PDF 渲染的 | 重跑 `scripts/render_evidence_card.py` 并与 `submissions/week07/artifacts/` 里的图比对哈希 |
+| 13 | 授权目录有状态、可撤销 | `services/common/models.py` 的 `AuthorizedRoot`；`evidence.py` 的 `root_revoked` |
+| 14 | 检索尚未实现（C 的活） | `rg -n "search|embedding|pgvector" services/` 找不到对应模块 |
+| 15 | AI 服务是关键词打分 | `services/ai/app/main.py` 的 `LABEL_KEYWORDS` 与 `triage_text` |
+| 16 | 不挂载源码会静默少跑测试 | 分别在挂载与不挂载下跑 `pytest -q`，比较 passed 数量（当前 103 与 97） |
+| 16 | 不重建镜像会让 api 崩 | `evidence-final.md` 里那一行（记录的是当时的一次观察，现已无法复现，原因写明） |
+
+**两条使用规则：**
+
+1. 报告与代码冲突时，**代码优先**，并且把报告改掉——就像 `evidence-diff.md` 记录
+   那次"候选数字串了"的纠正一样。
+2. 报告里凡是**没有**给出核对方式的段落，都应被视为"作者的观点"而不是"事实"。
+   主要集中在"行业里通常怎么做"那几句——那些是行业经验，不是本项目测量出来的。
