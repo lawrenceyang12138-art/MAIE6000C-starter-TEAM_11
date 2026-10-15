@@ -79,6 +79,11 @@ Cut in this order:
 Ten answers, all short enough to say in twenty seconds. Each one is a fact in
 `evidence-final.md` or in a file named beside it.
 
+These are about this slice. Questions about the system rather than the slice -
+why the work happens in a worker, why versions are content-hashed, what is
+planned for search - are answered in
+`submissions/week07/B-answers-on-system-design.md`.
+
 **"How accurate is the entity finding?"** About three in four on the bounded
 list, measured on real slides. It is a rule set, and we bounded it to ten
 because the schedule asked for candidates rather than a graph.

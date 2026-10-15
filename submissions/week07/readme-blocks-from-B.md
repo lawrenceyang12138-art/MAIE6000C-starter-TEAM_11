@@ -80,6 +80,7 @@ calls it from the worker. Those two are A's.
 | How this lands in the team repository | `submissions/week07/port-to-team-repo.md` |
 | Every technical decision, its alternatives and the trade-offs | `docs/technical-decisions-and-alternatives.md` |
 | How to verify this work without reading code | `docs/how-to-review-and-verify.md` |
+| English answers to system-design questions | `submissions/week07/B-answers-on-system-design.md` |
 
 ## Section 10 - AI Use Statement (B's part)
 
