@@ -108,6 +108,13 @@ Across all three documents:
 - running headers or footers removed: **0 pages** (the `headers` column of
   `scripts/check_parsing_quality.py`)
 
+The script's `hyphens` column reads **1**, and that is not a contradiction: it
+counts line-end hyphens the rule had to *judge*, not hyphens it joined. The one
+case is `Week 7 Contract-` followed by `Test Plan` - the next character is
+uppercase, so the rule correctly leaves a real compound alone. An independent
+reviewer read the two numbers as a conflict, which is why the distinction is
+written down here rather than only in a code comment.
+
 The rules are not wrong, they are simply not needed by these files, which were
 exported cleanly. They are covered by unit tests with synthetic input, so they
 behave as specified, but on this corpus they are unexercised.
