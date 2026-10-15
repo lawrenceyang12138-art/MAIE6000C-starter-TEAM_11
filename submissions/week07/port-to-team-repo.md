@@ -87,11 +87,38 @@ The patch touches no shared decision that the team has already made: the four
 relation tables are still listed as a proposal for A in
 `handover-to-A.md`.
 
-## What was deliberately not done
+## What has been done, and what has not
 
-No branch was pushed to the team repository, and nothing was merged into its
-`main`. A dry run showed the push would be accepted, so write access is already
-in place; the remaining step is a decision, not a permission.
+The branch **is now on the team repository**: `w7-parsing`, 51 commits, top
+commit `6555056`. Two properties make it cheap for the team to deal with:
+
+- **`main` is untouched** - it is still `abacacd`, the starter, exactly as the
+  team agreed: nobody commits to `main`, everyone pushes a branch and the merge
+  happens at the freeze.
+- **It is a descendant of `main`**, so merging it is a fast-forward with
+  nothing to resolve. The work was replayed onto the team's own starting point
+  rather than merged across two unrelated histories, which is what makes that
+  true.
+
+To merge it, whoever owns the freeze needs one command:
+
+```
+git switch main
+git merge --ff-only w7-parsing
+```
+
+**Two things that are still open, and are the team's to decide:**
+
+1. **CI does not run on branch pushes.** `.github/workflows/ci.yml` fires on
+   `pull_request` and on pushes to `main`, so this branch - like every member's
+   branch - gets no checks until a pull request exists. Either open a PR per
+   branch, or the workflow's trigger gains the member branches. Otherwise the
+   first time anyone sees whether the branches work together is at the merge.
+2. **The repository still hides two tests.** `tests/integration/` contains
+   `test_api_integration.py python` - a space in the name, no extension - so
+   pytest never collects it and two integration tests never run anywhere in
+   this repository, including in CI. It is a one-line rename; this branch does
+   not carry it, because it is Week 3 work rather than Week 7 work.
 
 Two things in the team repository are outside B's slice and remain open:
 `files.current_version_id` is still never set, so an evidence read would report
