@@ -9,6 +9,27 @@ or broken page boundaries, and record what was found.
 Three real course PDFs (66 pages in total) were parsed and chunked, then
 checked mechanically and inspected by eye.
 
+The mechanical part is a script, so these numbers can be re-run rather than
+believed:
+
+```
+docker compose run --rm --no-deps \
+  -v "$PWD/scripts:/app/scripts" -v "/path/to/pdfs:/fixtures:ro" api \
+  python scripts/check_parsing_quality.py /fixtures/*.pdf
+```
+
+It exits non-zero if any corrupt character appears or if a fragment is not
+found on the page it claims. Two definitions matter for reading the tables:
+
+- **Chars** is the raw per-page text joined with newlines, taken before the
+  cleaning rules run. Cleaning removes about one character per page.
+- **Short lines** counts lines shorter than fifteen characters, which on these
+  slides means a wrapped title fragment rather than prose.
+
+The fragment table below is the first twenty chunks of the first file, in
+storage order. Deterministic sampling is deliberate: a sample chosen by hand
+cannot be checked by anyone else.
+
 ## Fragment check: 20 chunks against their pages
 
 | # | Page | Chars | Attribution | Double spaces | Short lines | Opening |
