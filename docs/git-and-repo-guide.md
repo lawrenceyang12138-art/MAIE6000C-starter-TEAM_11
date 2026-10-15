@@ -215,6 +215,20 @@ delete the markers, then `git add` and `git commit`.
 **"My pushed branch has no green tick."** Continuous integration runs when a
 pull request is opened, not when a branch is pushed. See Part 4.
 
+**"The api container keeps restarting after I pulled new code."** It probably
+exits with `FAILED: Can't locate revision identified by ...`. The image holds
+its own copy of the migration files, and the api container applies them on
+start; a container built before the newest migration cannot serve a database
+that already has it. Restarting does not help, because the image is still the
+old one:
+
+```
+docker compose up -d --build
+```
+
+The general rule: **new dependencies or new migrations mean rebuild, not
+restart.** That flag costs a minute and saves an afternoon.
+
 ---
 
 ## Part 6 - Authentication

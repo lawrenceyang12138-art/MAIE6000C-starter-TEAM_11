@@ -96,6 +96,25 @@ code raises `Case not found for job N`, the job is marked failed, and the
 error looks like a data problem rather than a missing dispatch case. That is
 worth knowing before someone spends an afternoon on it.
 
+**Rebuild the image, do not just restart it.** The api container runs
+`alembic upgrade head` on start, and the image carries its own copy of
+`alembic/`. After pulling these migrations, a plain `docker compose up -d`
+starts a container whose alembic does not know revision `445f908b73b4` while
+the database is already at it, and the container exits with:
+
+```
+FAILED: Can't locate revision identified by '445f908b73b4'
+```
+
+The fix is one flag:
+
+```
+docker compose up -d --build
+```
+
+This was hit and confirmed on 2026-10-15, not predicted. Anyone who pulls this
+branch - A, C, D, or the second laptop - will hit it otherwise.
+
 ## 3. Routes to expose
 
 Three handlers are ready. B has not written routes because they are A's.
