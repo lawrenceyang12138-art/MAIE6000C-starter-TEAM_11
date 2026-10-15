@@ -72,6 +72,11 @@ class RelationshipView:
     producer_revision: str
     page_number: int | None
     quote: str
+    # True when the passage that justified this relation is gone - for
+    # instance because the version was re-processed and the chunk it cited was
+    # replaced. A relation without its evidence is not something to show as if
+    # it were checkable, so the caller can tell the difference.
+    evidence_missing: bool
     # The latest human decision, or None while the candidate is unreviewed.
     decision: str | None
     # What a "corrected" decision points to instead, when one is recorded.
@@ -143,6 +148,7 @@ def read_relationships(
                 producer_revision=relationship.producer_revision,
                 page_number=evidence[1].page_number if evidence else None,
                 quote=evidence[0].quote if evidence else "",
+                evidence_missing=evidence is None,
                 decision=latest.decision if latest else None,
                 corrected_entity_id=latest.corrected_entity_id if latest else None,
                 decision_revision=latest.decision_revision if latest else 0,

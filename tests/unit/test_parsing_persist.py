@@ -60,6 +60,43 @@ def test_persisting_the_same_version_twice_does_not_duplicate(
     assert [row.ordinal for row in rows] == [1, 2, 3]
 
 
+def test_reprocessing_identical_chunks_keeps_their_rows(
+    db_session: Session, make_file_version
+):
+    """The ids are what relation evidence points at.
+
+    Deleting and recreating identical rows would cascade that evidence away,
+    which is how relations ended up with no quote after a re-process.
+    """
+    version_id = make_file_version()
+    persist_chunks(db_session, version_id, SAMPLE)
+    first = {row.ordinal: row.id for row in _stored(db_session, version_id)}
+
+    persist_chunks(db_session, version_id, SAMPLE)
+
+    second = {row.ordinal: row.id for row in _stored(db_session, version_id)}
+    assert first == second, "unchanged chunks must keep their identity"
+
+
+def test_a_changed_chunk_is_replaced_rather_than_updated(
+    db_session: Session, make_file_version
+):
+    """Different text is a different passage, so it gets a different row."""
+    version_id = make_file_version()
+    persist_chunks(db_session, version_id, SAMPLE)
+    before = {row.ordinal: row.id for row in _stored(db_session, version_id)}
+
+    persist_chunks(
+        db_session,
+        version_id,
+        [Chunk(ordinal=1, page_number=1, text="a different first passage")],
+    )
+
+    rows = _stored(db_session, version_id)
+    assert [row.text for row in rows] == ["a different first passage"]
+    assert rows[0].id != before[1]
+
+
 def test_reprocessing_replaces_the_previous_chunk_set(
     db_session: Session, make_file_version
 ):

@@ -17,6 +17,14 @@ current. Two people reviewing the same relation at the same moment therefore
 produce a visible conflict instead of one silently discarding the other's
 decision.
 
+**A relation never arrives without saying whether its evidence is there.**
+Each view carries `evidence_missing`, which is true when the passage that
+justified the relation is gone - most often because the version was
+re-processed and the chunk it cited was replaced. The view used to serve such a
+relation with an empty quote, which reads as a display fault rather than a fact
+about the data. Re-running the relation step after a re-process restores the
+evidence.
+
 This is the behaviour the schedule calls for in the Activity D discussion:
 human review uses an expected revision to prevent duplicate or concurrent
 overwrites.
@@ -82,7 +90,7 @@ Result: **7 passed**.
 - a confirmation that tries to carry a replacement is refused
 - a correction pointing at an entity that does not exist is refused
 
-Full suite: **90 passed, 2 skipped**. `ruff check .` clean.
+Full suite: **94 passed, 2 skipped**. `ruff check .` clean.
 
 ## What is still missing
 

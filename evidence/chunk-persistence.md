@@ -14,6 +14,16 @@ Module: `services/parsing/persist.py`
    failed re-parse would leave a version with no chunks at all - worse than not
    running it.
 
+3. **A chunk whose content is unchanged keeps its row.** Added on 2026-10-15,
+   after finding the consequence of the first two rules. Relationship evidence
+   references chunk ids with a cascading foreign key, so deleting and
+   recreating an identical row silently strips the evidence from every relation
+   that cites it. Re-processing a version with the same parser did exactly
+   that: the relation rows survived, and the quotes they exist to justify were
+   gone. Unchanged rows are now kept; changed ones are still replaced, because
+   text that differs is a different passage and evidence pointing at it should
+   not survive either.
+
 ## End-to-end run against real PostgreSQL
 
 This was not a test fixture. It ran inside the API container against the
@@ -50,12 +60,16 @@ Command:
 docker compose run --rm --no-deps api pytest -q tests/unit/test_parsing_persist.py
 ```
 
-Result: **7 passed**, covering the three cases the schedule names plus the
+Result: **9 passed**, covering the three cases the schedule names plus the
 boundaries around them:
 
 - **normal write** - ordinals, page numbers and text land as given
 - **repeated write** - the same version written twice still holds one chunk set
 - **parser revision** - a different chunk set replaces the previous one
+- **unchanged re-write** - identical chunks keep their row ids, so anything
+  pointing at them (relation evidence) survives a re-process
+- **changed chunk** - a chunk whose text differs gets a new row rather than an
+  update, so evidence against the old text cannot silently persist
 - **failed write** - a real database rejection mid-insert leaves the previous
   chunks intact, and the session is still usable afterwards
 - **malformed set** - duplicate ordinals are rejected before anything is written

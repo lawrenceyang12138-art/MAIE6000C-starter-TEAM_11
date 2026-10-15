@@ -39,6 +39,30 @@ the handler records it as **failed** - not `unsupported`. It is a folder that
 changed under us rather than a document we cannot read, and it is retryable
 once the file is back.
 
+## A third defect, and this one broke an invariant in B's own module
+
+Re-processing a version - which is what a retry or a parser upgrade does -
+deleted its chunks and wrote new ones. Relationship evidence references chunk
+ids with a cascading foreign key, so the database correctly removed the
+evidence rows along with the chunks, and the relations were left **without the
+passage that justifies them**. The read path served them with an empty quote,
+which looks like a display bug rather than a fact about the data.
+
+Measured on the real database, not inferred: three relations, three quotes
+before the re-process, **zero** after it.
+
+Two changes:
+
+- unchanged chunks keep their rows, so a re-process with the same parser no
+  longer disturbs the evidence pointing at them
+- a relation whose evidence has genuinely gone is now served with
+  `evidence_missing = true` instead of a blank quote, and re-running the
+  relation step restores it
+
+The module's stated rule is that a relation cannot be stored without its
+evidence. Until this was fixed, re-processing a version quietly broke that rule
+for every relation in it.
+
 ## Regression: 12 normal, 3 abnormal, 1 unsupported
 
 The official fixture corpus is D's deliverable and has not landed yet, so this

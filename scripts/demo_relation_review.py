@@ -93,7 +93,10 @@ def main(argv: list[str] | None = None) -> int:
         views = read_relationships(db, version.id)
         for view in views:
             print(f"  [{view.entity_type:<7}] {view.label}  (page {view.page_number})")
-            print(f"        {view.quote[:78]}")
+            if view.evidence_missing:
+                print("        (no evidence stored for this relation)")
+            else:
+                print(f"        {view.quote[:78]}")
         print()
 
         first = views[0]

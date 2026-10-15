@@ -13,7 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from services.common.models import Entity, Review, ReviewDecision
-from services.parsing.chunking import chunk_document
+from services.parsing.chunking import Chunk, chunk_document
 from services.parsing.graph import (
     MAX_RELATIONSHIPS,
     REASON_CORRECTED_ENTITY_NOT_FOUND,
@@ -68,6 +68,59 @@ def test_relations_are_read_back_with_their_evidence(
         assert view.producer_revision
         assert view.decision is None
         assert view.decision_revision == 0
+
+
+def test_a_relation_whose_passage_was_replaced_says_so(
+    db_session: Session, make_file_version
+):
+    """Re-processing a version can leave a relation without its passage.
+
+    The relation and its human reviews survive a re-parse; the chunk it cited
+    may not. That used to surface as an empty quote, which reads like a display
+    bug rather than a fact about the data.
+    """
+    version_id = _version_with_relations(db_session, make_file_version)
+    view = read_relationships(db_session, version_id)[0]
+    assert view.evidence_missing is False
+    assert view.quote
+
+    # A different parser revision produces a different chunk set.
+    persist_chunks(
+        db_session,
+        version_id,
+        [Chunk(ordinal=1, page_number=1, text="a completely different passage")],
+    )
+
+    refreshed = read_relationships(db_session, version_id)
+    assert refreshed, "re-processing must not delete the relation rows"
+    assert all(other.evidence_missing for other in refreshed)
+    assert all(other.quote == "" for other in refreshed)
+
+
+def test_rerunning_the_relation_step_restores_the_evidence(
+    db_session: Session, make_file_version
+):
+    """This is what the pipeline should do after re-processing a version."""
+    version_id = _version_with_relations(db_session, make_file_version)
+    view = read_relationships(db_session, version_id)[0]
+
+    persist_chunks(
+        db_session,
+        version_id,
+        [Chunk(ordinal=1, page_number=1, text="a completely different passage")],
+    )
+    assert read_relationships(db_session, version_id)[0].evidence_missing
+
+    chunks = chunk_document(extract_document(FIXTURES / "entities.pdf"))
+    persist_chunks(db_session, version_id, chunks)
+    persist_relations(db_session, version_id, candidate_relations(chunks))
+
+    refreshed = {
+        candidate.relationship_id: candidate
+        for candidate in read_relationships(db_session, version_id)
+    }
+    assert refreshed[view.relationship_id].evidence_missing is False
+    assert refreshed[view.relationship_id].quote
 
 
 def test_relation_read_is_bounded(db_session: Session, make_file_version):

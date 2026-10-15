@@ -63,6 +63,15 @@ The last row is newer than the rest: a deleted file used to escape the handler
 as `FileNotFoundError`, which left the version sitting in `extracting` with the
 worker's failed job as the only explanation. It is a version outcome now.
 
+**Re-processing a version and the relation step.** `handle_extract_file`
+replaces a version's chunks. Unchanged chunks keep their rows, so a retry with
+the same parser leaves the relation evidence alone. If the chunks genuinely
+change, the evidence that pointed at them is removed by the database, and the
+relation list reports those relations with `evidence_missing` set rather than
+with a blank quote - so a re-process should be followed by the relation step if
+you want the quotes back. That ordering is the pipeline's to decide, and it is
+the difference between a relation a reader can check and one they cannot.
+
 Two things A needs to supply:
 
 - **The source path.** The handler needs a resolved filesystem path for the
@@ -182,7 +191,7 @@ exactly the kind of silent data creation this system should not do.
 
 | Thing | Result |
 | --- | --- |
-| Whole suite | 90 passed, 2 skipped |
+| Whole suite | 94 passed, 2 skipped |
 | Static analysis | clean |
 | Page attribution against an independent PDF library | 12/12 |
 | 12 normal, 3 abnormal, 1 unsupported | passing |

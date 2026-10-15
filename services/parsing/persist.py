@@ -61,12 +61,58 @@ def persist_chunks(db: Session, version_id: str, chunks: Sequence[Chunk]) -> int
     Returns the number of chunks written. The whole replace is one
     transaction: on any failure the previous chunks are left untouched and the
     exception is re-raised for the caller to record against the job.
+
+    A chunk whose ordinal, page and text are unchanged **keeps its row**, and
+    therefore its id. That is not an optimisation: relationship evidence points
+    at chunk ids with a cascading foreign key, so deleting and recreating
+    identical rows would silently strip the evidence from every relation that
+    cites them. Re-processing a version with the same parser used to do exactly
+    that, leaving relations whose quotes had gone missing.
+
+    A chunk whose text or page did change is replaced, and the evidence that
+    pointed at it is dropped by the database rather than left claiming a quote
+    that the chunk no longer contains.
     """
     _validate_ordinals(chunks)
 
     try:
-        db.execute(delete(SourceChunk).where(SourceChunk.version_id == version_id))
+        existing = {
+            row.ordinal: row
+            for row in db.execute(
+                select(SourceChunk).where(SourceChunk.version_id == version_id)
+            )
+            .scalars()
+            .all()
+        }
+        incoming = {chunk.ordinal for chunk in chunks}
+
+        to_delete: list[SourceChunk] = []
+        to_insert: list[Chunk] = []
         for chunk in chunks:
+            row = existing.get(chunk.ordinal)
+            if (
+                row is not None
+                and row.text == chunk.text
+                and row.page_number == chunk.page_number
+            ):
+                continue
+            if row is not None:
+                to_delete.append(row)
+            to_insert.append(chunk)
+
+        for ordinal, row in existing.items():
+            if ordinal not in incoming:
+                to_delete.append(row)
+
+        for row in to_delete:
+            db.delete(row)
+
+        # The delete has to reach the database before a replacement is
+        # inserted for the same ordinal: the table is unique on
+        # (version_id, ordinal), and the unit of work does not promise an order.
+        db.flush()
+
+        for chunk in to_insert:
             db.add(
                 SourceChunk(
                     version_id=version_id,
@@ -75,6 +121,7 @@ def persist_chunks(db: Session, version_id: str, chunks: Sequence[Chunk]) -> int
                     text=chunk.text,
                 )
             )
+
         db.commit()
     except Exception:
         # Undo the delete along with the partial insert.
