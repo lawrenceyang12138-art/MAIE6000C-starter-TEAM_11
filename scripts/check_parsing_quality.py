@@ -26,7 +26,11 @@ import re
 import sys
 from pathlib import Path
 
-from services.parsing.chunking import chunk_document, clean_page_text
+from services.parsing.chunking import (
+    chunk_document,
+    clean_page_text,
+    strip_running_headers_footers,
+)
 from services.parsing.pdf import extract_document
 
 # A line this short is a title fragment rather than prose. The threshold was
@@ -45,6 +49,16 @@ def _scan(path: Path) -> dict[str, object]:
     joined = "\n".join(raw_pages)
     chunks = chunk_document(document)
 
+    # The pipeline cleans a page first and applies the running-header rule
+    # second. Measuring the rule on raw text instead counts blank lines it
+    # trims, which are not content: on this corpus that mistake reports three
+    # changed pages where the real answer is none.
+    cleaned_pages = [clean_page_text(page) for page in raw_pages]
+    stripped_pages = strip_running_headers_footers(list(cleaned_pages))
+    headers_removed = sum(
+        1 for before, after in zip(cleaned_pages, stripped_pages) if before != after
+    )
+
     return {
         "name": path.name,
         "pages": document.page_count,
@@ -54,6 +68,7 @@ def _scan(path: Path) -> dict[str, object]:
             1 for char in joined if ord(char) < 32 and char not in KEEP_CONTROL
         ),
         "line_end_hyphens": len(LINE_END_HYPHEN.findall(joined)),
+        "headers_removed": headers_removed,
         "chunks": len(chunks),
         "raw_pages": raw_pages,
         "chunks_list": chunks,
@@ -97,17 +112,22 @@ def main(argv: list[str] | None = None) -> int:
     print("character scan")
     print(
         f"{'file':<40}{'pages':<7}{'chars':<8}{'repl':<6}{'ctrl':<6}"
-        f"{'hyphens':<9}chunks"
+        f"{'hyphens':<9}{'headers':<9}chunks"
     )
-    print("-" * 82)
+    print("-" * 92)
     for row in scanned:
         print(
             f"{str(row['name'])[:38]:<40}{row['pages']:<7}{row['chars']:<8}"
             f"{row['replacement']:<6}{row['control']:<6}"
-            f"{row['line_end_hyphens']:<9}{row['chunks']}"
+            f"{row['line_end_hyphens']:<9}{row['headers_removed']:<9}"
+            f"{row['chunks']}"
         )
     print()
     print("chars counts the raw per-page text joined with newlines, before cleaning")
+    print(
+        "headers counts pages whose text the running-header rule changed, "
+        "measured after cleaning"
+    )
 
     rows = _fragments(scanned[0], args.fragments)
     print()

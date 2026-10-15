@@ -105,7 +105,8 @@ Across all three documents:
 
 - hyphenated line breaks joined: **0**
 - spaces between Chinese characters removed: **0**
-- running headers or footers removed: **0 pages**
+- running headers or footers removed: **0 pages** (the `headers` column of
+  `scripts/check_parsing_quality.py`)
 
 The rules are not wrong, they are simply not needed by these files, which were
 exported cleanly. They are covered by unit tests with synthetic input, so they
@@ -116,6 +117,14 @@ the fixture corpus D is preparing.** If those PDFs are generated from Word or
 LaTeX they will be clean too. If they are scans or exports with repeated
 headers, the rules will start mattering. This is worth a five-minute check once
 the fixtures land, rather than an assumption either way.
+
+**A measurement trap worth recording.** Running the header rule directly on
+raw page text reports three changed pages on this corpus, and all three are
+blank lines being trimmed rather than content being dropped. The pipeline
+cleans a page first and applies the rule second; measured in that order the
+answer is zero. The first attempt at checking this claim got it wrong, in the
+harmless direction, which is exactly how a claim that matters can go wrong in
+the harmful direction.
 
 ## Known limitations, unchanged
 
