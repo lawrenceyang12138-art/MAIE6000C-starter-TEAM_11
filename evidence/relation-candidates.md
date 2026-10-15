@@ -46,14 +46,16 @@ each with its page and the passage that justifies it.
 
 ## Result on real slides, and why the output is bounded
 
-The same finder on three real course decks produced **47, 44 and 45 candidates**
+The same finder on three real course decks produced **47, 44 and 36 candidates**
 respectively, and most were noise: `Observe`, `Create`, `Trigger`, `Retrieve`,
 `Trace`, `Session`, `Today` - capitalised words that begin a line because they
-begin a sentence or a bullet.
+begin a sentence or a bullet. (Re-measured at this commit by disabling the
+line-initial rule and counting every candidate; the earlier draft of this file
+quoted 45 for the third deck, which was wrong.)
 
 Two changes followed, and both are measured rather than assumed:
 
-- skipping line-initial single words took 47 down to about 33
+- skipping line-initial single words took them to **39, 38 and 33**
 - ranking by mention count and keeping at most ten produced lists like
   `AI`, `API`, `Worker`, `Client`, `Database`, `Internal`, `POST`, `GET`
   for a document about APIs, with residual noise such as `Which` and `Who`

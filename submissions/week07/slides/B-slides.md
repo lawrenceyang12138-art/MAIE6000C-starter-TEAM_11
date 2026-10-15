@@ -47,9 +47,9 @@ together must fit three minutes of speaking.
 > one of each type, each carrying the page and the sentence that produced it.
 > This is a rule, not a model, and we measured it. On real lecture slides the
 > rules first produced forty-seven candidates, most of them sentence openers.
-> Skipping line-initial words and ranking by how often a term recurs brought
-> that to ten, of which roughly three in four are real. That is good enough for
-> a list a person reviews, and we are not claiming more than that.
+> Skipping line-initial words took that to thirty-nine, and ranking by how often
+> a term recurs plus keeping ten left roughly three in four real. That is good
+> enough for a list a person reviews, and we are not claiming more than that.
 
 ---
 

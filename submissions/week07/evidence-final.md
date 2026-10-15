@@ -48,6 +48,8 @@ The skipped test is the starter's smoke test, which needs a running stack and
   topic, each with its page and its quote.
 - **About three in four** precise on real slides once the list is bounded to
   ten. Stated as a measured limitation, not as a capability.
+  The bounding steps were re-measured at this commit: 47, 44 and 36 candidates
+  with the line-initial rule disabled, 39, 38 and 33 with it, 10 after ranking.
 - Review revisions **1 and 2** both retained after the second decision; a stale
   reviewer refused rather than allowed to overwrite.
 
@@ -78,10 +80,11 @@ code would have proved nothing.
 The schedule for this step asked for at least three candidates and explicitly
 warned against building a knowledge graph, so the list is bounded to ten in
 code. Accuracy is about three in four on real lecture slides: the rules first
-produced forty-seven candidates, mostly sentence openers, and skipping
-line-initial words plus ranking by mention count brought that down and put the
-document's real recurring terms at the top. It is a candidate list for a person
-to review, and we are not claiming more than that.
+produced 47, 44 and 36 candidates across three decks, mostly sentence openers;
+skipping line-initial words took those to 39, 38 and 33; ranking by mention
+count and keeping ten put the document's real recurring terms at the top. It is
+a candidate list for a person to review, and we are not claiming more than
+that.
 
 ## Where to start reading
 

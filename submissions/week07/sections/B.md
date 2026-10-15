@@ -96,12 +96,14 @@ checks the PDF header and reports `unsupported_format`.
 ## 5. Honest limitations
 
 **Entity finding is a rule, not a model, and it is roughly three in four
-precise.** On real slides the rules first produced 47 candidates, most of them
-sentence openers. Skipping line-initial single words took that to about 33;
-ranking by mention count and bounding the list to ten left lists that a person
-would recognise, with residual noise such as `Which` and `Who`. That is usable
-for a candidate list a human reviews, and not usable as automatic fact
-extraction.
+precise.** On three real slide decks the rules first produced 47, 44 and 36
+candidates, most of them sentence openers. Skipping line-initial single words
+took those to 39, 38 and 33; ranking by mention count and bounding the list to
+ten left lists that a person would recognise, with residual noise such as
+`Which` and `Who`. That is usable for a candidate list a human reviews, and not
+usable as automatic fact extraction. These figures were re-measured when the
+claim was checked; an earlier draft quoted 45 for the third deck and 33 for the
+first after filtering, both wrong.
 
 **The cleaning rules did not fire on our corpus at all.** Zero hyphen joins,
 zero Chinese-space removals, zero headers removed across 66 real pages. The

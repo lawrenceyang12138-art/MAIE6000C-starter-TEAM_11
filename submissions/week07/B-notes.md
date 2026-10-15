@@ -38,8 +38,8 @@ part most likely to drift.
 >
 > This is a rule, not a model, and I want to be precise about how well it works.
 > On real lecture slides the rules first produced forty-seven candidates, most
-> of them words that start a sentence. Skipping line-initial words and ranking
-> by how often a term recurs brought that down to ten, and those ten are mostly
+> of them words that start a sentence. Skipping line-initial words took that to
+> thirty-nine; ranking by how often a term recurs and keeping ten left mostly
 > the document's real recurring terms. About three in four are right.
 >
 > That is good enough for a list a person reviews. It is not good enough to
