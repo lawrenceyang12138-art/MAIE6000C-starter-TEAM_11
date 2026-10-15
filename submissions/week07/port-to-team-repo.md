@@ -38,10 +38,12 @@ git checkout -b w7-parsing origin/main
 git rebase --onto origin/main personal/main personal/feat/w7-data-layer
 ```
 
-Result: **every commit on the branch replayed, zero conflicts** - thirty-four
-of them on the last run, and the replay was repeated after each addition. The
-commits are re-created with new hashes, which is expected when the history
-underneath them changes; the content is identical.
+Result: **every commit on the branch replayed, zero conflicts.** The replay was
+re-run after every addition and has never produced a conflict, so the exact
+count matters less than the fact that it keeps holding; what matters is that
+the branch is replayed, not merged. The commits are re-created with new hashes,
+which is expected when the history underneath them changes; the content is
+identical.
 
 The replayed tree then runs under the same container as the personal
 repository:
