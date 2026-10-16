@@ -33,7 +33,7 @@ function ActionButton({ children, className, ...props }) {
   return (
     <motion.button
       {...props}
-      className={className}
+      className={"action-button " + (className || "")}
       whileTap={reduceMotion || props.disabled ? undefined : { scale: 0.98 }}
       transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 260, damping: 22 }}
     >
@@ -216,7 +216,7 @@ function SelectPage() {
         </div>
       )}
       <div className="select-layout">
-        <form className="workspace-panel authorization-panel" onSubmit={submit}>
+        <form className="workspace-panel glass-card authorization-panel" onSubmit={submit}>
           <div className="panel-topline"><div><span className="panel-icon"><LockKey size={17} weight="duotone" /></span><span>DIRECTORY AUTHORIZATION</span></div><span className="method-label">POST <code>/roots</code></span></div>
           <h2>Define the scan boundary</h2>
           <p className="panel-intro">Only a mount ID and a configured relative path are sent. The client never receives an absolute host path.</p>
@@ -233,7 +233,7 @@ function SelectPage() {
           <div className="form-hint" id="mount-hint"><LockKey size={16} weight="duotone" /><span>The mount is read-only. File enumeration and parsing happen asynchronously after this request.</span></div>
           <ActionButton className="primary-button" type="submit" disabled={!relativePath || loading}>Authorize and start scan <ArrowUpRight size={16} /></ActionButton>
         </form>
-        <section className="workspace-panel contract-panel">
+        <section className="workspace-panel glass-card contract-panel">
           <div className="panel-title-row"><div><p className="meta-label">REQUEST CONTRACT</p><h2>Scoped by design</h2></div><CheckCircle size={22} weight="fill" className="green-icon" /></div>
           <div className="contract-line"><span>Response</span><strong>202 Accepted</strong></div>
           <div className="contract-line"><span>Returns</span><code>root_id · job_id · pending</code></div>
@@ -302,7 +302,7 @@ function ScanPage({ jobId }) {
         </div>
       )}
       <ErrorNotice error={error} />
-      <section className="workspace-panel progress-panel">
+      <section className="workspace-panel glass-card progress-panel">
         <div className="progress-head"><div><p className="meta-label">SCAN JOB · ROOT</p><h2>{job?.root_id || (error ? "Job status unavailable" : "Connecting to scan job")}</h2></div><span className="poll-count">{job ? "Updated on poll " + pollCount : "Waiting for first response"}</span></div>
         {job ? (
           <>
@@ -312,7 +312,7 @@ function ScanPage({ jobId }) {
           </>
         ) : error ? <div className="state-message state-error">Progress could not be loaded. Review the error above, then reopen this scan link.</div> : <div className="loading-state"><span className="loading-bar" /><span>Fetching committed job status…</span></div>}
       </section>
-      <section className="workspace-panel timeline-panel">
+      <section className="workspace-panel glass-card timeline-panel">
         <div className="panel-title-row"><div><p className="meta-label">BACKGROUND WORKER</p><h2>Job lifecycle</h2></div><span className="lifecycle-note">Scan completion ≠ parse completion</span></div>
         <div className="timeline">
           {[
@@ -339,6 +339,13 @@ function Inspector({ data }) {
     setTab("evidence");
     setCopied(false);
   }, [data?.file?.file_id, data?.file?.version_id]);
+  useEffect(() => {
+    function closeOnEscape(event) {
+      if (event.key === "Escape") data?.onClose?.();
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [data?.onClose]);
   if (!data?.file) return null;
   const { file, evidence, evidenceError, evidenceLoading } = data;
   const status = file.status === "failed" ? "failed_file" : file.status;
@@ -353,8 +360,8 @@ function Inspector({ data }) {
     }
   }
   return (
-    <div className="inspector-content">
-      <div className="inspector-heading"><div><p className="meta-label">FILE INSPECTOR</p><h2>Source context</h2></div><button className="inspector-close" onClick={data.onClose} aria-label="Close inspector">×</button></div>
+    <div className="inspector-content reveal-on-load">
+      <div className="inspector-heading"><div><p className="meta-label">FILE INSPECTOR</p><h2>Source context</h2></div><div className="inspector-close-wrap"><kbd>ESC</kbd><button className="inspector-close" onClick={data.onClose} aria-label="Close inspector">×</button></div></div>
       <div className="inspector-file-head"><span className={"inspector-file-icon tone-" + meta.tone}><FileText size={19} weight="duotone" /></span><div><strong>{file.display_name}</strong><StatusBadge status={status} /></div></div>
       <div className="path-block"><div className="path-label"><span>LOCAL PATH</span><button onClick={copyPath}>{copied ? "Copied" : "Copy"}</button></div><code>{file.relative_path}</code></div>
       <div className="inspector-tabs" role="tablist" aria-label="File details">
@@ -482,29 +489,37 @@ function ResultsPage({ rootId, onInspector }) {
   return (
     <>
       <PageHeading eyebrow="SEARCH & DISCOVER" title="Find in your files" description={rootId + " · Current versions with traceable source evidence"} action={<span className="scope-chip"><span />Authorized scope</span>} />
-      <div className="search-field"><span className="search-glyph">⌕</span><input ref={searchInput} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by concept, topic, person, or keyword across authorized folders…" aria-label="Search files" /><kbd>⌘ K</kbd></div>
+      <div className="search-field spotlight-field"><span className="search-glyph">⌕</span><input ref={searchInput} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by concept, topic, person, or keyword across authorized folders…" aria-label="Search files" /><kbd>⌘ K</kbd></div>
+      <div className="search-telemetry" aria-live="polite">
+        <span className="telemetry-led" />
+        <span>{loading ? "Reading local index" : "Found " + filteredFiles.length + " matching files"}</span>
+        <span className="telemetry-separator">·</span>
+        <span>{loading ? "Preparing evidence" : (counts.failed + counts.unsupported) + " attention items"}</span>
+        <span className="telemetry-separator">·</span>
+        <span className="telemetry-ready">{loading ? "Index warming" : "Local index ready"}</span>
+      </div>
       <div className="filter-row" aria-label="File filters">
         {[["all", "All files"], ["ready", "Ready"], ["attention", "Needs attention"]].map(([key, label]) => <button key={key} className={filter === key ? "filter-chip selected" : "filter-chip"} onClick={() => setFilter(key)}>{label}{key === "all" && !loading && <span>{files.length}</span>}{key === "ready" && !loading && <span>{counts.ready}</span>}{key === "attention" && !loading && <span>{counts.failed + counts.unsupported}</span>}</button>)}
         <span className="filter-separator" />
         <span className="filter-summary">{loading ? "Loading files…" : filteredFiles.length + " results"}</span>
       </div>
       <ErrorNotice error={error} />
-      <div className="result-overview">
+      <div className="result-overview glass-card">
         <div><span>SEARCHABLE</span><strong className="tone-green">{loading ? "—" : counts.ready}</strong></div>
         <div><span>FAILED</span><strong className="tone-rose">{loading ? "—" : counts.failed}</strong></div>
         <div><span>UNSUPPORTED</span><strong className="tone-amber">{loading ? "—" : counts.unsupported}</strong></div>
         <div className="overview-note"><span className="overview-led" /><span>Evidence is tied to a specific content version</span></div>
       </div>
-      <section className="results-panel">
+      <section className="results-panel glass-card">
         <div className="results-header"><div><h2>Files</h2><p>Matched passages and processing state</p></div><span className="results-count">{loading ? "Loading" : filteredFiles.length + " of " + files.length}</span></div>
         {loading ? <div className="results-loading" role="status"><span className="loading-bar" /><span>Loading current file versions…</span></div> : error ? <div className="empty-state"><FolderOpen size={30} /><h3>Results unavailable</h3><p>Check the request error above and reopen this view.</p></div> : files.length === 0 ? <div className="empty-state"><FolderOpen size={30} /><h3>No indexed files yet</h3><p>Authorize a configured directory and complete a scan to populate this workspace.</p><ActionButton className="secondary-button" onClick={() => navigate("/select")}>Authorize local directory</ActionButton></div> : filteredFiles.length === 0 ? <div className="empty-state"><h3>No matches found</h3><p>Try a broader phrase or clear the current filters.</p><button className="text-button" onClick={() => { setQuery(""); setFilter("all"); }}>Clear search and filters</button></div> : (
           <div className="file-list">
-            {filteredFiles.map((file) => {
+            {filteredFiles.map((file, index) => {
               const key = file.file_id + ":" + file.version_id;
               const tone = file.status === "failed" ? "rose" : file.status === "unsupported" ? "amber" : "indigo";
               const status = statusMeta(file.status === "failed" ? "failed_file" : file.status);
               return (
-                <motion.article key={key} className={"file-row " + (selectedKey === key ? "selected" : "")} layout transition={{ duration: 0.18 }}>
+                <motion.article key={key} style={{ "--stagger-index": Math.min(index, 7) }} className={"file-row motion-stagger " + (selectedKey === key ? "selected" : "")} layout transition={{ duration: 0.18 }}>
                   <button className="file-row-main" onClick={() => selectFile(file)} aria-pressed={selectedKey === key}>
                     <span className={"document-icon doc-" + tone}><FileText size={18} weight="duotone" /></span>
                     <span className="file-main-copy"><strong>{file.display_name}</strong><code>{file.relative_path}</code></span>
@@ -513,7 +528,7 @@ function ResultsPage({ rootId, onInspector }) {
                   </button>
                   <div className="file-row-details">
                     <div className="file-match"><span className="match-label">MATCH REASON</span><strong>{file.status === "basic_ready" ? "Matched via indexed source passage" : file.status === "failed" ? "Processing stopped · fallback to filename search" : "Format not supported · filename remains searchable"}</strong></div>
-                    <div className="file-passage"><span className="quote-mark">“</span><span>{file.snippet}</span><code>{file.page_count ? "Page 1 · " + file.page_count + " page" + (file.page_count === 1 ? "" : "s") : file.expected_error_code || "No page locator"}</code></div>
+                    <div className="file-passage"><span className="quote-mark">“</span><span>{file.snippet}</span><code className="passage-locator">{file.page_count ? "Page 1 · " + file.page_count + " page" + (file.page_count === 1 ? "" : "s") : file.expected_error_code || "No page locator"}</code></div>
                     <div className="file-meta-line"><span><i className={"tiny-state " + (file.status === "basic_ready" ? "confirmed" : file.status === "failed" ? "failed" : "paused")} />{file.status === "basic_ready" ? "Source supported" : file.status === "failed" ? "Action needed" : "Unsupported format"}</span><span className="file-version">ID {file.file_id} · {file.version_id}</span></div>
                     {(file.source_available === false || file.capability_status === "keyword_only" || file.expected_error_code) && <div className={"file-warning " + (file.status === "failed" ? "warning-danger" : "")}>{file.expected_error_code || (file.source_available === false ? "Source file unavailable" : "Keyword-only search capability")}</div>}
                   </div>
@@ -538,7 +553,7 @@ function UnavailablePage({ kind }) {
         description={graph ? "Local relationships and source-backed context will appear here." : "Preview every change before explicit approval. Original files remain untouched until execution is available."}
         action={<span className="status-badge status-neutral">Adapter unavailable</span>}
       />
-      <section className="workspace-panel unavailable-panel">
+      <section className={"workspace-panel glass-card unavailable-panel bg-dot-grid " + (graph ? "graph-empty" : "organize-empty")}>
         <div className="unavailable-mark">{graph ? "◇" : "⇄"}</div>
         <div>
           <h2>{graph ? "Graph data is not exposed yet" : "No organization endpoint is available"}</h2>
