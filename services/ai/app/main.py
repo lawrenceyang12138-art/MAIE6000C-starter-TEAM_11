@@ -1,13 +1,21 @@
 from __future__ import annotations
 
 import logging
+from functools import lru_cache
 from time import perf_counter
 
-from fastapi import FastAPI, Response
+from fastapi import Depends, FastAPI, HTTPException, Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 
-from services.common.config import configure_logging
-from services.common.schemas import HealthResponse, TriageRequest, TriageResponse
+from services.common.config import configure_logging, get_settings
+from services.common.schemas import (
+    EmbeddingRequest,
+    EmbeddingResponse,
+    HealthResponse,
+    TriageRequest,
+    TriageResponse,
+)
+from services.search.embeddings import EmbeddingUnavailable, LocalE5EmbeddingBackend
 
 configure_logging()
 logger = logging.getLogger("services.ai.main")
@@ -16,6 +24,14 @@ app = FastAPI(title="MAIE 6000C Starter AI Service", version="0.1.0")
 
 TRIAGE_REQUESTS = Counter("ai_triage_requests_total", "Total triage requests", ["label"])
 TRIAGE_LATENCY = Histogram("ai_triage_duration_seconds", "Triage duration in seconds")
+EMBEDDING_REQUESTS = Counter("ai_embedding_requests_total", "Embedding requests", ["status"])
+
+
+@lru_cache(maxsize=1)
+def get_local_embedding_backend() -> LocalE5EmbeddingBackend:
+    settings = get_settings()
+    return LocalE5EmbeddingBackend(settings.embedding_model_path, settings.embedding_cpu_threads)
+
 
 LABEL_KEYWORDS = {
     "incident": {"error", "outage", "down", "failed", "failure", "broken", "crash", "bug"},
@@ -85,3 +101,19 @@ def triage(payload: TriageRequest) -> TriageResponse:
         },
     )
     return result
+
+
+@app.post("/embeddings", response_model=EmbeddingResponse)
+def embeddings(
+    payload: EmbeddingRequest,
+    backend: LocalE5EmbeddingBackend = Depends(get_local_embedding_backend),
+) -> EmbeddingResponse:
+    if not get_settings().embedding_enabled:
+        raise HTTPException(status_code=503, detail="ai_disabled")
+    try:
+        vectors = backend.embed(payload.texts, payload.kind)
+    except EmbeddingUnavailable as exc:
+        EMBEDDING_REQUESTS.labels("unavailable").inc()
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    EMBEDDING_REQUESTS.labels("ok").inc()
+    return EmbeddingResponse(model=backend.model_id, dimensions=backend.dimensions, vectors=vectors)
