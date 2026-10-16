@@ -124,7 +124,15 @@ docker compose --profile observability up --build
 
 - API docs: `http://localhost:8000/docs`
 - AI service docs: `http://localhost:8100/docs`
+- D demo frontend: `http://localhost:3000/select`
 - Prometheus: `http://localhost:9090` if the observability profile is enabled
+
+The D frontend is Mock-first and is built as part of `docker compose up --build`.
+It can start independently of the Python API; API requests are proxied only
+when API mode is enabled.
+Set `FRONTEND_DATA_MODE=api` before rebuilding to use the future file-management
+routes through the frontend's `/api` proxy. The current starter API does not yet
+implement those routes, so Mock mode is the runnable default.
 
 ## Typical development commands
 
