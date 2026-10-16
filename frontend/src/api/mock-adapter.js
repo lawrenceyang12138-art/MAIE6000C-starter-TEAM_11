@@ -117,10 +117,28 @@ export function createMockAdapter(data, { latency = 80 } = {}) {
       }));
       return clone(files);
     },
+    async getRoot(rootId) {
+      await delay(latency);
+      if (rootId !== data.root.root_id && rootId !== "root-empty-01") {
+        throw new AdapterError("Directory authorization not found.", { status: 404, code: "UNKNOWN_ROOT" });
+      }
+      const current = [...jobs.values()].findLast((job) => job.rootId === rootId);
+      const sequence = sequenceFor(rootId);
+      const cursor = current ? Math.max(0, (jobCursors.get(current.jobId) ?? 1) - 1) : sequence.length - 1;
+      const progress = sequence[cursor];
+      // Only an explicit mock adapter creates these demonstration aggregates.
+      return {
+        root_id: rootId, status: "active", availability: "available",
+        file_counts: { total: progress.total, basic_ready: progress.normal, enriched: 0, failed: progress.abnormal, unsupported: progress.unsupported },
+      };
+    },
     async getEvidence(fileId, versionId) {
       await delay(latency);
       const evidence = data.evidence[`${fileId}:${versionId}`];
       const file = data.files.find((item) => item.file_id === fileId);
+      if (file && file.version_id !== versionId) {
+        throw new AdapterError("The file version changed. Reload the results.", { status: 409, code: "STALE_VERSION" });
+      }
       if (file?.source_available === false) {
         throw new AdapterError("The source file is unavailable. Re-check the mounted directory.", { status: 404, code: "SOURCE_UNAVAILABLE" });
       }

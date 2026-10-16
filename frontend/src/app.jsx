@@ -9,7 +9,7 @@ import {
   WarningCircle,
 } from "@phosphor-icons/react";
 import { createAdapter } from "./api/adapter.js";
-import { dedupeFiles, isEvidenceForVersion, statusMeta, summarizeProgress } from "./lib/scan.js";
+import { dedupeFiles, isEvidenceForVersion, isSourceUnavailable, shouldPoll, statusMeta, summarizeProgress } from "./lib/scan.js";
 
 const adapter = createAdapter();
 
@@ -59,7 +59,7 @@ function ErrorNotice({ error }) {
       <span className="notice-icon"><WarningCircle size={17} weight="fill" aria-hidden="true" /></span>
       <div>
         <strong>{error.message}</strong>
-        <span>Error code: {error.code || "UNKNOWN_ERROR"} · HTTP {error.status || 500}</span>
+        <span>Error code: {error.code || "UNKNOWN_ERROR"} · {error.status ? "HTTP " + error.status : "No HTTP response"}</span>
       </div>
     </div>
   );
@@ -84,7 +84,7 @@ function Shell({ children, activeLabel, activeNav, inspector, rootId }) {
         </button>
         <div className="engine-state">
           <span className="engine-dot" />
-          <span><strong>Local engine ready</strong><small>Offline safe · {adapter.mode === "mock" ? "Demo data" : "API connected"}</small></span>
+          <span><strong>{adapter.mode === "mock" ? "Simulated local engine" : "Local service mode"}</strong><small>{adapter.mode === "mock" ? "Demo data · not product evidence" : "API state must be verified"}</small></span>
         </div>
         <div className="sidebar-label">WORKSPACE</div>
         <nav className="primary-nav">
@@ -105,7 +105,7 @@ function Shell({ children, activeLabel, activeNav, inspector, rootId }) {
           <div className="sidebar-label">AUTHORIZED SCOPE</div>
           <div className="scope-item">
             <span className="scope-icon"><FolderOpen size={16} weight="duotone" /></span>
-            <span><strong>Team 11 demo mount</strong><small>Read-only · synthetic data</small></span>
+            <span><strong>Read-only configured mounts</strong><small>{adapter.mode === "mock" ? "Synthetic demonstration" : "Scope returned by API"}</small></span>
             <span className="scope-state" title="Active" />
           </div>
           <ActionButton className="scope-scan" onClick={() => navigate("/select")}><span>+</span> Authorize or scan</ActionButton>
@@ -115,12 +115,15 @@ function Shell({ children, activeLabel, activeNav, inspector, rootId }) {
       <header className="topbar">
         <div className="breadcrumbs"><span>WORKSPACE</span><span className="crumb-slash">/</span><strong>{activeLabel}</strong></div>
         <div className="topbar-right">
-          <span className="offline-indicator"><i />Offline ready</span>
+          <span className="offline-indicator"><i />{adapter.mode === "mock" ? "Simulation only" : "Local API · not health-verified"}</span>
           <span className={"mode-pill " + (adapter.mode === "mock" ? "mode-mock" : "mode-api")}>{adapter.mode === "mock" ? "Demo data" : "API mode"}</span>
           <span className="avatar" aria-label="Local user">T</span>
         </div>
       </header>
-      <main className="page-wrap" id="main-content">{children}</main>
+      <main className="page-wrap" id="main-content">
+        {adapter.mode === "mock" && <div className="notice notice-info" role="note">SIMULATED CONTRACT DATA — not real backend, parser, model, or product acceptance evidence.</div>}
+        {children}
+      </main>
       <aside className={"inspector-pane " + (inspector ? "has-selection" : "")} aria-label="Context inspector">
         {inspector || (
           <div className="inspector-empty">
@@ -133,7 +136,7 @@ function Shell({ children, activeLabel, activeNav, inspector, rootId }) {
       </aside>
       <footer className="footer">
         <span><span className="footer-dot" />Local-first · Read-only mounts · Evidence is version-bound</span>
-        <span>CONTRACT <code>d-mock-contract-v1</code></span>
+        <span>CONTRACT <code>{adapter.mode === "mock" ? "d-mock-contract-v1" : "d-ui-integration-v1"}</code></span>
       </footer>
     </div>
   );
@@ -161,16 +164,32 @@ function SelectPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [directoriesLoading, setDirectoriesLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setMounts([]);
+    setMountId("");
+    setRelativePath("");
+    setDirectories([]);
+    setError(null);
     adapter.listMounts().then((items) => {
+      if (cancelled) return;
       setMounts(items);
       if (items[0]) setMountId(items[0].mount_id);
-    }).catch(setError).finally(() => setLoading(false));
-  }, []);
+    }).catch((caught) => { if (!cancelled) setError(caught); }).finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [reload]);
 
   useEffect(() => {
-    if (!mountId) return undefined;
+    if (!mountId) {
+      setRelativePath("");
+      setDirectories([]);
+      setDirectoriesLoading(false);
+      return undefined;
+    }
     let cancelled = false;
     setRelativePath("");
     setDirectories([]);
@@ -184,10 +203,12 @@ function SelectPage() {
       if (!cancelled) setDirectoriesLoading(false);
     });
     return () => { cancelled = true; };
-  }, [mountId]);
+  }, [mountId, reload]);
 
   async function submit(event) {
     event.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
     setError(null);
     setAccepted(null);
     try {
@@ -197,7 +218,7 @@ function SelectPage() {
       navigate("/scan/" + response.job_id);
     } catch (caught) {
       setError(caught);
-    }
+    } finally { setSubmitting(false); }
   }
 
   return (
@@ -209,6 +230,8 @@ function SelectPage() {
         action={<StatusBadge status="completed" label={adapter.mode === "mock" ? "Demo environment" : "API mode"} />}
       />
       <ErrorNotice error={error} />
+      {error && <button className="secondary-button" onClick={() => setReload((value) => value + 1)}>Retry directory reads</button>}
+      {!loading && !error && mounts.length === 0 && <div className="notice notice-info" role="status">No configured read-only mounts. Ask the service owner to configure an authorized source.</div>}
       {accepted && (
         <div className="notice notice-success" role="status" aria-live="polite">
           <CheckCircle size={18} weight="fill" />
@@ -231,7 +254,7 @@ function SelectPage() {
             {directories.map((directory) => <option key={directory.relative_path} value={directory.relative_path}>{directory.label} · {directory.relative_path}</option>)}
           </select>
           <div className="form-hint" id="mount-hint"><LockKey size={16} weight="duotone" /><span>The mount is read-only. File enumeration and parsing happen asynchronously after this request.</span></div>
-          <ActionButton className="primary-button" type="submit" disabled={!relativePath || loading}>Authorize and start scan <ArrowUpRight size={16} /></ActionButton>
+          <ActionButton className="primary-button" type="submit" disabled={!relativePath || loading || directoriesLoading || submitting}>{submitting ? "Waiting for acceptance…" : "Authorize and start scan"} <ArrowUpRight size={16} /></ActionButton>
         </form>
         <section className="workspace-panel glass-card contract-panel">
           <div className="panel-title-row"><div><p className="meta-label">REQUEST CONTRACT</p><h2>Scoped by design</h2></div><CheckCircle size={22} weight="fill" className="green-icon" /></div>
@@ -255,40 +278,51 @@ function StatStrip({ progress }) {
   const stats = summarizeProgress(progress);
   return (
     <div className="job-stats">
-      <div><span>Files observed</span><strong>{stats.processed}<small> / {stats.total}</small></strong></div>
-      <div><span>Searchable</span><strong className="tone-green">{stats.normal}</strong></div>
-      <div><span>Failed</span><strong className="tone-rose">{stats.abnormal}</strong></div>
-      <div><span>Unsupported</span><strong className="tone-amber">{stats.unsupported}</strong></div>
+      <div><span>Files processed</span><strong>{stats.processed ?? "—"}<small> / {stats.total ?? "—"}</small></strong></div>
+      <div><span>Searchable</span><strong className="tone-green">{stats.normal ?? "—"}</strong></div>
+      <div><span>Failed</span><strong className="tone-rose">{stats.abnormal ?? "—"}</strong></div>
+      <div><span>Unsupported</span><strong className="tone-amber">{stats.unsupported ?? "—"}</strong></div>
     </div>
   );
 }
 
 function ScanPage({ jobId }) {
   const [job, setJob] = useState(null);
+  const [root, setRoot] = useState(null);
   const [error, setError] = useState(null);
   const [pollCount, setPollCount] = useState(0);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     let timer;
+    setJob(null);
+    setRoot(null);
+    setError(null);
+    setPollCount(0);
     async function poll() {
       try {
         const next = await adapter.getJob(jobId);
         if (cancelled) return;
         setJob(next);
+        const scope = await adapter.getRoot(next.root_id);
+        if (cancelled) return;
+        setRoot(scope);
+        setError(null);
         setPollCount((count) => count + 1);
-        if (next.status !== "completed" && next.status !== "failed") timer = window.setTimeout(poll, 900);
+        if (shouldPoll(next, scope)) timer = window.setTimeout(poll, 900);
       } catch (caught) {
-        if (!cancelled) setError(caught);
+        if (!cancelled) { setRoot(null); setError(caught); }
       }
     }
     poll();
     return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [jobId]);
+  }, [jobId, reload]);
 
   const meta = statusMeta(job?.status || "pending");
-  const progress = job ? summarizeProgress(job) : null;
-  const terminalStatus = job?.status === "failed" ? "failed" : "completed";
+  const progress = summarizeProgress(root);
+  const stopped = ["failed", "canceled"].includes(job?.status);
+  const terminalStatus = stopped ? job.status : "completed";
   const stageIndex = ["pending", "running", terminalStatus].indexOf(job?.status || "");
   const completed = job?.status === "completed";
   return (
@@ -297,18 +331,20 @@ function ScanPage({ jobId }) {
       {job && (
         <div className={"notice " + (job.status === "failed" ? "notice-danger" : "notice-info")} role="status" aria-live="polite">
           <span className="notice-icon">{job.status === "failed" ? <WarningCircle size={18} weight="fill" /> : <CheckCircle size={18} weight="fill" />}</span>
-          <div><strong>{job.status === "failed" ? "Scan job failed" : "Scan job accepted"}</strong><span>Root {job.root_id} · Job {job.job_id} · Current status {job.status}</span></div>
+          <div><strong>{job.status === "failed" ? "Scan job failed" : job.status === "canceled" ? "Scan job canceled" : "Scan job accepted"}</strong><span>Root {job.root_id} · Job {job.job_id} · Last read status {job.status}</span></div>
           <code>{job.error_code || ("Poll " + pollCount + " · attempt " + (job.attempts || 1))}</code>
         </div>
       )}
       <ErrorNotice error={error} />
+      {error && <button className="secondary-button" onClick={() => setReload((value) => value + 1)}>Retry status reads</button>}
+      {root?.availability && root.availability !== "available" && <div className="notice notice-danger" role="alert">Source unavailable. Existing cached results do not prove the source is accessible.</div>}
+      {completed && <div className="notice notice-info" role="status">Scan discovery complete — extraction and AI are separate. {progress.known ? progress.pending + " files still awaiting processing." : "File counters unavailable; processing readiness is unknown."}</div>}
       <section className="workspace-panel glass-card progress-panel">
         <div className="progress-head"><div><p className="meta-label">SCAN JOB · ROOT</p><h2>{job?.root_id || (error ? "Job status unavailable" : "Connecting to scan job")}</h2></div><span className="poll-count">{job ? "Updated on poll " + pollCount : "Waiting for first response"}</span></div>
-        {job ? (
+        {job && root ? (
           <>
-            <div className="progress-track" role="progressbar" aria-label="Scan progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow={progress.percent}><span style={{ transform: "scaleX(" + (progress.percent / 100) + ")" }} /></div>
-            <div className="progress-caption"><strong>{progress.percent}%</strong><span>{progress.processed} of {progress.total} files observed</span></div>
-            <StatStrip progress={job} />
+            {progress.known ? <><div className="progress-track" role="progressbar" aria-label="File processing progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow={progress.percent}><span style={{ transform: "scaleX(" + (progress.percent / 100) + ")" }} /></div><div className="progress-caption"><strong>{progress.percent}%</strong><span>{progress.processed} of {progress.total} files processed · {progress.pending} pending</span></div></> : <div className="state-message">File counters unavailable. No readiness is inferred from scan status.</div>}
+            <StatStrip progress={root} />
           </>
         ) : error ? <div className="state-message state-error">Progress could not be loaded. Review the error above, then reopen this scan link.</div> : <div className="loading-state"><span className="loading-bar" /><span>Fetching committed job status…</span></div>}
       </section>
@@ -318,14 +354,14 @@ function ScanPage({ jobId }) {
           {[
             ["pending", "Accepted", "202 response issued"],
             ["running", "Scanning", "Worker enumerates files"],
-            [terminalStatus, job?.status === "failed" ? "Stopped" : "Complete", job?.status === "failed" ? job.error_code || "Execution error" : "Results are ready"],
+            [terminalStatus, stopped ? "Stopped" : "Discovery complete", stopped ? "Check the job status and failure code" : "File processing tracked separately"],
           ].map(([status, title, detail], index) => (
             <div className={"timeline-item " + (index < stageIndex ? "complete " : "") + (index === stageIndex ? "active " : "") + (index === stageIndex && terminalStatus === "failed" ? "failed" : "")} key={status + index} aria-current={index === stageIndex ? "step" : undefined}>
               <span className="timeline-marker" /><div><strong>{title}</strong><small>{detail}</small></div>
             </div>
           ))}
         </div>
-        {completed && <ActionButton className="primary-button" onClick={() => { window.sessionStorage.setItem("lastRootId", job.root_id); navigate("/results/" + job.root_id); }}>View results and evidence <ArrowUpRight size={16} /></ActionButton>}
+        {job?.root_id && <ActionButton className="primary-button" onClick={() => { window.sessionStorage.setItem("lastRootId", job.root_id); navigate("/results/" + job.root_id); }}>View available files and evidence <ArrowUpRight size={16} /></ActionButton>}
       </section>
       <div className="state-boundary"><LockKey size={17} /><span><strong>Read-only status</strong><small>The API returns committed state. This client never submits job lifecycle values.</small></span></div>
     </>
@@ -348,6 +384,7 @@ function Inspector({ data }) {
   }, [data?.onClose]);
   if (!data?.file) return null;
   const { file, evidence, evidenceError, evidenceLoading } = data;
+  const invalidSource = isSourceUnavailable(file, evidenceError);
   const status = file.status === "failed" ? "failed_file" : file.status;
   const meta = statusMeta(status);
   async function copyPath() {
@@ -369,12 +406,12 @@ function Inspector({ data }) {
       </div>
       {tab === "evidence" && (
         <div className="inspector-tab-content">
-          <div className="evidence-section-title"><span>Matched source</span><span className="evidence-locator">{file.page_count ? "Page 1 · " + file.page_count + " page" + (file.page_count === 1 ? "" : "s") : "No locator"}</span></div>
-          <div className="passage-card"><span className="passage-quote">“</span><p>{file.snippet}</p><small>{file.scan_note}</small></div>
-          {file.source_available === false && <div className="stale-warning"><WarningCircle size={16} /><span>Source file unavailable. Re-check the mounted directory.</span></div>}
+          <div className="evidence-section-title"><span>Indexed passage</span><span className="evidence-locator">{file.page_count ? file.page_count + " source pages" : "No locator"}</span></div>
+          <div className="passage-card"><span className="passage-quote">“</span><p>{invalidSource ? "Cached passage hidden until the source is verified." : file.snippet || "No indexed passage available."}</p><small>{file.scan_note}</small></div>
+          {invalidSource && <div className="stale-warning"><WarningCircle size={16} /><span>Source file unavailable or changed. Re-check the mounted directory.</span></div>}
           {file.capability_status === "keyword_only" && <div className="fallback-note">Keyword-only mode · semantic enrichment unavailable</div>}
           <div className="evidence-detail-heading"><strong>Version evidence</strong><code>{file.version_id}</code></div>
-          {evidenceLoading ? <div className="loading-line">Loading version-bound evidence…</div> : evidenceError ? <ErrorNotice error={evidenceError} /> : evidence?.length ? evidence.map((item) => <div className="evidence-record" key={item.evidence_id}><span className="page-index">P{item.page}</span><div><strong>{item.source_path}</strong><p>{item.excerpt}</p></div></div>) : <p className="muted-copy">{file.page_count === 0 ? "No page evidence is available for this file." : "Open the source evidence to load its version-bound passages."}</p>}
+          {invalidSource ? <>{evidenceError && <ErrorNotice error={evidenceError} />}<p className="muted-copy">Source evidence is hidden until the current source is verified.</p></> : evidenceLoading ? <div className="loading-line">Loading version-bound evidence…</div> : evidenceError ? <ErrorNotice error={evidenceError} /> : evidence?.length ? evidence.map((item) => <div className="evidence-record" key={item.evidence_id}><span className="page-index">P{item.page}</span><div><strong>{item.source_path}</strong><p>{item.excerpt}</p></div></div>) : <p className="muted-copy">{file.page_count === 0 ? "No page evidence is available for this file." : "Open the source evidence to load its version-bound passages."}</p>}
           <button className="subtle-button" disabled>Open local preview <span>Not available in this adapter</span></button>
         </div>
       )}
@@ -412,10 +449,13 @@ function ResultsPage({ rootId, onInspector }) {
   const [error, setError] = useState(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
+  const [reload, setReload] = useState(0);
   const searchInput = useRef(null);
+  const generation = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
+    generation.current += 1;
     setLoading(true);
     setFiles([]);
     setError(null);
@@ -430,8 +470,8 @@ function ResultsPage({ rootId, onInspector }) {
     }).finally(() => {
       if (!cancelled) setLoading(false);
     });
-    return () => { cancelled = true; };
-  }, [rootId]);
+    return () => { cancelled = true; generation.current += 1; };
+  }, [rootId, reload]);
 
   const selected = files.find((file) => file.file_id + ":" + file.version_id === selectedKey) || null;
   useEffect(() => {
@@ -456,23 +496,26 @@ function ResultsPage({ rootId, onInspector }) {
   }, []);
 
   async function selectFile(file) {
+    const requestGeneration = generation.current;
     const key = file.file_id + ":" + file.version_id;
     setSelectedKey(key);
-    if (evidence[key] || evidenceErrors[key] || file.page_count === 0) return;
+    if (isSourceUnavailable(file) || evidence[key] || evidenceErrors[key] || file.page_count === 0) return;
     setEvidenceLoading((current) => ({ ...current, [key]: true }));
     try {
       const items = await adapter.getEvidence(file.file_id, file.version_id);
-      if (!isEvidenceForVersion(items, file.file_id, file.version_id)) throw new Error("The evidence version does not match the result.");
+      if (generation.current !== requestGeneration) return;
+      if (!isEvidenceForVersion(items, file.file_id, file.version_id, { sourcePath: file.relative_path, pageCount: file.page_count })) throw new Error("The evidence file, version, source path or page does not match the current result.");
       setEvidence((current) => ({ ...current, [key]: items }));
     } catch (caught) {
+      if (generation.current !== requestGeneration) return;
       setEvidenceErrors((current) => ({ ...current, [key]: caught }));
     } finally {
-      setEvidenceLoading((current) => ({ ...current, [key]: false }));
+      if (generation.current === requestGeneration) setEvidenceLoading((current) => ({ ...current, [key]: false }));
     }
   }
 
   const counts = useMemo(() => files.reduce((result, file) => {
-    if (file.status === "basic_ready") result.ready += 1;
+    if (["basic_ready", "enriched"].includes(file.status)) result.ready += 1;
     if (file.status === "failed") result.failed += 1;
     if (file.status === "unsupported") result.unsupported += 1;
     return result;
@@ -480,23 +523,24 @@ function ResultsPage({ rootId, onInspector }) {
   const filteredFiles = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return files.filter((file) => {
-      const matchesQuery = !needle || [file.display_name, file.relative_path, file.file_id, file.snippet, file.scan_note].some((value) => String(value || "").toLowerCase().includes(needle));
-      const matchesFilter = filter === "all" || (filter === "ready" && file.status === "basic_ready") || (filter === "attention" && file.status !== "basic_ready");
+      const invalidSource = isSourceUnavailable(file, evidenceErrors[file.file_id + ":" + file.version_id]);
+      const matchesQuery = !needle || [file.display_name, file.relative_path, file.file_id, invalidSource ? "" : file.snippet, file.scan_note].some((value) => String(value || "").toLowerCase().includes(needle));
+      const matchesFilter = filter === "all" || (filter === "ready" && ["basic_ready", "enriched"].includes(file.status)) || (filter === "attention" && !["basic_ready", "enriched"].includes(file.status));
       return matchesQuery && matchesFilter;
     });
-  }, [files, query, filter]);
+  }, [files, query, filter, evidenceErrors]);
 
   return (
     <>
-      <PageHeading eyebrow="SEARCH & DISCOVER" title="Find in your files" description={rootId + " · Current versions with traceable source evidence"} action={<span className="scope-chip"><span />Authorized scope</span>} />
-      <div className="search-field spotlight-field"><span className="search-glyph">⌕</span><input ref={searchInput} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by concept, topic, person, or keyword across authorized folders…" aria-label="Search files" /><kbd>⌘ K</kbd></div>
+      <PageHeading eyebrow="SEARCH & DISCOVER" title="Find in your files" description={rootId + " · Current versions with traceable source evidence"} action={<button className="secondary-button" disabled={loading} onClick={() => setReload((value) => value + 1)}>Refresh current versions</button>} />
+      <div className="search-field spotlight-field"><span className="search-glyph">⌕</span><input ref={searchInput} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Filter loaded filenames, relative paths and available snippets…" aria-label="Filter loaded files" /><kbd>⌘ K</kbd></div>
       <div className="search-telemetry" aria-live="polite">
         <span className="telemetry-led" />
-        <span>{loading ? "Reading local index" : "Found " + filteredFiles.length + " matching files"}</span>
+        <span>{loading ? "Loading file records" : error ? "File records unavailable" : "Found " + filteredFiles.length + " matching files"}</span>
         <span className="telemetry-separator">·</span>
         <span>{loading ? "Preparing evidence" : (counts.failed + counts.unsupported) + " attention items"}</span>
         <span className="telemetry-separator">·</span>
-        <span className="telemetry-ready">{loading ? "Index warming" : "Local index ready"}</span>
+        <span className="telemetry-ready">{loading ? "Reading service state" : error ? "Check local API" : "Client-side filter · not semantic search"}</span>
       </div>
       <div className="filter-row" aria-label="File filters">
         {[["all", "All files"], ["ready", "Ready"], ["attention", "Needs attention"]].map(([key, label]) => <button key={key} className={filter === key ? "filter-chip selected" : "filter-chip"} onClick={() => setFilter(key)}>{label}{key === "all" && !loading && <span>{files.length}</span>}{key === "ready" && !loading && <span>{counts.ready}</span>}{key === "attention" && !loading && <span>{counts.failed + counts.unsupported}</span>}</button>)}
@@ -505,9 +549,9 @@ function ResultsPage({ rootId, onInspector }) {
       </div>
       <ErrorNotice error={error} />
       <div className="result-overview glass-card">
-        <div><span>SEARCHABLE</span><strong className="tone-green">{loading ? "—" : counts.ready}</strong></div>
-        <div><span>FAILED</span><strong className="tone-rose">{loading ? "—" : counts.failed}</strong></div>
-        <div><span>UNSUPPORTED</span><strong className="tone-amber">{loading ? "—" : counts.unsupported}</strong></div>
+        <div><span>SEARCHABLE</span><strong className="tone-green">{loading || error ? "—" : counts.ready}</strong></div>
+        <div><span>FAILED</span><strong className="tone-rose">{loading || error ? "—" : counts.failed}</strong></div>
+        <div><span>UNSUPPORTED</span><strong className="tone-amber">{loading || error ? "—" : counts.unsupported}</strong></div>
         <div className="overview-note"><span className="overview-led" /><span>Evidence is tied to a specific content version</span></div>
       </div>
       <section className="results-panel glass-card">
@@ -516,6 +560,7 @@ function ResultsPage({ rootId, onInspector }) {
           <div className="file-list">
             {filteredFiles.map((file, index) => {
               const key = file.file_id + ":" + file.version_id;
+              const invalidSource = isSourceUnavailable(file, evidenceErrors[key]);
               const tone = file.status === "failed" ? "rose" : file.status === "unsupported" ? "amber" : "indigo";
               const status = statusMeta(file.status === "failed" ? "failed_file" : file.status);
               return (
@@ -527,10 +572,10 @@ function ResultsPage({ rootId, onInspector }) {
                     <span className="file-open">Inspect <ArrowUpRight size={14} /></span>
                   </button>
                   <div className="file-row-details">
-                    <div className="file-match"><span className="match-label">MATCH REASON</span><strong>{file.status === "basic_ready" ? "Matched via indexed source passage" : file.status === "failed" ? "Processing stopped · fallback to filename search" : "Format not supported · filename remains searchable"}</strong></div>
-                    <div className="file-passage"><span className="quote-mark">“</span><span>{file.snippet}</span><code className="passage-locator">{file.page_count ? "Page 1 · " + file.page_count + " page" + (file.page_count === 1 ? "" : "s") : file.expected_error_code || "No page locator"}</code></div>
-                    <div className="file-meta-line"><span><i className={"tiny-state " + (file.status === "basic_ready" ? "confirmed" : file.status === "failed" ? "failed" : "paused")} />{file.status === "basic_ready" ? "Source supported" : file.status === "failed" ? "Action needed" : "Unsupported format"}</span><span className="file-version">ID {file.file_id} · {file.version_id}</span></div>
-                    {(file.source_available === false || file.capability_status === "keyword_only" || file.expected_error_code) && <div className={"file-warning " + (file.status === "failed" ? "warning-danger" : "")}>{file.expected_error_code || (file.source_available === false ? "Source file unavailable" : "Keyword-only search capability")}</div>}
+                    <div className="file-match"><span className="match-label">FILE STATE</span><strong>{invalidSource ? "Source unavailable · verify before inspecting evidence" : ["basic_ready", "enriched"].includes(file.status) ? "Indexed record · inspect version-bound evidence" : file.status === "failed" ? "Processing stopped · filename remains visible" : file.status === "unsupported" ? "Format not supported · filename remains visible" : "Processing is not yet complete"}</strong></div>
+                    <div className="file-passage"><span className="quote-mark">“</span><span>{invalidSource ? "Cached passage hidden until the source is verified." : file.snippet}</span><code className="passage-locator">{file.page_count ? file.page_count + " source pages · inspect to locate passage" : file.expected_error_code || file.error_code || "No page locator"}</code></div>
+                    <div className="file-meta-line"><span><i className={"tiny-state " + (["basic_ready", "enriched"].includes(file.status) ? "confirmed" : file.status === "failed" ? "failed" : "paused")} />{["basic_ready", "enriched"].includes(file.status) ? "Indexed source" : file.status === "failed" ? "Action needed" : file.status === "unsupported" ? "Unsupported format" : "Processing pending"}</span><span className="file-version">ID {file.file_id} · {file.version_id}</span></div>
+                    {(invalidSource || file.capability_status === "keyword_only" || file.expected_error_code || file.error_code) && <div className={"file-warning " + (file.status === "failed" ? "warning-danger" : "")}>{file.expected_error_code || file.error_code || (invalidSource ? "Source file unavailable or changed" : "Keyword-only search capability")}</div>}
                   </div>
                 </motion.article>
               );

@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:mock": "node ../scripts/test_d_mock.mjs",
+    "test:integration": "node --test ../scripts/test_d_integration.test.mjs",
+    "gold:check": "python ../scripts/validate_d_gold.py",
     "fixtures:check": "node ../scripts/validate_d_fixtures.mjs"
   },
   "dependencies": {
