@@ -1,5 +1,21 @@
 # MAIE 6000C Starter Template
 
+## Team 11 member C implementation
+
+Member C's feature branch adds bilingual keyword search, pinned offline E5 embeddings,
+pgvector retrieval, hybrid ranking, file deduplication, version/page evidence, and
+explicit keyword fallback when AI is unavailable. See [search implementation and
+verification](docs/search-plan.md) and [integration handoff](docs/search-integration-handoff.md).
+The sample importer uses synthetic text chunks; scanning, authorization, PDF parsing,
+and the final UI require integration with members A/B/D. Internal evaluation evidence
+is stored under `submissions/week07/evidence/C/`. The [local acceptance record](submissions/week07/C-final-check.md)
+records 49 passing tests, including live HTTP smoke, on both the host and Docker
+Python 3.11, the actual 5/5 keyword and 4/5 semantic results, and the remaining
+team integration work. The [requirements review](submissions/week07/C-requirements-review.md)
+also records the schema and migration differences with the remote parsing branch.
+See the [branch review notes](submissions/week07/C-branch-review.md) for the release
+scope, current integration status, and the dates of the verification evidence.
+
 This repository is the starter template for MAIE 6000C: **Engineering AI Products: From Prototype to Production**.
 
 It is intentionally small, but it already demonstrates the core engineering shape expected in the course:
