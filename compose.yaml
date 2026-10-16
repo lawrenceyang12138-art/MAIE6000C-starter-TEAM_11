@@ -6,7 +6,9 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "${POSTGRES_HOST_PORT:-5432}:5432"
+      # Windows: host port 5432 falls inside the Hyper-V reserved range
+      # (5357-5657) and cannot be bound; 15432 is outside every reserved range.
+      - "${POSTGRES_HOST_PORT:-15432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -40,6 +42,10 @@ services:
       AI_SERVICE_URL: http://ai:8100
     ports:
       - "${API_HOST_PORT:-8000}:8000"
+    volumes:
+      # Read-only source mounts (allowlist keys live in services/common/config.py).
+      # The api serves source previews from here; nothing in the stack writes to it.
+      - ./corpus:/source/corpus:ro
     depends_on:
       db:
         condition: service_healthy
@@ -59,6 +65,9 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/maie6000c
       AI_SERVICE_URL: http://ai:8100
+    volumes:
+      # Same read-only source mount as the api service.
+      - ./corpus:/source/corpus:ro
     depends_on:
       db:
         condition: service_healthy
