@@ -14,6 +14,11 @@ class Settings(BaseSettings):
     ai_service_url: str = "http://ai:8100"
     worker_poll_seconds: float = 2.0
     worker_request_timeout_seconds: float = 20.0
+    # Server-side allowlist of read-only source mounts: mount_id -> container path.
+    # The UI may only select folders beneath these mounts; an unknown mount_id is
+    # rejected. Spec: week04 docs/architecture.md "Folder access and local
+    # deployment boundary" (adding a mount requires config change + restart).
+    source_mounts: dict[str, str] = {"corpus": "/source/corpus"}
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
