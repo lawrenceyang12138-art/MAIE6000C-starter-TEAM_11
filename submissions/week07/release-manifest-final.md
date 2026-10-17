@@ -8,7 +8,7 @@ October presentation.
 
 - Repository: `https://github.com/lawrenceyang12138-art/MAIE6000C-starter-TEAM_11`
 - Branch: `w7-integration-bootstrap`
-- Code commit: `7b0b6ef665af79dee1cbb20a78058be7c5dc313b`
+- Code commit: `ed83f64` (semantic intent + bounded worker reliability)
 - Materials commit: `636170e` (this manifest and the matching deck/report set)
 - Alembic head: `a1b2c3d4e5f6`
 
@@ -34,18 +34,21 @@ October presentation.
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `W07_Team11.pptx` | `5904e5331357b74705555f5228703f7276113e7f145dc4f0f6b9722defaddc46` |
-| `W07_Team11.pdf` | `9347ecdb3cfa74966888902c789797056afaf0ac25e7c33295d32e5bf322d890` |
-| `report.md` | `b0d8ecdccdff70599b1e20a2c35f7c79221c757ad93d2ebdb089c45b6cdd0d14` |
-| `README.md` | `8ab9efcc64e875bc8b764551b068277bad2bdfdaa0aa0a40cd90decbbc406066` |
+| `W07_Team11.pptx` | `3410a7a4dbc65b877478682b76256e8d7d90a84e0b0aa41bdcc2cb6922947eb9` |
+| `W07_Team11.pdf` | `cedda15282d141d03df2e735aee1149b8e86637976ca3f8f83b05a59fee1bfe1` |
+| `report.md` | `1ec0d90b5d851fa1d6291a21d58e1359dea949f69deb6c6336f688fab5711b44` |
+| `README.md` | `281f373413da5c8b105e60688e8c4ccd445616edc2c45fa92b089f6876177b37` |
 
 ## Model cache
 
-The pinned local E5 model is **not present** in this checkout. The semantic
-path therefore reports a keyword-only degradation. Do not claim semantic
-quality from this release candidate. The intended path is
-`models/multilingual-e5-small` with the manifest described in
-`services/search/embeddings.py`.
+The pinned local E5 model is prepared at `models/multilingual-e5-small`
+(about 486MB, revision
+`614241f622f53c4eeff9890bdc4f31cfecc418b3`, six files plus checksum
+manifest). It is intentionally excluded from Git. Copy this directory into
+the offline release bundle and build the AI image with
+`INSTALL_EMBEDDINGS=1`. The real verification is **20 embedded chunks, S01–S05
+Top-3 5/5 and evidence 5/5**; it is a synthetic smoke test, not a general
+semantic benchmark.
 
 ## Start and migration
 

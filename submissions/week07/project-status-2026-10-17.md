@@ -205,8 +205,8 @@ schema 适配和 D 的结果页真实搜索联调。
 
 当前仍未完成：
 
-- 本机没有 `models/multilingual-e5-small`，所以语义向量尚不能在实时演示中
-  生成，浏览器会明确显示 keyword-only；
+- 固定 revision 的 E5 模型已经准备好并完成 20 个 chunk 的真实向量写入；
+  S01–S05 语义 Top-3 为 **5/5**，证据页为 **5/5**；
 - 自动重试/backoff、stale claim 恢复和 UI 重试按钮仍未实现；
 - 正式 `report.md`、README 十节、12 页 PPT/PDF、录像、QA 和 release
   manifest 仍需团队在 10 月 24 日前完成。
@@ -219,9 +219,13 @@ schema 适配和 D 的结果页真实搜索联调。
   和 stale-claim recovery；失败任务仍可通过 `POST /jobs/{id}/retry` 显式
   重试。
 - 浏览器任务页增加了失败任务 retry 按钮。
-- Python 套件为 **136 passed, 1 skipped**；前端为 **11 Vitest + 35 Node**
+- Python 套件为 **139 passed, 1 skipped**；前端为 **11 Vitest + 35 Node**
   通过，production build 成功。
 - 已生成 `README.md`、`report.md`（4508 词）、A/B/C/D 分节、`demo-script.md`、
   `qa.md`、12 页同名 PPT/PDF 和 release candidate manifest。
 
 当前只剩语义模型实测、录像、第二电脑验证、多人 worker 压测和团队签字。
+
+语义模型实测已经完成：模型目录 `models/multilingual-e5-small` 约 486MB，
+向量维度和 manifest 校验通过。剩余工作是把模型缓存复制进最终离线运行包，
+完成录像、第二电脑、多人 worker 压测和团队签字。

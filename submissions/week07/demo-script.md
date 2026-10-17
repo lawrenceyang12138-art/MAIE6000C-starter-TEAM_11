@@ -94,11 +94,11 @@ DOCX. Read the reason codes rather than calling every item a parser bug:
 - an empty or image-only PDF is `no_text_layer`/`empty`;
 - a DOCX is `unsupported_format`.
 
-Then show the search telemetry line. In this checkout it says keyword search
-and semantic not connected. Explain: “The semantic index and embedding
-interface are implemented, but the pinned E5 model is not in the release
-bundle. The system degrades to keyword search and says so. We do not count a
-keyword result as a semantic success.”
+Then show the search telemetry line. With the prepared model it can run in
+semantic mode: “The pinned E5 model produced 20 vectors and the five frozen
+semantic descriptions hit the expected file and page 5/5. If the model or AI
+service is unavailable, the system degrades to keyword search and says so; we
+do not count that as a semantic success.”
 
 Finally, state the reliability behavior: “The worker records a lease and a
 worker identity, retries transient failures with bounded backoff, and returns

@@ -58,6 +58,8 @@ The exact browser acceptance record is in
 - canonical `files`, `file_versions` and `source_chunks` tables;
 - derived `chunk_search_index` keyed by the canonical chunk id;
 - bilingual keyword search and file-deduplicated evidence results;
+- semantic search with the pinned E5 model; frozen S01–S05 **5/5** Top-3
+  file/page and **5/5** evidence matches;
 - explicit failure codes for encrypted, corrupt, no-text-layer, missing and
   unsupported inputs;
 - relation candidates, bounded relation reads and review revision conflicts;
@@ -65,14 +67,11 @@ The exact browser acceptance record is in
 - explicit `POST /jobs/{id}/retry` and a browser retry control for a failed job;
 - bounded automatic retry with backoff, claim leases and stale-claim recovery.
 
-### Partially implemented
-
-- Semantic search has the adapted index, vector schema and `/embeddings`
-  boundary, but this checkout does not contain the pinned local E5 model.
-  The live browser therefore reports keyword-only and degrades explicitly.
-
 ### Not yet implemented
 
+- the model weights are intentionally not committed to Git, so the release
+  bundle must copy `models/multilingual-e5-small` and build the AI image with
+  `INSTALL_EMBEDDINGS=1`;
 - OCR and non-PDF document parsing;
 - a graph view or a production-grade relation extraction model;
 - the final recording and second-computer installation record; the deck,
@@ -94,17 +93,19 @@ not create a parallel file catalogue. The migration chain has one head,
 | DB write path | **works** — 16 files, 16 versions and 20 indexed chunks in a fresh PostgreSQL run |
 | API path | **works** — `/mounts`, `/roots`, `/jobs`, `/files`, `/search`, `/evidence` |
 | Worker path | **works** — scan and extraction jobs leave durable completed/failed records |
-| AI path | **boundary exists** — `/embeddings` returns a safe degradation when the local model is absent |
+| AI path | **works locally** — pinned 384-dimensional E5 vectors, 20 chunks embedded, semantic S01–S05 5/5 |
 | Operational signal | **works** — job status, attempts, error/reason codes, root counts and scan timestamp |
 
 ## 6. Testing and verification performed
 
-- Python tests: **136 passed, 1 skipped**; the skip is the starter smoke test
+- Python tests: **139 passed, 1 skipped**; the skip is the starter smoke test
   that requires `SMOKE_BASE_URL`.
 - `ruff check .`: clean.
 - Fresh PostgreSQL migration reaches the single head `a1b2c3d4e5f6`.
 - Live keyword queries K01–K05: **5/5** expected file and page.
 - Live evidence after each hit: **5/5** same chunk and page.
+- Live semantic descriptions S01–S05: **5/5** Top-3 file/page, with **5/5**
+  evidence matches after opening the returned chunk.
 - Repeat scan: **0** new files or versions.
 - Original corpus SHA-256: **0** changes.
 - Browser acceptance: 16/16 processed, 12 searchable, 4 unsupported; search
@@ -116,9 +117,10 @@ not create a parallel file catalogue. The migration chain has one head,
 
 ## 7. Risks and revised scope
 
-- **Biggest current risk:** the semantics path is structurally ready but the
-  pinned local E5 model is not in this checkout; do not claim semantic quality
-  from a degraded keyword result.
+- **Biggest current risk:** the local E5 model cache is intentionally not in
+  Git; the release bundle must copy it and build the AI image with embeddings.
+  The measured result is a small synthetic smoke test, not a general semantic
+  quality claim.
 - **Biggest cut already made:** relations are a bounded candidate list with
   quotes, not a graph; OCR and non-PDF parsing are out of the W7 slice.
 - **Biggest cut still available:** keep the M1 demonstration keyword-only and
@@ -130,8 +132,8 @@ not create a parallel file catalogue. The migration chain has one head,
 
 ## 8. Plan from Week 7 to Week 13
 
-1. Put the pinned E5 model and optional embeddings dependencies in the release
-   bundle; run the frozen semantic smoke test without network access.
+1. Copy the prepared E5 model cache into the release bundle and re-run the
+   frozen semantic smoke test with networking disabled.
 2. Load-test competing workers and the lease recovery path.
 3. Have A/C/D cross-review the drafted sections and complete the 12-page deck.
 4. Run a second-computer install, freeze the version, record the 3–4 minute
@@ -168,6 +170,6 @@ committed to Git.
 The assistant was used for code scaffolding, tests, debugging, evidence checks
 and documentation drafts. The detailed member-by-member statement, including
 the limits of what was independently verified, is in
-`submissions/week07/ai-use-statement.md`. No claim of semantic quality is made
-where the model is unavailable; the team must review and sign the remaining
-member statements before submission.
+`submissions/week07/ai-use-statement.md`. The semantic result is a five-query
+synthetic smoke test, not a general quality claim; the team must review and
+sign the remaining member statements before submission.

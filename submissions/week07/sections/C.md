@@ -52,15 +52,16 @@ as a production search backend. The candidate pool is bounded by
 Semantic and hybrid modes use the same canonical result base. The AI service
 exposes `/embeddings`; the local backend validates a pinned model manifest and
 refuses to download a different model at runtime. The HTTP embedding client
-checks the model id, dimensions and vector norms. If the model, service or
-vectors are unavailable, the service returns keyword results with an explicit
-reason such as `ai_unavailable`, `ai_disabled`, `embeddings_not_ready` or
-`partial_embeddings`.
+checks the model id, dimensions and vector norms. The real pinned E5 model was
+loaded locally, produced 384-dimensional vectors for all 20 canonical chunks,
+and the five frozen descriptions hit the expected file/page 5/5 in Top-3.
+Opening each hit returned the matching chunk/page 5/5.
 
-The UI must display the degradation. In this checkout the model files are not
-present, so the live browser correctly says “keyword search · semantic not
-connected.” A deterministic test backend proves that the canonical vector
-path works without pretending that a synthetic vector is a quality result.
+The UI retains an explicit degradation path such as `ai_unavailable`,
+`ai_disabled`, `embeddings_not_ready` or `partial_embeddings` when the model or
+service is unavailable. The model weights are not committed to Git; the
+release bundle must copy them and build the AI image with
+`INSTALL_EMBEDDINGS=1`.
 
 ## Evaluation and evidence
 
@@ -69,18 +70,17 @@ the expected file and page 5/5, and each returned chunk id opened evidence
 with the same page 5/5. This is the M1 search gate. The results were not tuned
 after the answer table was frozen.
 
-The semantic evaluation is still partial. The next step is to place the pinned
-model bundle in `models/multilingual-e5-small`, install the optional embeddings
-dependencies, run the five semantic descriptions offline and record Top-3
-results with the model revision and hardware. The result must be reported as a
-small synthetic smoke test, not a general quality claim.
+The semantic result is verified on the prepared local model. The remaining
+step is to package the model cache and the CPU dependency image for the
+offline release. The result must be reported as a small synthetic smoke test,
+not a general quality claim.
 
 ## Tests
 
 The suite covers index creation and rebuild, current-version filtering, root
 authorization, file deduplication, keyword phrase matching, semantic vector
 retrieval, malformed queries and evidence/chunk agreement. The full suite is
-136 passed with one skip. The search implementation is not a replacement for
+139 passed with one skip. The search implementation is not a replacement for
 the parser's evidence checks: the route and the evidence handler both verify
 the canonical chunk and version.
 

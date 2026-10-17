@@ -73,7 +73,9 @@ explainable.
 The presentation must also distinguish the implemented frontend from the
 remaining product work. The current UI has a working API adapter, typed state
 messages, an evidence inspector and a failed-job retry control. It does not
-yet have a semantic-mode quality claim or a full accessibility audit. The final
+have a general semantic benchmark or a full accessibility audit. The five
+frozen semantic descriptions are verified 5/5 Top-3 with matching evidence, but
+that remains a synthetic smoke test. The final
 slides should show those gaps in the limitations slide rather than burying
 them in an appendix. This makes the demo auditable and gives the next team
 owner a precise handoff.

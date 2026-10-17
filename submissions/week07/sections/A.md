@@ -74,7 +74,7 @@ the run agreed.
 
 The tests cover unknown mounts, path traversal, symlink escapes, first import,
 repeated scan, one changed file and mixed abnormal input. The full Python
-suite passed 136 tests with one skip; `ruff check .` was clean. The skipped test
+suite passed 139 tests with one skip; `ruff check .` was clean. The skipped test
 is the starter smoke test that needs a live stack.
 
 ## Honest limitations

@@ -31,12 +31,15 @@ key.
 
 | Check | Result |
 | --- | --- |
-| Python unit/integration suite | **136 passed, 1 skipped** |
+| Python unit/integration suite | **139 passed, 1 skipped** |
 | `ruff check .` | clean |
 | Fresh PostgreSQL migration | reaches head `7f3a1b2c4d5e`; the later job-lease migration reaches `a1b2c3d4e5f6` |
 | `chunk_search_index` rows in the live 16-file run | **20** |
 | Live keyword queries K01-K05 | **5/5** expected file and page |
 | Live evidence lookup after each keyword hit | **5/5** same chunk and page |
+| Real E5 vectors | **20** canonical chunks embedded, 0 errors |
+| Frozen semantic descriptions S01-S05 | **5/5** Top-3 file/page hits |
+| Semantic evidence lookup | **5/5** same chunk and page |
 | Repeat scan | **0** new files or versions |
 | Browser walkthrough | scan 19: 16/16 processed, 12 searchable, 4 unsupported; search and P1 evidence opened |
 | Failed-job retry route | live job 20: `failed`/attempts 2 changed to `pending`/attempts 2; second retry returned 409 |
@@ -44,11 +47,10 @@ key.
 
 ## Remaining limitations
 
-- No local E5 model files are present in this checkout, so semantic search
-  currently reports `semantic_not_integrated`/keyword fallback in the live
-  browser. The model must be placed at `models/multilingual-e5-small` and the
-  embeddings dependencies must be installed before semantic quality can be
-  claimed.
+- The pinned E5 model and CPU embeddings dependencies are prepared locally and
+  verified. The model weights are not committed to Git; the release bundle
+  must copy `models/multilingual-e5-small` and the AI image must be built with
+  `INSTALL_EMBEDDINGS=1`.
 - The worker now has bounded exponential backoff, lease expiry and stale-claim
   recovery. A failed job can also be explicitly requeued through
   `POST /jobs/{id}/retry`, and the browser exposes the same action. Load-testing

@@ -40,8 +40,8 @@ checks again.
 
 The service returns keyword results with a visible degradation reason such as
 `ai_unavailable`, `ai_disabled` or `embeddings_not_ready`. It never labels a
-keyword result as semantic. In this checkout the local E5 model is not
-present, so the demo correctly says keyword-only.
+keyword result as semantic. In the prepared local run the pinned E5 model
+produced 20 vectors and S01–S05 hit the expected file/page 5/5.
 
 ## Q7. Why is human review append-only?
 
@@ -80,7 +80,7 @@ dressed up as completed features.
 
 ## Q12. What is the next engineering step?
 
-Prepare and verify the pinned local E5 model and run the five frozen semantic
-descriptions offline. Then load-test multiple competing workers and the lease
-recovery path. The final presentation materials must be frozen against the
-same commit SHA and release manifest.
+Package the prepared E5 model cache and CPU dependency image for offline use.
+Then load-test multiple competing workers and the lease recovery path. The
+final presentation materials must be frozen against the same commit SHA and
+release manifest.

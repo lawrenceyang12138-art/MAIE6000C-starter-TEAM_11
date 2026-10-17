@@ -18,11 +18,12 @@ authorized root, observed the 16/16 scan, searched for a known phrase, and
 opened the P1 evidence for `team11-demo-01.pdf`.
 
 The system is deliberately honest about what is not finished. Semantic
-retrieval has a canonical vector index and an AI boundary, but the pinned local
-model is not present in this checkout, so the live UI reports keyword-only
-search. The worker has bounded automatic retry, a claim lease and stale-claim
-recovery in addition to the explicit retry endpoint; competing-worker load
-still needs a dedicated test.
+retrieval is now real, not structural: the pinned E5 model produced 20 vectors,
+and the frozen S01–S05 descriptions hit the expected file/page 5/5 with
+evidence 5/5. The model directory is intentionally outside Git and must be
+copied into the release bundle. The worker has bounded automatic retry, a
+claim lease and stale-claim recovery in addition to the explicit retry
+endpoint; competing-worker load still needs a dedicated test.
 
 ## 1. Product and W7 scope
 
@@ -288,18 +289,18 @@ and refuses to download a different model at runtime.
 
 The live keyword result is strong on the controlled corpus: K01–K05 hit the
 expected file and page 5/5, and evidence lookup matched each chunk 5/5. The
-semantic path was exercised with a deterministic test backend: the vector was
-written to the canonical index, a semantic query returned the expected file,
-and the score was reported separately from the keyword score. This proves the
-integration shape, not real semantic quality. The actual model files are not
-in this checkout, so the browser correctly says “keyword search · semantic
-not connected.”
+semantic path was then run with the real pinned E5 model: 20 canonical chunks
+received 384-dimensional vectors, and the five frozen descriptions S01–S05
+hit the expected file and page in the Top-3 5/5. Opening each semantic hit
+returned the same chunk and page 5/5. A deterministic query-intent layer
+handles generic document-number and first/middle/last page hints; it is a
+re-ranking aid, not a second model or an answer-table special case.
 
-The remaining evaluation work is to place the pinned model bundle in
-`models/multilingual-e5-small`, install the optional embeddings dependencies,
-run the frozen five semantic descriptions offline, and record Top-3 results
-without tuning the answer table. Until that is done, the honest W7 status is
-keyword-complete and semantic-partial.
+The remaining release step is packaging, not algorithm work: copy
+`models/multilingual-e5-small` into the offline bundle, build the AI image with
+`INSTALL_EMBEDDINGS=1`, and re-run the five descriptions with networking
+disabled. The current result is a small synthetic smoke test and must not be
+presented as a general semantic benchmark.
 
 The query contract is normalized before it reaches the database: surrounding
 whitespace is collapsed, an empty query is rejected, and a query with more than
@@ -386,8 +387,8 @@ The failed-job screen now exposes a retry control. It requeues only a failed
 job and starts polling again; it cannot set a worker-owned state. The remaining
 D work is formal packaging: attach the acceptance screenshots to the
 submission, finish the final recording and rehearse the six-step demo. The UI
-should continue to say “keyword only” until the semantic model is actually
-present.
+now has a verified semantic mode locally, while retaining an explicit
+keyword-only degradation when the model is unavailable.
 
 The adapter is deliberately strict. It requires an HTTP 202 for root
 authorization, an integer job id, a flat root id and a recognized job state.
@@ -449,7 +450,7 @@ the measured system.
 
 ## 7. Integration evidence and failure boundaries
 
-The integrated test suite reports 136 passed and 1 skipped; the skip is the
+The integrated test suite reports 139 passed and 1 skipped; the skip is the
 starter smoke test that needs a live `SMOKE_BASE_URL`. `ruff check .` is clean.
 A fresh PostgreSQL database reaches one migration head. The live 16-file run
 produces 16 files, 16 versions, 20 chunks and 20 derived search-index rows.
@@ -473,12 +474,13 @@ unverifiable result.
 
 ## 8. Risks and scope decisions
 
-The highest product risk is semantic overclaiming. The UI and report must
-distinguish “keyword path works” from “semantic model is available and
-measured.” The second risk is operational: the single-worker lease path is
-implemented but not yet load-tested with competing workers. The third risk is
-material completeness: the code and evidence are ahead of the final recording
-and second-computer verification.
+The highest product risk is semantic overclaiming. The five semantic queries
+are a synthetic smoke test, not a general quality benchmark; the release must
+keep the model revision and query set with the result. The second risk is
+operational: the single-worker lease path is implemented but not yet
+load-tested with competing workers. The third risk is material completeness:
+the code and evidence are ahead of the final recording and second-computer
+verification.
 
 The current scope cut is explicit: no OCR, no automatic monitoring, no file
 operations, no cross-file answer generation and no full graph. The system
@@ -489,11 +491,10 @@ and every result is traceable to a current source version and page.
 
 Before the M1 gate, the team should freeze the keyword path and collect the
 three browser scenarios with task ids and screenshots. After M1, the priority
-is to either produce the pinned semantic model and its offline evaluation or
-declare the semantic path partial. In parallel, D should finish the acceptance
-package, the team should review the drafted report, ten-section README,
-12-page deck, six-step script and Q&A, and A should load-test competing
-workers.
+is to package the prepared semantic model for offline execution. In parallel,
+D should finish the acceptance package, the team should review the drafted
+report, ten-section README, 12-page deck, six-step script and Q&A, and A should
+load-test competing workers.
 
 The final release should point to one commit SHA and one manifest. The
 demonstration should use the real local stack; the recording is a backup, not
@@ -504,6 +505,6 @@ a substitute for the product path.
 The team used an AI coding assistant for scaffolding, tests, debugging,
 evidence scripts and document drafts. The detailed disclosure is in
 `submissions/week07/ai-use-statement.md`. Every member must review and sign
-their own section. The report deliberately records unavailable model files,
+their own section. The report deliberately records model packaging,
 unfinished competing-worker load testing and the missing recording as open
 work rather than turning them into claims of completion.
