@@ -1,10 +1,10 @@
 # Team 11 W7 共享集成契约
 
-版本：**v1.0 release candidate**  
-日期：2026-10-17  
-适用分支：`w7-scan-dispatch`（A）、`w7-parsing`（B）、
-`feat/c-search-model-evaluation`（C）、`Role_D`（D）  
-最终架构依据：`week04-architecture-proposal` 中的 `docs/architecture.md`
+- 版本：**v1.1 release candidate，等待 A 确认公共 schema 后封板**
+- 日期：2026-10-17
+- 适用分支：`w7-scan-dispatch`（A）、`w7-parsing`（B）、
+  `feat/c-search-model-evaluation`（C）、`Role_D`（D）
+- 最终架构依据：`week04-architecture-proposal` 中的 `docs/architecture.md`
 
 这份文件解决四人在合并前必须共同决定的事情：**一张数据表能不能有两份定义、
 搜索结果的 chunk 能不能核对原文、异步任务到底有哪些状态、前端最终调用什么接口。**
@@ -21,6 +21,23 @@
 
 一句话：**A+B 先形成一个唯一数据底座，C 在它上面加搜索索引，D 最后接真实接口。**
 
+### 当前符合情况（不是完成声明）
+
+| 项目 | 当前状态 | 合并前动作 |
+| --- | --- | --- |
+| B 主表与稳定 chunk ID | 已实现 | 保持 |
+| B `paused` root 的证据读取 | **不符合**：现在只接受 `active` | 允许 `active/paused`，拒绝 `revoking/revoked` |
+| A 扫描、current pointer、worker | **尚未实现** | 按第 3–5 节实现 |
+| A mounts/files/jobs/evidence 路由 | **部分或尚未实现** | 按第 6 节组装 |
+| C 搜索算法和 embedding | 分支内可运行 | 保留 |
+| C 数据库 schema | **不符合**：仍是三张独立表 | 改为 `chunk_search_index` |
+| C 搜索字段 | **不符合**：仍用 `version_number/page_start/page_end` | 改 `version_created_at/page` |
+| D 前端 | **尚未接真实搜索** | 改 API adapter 并调用 `/search` |
+| D 错误码 | **不符合**：仍识别大写码 | 改 canonical 小写码 |
+| Alembic | **不符合**：A/C 两条 head | 接成一条链 |
+
+这张表必须随实现更新。契约写对不等于代码已经满足。
+
 ## 0. 生效规则
 
 以下规则是合并阻断项。没有做到的项目不能写成“已经接通”。
@@ -36,8 +53,10 @@
 5. **共享文件由 A 最终落地。** `services/common/`、`alembic/`、
    `services/api/app/main.py` 和 worker 分发由 A 审核并合并。B/C 提交字段和
    行为意图，不在各自分支制造互相覆盖的第二套定义。
-6. **机器可读值使用小写下划线。** ID 是字符串 UUID；时间使用 UTC；状态和错误码
-   不做中文、大小写或别名转换后再存库。
+6. **机器可读值使用小写下划线。** 时间使用 UTC；状态和错误码不做中文、大小写
+   或别名转换后再存库。`root/file/version/chunk/entity/relationship/review/chunk_index`
+   的业务 ID 是字符串 UUID。`jobs.id` 是唯一例外：W7 继续使用现有的自增整数，
+   公开 API 也返回 JSON number，避免无关的主键迁移。
 7. **错误不能伪装成空结果。** 文件不存在、版本过期、目录撤销、AI 降级和真正
    没有搜索结果必须可区分。
 8. **原文只读。** API、worker、搜索和复核都不能移动、重命名、写回或删除用户的
@@ -253,7 +272,8 @@ discovered → extracting → basic_ready → enriched
 ```
 
 - `basic_ready`：正文和 chunk 已保存，关键词搜索可以使用。
-- `enriched`：附加分析或向量处理完成，但不得作为关键词可用的前提。
+- `enriched`：该版本计划执行的 enrichment 已全部成功，包括配置启用的
+  embedding，以及关系候选等附加分析。它不得作为关键词可用的前提。
 - `failed`：处理失败，带 `error_code`，可按规则重试。
 - `unsupported`：文档格式或内容不可处理，不是 API 崩溃。
 
@@ -285,18 +305,19 @@ discovered → extracting → basic_ready → enriched
 | `triage_case` | `case_id` | starter/A |
 | `scan_root` | `root_id` | A |
 | `extract_file` | `version_id` | A 分发、B 处理 |
-| `embed_file` | `version_id` | A 分发、C 处理 |
+| `enrich_file` | `version_id` | A 分发；C embedding，B 关系候选 |
 
 每个 Job 恰好有一个有效目标。`extract_file` 不能进入 starter 的 Case 分支，
-`embed_file` 失败不能删除已解析正文。
+`enrich_file` 失败不能删除已解析正文。
 
 ### 3.4 任务事务
 
 1. 扫描创建 `files/file_versions/extract_file` 在同一事务完成。
 2. B 的 `handle_extract_file()` 保存 chunk 与版本结果。
-3. 正文成功后，A 才创建或继续搜索索引任务。
-4. C 先建立关键词索引，再尝试 embedding。
-5. embedding 失败时：Job 可失败，版本正文仍保留，搜索自动降级为 keyword。
+3. 正文成功后，A 才创建 `enrich_file`。
+4. enrichment 先建立关键词索引，再尝试 embedding 和关系候选。
+5. embedding 失败时：Job 可失败，版本保持 `basic_ready`，正文仍保留，
+   搜索自动降级为 keyword；不得把部分失败的版本标成 `enriched`。
 6. 所有重复扫描和重复任务必须幂等。
 
 ---
@@ -339,7 +360,7 @@ sequenceDiagram
     W->>DB: files + file_versions + extract_file jobs
     W->>B: handle_extract_file(version_id, path)
     B->>DB: source_chunks + basic_ready
-    W->>C: build search index / embed version
+    W->>C: enrich_file: keyword index / embedding
     C->>DB: chunk_search_index
     U->>API: POST /search
     API->>C: search current authorised chunks
@@ -358,7 +379,8 @@ sequenceDiagram
 
 ### 6.1 通用规则
 
-- 成功资源 ID 是非空字符串 UUID。
+- 除 `job_id` 外，成功资源 ID 是非空字符串 UUID。
+- `job_id` 是 JSON 整数；前端不得把它当作 UUID 字符串比较或存成另一类型。
 - JSON 字段使用下划线命名。
 - 集合直接返回数组，不使用未声明的 `items` 包装。
 - 时间使用 ISO 8601 UTC。
