@@ -51,6 +51,7 @@ def _finish(db: Session, version_id: str, status: str, error_code: str | None) -
     version = db.get(FileVersion, version_id)
     if version is None:
         raise LookupError(f"file version {version_id} disappeared mid-processing")
+    version.parser_revision = PARSER_REVISION
     version.status = status
     version.error_code = error_code
     db.commit()
@@ -85,6 +86,14 @@ def handle_extract_file(db: Session, version_id: str, source_path: str | Path) -
 
         chunks = chunk_document(document)
         persist_chunks(db, version_id, chunks)
+
+        version = db.get(FileVersion, version_id)
+        if version is None:
+            raise LookupError(f"file version {version_id} disappeared mid-processing")
+        version.parser_revision = PARSER_REVISION
+        version.status = VersionStatus.BASIC_READY.value
+        version.error_code = None
+        db.commit()
     except UnsupportedDocument as exc:
         return _finish(
             db, version_id, VersionStatus.UNSUPPORTED.value, exc.reason_code
@@ -107,14 +116,8 @@ def handle_extract_file(db: Session, version_id: str, source_path: str | Path) -
         # store - leaving the row mid-extraction makes it indistinguishable
         # from one that is still running, so the outcome is recorded before the
         # error goes up for the worker to decide whether to retry.
+        db.rollback()
         _finish(db, version_id, VersionStatus.FAILED.value, REASON_PROCESSING_FAILED)
         raise
 
-    version = db.get(FileVersion, version_id)
-    if version is None:
-        raise LookupError(f"file version {version_id} disappeared mid-processing")
-    version.parser_revision = PARSER_REVISION
-    version.status = VersionStatus.BASIC_READY.value
-    version.error_code = None
-    db.commit()
-    return version.status
+    return VersionStatus.BASIC_READY.value
