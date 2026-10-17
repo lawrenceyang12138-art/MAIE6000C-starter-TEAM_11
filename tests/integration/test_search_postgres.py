@@ -72,11 +72,11 @@ def test_postgres_chinese_english_and_pgvector(postgres_session):
         )
         assert not response.degraded
         assert response.results[0].file_id == "pg-test"
-        assert response.results[0].page_start == 2
+        assert response.results[0].page == 2
     index_exists = db.scalar(
         text(
             "SELECT count(*) FROM pg_indexes WHERE schemaname = current_schema() "
-            "AND indexname = 'ix_source_chunks_keyword' AND indexdef LIKE '%gin%'"
+            "AND indexname = 'ix_chunk_search_index_keyword' AND indexdef LIKE '%gin%'"
         )
     )
     assert index_exists == 1
@@ -97,4 +97,10 @@ def test_postgres_current_version_unique_and_old_text_hidden(postgres_session):
         db, SearchRequest(query="obsolete", mode="keyword"), Settings(_env_file=None), None
     )
     assert result.results == []
-    assert db.scalar(text("SELECT count(*) FROM source_versions WHERE is_current")) == 1
+    current_count = db.scalar(
+        text(
+            "SELECT count(*) FROM files WHERE current_version_id IN "
+            "(SELECT id FROM file_versions WHERE file_id = 'pg-file')"
+        )
+    )
+    assert current_count == 1

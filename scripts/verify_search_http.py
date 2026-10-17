@@ -179,7 +179,7 @@ def main() -> None:
             )
             hit = data["results"][0]
             assert hit["file_id"] == query["expected_file_id"]
-            assert hit["page_start"] <= query["expected_page"] <= hit["page_end"]
+            assert hit["page"] == query["expected_page"]
             after.append({"id": query["id"], "response": data})
         report = {
             "data_kind": "synthetic",

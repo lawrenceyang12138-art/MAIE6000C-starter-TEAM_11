@@ -37,7 +37,7 @@ def evaluate_queries(
         results = response.results
         hit = any(
             item.file_id == query["expected_file_id"]
-            and item.page_start <= query["expected_page"] <= item.page_end
+            and item.page == query["expected_page"]
             for item in (results[:1] if kind == "keyword" else results)
         )
         if kind == "semantic" and (

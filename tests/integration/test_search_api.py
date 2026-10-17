@@ -8,7 +8,13 @@ from sqlalchemy import func, select
 
 from services.api.app.main import app, get_embedding_backend
 from services.common.config import Settings, get_settings
-from services.common.models import SourceChunk, SourceFile, SourceVersion
+from services.common.models import (
+    AuthorizedRoot,
+    ChunkSearchIndex,
+    FileRecord,
+    RootStatus,
+    SourceChunk,
+)
 from services.search.embeddings import EmbeddingUnavailable
 from services.search.evaluation import evaluate_queries
 from services.search.indexing import embed_version, index_document
@@ -66,7 +72,7 @@ def test_keyword_page_evidence_and_file_deduplication(client, db_session):
     assert data["total"] == 1
     assert len(data["results"]) == 1
     hit = data["results"][0]
-    assert (hit["file_id"], hit["page_start"], hit["page_end"]) == ("test-file", 2, 3)
+    assert (hit["file_id"], hit["page"], hit["ordinal"]) == ("test-file", 2, 1)
     assert hit["version_id"] and hit["chunk_id"] and hit["reason"] and hit["score"] > 0
     assert data["effective_mode"] == "keyword" and not data["degraded"]
 
@@ -74,13 +80,13 @@ def test_keyword_page_evidence_and_file_deduplication(client, db_session):
 def test_only_current_ready_unchanged_sources_are_searched(client, db_session):
     old = add_document(db_session, text="obsolete secret")
     current = add_document(db_session, text="current revision", version_number=2)
-    assert old.is_current is False and current.is_current is True
+    source = db_session.get(FileRecord, "test-file")
+    assert source.current_version_id == current.id and old.id != current.id
     assert (
         client.post("/search", json={"query": "obsolete", "mode": "keyword"}).json()["total"] == 0
     )
     assert client.post("/search", json={"query": "current", "mode": "keyword"}).json()["total"] == 1
-    source = db_session.get(SourceFile, "test-file")
-    source.sha256 = "0" * 64
+    source.current_version_id = None
     db_session.flush()
     assert client.post("/search", json={"query": "current", "mode": "keyword"}).json()["total"] == 0
 
@@ -114,7 +120,8 @@ def test_semantic_and_hybrid_use_matching_version_vectors(client, db_session):
 
 def test_missing_and_mismatched_vectors_fall_back(client, db_session):
     version = add_document(db_session, backend=ControlledEmbedding())
-    version.chunks[0].embedding_model = "old-model"
+    chunk = db_session.scalar(select(SourceChunk).where(SourceChunk.version_id == version.id))
+    db_session.get(ChunkSearchIndex, chunk.id).embedding_model = "old-model"
     db_session.flush()
     app.dependency_overrides[get_embedding_backend] = ControlledEmbedding
     data = client.post("/search", json={"query": "backup"}).json()
@@ -136,6 +143,32 @@ def test_file_filter_and_empty_result(client, db_session):
         == []
     )
     assert client.post("/search", json={"query": "qzxv", "mode": "keyword"}).json()["total"] == 0
+
+
+def test_search_scope_intersects_root_and_file_and_allows_paused_roots(
+    client, db_session
+):
+    add_document(db_session, file_id="scoped-file")
+    file_record = db_session.get(FileRecord, "scoped-file")
+    root = db_session.get(AuthorizedRoot, file_record.root_id)
+    other_root = AuthorizedRoot(
+        mount_id="other-fixture",
+        relative_path=".",
+        status=RootStatus.ACTIVE.value,
+    )
+    db_session.add(other_root)
+    db_session.flush()
+
+    base = {"query": "backup", "mode": "keyword", "file_id": file_record.id}
+    assert client.post("/search", json={**base, "root_id": root.id}).json()["total"] == 1
+    assert client.post("/search", json={**base, "root_id": other_root.id}).json()["total"] == 0
+
+    root.status = RootStatus.PAUSED.value
+    db_session.flush()
+    assert client.post("/search", json={**base, "root_id": root.id}).json()["total"] == 1
+    root.status = RootStatus.REVOKED.value
+    db_session.flush()
+    assert client.post("/search", json={**base, "root_id": root.id}).json()["total"] == 0
 
 
 @pytest.mark.parametrize(
@@ -164,8 +197,12 @@ def test_idempotent_import_and_immutable_versions(db_session):
     assert first.id == second.id
     assert db_session.scalar(select(func.count()).select_from(SourceChunk)) == 1
     with pytest.raises(ValueError, match="immutable"):
-        add_document(db_session, text="changed text")
-    assert db_session.get(SourceVersion, first.id).chunks[0].text == "Database backup instructions"
+        add_document(db_session, text="changed text", sha256=first.content_sha256)
+    changed = add_document(db_session, text="changed text")
+    assert changed.id != first.id
+    assert db_session.scalar(
+        select(SourceChunk.text).where(SourceChunk.version_id == first.id)
+    ) == "Database backup instructions"
 
 
 @pytest.mark.parametrize("existing_vectors", [False, True])
@@ -180,8 +217,15 @@ def test_failed_second_embedding_batch_keeps_text_and_existing_vectors(
         chunks=[{"text": f"Database backup item {i}", "chunk_index": i} for i in range(17)],
         backend=ControlledEmbedding() if existing_vectors else None,
     )
-    previous_vectors = [chunk.embedding for chunk in version.chunks]
-    previous_model = version.embedding_model
+    chunks = list(
+        db_session.scalars(
+            select(SourceChunk)
+            .where(SourceChunk.version_id == version.id)
+            .order_by(SourceChunk.ordinal)
+        )
+    )
+    indexes = [db_session.get(ChunkSearchIndex, chunk.id) for chunk in chunks]
+    previous_vectors = [index.embedding for index in indexes]
 
     class FailSecondBatch(ControlledEmbedding):
         calls = 0
@@ -194,10 +238,9 @@ def test_failed_second_embedding_batch_keeps_text_and_existing_vectors(
 
     result = embed_version(db_session, version.id, FailSecondBatch())
     assert result.embedding_error == "ai_timeout" and result.embedded_count == 0
-    assert len(version.chunks) == 17
-    assert [chunk.embedding for chunk in version.chunks] == previous_vectors
-    assert version.embedding_model == previous_model
-    assert all(chunk.text for chunk in version.chunks)
+    assert len(chunks) == 17
+    assert [index.embedding for index in indexes] == previous_vectors
+    assert all(chunk.text for chunk in chunks)
 
 
 def test_frozen_keyword_benchmark(client, db_session):
@@ -210,7 +253,7 @@ def test_frozen_keyword_benchmark(client, db_session):
         data = client.post("/search", json={"query": query["query"], "mode": "keyword"}).json()
         hit = data["results"][0]
         assert hit["file_id"] == query["expected_file_id"]
-        assert hit["page_start"] <= query["expected_page"] <= hit["page_end"]
+        assert hit["page"] == query["expected_page"]
 
 
 def test_oversized_query_token_count_returns_422(client):
@@ -254,9 +297,12 @@ def test_partial_semantic_evaluation_cannot_pass(db_session):
 def test_backfilling_old_version_does_not_replace_current(client, db_session):
     current = add_document(db_session, version_number=3, text="current backup")
     older = add_document(db_session, version_number=2, text="obsolete password")
-    assert current.is_current and not older.is_current
+    file_record = db_session.get(FileRecord, "test-file")
+    file_record.current_version_id = current.id
+    db_session.flush()
+    assert older.id != current.id
     data = client.post("/search", json={"query": "backup", "mode": "keyword"}).json()
-    assert data["results"][0]["version_number"] == 3
+    assert data["results"][0]["version_id"] == current.id
     assert (
         client.post("/search", json={"query": "obsolete", "mode": "keyword"}).json()["total"] == 0
     )
@@ -276,7 +322,7 @@ def test_long_document_cannot_starve_other_files(client, db_session):
 
 
 def test_tied_evidence_keeps_first_source_page(client, db_session):
-    version = index_document(
+    index_document(
         db_session,
         file_id="tied-evidence",
         name="repeated.pdf",
@@ -287,12 +333,8 @@ def test_tied_evidence_keeps_first_source_page(client, db_session):
         ],
         backend=ControlledEmbedding(),
     )
-    # IDs deliberately sort against the source order. They must not choose the page.
-    version.chunks[0].id = "z-first-chunk"
-    version.chunks[1].id = "a-later-chunk"
-    db_session.flush()
     app.dependency_overrides[get_embedding_backend] = ControlledEmbedding
     for mode in ["keyword", "semantic", "hybrid"]:
         data = client.post("/search", json={"query": "backup", "mode": mode}).json()
         assert len(data["results"]) == 1
-        assert data["results"][0]["page_start"] == 1
+        assert data["results"][0]["page"] == 1

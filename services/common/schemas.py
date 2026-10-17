@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from services.common.models import CaseStatus, JobStatus, JobType
+from services.common.models import CaseStatus, JobStatus, RootStatus
 from services.search.text import MAX_QUERY_TOKENS, tokenize
 
 
@@ -36,8 +36,12 @@ class CaseRead(BaseModel):
 
 class JobRead(BaseModel):
     id: int
-    case_id: str
-    job_type: JobType
+    case_id: str | None = None
+    root_id: str | None = None
+    version_id: str | None = None
+    # Jobs are general now: the starter's triage_case, plus scan_root and
+    # extract_file. Kept as a plain string rather than a single enum.
+    job_type: str
     status: JobStatus
     attempts: int
     error: str | None = None
@@ -46,6 +50,34 @@ class JobRead(BaseModel):
     completed_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class RootCreate(BaseModel):
+    """Authorize a folder and start its first scan.
+
+    relative_path is resolved inside the configured mount, never treated as an
+    arbitrary host path.
+    """
+
+    mount_id: str = Field(min_length=1, max_length=100)
+    relative_path: str = Field(min_length=1, max_length=500)
+
+
+class RootRead(BaseModel):
+    id: str
+    mount_id: str
+    relative_path: str
+    status: RootStatus
+    file_count: int = 0
+    indexed_count: int = 0
+    last_successful_scan_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class RootCreateResponse(BaseModel):
+    root: RootRead
+    job: JobRead
 
 
 class CaseCreateResponse(BaseModel):
@@ -75,6 +107,7 @@ class SearchRequest(BaseModel):
     query: str = Field(min_length=1, max_length=500)
     mode: SearchMode = SearchMode.HYBRID
     top_k: int = Field(default=10, ge=1, le=50)
+    root_id: str | None = Field(default=None, min_length=1, max_length=36)
     file_id: str | None = Field(default=None, min_length=1, max_length=36)
 
     @field_validator("query")
@@ -89,15 +122,15 @@ class SearchRequest(BaseModel):
 
 
 class SearchResultRead(BaseModel):
+    root_id: str
     file_id: str
     file_name: str
     file_path: str
     version_id: str
-    version_number: int
+    version_created_at: datetime
     chunk_id: str
-    chunk_index: int
-    page_start: int
-    page_end: int
+    ordinal: int
+    page: int | None
     text: str
     reason: str
     score: float = Field(ge=0.0, le=1.0)

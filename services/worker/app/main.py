@@ -9,18 +9,25 @@ from sqlalchemy.orm import Session
 
 from services.common.config import configure_logging, get_settings
 from services.common.db import get_session_factory
-from services.common.models import Case, CaseStatus, Job, JobStatus, utcnow
+from services.common.models import Case, CaseStatus, Job, JobStatus, JobType, utcnow
 from services.common.schemas import TriageResponse
 
 configure_logging()
 logger = logging.getLogger("services.worker.main")
 settings = get_settings()
 
+# Job types this worker knows how to run. Jobs of other types stay pending
+# instead of being claimed and failed - for example a scan_root job created by
+# POST /roots before the scan handler exists. Add a type here when its handler
+# is implemented.
+HANDLED_JOB_TYPES = {JobType.TRIAGE_CASE.value}
+
 
 def claim_next_pending_job(db: Session) -> Job | None:
     stmt = (
         select(Job)
         .where(Job.status == JobStatus.PENDING.value)
+        .where(Job.job_type.in_(HANDLED_JOB_TYPES))
         .order_by(Job.created_at.asc())
         .limit(1)
     )
