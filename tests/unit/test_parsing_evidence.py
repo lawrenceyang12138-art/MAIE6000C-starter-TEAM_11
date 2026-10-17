@@ -166,6 +166,23 @@ def test_a_revoked_folder_stops_being_served(db_session: Session, make_file_vers
     assert excinfo.value.reason_code == REASON_ROOT_REVOKED
 
 
+def test_a_paused_folder_keeps_existing_evidence_readable(
+    db_session: Session, make_file_version
+):
+    """Pausing blocks new work; it does not revoke existing read access."""
+    chunk_ids = _ready_chunks(db_session, make_file_version, "c" * 64, SIMPLE)
+
+    version = db_session.get(FileVersion, _version_of(db_session, chunk_ids[0]))
+    file_record = db_session.get(FileRecord, version.file_id)
+    root = db_session.get(AuthorizedRoot, file_record.root_id)
+    root.status = RootStatus.PAUSED.value
+    db_session.commit()
+
+    evidence = read_evidence(db_session, chunk_ids[0])
+
+    assert evidence.text == "the first passage"
+
+
 def test_ten_passages_resolve_to_the_page_they_were_stored_on(
     db_session: Session, make_file_version
 ):
