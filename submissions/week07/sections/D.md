@@ -67,13 +67,13 @@ capture three separate states: the completed scan, the keyword result, and
 the evidence inspector. The screenshots will be supplemented by the API task
 ids and a copy of the observed counts. A separate failure capture will show
 an unsupported or abnormal file with its reason, because the product promise
-is not that every document succeeds—it is that every outcome is visible and
+is not that every document succeeds. It is that every outcome is visible and
 explainable.
 
 The presentation must also distinguish the implemented frontend from the
 remaining product work. The current UI has a working API adapter, typed state
-messages and an evidence inspector; it does not yet have a semantic-mode
-quality claim, a live retry control or a full accessibility audit. The final
+messages, an evidence inspector and a failed-job retry control. It does not
+yet have a semantic-mode quality claim or a full accessibility audit. The final
 slides should show those gaps in the limitations slide rather than burying
 them in an appendix. This makes the demo auditable and gives the next team
 owner a precise handoff.
