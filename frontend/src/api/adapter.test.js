@@ -26,6 +26,17 @@ describe("mock file-management adapter", () => {
     expect((await adapter.getJob(accepted.job_id)).status).toBe("completed");
   });
 
+  it("requeues an explicitly failed scan and resumes polling from pending", async () => {
+    const adapter = createMockAdapter(mockData, { latency: 0 });
+    const accepted = await adapter.createRootScan("mount-team11-demo", "normal");
+    await adapter.getJob(accepted.job_id);
+
+    const retried = await adapter.retryJob(accepted.job_id);
+
+    expect(retried).toMatchObject({ status: "pending", error_code: null });
+    expect((await adapter.getJob(accepted.job_id)).status).toBe("pending");
+  });
+
   it("rejects unknown mounts, unsafe paths, and an active duplicate scan", async () => {
     const adapter = createMockAdapter(mockData, { latency: 0 });
     await expect(adapter.createRootScan("missing", "normal")).rejects.toMatchObject({ status: 404, code: "UNKNOWN_MOUNT" });

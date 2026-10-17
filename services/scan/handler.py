@@ -107,7 +107,13 @@ def _active_extract_job(db: Session, version_id: str) -> Job | None:
             .where(
                 Job.version_id == version_id,
                 Job.job_type == RootJobType.EXTRACT_FILE.value,
-                Job.status.in_([JobStatus.PENDING.value, JobStatus.CLAIMED.value]),
+                Job.status.in_(
+                    [
+                        JobStatus.PENDING.value,
+                        JobStatus.CLAIMED.value,
+                        JobStatus.RETRY_WAIT.value,
+                    ]
+                ),
             )
             .limit(1)
         )

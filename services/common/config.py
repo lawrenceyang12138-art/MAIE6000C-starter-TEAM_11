@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     ai_service_url: str = "http://ai:8100"
     worker_poll_seconds: float = 2.0
     worker_request_timeout_seconds: float = 20.0
+    worker_max_attempts: int = Field(default=3, ge=1, le=20)
+    worker_retry_base_seconds: float = Field(default=2.0, gt=0, le=300)
+    worker_lease_seconds: float = Field(default=60.0, gt=0, le=3600)
     # Server-side allowlist of read-only source mounts: mount_id -> container path.
     # The UI may only select folders beneath these mounts; an unknown mount_id is
     # rejected. Spec: week04 docs/architecture.md "Folder access and local

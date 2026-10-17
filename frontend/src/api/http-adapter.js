@@ -83,6 +83,11 @@ export function createApiAdapter({ baseUrl = "/api", fetchImpl = globalThis.fetc
       requireValue(String(job.job_id) === String(jobId) && isId(job.root_id) && jobStates.includes(job.status));
       return { ...job, error_code: safeErrorCode(job.error_code) };
     },
+    async retryJob(jobId) {
+      const job = await request(`/jobs/${encodeURIComponent(jobId)}/retry`, { method: "POST" });
+      requireValue(String(job.job_id) === String(jobId) && isId(job.root_id) && jobStates.includes(job.status));
+      return { ...job, error_code: safeErrorCode(job.error_code) };
+    },
     async getRoot(rootId) {
       const root = await request(`/roots/${encodeURIComponent(rootId)}`);
       requireValue(root.root_id === rootId && isId(root.status));

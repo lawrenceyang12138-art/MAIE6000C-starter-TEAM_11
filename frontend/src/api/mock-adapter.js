@@ -96,6 +96,20 @@ export function createMockAdapter(data, { latency = 80 } = {}) {
         error_code: progress.status === "failed" ? "SCAN_FAILED" : null,
       };
     },
+    async retryJob(jobId) {
+      await delay(latency);
+      if (!jobs.has(jobId)) {
+        throw new AdapterError("Scan job not found.", { status: 404, code: "UNKNOWN_JOB" });
+      }
+      jobCursors.set(jobId, 0);
+      return {
+        job_id: jobId,
+        root_id: jobs.get(jobId).rootId,
+        status: "pending",
+        attempts: 1,
+        error_code: null,
+      };
+    },
     async listFiles(rootId) {
       await delay(latency);
       if (rootId === "root-empty-01") return [];

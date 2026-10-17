@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import logging
+import os
+import socket
 import time
+from datetime import timedelta
 from pathlib import Path
 
 import httpx
 from sqlalchemy import select
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from services.common.config import configure_logging, get_settings
@@ -49,12 +53,73 @@ HANDLED_JOB_TYPES = {
 }
 
 
+class RetryableJobError(RuntimeError):
+    """A failure that may succeed on a later attempt."""
+
+
+def _worker_id() -> str:
+    return f"{socket.gethostname()}:{os.getpid()}"
+
+
+def _is_retryable(exc: Exception) -> bool:
+    return isinstance(
+        exc,
+        (
+            RetryableJobError,
+            httpx.HTTPError,
+            OperationalError,
+            OSError,
+        ),
+    )
+
+
+def _recover_stale_jobs(db: Session) -> None:
+    """Return an abandoned claimed job to the queue after its lease expires."""
+    now = utcnow()
+    stale_jobs = list(
+        db.execute(
+            select(Job)
+            .where(Job.status == JobStatus.CLAIMED.value)
+            .where(Job.lease_expires_at.is_not(None))
+            .where(Job.lease_expires_at < now)
+            .with_for_update(skip_locked=True)
+        )
+        .scalars()
+        .all()
+    )
+    for job in stale_jobs:
+        job.claimed_at = None
+        job.lease_expires_at = None
+        job.worker_id = None
+        if job.attempts >= settings.worker_max_attempts:
+            job.status = JobStatus.FAILED.value
+            job.error = "stale_claim_attempts_exhausted"
+            job.completed_at = now
+        else:
+            job.status = JobStatus.RETRY_WAIT.value
+            job.error = "stale_claim_recovered"
+            job.available_at = now
+        logger.warning(
+            "stale_job_recovered",
+            extra={"job_id": job.id, "attempts": job.attempts, "status": job.status},
+        )
+    if stale_jobs:
+        db.flush()
+
+
 def claim_next_pending_job(db: Session) -> Job | None:
+    _recover_stale_jobs(db)
+    now = utcnow()
     stmt = (
         select(Job)
-        .where(Job.status == JobStatus.PENDING.value)
+        .where(
+            Job.status.in_(
+                [JobStatus.PENDING.value, JobStatus.RETRY_WAIT.value]
+            )
+        )
+        .where(Job.available_at <= now)
         .where(Job.job_type.in_(HANDLED_JOB_TYPES))
-        .order_by(Job.created_at.asc())
+        .order_by(Job.available_at.asc(), Job.created_at.asc())
         .limit(1)
         # PostgreSQL serialises competing workers here; SQLite ignores this
         # clause, so the single-worker unit tests still exercise the handler.
@@ -65,7 +130,9 @@ def claim_next_pending_job(db: Session) -> Job | None:
         return None
 
     job.status = JobStatus.CLAIMED.value
-    job.claimed_at = utcnow()
+    job.claimed_at = now
+    job.lease_expires_at = now + timedelta(seconds=settings.worker_lease_seconds)
+    job.worker_id = _worker_id()
     job.attempts += 1
     db.commit()
     db.refresh(job)
@@ -82,11 +149,40 @@ def mark_job_failed(job_id: int, error_message: str) -> None:
         case = db.get(Case, job.case_id)
         job.status = JobStatus.FAILED.value
         job.error = error_message[:1000]
+        job.claimed_at = None
+        job.lease_expires_at = None
+        job.worker_id = None
         job.completed_at = utcnow()
 
         if case is not None:
             case.status = CaseStatus.FAILED.value
 
+        db.commit()
+
+
+def mark_job_retry(job_id: int, error_message: str) -> None:
+    """Schedule a bounded retry without losing the attempt history."""
+    session_factory = get_session_factory()
+    with session_factory() as db:
+        job = db.get(Job, job_id)
+        if job is None:
+            return
+        if job.attempts >= settings.worker_max_attempts:
+            job.status = JobStatus.FAILED.value
+            job.error = f"retry_exhausted: {error_message}"[:1000]
+            job.completed_at = utcnow()
+        else:
+            delay = min(
+                300.0,
+                settings.worker_retry_base_seconds * (2 ** max(0, job.attempts - 1)),
+            )
+            job.status = JobStatus.RETRY_WAIT.value
+            job.error = error_message[:1000]
+            job.available_at = utcnow() + timedelta(seconds=delay)
+            job.completed_at = None
+        job.claimed_at = None
+        job.lease_expires_at = None
+        job.worker_id = None
         db.commit()
 
 
@@ -96,6 +192,9 @@ def _complete_job(db: Session, job_id: int, error: str | None = None) -> None:
         return
     job.status = JobStatus.COMPLETED.value if error is None else JobStatus.FAILED.value
     job.error = error[:1000] if error is not None else None
+    job.claimed_at = None
+    job.lease_expires_at = None
+    job.worker_id = None
     job.completed_at = utcnow()
     db.commit()
 
@@ -276,7 +375,10 @@ def run_worker() -> None:
         except Exception as exc:
             logger.exception("job_processing_failed")
             if job is not None:
-                mark_job_failed(job.id, str(exc))
+                if _is_retryable(exc):
+                    mark_job_retry(job.id, str(exc))
+                else:
+                    mark_job_failed(job.id, str(exc))
             time.sleep(settings.worker_poll_seconds)
 
 

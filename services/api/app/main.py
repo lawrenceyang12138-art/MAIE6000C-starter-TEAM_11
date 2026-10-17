@@ -26,6 +26,7 @@ from services.common.models import (
     JobType,
     RootJobType,
     RootStatus,
+    utcnow,
 )
 from services.common.schemas import (
     CaseCreate,
@@ -141,7 +142,11 @@ def create_root_with_scan_job(
                     Job.root_id == existing.id,
                     Job.job_type == RootJobType.SCAN_ROOT.value,
                     Job.status.in_(
-                        [JobStatus.PENDING.value, JobStatus.CLAIMED.value]
+                        [
+                            JobStatus.PENDING.value,
+                            JobStatus.CLAIMED.value,
+                            JobStatus.RETRY_WAIT.value,
+                        ]
                     ),
                 )
                 .order_by(Job.created_at.desc())
@@ -333,6 +338,9 @@ def retry_job(job_id: int, db: Session = Depends(get_db)) -> JobRead:
     job.status = JobStatus.PENDING.value
     job.error = None
     job.claimed_at = None
+    job.available_at = utcnow()
+    job.lease_expires_at = None
+    job.worker_id = None
     job.completed_at = None
     db.commit()
     db.refresh(job)

@@ -118,7 +118,7 @@ The API accepts user authorization, queries, and reviews, then persists and retu
 | --- | --- | --- |
 | `POST /cases` accepts title/description and returns `201` with case/job | [API code](../services/api/app/main.py), [input/output models](../services/common/schemas.py) | Creates Case `queued` and Job `pending`; it is not the directory-scan entry point |
 | `GET /cases/{case_id}` and `GET /jobs/{job_id}` | [API code](../services/api/app/main.py) | Returns starter Case/Job records; current Job IDs are integers while the target proposal uses UUIDs and different fields, so this is not the final product contract |
-| Worker `pending -> claimed -> completed/failed` | [Worker code](../services/worker/app/main.py) | Does not implement the proposed lease, `running/retry_wait`, automatic requeue, or retry action |
+| Worker `pending -> claimed -> completed/failed/retry_wait` | [Worker code](../services/worker/app/main.py) | Implements leases, bounded backoff, stale-claim recovery and explicit retry; competing-worker load testing is still pending |
 | Worker calls `POST /triage` and saves label/summary/confidence | [AI code](../services/ai/app/main.py), [persistence models](../services/common/models.py) | Uses keyword rules and text shortening, not local semantic retrieval or entity models |
 | PostgreSQL volume, Alembic, health checks, metrics, and test skeleton | [Compose](../compose.yaml), [initial migration](../alembic/versions/20260713_0001_create_initial_tables.py), [integration test](../tests/integration/test_api_case_flow.py) | Reusable foundation; existing tests do not prove directory indexing, the product contract, or PostgreSQL restart acceptance |
 

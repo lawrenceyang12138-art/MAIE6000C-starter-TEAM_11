@@ -35,6 +35,7 @@ class CaseStatus(StrEnum):
 class JobStatus(StrEnum):
     PENDING = "pending"
     CLAIMED = "claimed"
+    RETRY_WAIT = "retry_wait"
     COMPLETED = "completed"
     FAILED = "failed"
 
@@ -124,6 +125,16 @@ class Job(Base):
         DateTime(timezone=True),
         nullable=True,
     )
+    available_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utcnow,
+        nullable=False,
+    )
+    lease_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    worker_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,

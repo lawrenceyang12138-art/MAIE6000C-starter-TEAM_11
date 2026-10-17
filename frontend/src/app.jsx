@@ -292,6 +292,8 @@ function ScanPage({ jobId }) {
   const [error, setError] = useState(null);
   const [pollCount, setPollCount] = useState(0);
   const [reload, setReload] = useState(0);
+  const [retrying, setRetrying] = useState(false);
+  const [retryError, setRetryError] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -325,6 +327,18 @@ function ScanPage({ jobId }) {
   const terminalStatus = stopped ? job.status : "completed";
   const stageIndex = ["pending", "running", terminalStatus].indexOf(job?.status || "");
   const completed = job?.status === "completed";
+  async function retryFailedJob() {
+    setRetrying(true);
+    setRetryError(null);
+    try {
+      await adapter.retryJob(jobId);
+      setReload((value) => value + 1);
+    } catch (caught) {
+      setRetryError(caught);
+    } finally {
+      setRetrying(false);
+    }
+  }
   return (
     <>
       <PageHeading eyebrow="PROCESSING QUEUE" title="Scan progress" description={"Job " + jobId + " · Read-only polling of background execution"} action={<StatusBadge status={job?.status || "pending"} label={meta.label} />} />
@@ -337,6 +351,8 @@ function ScanPage({ jobId }) {
       )}
       <ErrorNotice error={error} />
       {error && <button className="secondary-button" onClick={() => setReload((value) => value + 1)}>Retry status reads</button>}
+      {job?.status === "failed" && <ActionButton className="secondary-button" onClick={retryFailedJob} disabled={retrying}>{retrying ? "Requeuing failed job…" : "Retry failed job"}</ActionButton>}
+      <ErrorNotice error={retryError} />
       {root?.availability && root.availability !== "available" && <div className="notice notice-danger" role="alert">Source unavailable. Existing cached results do not prove the source is accessible.</div>}
       {completed && <div className="notice notice-info" role="status">Scan discovery complete — extraction and AI are separate. {progress.known ? progress.pending + " files still awaiting processing." : "File counters unavailable; processing readiness is unknown."}</div>}
       <section className="workspace-panel glass-card progress-panel">
