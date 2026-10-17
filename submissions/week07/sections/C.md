@@ -80,7 +80,7 @@ small synthetic smoke test, not a general quality claim.
 The suite covers index creation and rebuild, current-version filtering, root
 authorization, file deduplication, keyword phrase matching, semantic vector
 retrieval, malformed queries and evidence/chunk agreement. The full suite is
-131 passed with one skip. The search implementation is not a replacement for
+136 passed with one skip. The search implementation is not a replacement for
 the parser's evidence checks: the route and the evidence handler both verify
 the canonical chunk and version.
 

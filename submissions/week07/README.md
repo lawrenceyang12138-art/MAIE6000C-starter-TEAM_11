@@ -62,22 +62,21 @@ The exact browser acceptance record is in
   unsupported inputs;
 - relation candidates, bounded relation reads and review revision conflicts;
 - results/progress/evidence browser views;
-- explicit `POST /jobs/{id}/retry` for a failed job.
+- explicit `POST /jobs/{id}/retry` and a browser retry control for a failed job;
+- bounded automatic retry with backoff, claim leases and stale-claim recovery.
 
 ### Partially implemented
 
 - Semantic search has the adapted index, vector schema and `/embeddings`
   boundary, but this checkout does not contain the pinned local E5 model.
   The live browser therefore reports keyword-only and degrades explicitly.
-- The frontend displays failure and keyword-only states, but does not yet put
-  a retry button on the job page.
 
 ### Not yet implemented
 
-- automatic bounded retry/backoff, claim leases and stale-job recovery;
 - OCR and non-PDF document parsing;
 - a graph view or a production-grade relation extraction model;
-- the final 12-page deck, recording, QA set and release manifest.
+- the final recording and second-computer installation record; the deck,
+  README, report, QA and release manifest are now present.
 
 ## 4. Architecture status
 
@@ -86,7 +85,7 @@ internal AI service, Alembic migrations and Docker Compose. The important
 change is that B's file/version/chunk model is now the single source of truth.
 C contributes search-only derived data through `chunk_search_index`; it does
 not create a parallel file catalogue. The migration chain has one head,
-`7f3a1b2c4d5e`, after `445f908b73b4`.
+`a1b2c3d4e5f6`, after the search-index migration `7f3a1b2c4d5e`.
 
 ## 5. Current evidence of integration
 
@@ -100,10 +99,10 @@ not create a parallel file catalogue. The migration chain has one head,
 
 ## 6. Testing and verification performed
 
-- Python tests: **131 passed, 1 skipped**; the skip is the starter smoke test
+- Python tests: **136 passed, 1 skipped**; the skip is the starter smoke test
   that requires `SMOKE_BASE_URL`.
 - `ruff check .`: clean.
-- Fresh PostgreSQL migration reaches the single head `7f3a1b2c4d5e`.
+- Fresh PostgreSQL migration reaches the single head `a1b2c3d4e5f6`.
 - Live keyword queries K01–K05: **5/5** expected file and page.
 - Live evidence after each hit: **5/5** same chunk and page.
 - Repeat scan: **0** new files or versions.
@@ -123,17 +122,16 @@ not create a parallel file catalogue. The migration chain has one head,
 - **Biggest cut still available:** keep the M1 demonstration keyword-only and
   publish semantic evaluation as a separate increment if the model bundle
   cannot be prepared in time.
-- **Operational risk:** the worker currently has one claim loop and no
-  automatic retry/lease policy. A manual retry route exists; it is not a
-  substitute for production fault recovery.
+- **Operational risk:** the worker now has bounded retry, a lease and stale
+  claim recovery, but the team has not yet load-tested multiple competing
+  workers. The manual retry route remains available for a failed job.
 
 ## 8. Plan from Week 7 to Week 13
 
 1. Put the pinned E5 model and optional embeddings dependencies in the release
    bundle; run the frozen semantic smoke test without network access.
-2. Add bounded worker retry/backoff and stale-claim recovery, with visible
-   attempt history.
-3. Add A/C/D sections, cross-review and a complete 12-page deck.
+2. Load-test competing workers and the lease recovery path.
+3. Have A/C/D cross-review the drafted sections and complete the 12-page deck.
 4. Run a second-computer install, freeze the version, record the 3–4 minute
    demo and verify the manifest SHA.
 5. Move to the R1 increments: DOCX/TXT/Markdown, monitoring, OCR and richer

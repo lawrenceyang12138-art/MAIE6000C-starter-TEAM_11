@@ -4,7 +4,7 @@
 
 The D frontend now defaults to the real HTTP adapter with no automatic demo fallback. It checks actual 202 acceptance, keeps Job discovery separate from Root file-stage counters, preserves unknown counters, and supports read retries without replaying authorization. Empty, parse-failed, source-unavailable and keyword-only states remain distinct; cached invalid source passages are hidden. The client-side results filter is explicitly not semantic search.
 
-Thirty-five Node adapter/progress tests, nine Vitest adapter/helper tests, the API-mode production build, and eight browser contract scenarios pass. All eight watermarked PNGs have been visually inspected; the browser report records zero runtime errors and `product_acceptance: false`. Ten frozen source-location answers were checked against actual PDF pages. These are numbered synthetic placeholder files, not a representative semantic evaluation. B review is pending. See `../ui-progress.md`, `../gold-queries.json` and `../evidence/1016-D/` for the full handoff and raw evidence.
+Thirty-five Node adapter/progress tests, eleven Vitest adapter/helper tests, the API-mode production build, and eight browser contract scenarios pass. All eight watermarked PNGs have been visually inspected; the browser report records zero runtime errors and `product_acceptance: false`. Ten frozen source-location answers were checked against actual PDF pages. These are numbered synthetic placeholder files, not a representative semantic evaluation. B review is pending. See `../ui-progress.md`, `../gold-queries.json` and `../evidence/1016-D/` for the full handoff and raw evidence.
 
 User authorization unblocked dependency installation and read-only Docker inspection. The generated lockfile is included. Docker inspection found only the frontend running; API/DB/AI/Worker remain created but not started. The unhealthy frontend probe resolves localhost to IPv6 while Nginx listens on IPv4. Both source healthchecks now use 127.0.0.1; no container was restarted or rebuilt. Real integration/screenshots remain incomplete because the repository still has only the starter API. No A/B/C-owned backend, migration or worker was changed; no simulated run is claimed as product acceptance. The notes below retain the historical 14–15 October slice; the current mode, lockfile and verification record supersede historical pending items.
 
@@ -54,12 +54,13 @@ search telemetry says keyword-only when the local E5 model is absent, and the
 four attention items remain visible instead of being presented as a failed
 scan. The repeated scan produced no duplicate files or versions.
 
-The interface still needs a retry button on failed jobs, a final screenshot
-set, responsive checks, the 12-page deck and the recording. Those are material
-and operational tasks, not reasons to relabel a contract screenshot as a live
-product result. The UI should continue to show the root id, job id, effective
-search mode and evidence version in the same view so a reviewer can verify
-the claims directly.
+The failed-job screen now exposes a retry control. It requeues only a failed
+job and starts polling again; it cannot set a worker-owned state. The remaining
+work is a final screenshot set, responsive checks, the 12-page deck and the
+recording. Those are material and operational tasks, not reasons to relabel a
+contract screenshot as a live product result. The UI should continue to show
+the root id, job id, effective search mode and evidence version in the same
+view so a reviewer can verify the claims directly.
 
 For the final demo, D will use a clean database and the frozen corpus, then
 capture three separate states: the completed scan, the keyword result, and

@@ -8,8 +8,8 @@ October presentation.
 
 - Repository: `https://github.com/lawrenceyang12138-art/MAIE6000C-starter-TEAM_11`
 - Branch: `w7-integration-bootstrap`
-- Commit: `045be531b67c8aeacbdb17b4065a6beb9822dfb7`
-- Alembic head: `7f3a1b2c4d5e`
+- Commit: `7b0b6ef665af79dee1cbb20a78058be7c5dc313b`
+- Alembic head: `a1b2c3d4e5f6`
 
 ## Runtime
 
@@ -23,20 +23,20 @@ October presentation.
 
 | Service | Image ID |
 | --- | --- |
-| API | `sha256:0793c303c408c208e1deb9cd91c717de85cbef034c81e165ca7fe47b7df12308` |
-| Worker | `sha256:40866084ebe305bb9b2f519ed33a855510e7e24bbad85a5cce95e2e0451d9c31` |
-| Frontend | `sha256:0bb26f68f6ef45eb093bfd1dab3085e0e28e43e5fee4f61d84bd946cb00101a0` |
-| AI | `sha256:6c632009d6b43ac5b746e95c814fc098fc6edd597362820127b4a0690a4cf2fe` |
+| API | `sha256:2607759bebf21eed0bdac2b7a0db062d1470b56e3a2ecaf86255ac00b51ca75e` |
+| Worker | `sha256:8685b9e4bab4ea7301af50991b58c6299b3dc21d4fc16c1190d0ffa8eed8ef28` |
+| Frontend | `sha256:40d7920178b0072376b186135f74a7e265073df98c7c7ca876e63d1ebaa00a05` |
+| AI | `sha256:6bd11346b15b32ccfdf8188d3f35f60a6a4c76bfecd1de363605fa8cc141c257` |
 | Database | `sha256:f40e48eca747184a758d8f04b465186c04f1c9d7c2bee3935cc38cebdaf52326` |
 
 ## Artifact hashes
 
 | Artifact | SHA-256 |
 | --- | --- |
-| `W07_Team11.pptx` | `47c065a8dc61467c83a15f40687b81c8763be8fab4f8e69af5a1b2885fd26f9a` |
-| `W07_Team11.pdf` | `6282a8a8a662a65ddaa516c6f0531bc711b4ba0ace55a7a731a882f8c10602a8` |
-| `report.md` | `a503764d08d4c6c458fd88d1872084194b98a6be614f7f44271f7b4b02c53f7d` |
-| `README.md` | `369c4a0e2662e57a015718d9f8fcadeba89e7700e89d3c237a3d78b94a0f70be` |
+| `W07_Team11.pptx` | `5904e5331357b74705555f5228703f7276113e7f145dc4f0f6b9722defaddc46` |
+| `W07_Team11.pdf` | `9347ecdb3cfa74966888902c789797056afaf0ac25e7c33295d32e5bf322d890` |
+| `report.md` | `b0d8ecdccdff70599b1e20a2c35f7c79221c757ad93d2ebdb089c45b6cdd0d14` |
+| `README.md` | `0d23c0b34bc1257678a8d8cae47e9ebf6eb0187698e5ac339a02371dc690ef5c` |
 
 ## Model cache
 

@@ -45,10 +45,11 @@ public API maps the internal `claimed` state to `running`; the client never
 sets worker-owned states.
 
 The PostgreSQL claim uses `FOR UPDATE SKIP LOCKED`, preventing two workers from
-claiming the same pending row. A manual `POST /jobs/{id}/retry` accepts only a
-failed job, returns it to `pending`, clears the old error and retains the
-attempt count. Automatic backoff, leases and stale-job recovery are not yet
-implemented; the report and README state that boundary explicitly.
+claiming the same pending row. A claim records a worker identity and a lease.
+The worker returns expired claims to `retry_wait` and uses bounded exponential
+backoff. A manual `POST /jobs/{id}/retry` accepts only a failed job, returns it
+to `pending`, clears the old error and retains the attempt count. The browser
+job page exposes the equivalent retry control.
 
 ## API and data model
 
@@ -73,17 +74,16 @@ the run agreed.
 
 The tests cover unknown mounts, path traversal, symlink escapes, first import,
 repeated scan, one changed file and mixed abnormal input. The full Python
-suite passed 131 tests with one skip; `ruff check .` was clean. The skipped test
+suite passed 136 tests with one skip; `ruff check .` was clean. The skipped test
 is the starter smoke test that needs a live stack.
 
 ## Honest limitations
 
-The current scan is a manual request, not a filesystem watcher. It is
-single-worker in the demonstration. The retry endpoint is manual and does not
-yet implement bounded automatic retry or a claim lease. A worker that crashes
-after claiming a job needs an operator recovery path rather than a fully
-automatic stale-claim recovery. Those are the next reliability items, and they
-must not be described as production-ready until implemented and tested.
+The current scan is a manual request, not a filesystem watcher. It runs as a
+single worker in the demonstration. The retry, lease and stale-claim paths are
+implemented, but a multi-worker load test is still needed before calling the
+system production-ready. A crashed worker's expired lease is recovered on the
+next claim cycle; the manual retry remains available after retry exhaustion.
 
 The scan also intentionally does not use file names as identity. Two files with
 the same name in different subdirectories are separate records, and the same

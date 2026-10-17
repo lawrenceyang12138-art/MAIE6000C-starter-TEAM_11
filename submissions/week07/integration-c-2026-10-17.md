@@ -31,15 +31,16 @@ key.
 
 | Check | Result |
 | --- | --- |
-| Python unit/integration suite | **131 passed, 1 skipped** |
+| Python unit/integration suite | **136 passed, 1 skipped** |
 | `ruff check .` | clean |
-| Fresh PostgreSQL migration | reaches single head `7f3a1b2c4d5e` |
+| Fresh PostgreSQL migration | reaches head `7f3a1b2c4d5e`; the later job-lease migration reaches `a1b2c3d4e5f6` |
 | `chunk_search_index` rows in the live 16-file run | **20** |
 | Live keyword queries K01-K05 | **5/5** expected file and page |
 | Live evidence lookup after each keyword hit | **5/5** same chunk and page |
 | Repeat scan | **0** new files or versions |
 | Browser walkthrough | scan 19: 16/16 processed, 12 searchable, 4 unsupported; search and P1 evidence opened |
 | Failed-job retry route | live job 20: `failed`/attempts 2 changed to `pending`/attempts 2; second retry returned 409 |
+| Stale-claim recovery | live job 21: a simulated dead worker lease was reclaimed and completed at attempt 2; owner and lease cleared |
 
 ## Remaining limitations
 
@@ -48,8 +49,10 @@ key.
   browser. The model must be placed at `models/multilingual-e5-small` and the
   embeddings dependencies must be installed before semantic quality can be
   claimed.
-- Automatic retry/backoff and stale-claim recovery are still not implemented.
-  A failed job can be explicitly requeued through `POST /jobs/{id}/retry`;
-  the UI does not yet expose that action.
-- The formal report, README, 12-page deck, recording, QA and release manifest
-  must still be assembled before the 24 October demonstration.
+- The worker now has bounded exponential backoff, lease expiry and stale-claim
+  recovery. A failed job can also be explicitly requeued through
+  `POST /jobs/{id}/retry`, and the browser exposes the same action. Load-testing
+  multiple competing workers remains open.
+- The formal report, README, 12-page deck, QA and release candidate are now in
+  the repository. The recording and second-computer install record remain
+  before the 24 October demonstration.

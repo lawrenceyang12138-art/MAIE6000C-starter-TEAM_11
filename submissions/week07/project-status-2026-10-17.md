@@ -210,3 +210,18 @@ schema 适配和 D 的结果页真实搜索联调。
 - 自动重试/backoff、stale claim 恢复和 UI 重试按钮仍未实现；
 - 正式 `report.md`、README 十节、12 页 PPT/PDF、录像、QA 和 release
   manifest 仍需团队在 10 月 24 日前完成。
+
+## 2026-10-17 evening update
+
+后续又完成了：
+
+- worker 增加了 bounded exponential backoff、claim lease、worker identity
+  和 stale-claim recovery；失败任务仍可通过 `POST /jobs/{id}/retry` 显式
+  重试。
+- 浏览器任务页增加了失败任务 retry 按钮。
+- Python 套件为 **136 passed, 1 skipped**；前端为 **11 Vitest + 35 Node**
+  通过，production build 成功。
+- 已生成 `README.md`、`report.md`（4508 词）、A/B/C/D 分节、`demo-script.md`、
+  `qa.md`、12 页同名 PPT/PDF 和 release candidate manifest。
+
+当前只剩语义模型实测、录像、第二电脑验证、多人 worker 压测和团队签字。

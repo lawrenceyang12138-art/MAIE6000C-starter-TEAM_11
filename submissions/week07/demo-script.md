@@ -100,10 +100,10 @@ interface are implemented, but the pinned E5 model is not in the release
 bundle. The system degrades to keyword search and says so. We do not count a
 keyword result as a semantic success.”
 
-Finally, state the reliability caveat: “The worker has a durable job record
-and a manual retry endpoint. Automatic backoff, a claim lease and crash
-recovery are the next increment; we are not claiming production-grade fault
-recovery today.”
+Finally, state the reliability behavior: “The worker records a lease and a
+worker identity, retries transient failures with bounded backoff, and returns
+an expired claim to `retry_wait`. A failed job also has an explicit retry
+button. We have not yet load-tested multiple competing workers.”
 
 ## Closing
 

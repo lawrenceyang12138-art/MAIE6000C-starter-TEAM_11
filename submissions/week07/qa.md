@@ -54,8 +54,9 @@ A correction must also name the replacement entity.
 
 Yes. `POST /jobs/{id}/retry` moves only a failed job back to `pending`,
 clears the old error and keeps the attempt count. The client cannot set the
-job to `running` or `completed`. Automatic retry/backoff and stale-claim
-recovery are not yet implemented.
+job to `running` or `completed`. A transient worker failure is also retried
+automatically with bounded exponential backoff. Claims have leases, and an
+expired claim is returned to `retry_wait`.
 
 ## Q9. Why are you using a separate search index table?
 
@@ -79,7 +80,7 @@ dressed up as completed features.
 
 ## Q12. What is the next engineering step?
 
-Prepare and verify the pinned local E5 model, run the five frozen semantic
-descriptions offline, then add bounded worker retry/backoff and stale-claim
-recovery. The final presentation materials must be frozen against the same
-commit SHA and release manifest.
+Prepare and verify the pinned local E5 model and run the five frozen semantic
+descriptions offline. Then load-test multiple competing workers and the lease
+recovery path. The final presentation materials must be frozen against the
+same commit SHA and release manifest.
