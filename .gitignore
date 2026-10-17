@@ -217,6 +217,3 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-
-# Local scratch corpus for the read-only source mount (official fixtures land in tests/fixtures via the parsing branch)
-/corpus

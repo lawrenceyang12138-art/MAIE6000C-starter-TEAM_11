@@ -44,8 +44,13 @@ services:
       - "${API_HOST_PORT:-8000}:8000"
     volumes:
       # Read-only source mounts (allowlist keys live in services/common/config.py).
-      # The api serves source previews from here; nothing in the stack writes to it.
-      - ./corpus:/source/corpus:ro
+      # Exact fixture corpus for the W7 vertical slice: 12 normal PDFs +
+      # unsupported.txt + 3 abnormal PDFs = 16 files. The api serves source
+      # previews from here; nothing in the stack writes to it.
+      - ./tests/fixtures/regression:/source/corpus/regression:ro
+      - ./tests/fixtures/parsing/corrupt.pdf:/source/corpus/abnormal/corrupt.pdf:ro
+      - ./tests/fixtures/parsing/encrypted.pdf:/source/corpus/abnormal/encrypted.pdf:ro
+      - ./tests/fixtures/parsing/no_text_layer.pdf:/source/corpus/abnormal/no_text_layer.pdf:ro
     depends_on:
       db:
         condition: service_healthy
@@ -66,8 +71,11 @@ services:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/maie6000c
       AI_SERVICE_URL: http://ai:8100
     volumes:
-      # Same read-only source mount as the api service.
-      - ./corpus:/source/corpus:ro
+      # Same read-only source mounts as the api service.
+      - ./tests/fixtures/regression:/source/corpus/regression:ro
+      - ./tests/fixtures/parsing/corrupt.pdf:/source/corpus/abnormal/corrupt.pdf:ro
+      - ./tests/fixtures/parsing/encrypted.pdf:/source/corpus/abnormal/encrypted.pdf:ro
+      - ./tests/fixtures/parsing/no_text_layer.pdf:/source/corpus/abnormal/no_text_layer.pdf:ro
     depends_on:
       db:
         condition: service_healthy
