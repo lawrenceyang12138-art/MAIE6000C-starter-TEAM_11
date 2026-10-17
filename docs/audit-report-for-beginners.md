@@ -12,10 +12,20 @@ Owner: B. 写于 2026-10-17。对象：不写代码也想确认"它到底对不�
 分三层，不必一次读完：
 
 1. **读懂**：第 1–2 节。每个概念配一个 30 秒就能验证的小实验。
-2. **手验**：第 3 节。六个核心机制，每个都是"主张 → 为什么 → 你自己敲什么 → 应该看到什么"。
+2. **手验**：第 3 节。七个核心机制，每个都是"主张 → 为什么 → 你自己敲什么 → 应该看到什么"。
 3. **复核结论**：第 5 节。哪些结论强、哪些只是样本、哪些没验。
 
 所有命令都在仓库根目录 `/Users/zhangjintong/MAIE6000C-starter-jintong-zhang` 里执行。
+
+如果这是第一次拉下仓库，或者刚刚改过 `pyproject.toml`，先重建一次测试镜像：
+
+```
+docker compose build api
+```
+
+这一步不能省。镜像里保存着依赖库和测试文件的旧副本；源码目录可以挂载进容器，
+但 Python 包不会因此自动安装。我第一次按旧镜像运行，`pypdf` 缺失，12 个测试文件
+在收集阶段就失败。重建后才是真正的代码结果。
 
 ---
 
@@ -107,6 +117,9 @@ discovered → extracting → basic_ready        （成功）
 "替换一个版本的片段"要一次完成：删旧、写新。如果写到一半失败，**旧片段必须原样还在**。
 否则一次失败的重新解析会把内容清空，比不跑更糟。
 
+同样的规则适用于一批关系证据：第 1 条合法、第 2 条非法时，不能把第 1 条留在
+"待提交"状态。函数报错后必须整批回滚，否则调用方下一次普通提交会把半批数据永久保存。
+
 ### 2.6 唯一约束：让数据库帮你防重复
 
 复核记录的版本号在数据库上有一条唯一约束：同一个关系、同一个版本号，**只能存在一行**。
@@ -121,7 +134,7 @@ discovered → extracting → basic_ready        （成功）
 
 ---
 
-## 3. 六个核心机制：主张、理由、手验
+## 3. 七个核心机制：主张、理由、手验
 
 ### 3.1 逐页提取，并且记住"这份文字来自哪份字节"
 
@@ -207,8 +220,8 @@ docker compose run --rm --no-deps \
   pytest -q tests/unit/test_parsing_handler.py
 ```
 
-**应该看到**：`12 passed`，其中包含"坏文件被记录而不是抛异常""一个好的文件跟在坏文件后面
-仍然能完成""读取中崩溃也不会留下 `extracting`"。
+**应该看到**：`13 passed`，其中包含"坏文件被记录而不是抛异常""一个好的文件跟在坏文件后面
+仍然能完成""读取中崩溃、写库失败或最后状态提交失败都不会留下 `extracting`"。
 
 ### 3.5 证据读取：五种情况必须拒绝
 
@@ -260,6 +273,27 @@ reviewer B holds a stale view and is refused: review_conflict
 reviewer B re-reads and rejects: revision 2
 ```
 
+### 3.7 关系证据：引文必须真的属于这份文档
+
+**主张**：一条关系引用的 `chunk_id` 必须属于它声明的文件版本；引文的起止位置必须
+真的指向实体标签，引文还必须包含这个标签。
+
+**为什么**：数据库外键只能保证"这个 chunk 存在"，不能保证它属于当前版本。若只按
+`chunk_id` 连接，另一份文档里一段完全不相干的句子会被显示成这条关系的证据。数据库
+外键也没法检查 `[开始:结束]` 是否落在文本内，因此必须在写入前校验，在读取时再查一遍。
+
+**你自己验**：
+
+```
+docker compose run --rm --no-deps \
+  -v "$(pwd)/services:/app/services" -v "$(pwd)/tests:/app/tests" api \
+  pytest -q tests/unit/test_parsing_graph.py \
+  -k "another_version or chunk_text_changed"
+```
+
+**应该看到**：`2 passed`。一种情况把证据故意换成另一版本：结果必须是
+`evidence_missing=True`、空引文、无页码。另一种情况把原文改掉：结果同样不能继续展示旧引文。
+
 ---
 
 ## 4. 这次审查发现并修掉了什么
@@ -271,9 +305,17 @@ reviewer B re-reads and rejects: revision 2
 | 1 | **提取阶段崩溃时，版本永远卡在 `extracting`** | 人为让解析函数抛异常，然后把数据库里的行读回来 | 把提取、切块、写库放进同一个异常处理：任何失败都先写 `failed`/`processing_failed`，再上抛给 worker |
 | 2 | **片段序号有洞（1,2,5）也能写进库** | 直接调用写入函数，传一个带洞的集合 | 校验改为"必须是 1..N 连续"，带洞直接拒绝 |
 | 3 | **"最长 700" 只有一个例子支撑** | 用 300 种不同形状的页面（超长单词/中文/长段落…）去试探 | 收紧测试到真正的 700，并加上"任何形状都不超过 700"的属性测试 |
+| 10 | **关系会展示另一份文档里的句子** | 建两个文件版本，把关系证据的 `chunk_id` 换成第二版的 | 查询时同时要求 `chunk.version_id == relationship.source_version_id`，读取时再核对偏移和引文 |
+| 11 | **一批关系失败后留下半批待提交数据** | 第 1 条合法、第 2 条引用不存在的 chunk；捕获错误后再提交 session | 写入前整批校验；任何异常都 `rollback()`，用"错误后再 commit"的测试钉住 |
+| 12 | **越界的偏移和不含标签的引文也能写进库** | 传入 `start=999`，以及合法偏移配无关引文 | 新增 `InvalidRelationEvidence`，要求偏移在文本内、切片等于标签、引文包含标签 |
+| 13 | **同一实体的多次提及只留下最后一条证据** | 给同一实体的两个 chunk 调用写入函数 | 每个关系只清空一次旧证据，然后保留这一批里的全部不同引文；测试断言 1 个关系、2 条证据 |
+| 14 | **规则升级后仍显示旧的生产者版本** | 用 `rules-v1` 写入，再用 `rules-v2` 重跑 | 找到既有关系时同步更新 `producer_revision`，避免来源标签说谎 |
+| 15 | **最后一次状态提交失败时仍可能停在 `extracting`** | 让第三次 `commit()` 抛错，再回滚并重新从数据库读数 | 最终状态更新放进同一个异常边界；失败后先回滚，再记录 `failed`/`processing_failed` |
+| 16 | **不支持或失败的文档没有记录解析器版本** | 读取坏文件的 version 行，发现 `parser_revision=None` | 所有处理出口统一写入 `parsing-v1`，这样排错时能知道是谁尝试过 |
 
-**这三个都不是"跑挂了"，而是"看起来没问题、其实没有保证"。** 这类缺陷最危险，因为测试
-一直是绿的。
+**这些都不是"跑挂了"，而是"看起来没问题、其实没有保证"。** 这类缺陷最危险，因为测试
+一直是绿的。第 10–16 条是切换模型后重新从零审查新增的发现；第 1–9 条是前两轮记录，
+其中第 4–9 条在 `B-fixes.md` 里保留了复现细节。
 
 （更早的一轮独立审查还发现并修掉了：读取过程中文件被改写却仍发布、写库失败卡状态、
 测试库不开外键所以级联从未生效、带通用任务时降级失败、页码核对会"自己检自己"等等。
@@ -285,7 +327,7 @@ reviewer B re-reads and rejects: revision 2
 
 | 结论 | 有多强 | 为什么 |
 |---|---|---|
-| 全量测试 106 通过、1 跳过 | 强 | 每条都能重跑；但"通过"只覆盖被写出来的测试 |
+| 全量测试 112 通过、1 跳过 | 强 | 每条都能重跑；但"通过"只覆盖被写出来的测试 |
 | 页码归属 12/12 | 中 | 抽样 12 段，不是全部；但用了**另一个 PDF 库**独立判断 |
 | 66 页 0 坏字符 | 中 | 语料只有三份课件；换一批文件结论要重测 |
 | 40 份文档 0 崩溃 | 中 | 是"这台电脑上的 PDF"，语料会变（现在已经是 40 份而不是 38 份） |
@@ -299,15 +341,18 @@ D 的正式语料。这些不是"没做"，而是**不在 B 的边界内**，都
 
 ## 6. 十分钟自检清单
 
-在仓库根目录依次执行，每条都给出"应该看到什么"：
+在仓库根目录依次执行，每条都给出"应该看到什么"。新环境先运行第 1 行；它只准备依赖，
+不是测试项。
 
 | # | 命令 | 应该看到 |
 |---|---|---|
-| 1 | `docker compose run --rm --no-deps -v "$(pwd)/services:/app/services" -v "$(pwd)/tests:/app/tests" -v "$(pwd)/scripts:/app/scripts" -v "$(pwd)/alembic:/app/alembic" api pytest -q` | `106 passed, 1 skipped` |
-| 2 | 同上，把 `pytest -q` 换成 `ruff check .` | `All checks passed!` |
-| 3 | `pytest -q tests/unit/test_parsing_chunking.py` | `17 passed`（含属性测试） |
-| 4 | `pytest -q tests/unit/test_parsing_handler.py` | `12 passed`（状态机全覆盖） |
-| 5 | `pytest -q tests/unit/test_parsing_graph.py` | `15 passed`（复核与并发） |
+| 1 | `docker compose build api` | 最后一行是 `Built`；新环境必须先做 |
+| 2 | `docker compose run --rm --no-deps -v "$(pwd)/services:/app/services" -v "$(pwd)/tests:/app/tests" -v "$(pwd)/scripts:/app/scripts" -v "$(pwd)/alembic:/app/alembic" api pytest -q -rs` | `112 passed, 1 skipped`；跳过原因是 smoke test 没设置服务地址 |
+| 3 | 同上，把 `pytest -q -rs` 换成 `ruff check .` | `All checks passed!` |
+| 4 | `pytest -q tests/unit/test_parsing_chunking.py` | `17 passed`（含属性测试） |
+| 5 | `pytest -q tests/unit/test_parsing_handler.py` | `13 passed`（状态机全覆盖） |
+| 6 | `pytest -q tests/unit/test_parsing_graph.py` | `17 passed`（证据与复核边界） |
+| 7 | `pytest -q tests/unit/test_parsing_relations.py` | `15 passed`（关系写入原子性） |
 
 **判断标准**：不看"绿不绿"，看**数量对不对**、以及**跳过的那一条是什么原因**
 （`-rs` 会打印原因）。

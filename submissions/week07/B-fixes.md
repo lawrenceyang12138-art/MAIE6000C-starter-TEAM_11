@@ -161,3 +161,33 @@ never actually guaranteed.
 The same pass also strengthened a claim that had only one example behind it:
 "no chunk exceeds 700 characters" is now a property test over 300 hostile page
 shapes, not a single long string.
+
+## A third audit pass (2026-10-17), seven more defects
+
+The model was switched and the slice was re-read without trusting the earlier
+green result. The new probes concentrated on data that is individually valid
+but relationally wrong: a chunk from another version, a valid first write
+followed by a failed second write, and offsets that exist as integers but not
+as positions in the text.
+
+| # | Defect | How it was found | Fix |
+| --- | --- | --- | --- |
+| 10 | A relation could display a passage from a different file version | replaced its evidence chunk with one belonging to another version, then read it back | the read joins on both the chunk id and the declared source version, then rechecks the label and quote |
+| 11 | A failed relation batch left its valid prefix uncommitted in the session | made candidate two cite a missing chunk, caught the error, then committed the same session; rows appeared | validate the whole batch before writing and roll back every failure |
+| 12 | Out-of-range offsets and unrelated quotes were accepted | wrote `start=999`, and a valid offset with a quote from nowhere | added `InvalidRelationEvidence` with offset, slice and quote checks in `persist_relations` |
+| 13 | Two mentions of one entity overwrote the first mention's evidence | passed two candidates for one relationship and counted evidence rows | clear a relationship's old evidence once per batch, then insert every distinct evidence row |
+| 14 | A re-run under a new rule set kept crediting the old producer revision | persisted the same relation with `rules-v1`, then `rules-v2` | update `producer_revision` on the existing relationship |
+| 15 | The final status commit could leave the version `extracting` | made the third commit fail, rolled back and read the stored row | include the final status update in the handler's exception boundary and roll back before recording `failed` |
+| 16 | Unsupported and failed documents did not record the parser revision | read the version row after an encrypted-file outcome | every handler outcome now stamps `parsing-v1` |
+
+The full suite rose from **104 passed, 1 skipped** at the start of this pass to
+**112 passed, 1 skipped**. The eight new tests are two version-integrity tests,
+four relation-write integrity tests, one final-commit state-machine test and one
+public-export test. `ruff check .` remains clean.
+
+Three surrounding claims were re-run on the course decks rather than inferred:
+66 pages produced **0 corrupt characters** and **20/20** correctly located
+fragments; a second PDF library agreed on **12/12** sampled passages; and the
+bounded candidate counts stayed **47/44/36 → 39/38/33 → 10**. The relation
+review demo still produced revisions 1 and 2 and refused both a stale decision
+and a correction without a target.
