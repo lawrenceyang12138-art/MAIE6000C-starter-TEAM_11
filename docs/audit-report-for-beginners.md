@@ -327,7 +327,7 @@ docker compose run --rm --no-deps \
 
 | 结论 | 有多强 | 为什么 |
 |---|---|---|
-| 全量测试 112 通过、1 跳过 | 强 | 每条都能重跑；但"通过"只覆盖被写出来的测试 |
+| 个人仓库 114 通过、1 跳过；团队分支 112 | 强 | 两边都能重跑。差的 2 条是团队 starter 的 `test_api_integration.py python` 文件名尚未合并 A 的 W03 修复，不是解析逻辑失败 |
 | 页码归属 12/12 | 中 | 抽样 12 段，不是全部；但用了**另一个 PDF 库**独立判断 |
 | 66 页 0 坏字符 | 中 | 语料只有三份课件；换一批文件结论要重测 |
 | 40 份文档 0 崩溃 | 中 | 是"这台电脑上的 PDF"，语料会变（现在已经是 40 份而不是 38 份） |
@@ -347,7 +347,7 @@ D 的正式语料。这些不是"没做"，而是**不在 B 的边界内**，都
 | # | 命令 | 应该看到 |
 |---|---|---|
 | 1 | `docker compose build api` | 最后一行是 `Built`；新环境必须先做 |
-| 2 | `docker compose run --rm --no-deps -v "$(pwd)/services:/app/services" -v "$(pwd)/tests:/app/tests" -v "$(pwd)/scripts:/app/scripts" -v "$(pwd)/alembic:/app/alembic" api pytest -q -rs` | `112 passed, 1 skipped`；跳过原因是 smoke test 没设置服务地址 |
+| 2 | `docker compose run --rm --no-deps -v "$(pwd)/services:/app/services" -v "$(pwd)/tests:/app/tests" -v "$(pwd)/scripts:/app/scripts" -v "$(pwd)/alembic:/app/alembic" api pytest -q -rs` | 个人仓库 `114 passed, 1 skipped`；团队 `w7-parsing` 在 W03 文件名修复合入前为 `112 passed, 1 skipped`。跳过原因是 smoke test 没设置服务地址 |
 | 3 | 同上，把 `pytest -q -rs` 换成 `ruff check .` | `All checks passed!` |
 | 4 | `pytest -q tests/unit/test_parsing_chunking.py` | `17 passed`（含属性测试） |
 | 5 | `pytest -q tests/unit/test_parsing_handler.py` | `13 passed`（状态机全覆盖） |

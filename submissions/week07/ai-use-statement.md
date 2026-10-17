@@ -50,9 +50,10 @@ loop. In the form the repository keeps:
 ## Verification performed
 
 **Correctness checks.** The full suite is run in the container from a rebuilt
-image: 112 passed, 1 skipped, `ruff check .` clean. The migration set was
-applied, reverted and re-applied against PostgreSQL rather than reasoned about.
-Three claims that
+image: 114 passed, 1 skipped in the personal repository and 112 in the team
+branch before its Week 3 test-name fix; `ruff check .` clean. The migration set
+was applied, reverted and re-applied against PostgreSQL rather than reasoned
+about. Three claims that
 the documents make are produced by scripts that fail loudly rather than
 reporting a pass: page attribution is judged by a different PDF library
 (12/12), the twenty sampled fragments are found on the page they claim (20/20

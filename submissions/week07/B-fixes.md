@@ -180,10 +180,12 @@ as positions in the text.
 | 15 | The final status commit could leave the version `extracting` | made the third commit fail, rolled back and read the stored row | include the final status update in the handler's exception boundary and roll back before recording `failed` |
 | 16 | Unsupported and failed documents did not record the parser revision | read the version row after an encrypted-file outcome | every handler outcome now stamps `parsing-v1` |
 
-The full suite rose from **104 passed, 1 skipped** at the start of this pass to
-**112 passed, 1 skipped**. The eight new tests are two version-integrity tests,
-four relation-write integrity tests, one final-commit state-machine test and one
-public-export test. `ruff check .` remains clean.
+The full suite rose from **106 passed, 1 skipped in the personal repository**
+and **104 in the team branch** at the start of this pass to **114 and 112
+respectively**. The two-test difference is the team starter's misnamed Week 3
+integration test, which A fixes on the W03 branch. The eight new tests are two
+version-integrity tests, four relation-write integrity tests, one final-commit
+state-machine test and one public-export test. `ruff check .` remains clean.
 
 Three surrounding claims were re-run on the course decks rather than inferred:
 66 pages produced **0 corrupt characters** and **20/20** correctly located

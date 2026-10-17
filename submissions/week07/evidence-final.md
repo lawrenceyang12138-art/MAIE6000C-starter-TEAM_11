@@ -12,12 +12,12 @@ Run inside the api container, at the commit that contains this file.
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Whole suite from a rebuilt image, with no bind mounts | `docker compose build api`, then `docker compose run --rm --no-deps api pytest -q -rs` | **112 passed, 1 skipped**; this proves the image itself contains the current code and tests |
+| Whole suite from a rebuilt image, with no bind mounts | `docker compose build api`, then `docker compose run --rm --no-deps api pytest -q -rs` | personal repository **114 passed, 1 skipped**; team `w7-parsing` **112** until A's W03 test-file fix is merged. This proves the image itself contains the current code and tests |
 | Migrations from an empty database | `alembic upgrade head` against a freshly created PostgreSQL database | four migrations apply in order and reach `445f908b73b4` |
-| The commands CI runs | `ruff check .`, the migration step, `pytest -q tests/unit tests/integration` | clean, head reached, **112 passed, none skipped** |
+| The commands CI runs | `ruff check .`, the migration step, `pytest -q tests/unit tests/integration` | clean, head reached, **114 passed in the personal tree and 112 in the team tree**, none skipped |
 | Independent audit by two blank-context reviewers | materials verified by re-running their own commands; the code attacked with adversarial inputs | every claim reproduced except four stale statements (fixed); the code audit found and reproduced four real defects, all now fixed and pinned by tests (`submissions/week07/B-fixes.md`) |
 | Beginner audit report | `docs/audit-report-for-beginners.md` | seven mechanisms each with a hand check; defects 1-16 reproduced, fixed and pinned, including cross-version evidence, partial relation writes, malformed offsets and final-commit state loss |
-| Third audit pass from a rebuilt image | whole suite plus real-deck scripts | **112 passed, 1 skipped**; fresh build is now an explicit prerequisite because stale images can fail before any test runs |
+| Third audit pass from a rebuilt image | whole suite plus real-deck scripts | **114 personal / 112 team**, 1 skipped; fresh build is now an explicit prerequisite because stale images can fail before any test runs |
 | A file written while it is being read | `pytest -q tests/unit/test_parsing_pdf.py -k written` | refused with `source_changed`; the window was reproduced by an independent reviewer before the fix |
 | A failure while storing | `pytest -q tests/unit/test_parsing_handler.py -k extracting` | the version is recorded `failed` with `processing_failed` instead of staying `extracting` |
 | Foreign keys in the test database | `pytest -q tests/unit/test_parsing_graph.py -k restores` | SQLite now enforces them, and the test asserts the cascade really removes the evidence rows |
@@ -35,7 +35,7 @@ Run inside the api container, at the commit that contains this file.
 | Slide 4's picture, produced rather than screenshotted | `scripts/render_evidence_card.py` | `artifacts/page-6-passage.jpg`, `artifacts/api-deck-page-13-passage.jpg` - the real page rendered, our passage highlighted, provenance printed underneath |
 | 12 normal / 3 abnormal / 1 unsupported | `pytest -q tests/integration/test_extraction_regression.py` | **7 passed** |
 | Relation and review end to end | `scripts/demo_relation_review.py` | 3 candidates, review revisions 1 and 2, and a correction that carries the entity it points at |
-| Port to the team repository | the branch is pushed (`w7-parsing`), a descendant of `main` so the merge is a fast-forward | the team tree now runs the same **112 passed, 1 skipped** after its Week 3 test filename was corrected |
+| Port to the team repository | the branch is pushed (`w7-parsing`), a descendant of `main` so the merge is a fast-forward | team tree currently **112 passed, 1 skipped**; merging A's W03 filename fix adds the two hidden starter integration tests, making it 114 |
 
 The one skipped test is the starter's smoke test, which needs a running stack
 and `SMOKE_BASE_URL`. The page check's independent-reader case used to skip for

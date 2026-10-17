@@ -100,7 +100,9 @@ the authority).
 - a confirmation that tries to carry a replacement is refused
 - a correction pointing at an entity that does not exist is refused
 
-Full suite: **112 passed, 1 skipped**. `ruff check .` clean.
+Full suite: **114 passed, 1 skipped in the personal repository** and **112
+passed, 1 skipped on the team branch before A's W03 test-file fix lands**.
+`ruff check .` clean.
 
 ## What is still missing
 
