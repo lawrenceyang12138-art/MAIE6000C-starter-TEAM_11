@@ -8,7 +8,8 @@ October presentation.
 
 - Repository: `https://github.com/lawrenceyang12138-art/MAIE6000C-starter-TEAM_11`
 - Branch: `w7-integration-bootstrap`
-- Commit: `7b0b6ef665af79dee1cbb20a78058be7c5dc313b`
+- Code commit: `7b0b6ef665af79dee1cbb20a78058be7c5dc313b`
+- Materials commit: `636170e` (this manifest and the matching deck/report set)
 - Alembic head: `a1b2c3d4e5f6`
 
 ## Runtime
