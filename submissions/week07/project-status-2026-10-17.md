@@ -53,7 +53,7 @@ schema 适配和 D 的结果页真实搜索联调。
 | B `w7-parsing` | 本次提交后包含解析、证据、关系、复核及 HTTP 路由 | 模块可验收，依赖 A 接线 |
 | C `feat/c-search-model-evaluation` | 独立关键词/向量/混合搜索可运行 | 与 B schema 不兼容，尚未适配 |
 | D `Role_D` | 前端页面与 adapter 已有，搜索仍是本地过滤 | 尚未贯真实主链路 |
-| `w7-integration-bootstrap` | A+B+D 已合并，扫描/worker/search/证据后端口径跑通 | **浏览器 UI 尚未接 `/search`** |
+| `w7-integration-bootstrap` | A+B+D 已合并，扫描/worker/search/证据及 UI 代码已接通 | **尚缺人工浏览器走查/截图** |
 | `main` | 仍是 starter `abacacd` | 未合并集成分支 |
 
 ## 按角色的完成度
@@ -121,9 +121,8 @@ schema 适配和 D 的结果页真实搜索联调。
 
 仍缺：
 
-1. 搜索框调用 `POST /search`，去掉浏览器本地过滤。
-2. 结果直接使用 `GET /evidence/{chunk_id}`。
-3. 干净数据库上的浏览器端到端验收和截图。
+1. 用真实浏览器做一次人工走查并保存截图。
+2. 核对搜索命中、页码和证据展开的视觉状态。
 
 ## 本次实际实现
 
@@ -182,8 +181,7 @@ schema 适配和 D 的结果页真实搜索联调。
 
 不能演示的是：
 
-- D 的结果页把输入框接到 `POST /search`；
-- 从浏览器搜索结果直接打开同一 chunk 证据；
+- 人工观看到的浏览器搜索→证据走查（代码和构建已完成）；
 - 失败任务在页面可见并重试；
 - 尚未适配 C 的语义检索。
 

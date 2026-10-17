@@ -46,6 +46,6 @@ authorize root
 → returned chunk id reads back the same stored evidence
 ```
 
-It does not yet prove the final browser interaction: D's current results view
-still performs a client-side filter and has not been wired to `POST /search`.
-That remains the browser-level M1 gap.
+The frontend result view now calls `POST /search` and expands a hit through
+`GET /evidence/{chunk_id}`. Unit/build checks pass; a human-observed browser
+walkthrough remains the final M1 presentation check.

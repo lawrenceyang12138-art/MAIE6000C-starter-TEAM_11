@@ -33,7 +33,7 @@
 | C 搜索算法和 embedding | 分支内可运行 | 保留 |
 | C 数据库 schema | **不符合**：仍是三张独立表 | 改为 `chunk_search_index` |
 | C 搜索字段 | **不符合**：仍用 `version_number/page_start/page_end` | 改 `version_created_at/page` |
-| D 前端 | 授权/进度/文件/证据页面已可用，结果页仍是本地过滤 | 结果页改调 `/search` |
+| D 前端 | 授权/进度/文件/证据页面已可用，结果页代码已接 `/search` | 做一次人工浏览器走查 |
 | D 错误码 | **不符合**：仍识别大写码 | 改 canonical 小写码 |
 | Alembic | 集成分支保持单一 B 链；C 尚未合并 | C 迁移接到 B head |
 

@@ -20,7 +20,7 @@ Run inside the api container, at the commit that contains this file.
 | Third audit pass from a rebuilt image | whole suite plus real-deck scripts | previously **114 personal / 112 team**; the current HTTP-boundary pass raises them to **118 / 116** |
 | B's HTTP boundary | `pytest -q tests/integration/test_parsing_api.py` | files, evidence, relations and reviews return the documented fields and reason codes; stale evidence is 409, stale review is 409, and paused roots remain readable |
 | A+B+D integration bootstrap | full Python suite on `w7-integration-bootstrap` | **128 passed, 1 skipped**; scan, worker, keyword search, relations and evidence are connected |
-| D frontend checks | Vitest, Node integration and mock suites | **9 frontend tests + 36 Node tests passed**, and production build succeeds |
+| D frontend checks | Vitest, Node integration and mock suites | **10 frontend tests + 36 Node tests passed**, and production build succeeds; results now call `/search` and expand by chunk |
 | Frozen 16-file M1 backend flow | `pytest -q tests/integration/test_w7_m1_flow.py` | 12 ready, 4 unsupported-with-reason, keyword **5/5**, evidence **5/5**; repeat scan adds 0 files/versions |
 | A file written while it is being read | `pytest -q tests/unit/test_parsing_pdf.py -k written` | refused with `source_changed`; the window was reproduced by an independent reviewer before the fix |
 | A failure while storing | `pytest -q tests/unit/test_parsing_handler.py -k extracting` | the version is recorded `failed` with `processing_failed` instead of staying `extracting` |
