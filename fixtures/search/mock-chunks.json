@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "data_kind": "synthetic",
+  "description": "Hand-authored member C retrieval fixtures; not extracted PDF acceptance evidence.",
+  "documents": [
+    {
+      "file_id": "fixture-expenses", "version_id": "fixture-expenses-v1",
+      "name": "Employee_Expenses.pdf", "path": "synthetic/hr/Employee_Expenses.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 1, "page_end": 1, "text": "Employee travel reimbursement policy. Staff may claim business trip costs by uploading receipts within thirty days. Meals are limited to sixty dollars per day. 员工差旅报销：提交发票与审批记录，出差结束后三十天内申请。"},
+        {"chunk_index": 1, "page_start": 2, "page_end": 2, "text": "The finance team reviews expense claims every Friday. An approved claim is paid to the employee bank account in the next payroll cycle. 财务每周五审核报销，批准后随工资发放。"}
+      ]
+    },
+    {
+      "file_id": "fixture-access", "version_id": "fixture-access-v1",
+      "name": "Account_Access.pdf", "path": "synthetic/it/Account_Access.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 1, "page_end": 1, "text": "Password reset guide. To regain access to a locked account, use the recovery link and verify your identity with a one-time code. 联系服务台解锁账户，使用身份验证码重设密码。"},
+        {"chunk_index": 1, "page_start": 3, "page_end": 3, "text": "Multi-factor authentication is mandatory for administrator accounts. Never share a recovery code. 管理员必须启用多因素认证，恢复码不可共享。"}
+      ]
+    },
+    {
+      "file_id": "fixture-backup", "version_id": "fixture-backup-v1",
+      "name": "Backup_Recovery.pdf", "path": "synthetic/it/Backup_Recovery.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 2, "page_end": 3, "text": "Database backup and recovery procedure. A nightly snapshot preserves the database. After accidental deletion, restore the latest verified snapshot and replay the transaction log. 数据库备份每天夜间执行；误删后从已验证快照恢复并重放事务日志。"},
+        {"chunk_index": 1, "page_start": 4, "page_end": 4, "text": "Test a restoration every month on an isolated machine. Record the checksum and recovery duration. 每月在隔离设备进行恢复演练，记录校验和及耗时。"}
+      ]
+    },
+    {
+      "file_id": "fixture-retention", "version_id": "fixture-retention-v1",
+      "name": "Retention_Policy.pdf", "path": "synthetic/compliance/Retention_Policy.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 2, "page_end": 2, "text": "个人信息保留期限：客户合同到期后，个人资料最多保留九十天，随后安全删除。Data retention policy: personal customer records are kept for ninety days after a contract ends, then securely erased."}
+      ]
+    },
+    {
+      "file_id": "fixture-attendance", "version_id": "fixture-attendance-v1",
+      "name": "Course_Attendance.pdf", "path": "synthetic/course/Course_Attendance.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 3, "page_end": 3, "text": "Attendance policy. A student who misses a class because of illness must provide a medical certificate within seven days to request an excused absence. 学生因病缺课须在七天内提供医生证明，申请病假豁免。"}
+      ]
+    },
+    {
+      "file_id": "fixture-deploy", "version_id": "fixture-deploy-v1",
+      "name": "Deployment_Checklist.pdf", "path": "synthetic/it/Deployment_Checklist.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 1, "page_end": 1, "text": "Deployment checklist: run unit tests, record the release commit, apply migrations and perform health checks before switching traffic. 发布检查：运行测试，登记版本，执行迁移并核验健康检查。"}
+      ]
+    },
+    {
+      "file_id": "fixture-meeting", "version_id": "fixture-meeting-v1",
+      "name": "Meeting_Minutes.pdf", "path": "synthetic/project/Meeting_Minutes.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 1, "page_end": 1, "text": "Project meeting minutes: Alice owns scanning, Bob owns PDF parsing, Carol owns search and David owns the interface. Next review is Monday. 项目会议明确扫描、解析、检索与界面的负责人。"}
+      ]
+    },
+    {
+      "file_id": "fixture-leave", "version_id": "fixture-leave-v1",
+      "name": "Annual_Leave.pdf", "path": "synthetic/hr/Annual_Leave.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 2, "page_end": 2, "text": "Annual leave requests require manager approval at least five working days before the holiday. 员工申请年假须提前五个工作日获得经理批准。"}
+      ]
+    },
+    {
+      "file_id": "fixture-safety", "version_id": "fixture-safety-v1",
+      "name": "Laboratory_Safety.pdf", "path": "synthetic/course/Laboratory_Safety.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 1, "page_end": 1, "text": "Laboratory safety: wear protective glasses and gloves while handling chemicals. Know the location of emergency exits and eye wash stations. 实验室操作化学品时应佩戴护目镜和手套。"}
+      ]
+    },
+    {
+      "file_id": "fixture-invoice", "version_id": "fixture-invoice-v1",
+      "name": "Supplier_Invoice.pdf", "path": "synthetic/finance/Supplier_Invoice.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 1, "page_end": 1, "text": "Supplier invoice processing requires a purchase order number and vendor tax identifier. Payment terms are forty-five days. 供应商发票须包含采购单号与税号，付款周期为四十五天。"}
+      ]
+    },
+    {
+      "file_id": "fixture-library", "version_id": "fixture-library-v1",
+      "name": "Library_Opening.pdf", "path": "synthetic/course/Library_Opening.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 1, "page_end": 1, "text": "The library opens at eight in the morning and closes at ten at night on weekdays. 图书馆工作日早上八点开放，晚上十点关闭。"}
+      ]
+    },
+    {
+      "file_id": "fixture-network", "version_id": "fixture-network-v1",
+      "name": "Network_Troubleshooting.pdf", "path": "synthetic/it/Network_Troubleshooting.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 2, "page_end": 2, "text": "Network troubleshooting: check the Ethernet cable, confirm the gateway address and run a DNS lookup before escalating to the network team. 网络故障排查先检查网线、网关和域名解析。"}
+      ]
+    }
+  ]
+}

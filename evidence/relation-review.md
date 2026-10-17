@@ -79,10 +79,12 @@ Command:
 docker compose run --rm --no-deps api pytest -q tests/unit/test_parsing_graph.py
 ```
 
-Result: **15 passed** (the count grows as cases are added; the command above is
+Result: **17 passed** (the count grows as cases are added; the command above is
 the authority).
 
 - relations come back with their quote, page, origin and producer revision
+- evidence that points at a chunk from another file version is not displayed
+- evidence whose stored chunk text no longer matches its offsets is not displayed
 - an unreviewed relation reports decision `None` at revision 0
 - the read is bounded: asking for more than the cap does not exceed it, and a
   limit of zero returns nothing
@@ -98,7 +100,9 @@ the authority).
 - a confirmation that tries to carry a replacement is refused
 - a correction pointing at an entity that does not exist is refused
 
-Full suite: **103 passed, 1 skipped**. `ruff check .` clean.
+Full suite: **114 passed, 1 skipped in the personal repository** and **112
+passed, 1 skipped on the team branch before A's W03 test-file fix lands**.
+`ruff check .` clean.
 
 ## What is still missing
 

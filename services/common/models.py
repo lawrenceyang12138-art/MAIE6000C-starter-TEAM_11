@@ -4,18 +4,25 @@ import uuid
 from datetime import datetime, timezone
 from enum import StrEnum
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
+    JSON,
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
+    event,
+    func,
+    literal_column,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from services.common.db import Base
+from services.search.text import DIMENSIONS, normalize_text, search_terms
 
 
 def utcnow() -> datetime:
@@ -213,7 +220,6 @@ class FileRecord(Base):
     """A file's location on disk. We record it; we never move it."""
 
     __tablename__ = "files"
-
     id: Mapped[str] = mapped_column(
         String(36),
         primary_key=True,
@@ -323,6 +329,45 @@ class SourceChunk(Base):
     __table_args__ = (
         UniqueConstraint("version_id", "ordinal", name="uq_chunk_version_ordinal"),
     )
+
+
+# Search data is derived from, and shares the identity of, a canonical chunk.
+class ChunkSearchIndex(Base):
+    __tablename__ = "chunk_search_index"
+
+    chunk_id: Mapped[str] = mapped_column(
+        ForeignKey("source_chunks.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    search_text: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    search_terms: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    embedding: Mapped[list[float] | None] = mapped_column(
+        Vector(DIMENSIONS).with_variant(JSON(none_as_null=True), "sqlite"),
+        nullable=True,
+    )
+    embedding_model: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    embedding_dimensions: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
+    )
+
+
+keyword_index = Index(
+    "ix_chunk_search_index_keyword",
+    func.to_tsvector(literal_column("'simple'"), ChunkSearchIndex.search_terms),
+    postgresql_using="gin",
+).ddl_if(dialect="postgresql")
+ChunkSearchIndex.__table__.append_constraint(keyword_index)
+
+
+@event.listens_for(ChunkSearchIndex, "before_insert")
+@event.listens_for(ChunkSearchIndex, "before_update")
+def prepare_search_text(mapper, connection, index: ChunkSearchIndex) -> None:
+    index.search_text = normalize_text(index.search_text or "")
+    index.search_terms = search_terms(index.search_text)
 
 
 # ---------------------------------------------------------------------------
