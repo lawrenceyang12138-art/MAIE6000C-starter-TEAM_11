@@ -13,7 +13,7 @@ from prometheus_client import (
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
-from services.common.config import configure_logging
+from services.common.config import configure_logging, get_settings
 from services.common.db import get_db
 from services.common.models import (
     AuthorizedRoot,
@@ -292,6 +292,9 @@ def create_root(
     owns everything slow; this endpoint only validates and records intent.
     """
     mount_id = payload.mount_id.strip()
+    if mount_id not in get_settings().source_mounts:
+        # D3: an unknown mount_id is not authorized, whatever the path says.
+        raise HTTPException(status_code=403, detail="Unknown mount_id")
     relative_path = normalise_relative_path(payload.relative_path)
 
     root, job = create_root_with_scan_job(db, mount_id, relative_path)
