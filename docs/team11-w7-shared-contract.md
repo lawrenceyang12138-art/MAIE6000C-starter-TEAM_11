@@ -26,9 +26,10 @@
 | 项目 | 当前状态 | 合并前动作 |
 | --- | --- | --- |
 | B 主表与稳定 chunk ID | 已实现 | 保持 |
-| B `paused` root 的证据读取 | **不符合**：现在只接受 `active` | 允许 `active/paused`，拒绝 `revoking/revoked` |
+| B `paused` root 的证据读取 | 已实现 | 保持：允许 `active/paused`，拒绝 `revoking/revoked` |
 | A 扫描、current pointer、worker | **尚未实现** | 按第 3–5 节实现 |
-| A mounts/files/jobs/evidence 路由 | **部分或尚未实现** | 按第 6 节组装 |
+| A mounts/jobs 路由 | **尚未实现** | 按第 6 节组装 |
+| B files/evidence/relations/reviews 路由 | 已在 `parsing_routes.py` 实现 | A 合并时保留 router 注册 |
 | C 搜索算法和 embedding | 分支内可运行 | 保留 |
 | C 数据库 schema | **不符合**：仍是三张独立表 | 改为 `chunk_search_index` |
 | C 搜索字段 | **不符合**：仍用 `version_number/page_start/page_end` | 改 `version_created_at/page` |
@@ -73,7 +74,7 @@
 | 成员 | 分支 | 审查代码快照 | 职责 |
 | --- | --- | --- | --- |
 | A | `w7-scan-dispatch` | `7b084e5` | 授权、扫描、任务分发、挂载、公共模型、路由组装 |
-| B | `w7-parsing` | `a91d521` | PDF 解析、chunk、证据、关系、复核 |
+| B | `w7-parsing` | `fad0f39` | PDF 解析、chunk、证据、关系、复核及 HTTP 边界 |
 | C | `feat/c-search-model-evaluation` | `482ac32` | 中英关键词、embedding、hybrid 检索、评测 |
 | D | `Role_D` | `eb656ca` | 文件夹选择、进度、结果、证据与复核页面 |
 
@@ -737,8 +738,8 @@ docker compose up -d
    - `extract_file` 调用 B；
    - 正文成功后调度 C 的 search index/embed。
 5. 组装 API：
-   - `/mounts`、directories、roots、files、jobs；
-   - B 的 evidence、relations、reviews；
+   - `/mounts`、directories、完整 roots/jobs；
+   - 合并 B 已提供的 files、evidence、relations、reviews；
    - C 的 `/search`。
 6. A 负责最终 Alembic 文件；C 提交的迁移草案必须接到 `445f908b73b4`。
 7. 统一 Job API 映射：数据库 `claimed` → 公开 API `running`。
@@ -748,8 +749,8 @@ docker compose up -d
 1. 保留 `files/file_versions/source_chunks` 字段和稳定 chunk ID 语义。
 2. 不创建 C 的搜索字段；C 的 embedding 写进 `chunk_search_index`。
 3. 处理结果继续使用现有状态和理由码。
-4. `read_evidence()` 必须允许 `active` **和 `paused`** root；只有 `revoking/revoked`
-   才返回 `root_revoked`。当前代码只允许 `active`，合并时必须修正。
+4. `read_evidence()` 已允许 `active` **和 `paused`** root；只有
+   `revoking/revoked` 返回 `root_revoked`。
 5. 提供给 A 的调用入口保持：
 
 ```text

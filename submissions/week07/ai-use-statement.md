@@ -50,7 +50,7 @@ loop. In the form the repository keeps:
 ## Verification performed
 
 **Correctness checks.** The full suite is run in the container from a rebuilt
-image: 114 passed, 1 skipped in the personal repository and 112 in the team
+image: 118 passed, 1 skipped in the personal repository and 116 in the team
 branch before its Week 3 test-name fix; `ruff check .` clean. The migration set
 was applied, reverted and re-applied against PostgreSQL rather than reasoned
 about. Three claims that

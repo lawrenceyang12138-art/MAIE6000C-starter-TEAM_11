@@ -141,8 +141,8 @@ The skipped test is the starter's smoke test, which needs a running stack and
 
 - **Nothing sets `file.current_version_id`.** Until A's scan or the handler
   sets it, every evidence read will report the passage as stale.
-- **The API and worker do not call any of this yet.** Everything so far is
-  driven directly from tests and scripts. Wiring is A's boundary.
+- **The worker does not call the processors yet.** B now exposes the HTTP
+  evidence/relation/review boundary, but A still owns scan and job dispatch.
 - **The official fixture corpus has not landed**, so the regression above used
   a rehearsal corpus. Re-run it against D's fixtures when they arrive - that is
   a five-minute check, not a rebuild.
@@ -193,3 +193,16 @@ fragments; a second PDF library agreed on **12/12** sampled passages; and the
 bounded candidate counts stayed **47/44/36 → 39/38/33 → 10**. The relation
 review demo still produced revisions 1 and 2 and refused both a stale decision
 and a correction without a target.
+
+## W07 boundary pass (2026-10-17): paused reads and HTTP routes
+
+Two remaining B-side gaps were closed before the M1 integration checkpoint:
+
+| # | What was incomplete | Fix |
+| --- | --- | --- |
+| 17 | A paused root was treated like a revoked root, although pausing only stops new work | `active` and `paused` roots now serve existing evidence; `revoking/revoked` remain refused |
+| 18 | Evidence, relations and reviews existed only as Python handlers | added `services/api/app/parsing_routes.py` with files, evidence, relation and review routes and stable HTTP reason codes |
+
+The routes live in an isolated router to reduce conflicts with A's main API
+assembly. The suite is now **118 passed, 1 skipped in the personal tree** and
+**116 in the team tree**.

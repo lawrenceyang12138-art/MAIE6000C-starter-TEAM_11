@@ -149,7 +149,9 @@ branch - A, C, D, or the second laptop - will hit it otherwise.
 
 ## 3. Routes to expose
 
-Three handlers are ready. B has not written routes because they are A's.
+The handlers are now exposed by B's isolated
+`services/api/app/parsing_routes.py`; `main.py` only registers that router. A can
+keep the router during integration instead of recreating the transport mapping.
 
 | Handler | Suggest route | Notes |
 | --- | --- | --- |
