@@ -27,15 +27,15 @@
 | --- | --- | --- |
 | B 主表与稳定 chunk ID | 已实现 | 保持 |
 | B `paused` root 的证据读取 | 已实现 | 保持：允许 `active/paused`，拒绝 `revoking/revoked` |
-| A 扫描、current pointer、worker | **尚未实现** | 按第 3–5 节实现 |
-| A mounts/jobs 路由 | **尚未实现** | 按第 6 节组装 |
+| A 扫描、current pointer、worker | 集成候选已实现，原 A 分支未更新 | A 审核并吸收集成分支实现 |
+| A mounts/jobs 路由 | 集成候选已实现 | A 审核 canonical 响应 |
 | B files/evidence/relations/reviews 路由 | 已在 `parsing_routes.py` 实现 | A 合并时保留 router 注册 |
 | C 搜索算法和 embedding | 分支内可运行 | 保留 |
 | C 数据库 schema | **不符合**：仍是三张独立表 | 改为 `chunk_search_index` |
 | C 搜索字段 | **不符合**：仍用 `version_number/page_start/page_end` | 改 `version_created_at/page` |
-| D 前端 | **尚未接真实搜索** | 改 API adapter 并调用 `/search` |
+| D 前端 | 授权/进度/文件/证据页面已可用，结果页仍是本地过滤 | 结果页改调 `/search` |
 | D 错误码 | **不符合**：仍识别大写码 | 改 canonical 小写码 |
-| Alembic | **不符合**：A/C 两条 head | 接成一条链 |
+| Alembic | 集成分支保持单一 B 链；C 尚未合并 | C 迁移接到 B head |
 
 这张表必须随实现更新。契约写对不等于代码已经满足。
 

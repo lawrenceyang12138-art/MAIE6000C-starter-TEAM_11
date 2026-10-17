@@ -2,9 +2,10 @@
 
 ## 结论
 
-项目还没有达到 M1。当前仓库是**四个可独立运行的模块，而不是一条已经连通的产
-品**。B 的解析、证据和复核质量已具备提交条件；决定能否演示的剩余工作集中在 A
-的扫描/worker/公共路由、C 的 schema 适配，以及 D 的真实接口联调。
+项目还没有完成浏览器级 M1，但现在已经有了一条真实可运行的后端垂直切片。
+`w7-integration-bootstrap` 合并了 A 的配置、D 的语料/前端和 B 的解析证据，
+并补了扫描、worker、keyword search 与 canonical routes。剩余工作集中在 C 的
+schema 适配和 D 的结果页真实搜索联调。
 
 按团队排期，M1 的最晚检查时间是 **10 月 18 日 18:00**，正式 W07 汇报是
 **10 月 24 日**。距离 M1 已不足一天，应停止扩功能，只做最窄链路。
@@ -48,11 +49,12 @@
 
 | 成员/分支 | 最新状态 | 判定 |
 | --- | --- | --- |
-| A `w7-scan-dispatch` | `7b084e5`，仅决策、owner-map、配置和 W03 测试文件名修复 | **关键实现仍缺** |
+| A `w7-scan-dispatch` | `7b084e5`，仅决策、owner-map、配置和 W03 测试文件名修复 | 原分支仍缺；集成分支已补可运行实现 |
 | B `w7-parsing` | 本次提交后包含解析、证据、关系、复核及 HTTP 路由 | 模块可验收，依赖 A 接线 |
 | C `feat/c-search-model-evaluation` | 独立关键词/向量/混合搜索可运行 | 与 B schema 不兼容，尚未适配 |
 | D `Role_D` | 前端页面与 adapter 已有，搜索仍是本地过滤 | 尚未贯真实主链路 |
-| `main` | 仍是 starter `abacacd` | 没有团队集成版本 |
+| `w7-integration-bootstrap` | A+B+D 已合并，扫描/worker/search/证据后端口径跑通 | **浏览器 UI 尚未接 `/search`** |
+| `main` | 仍是 starter `abacacd` | 未合并集成分支 |
 
 ## 按角色的完成度
 
@@ -65,14 +67,14 @@
 - 服务端 mount allowlist 和只读 compose 配置。
 - W03 测试文件名修复。
 
-仍缺：
+集成候选已补，仍需 A 审核：
 
 1. `services/scan/`：遍历、哈希、版本复用、`current_version_id` 更新。
 2. `scan_root` worker：首次/重复/文件变化/异常混入。
 3. `extract_file` dispatch：调用 B 的 `handle_extract_file()`。
-4. `/mounts`、directories、完整 roots/jobs 路由和公开状态映射。
-5. 解析后触发 keyword index/embedding；失败重试与可见状态。
-6. 单一 Alembic head 的最终 schema。
+4. `/mounts`、directories、canonical roots/jobs 路由。
+5. 当前以 canonical keyword search 替代尚未适配的 C 语义搜索。
+6. 单一 Alembic head 已保持；C 合并时仍需重接迁移。
 
 ### B：读文件
 
@@ -90,10 +92,8 @@
   `GET /versions/{id}/relations`、`POST /relations/{id}/reviews`。
 - `active` 和 `paused` root 均可读已有证据；`revoking/revoked` 被拒绝。
 
-仍缺：
-
-- 正式 16 文件语料到达后用同一回归重跑。
-- A 的扫描产生真实 `current_version_id` 后做一条真实浏览器链路。
+- D 的正式 16 文件语料已纳入集成分支并通过回归。
+- 剩余只缺真实浏览器结果页调用搜索接口。
 
 ### C：搜文件
 
@@ -121,11 +121,9 @@
 
 仍缺：
 
-1. 接 A 真实的 mounts/roots/jobs/files 路由。
-2. 搜索框调用 C 的 `POST /search`，去掉浏览器本地过滤。
-3. 证据改用 `GET /evidence/{chunk_id}`。
-4. 小写 reason code 映射。
-5. 干净数据库上的浏览器端到端验收和截图。
+1. 搜索框调用 `POST /search`，去掉浏览器本地过滤。
+2. 结果直接使用 `GET /evidence/{chunk_id}`。
+3. 干净数据库上的浏览器端到端验收和截图。
 
 ## 本次实际实现
 
@@ -150,30 +148,43 @@
 这些路由放在独立文件中，A 合并时只需保留 `main.py` 中的 router 注册，减少多人
 同时修改主 API 文件的冲突。
 
+集成分支又补齐了：
+
+- `services/scan/`：授权路径解析、递归扫描、哈希、版本复用和 current pointer；
+- worker 的 `scan_root` 与 `extract_file` 分发；
+- `/mounts` 和目录选择；
+- canonical `/roots`、`/jobs`、`/files` 响应；
+- 读取 B current chunk 的关键词 `/search`；
+- D 现有文件证据视图的兼容路由。
+
+真实 Docker fresh-volume 结果：16 文件、12 ready、4 个明确不可处理原因、
+关键词 5/5、证据 5/5、重复扫描 0 新增、原件 SHA-256 0 变化。详见
+`evidence/w7-m1-live.md`。
+
 ## 当前最重要的执行顺序
 
 在 10.18 18:00 前，只做以下顺序，不新增 OCR、复杂图谱或部署优化：
 
-1. **A 立即合并 B 并实现扫描、current pointer、worker 的
-   `extract_file`。**
-2. **A 实现 `/mounts` 和 `/files` 所需的真实扫描数据；B 的 evidence/
-   relations/reviews 路由已提供。**
+1. **A 审核并吸收 `w7-integration-bootstrap` 的 scan/worker/routes 实现。**
+2. **B 已在集成分支提供 files/evidence/relations/reviews；不再重复实现。**
 3. **C 放弃第二套三表，按 B 的 chunk 改编 keyword 搜索。**
-4. **D 使用真实接口，不再以本地过滤或 mock 作为主链路。**
+4. **D 把结果页输入框从本地过滤改为真实 `POST /search`。**
 5. **D 用 16 文件语料跑首次、重复、异常混入三种场景。**
 6. **全员记录 M1 结果；若失败，按排期裁掉语义和关系，不声称完整 W07。**
 
 ## 是否已经可以演示
 
-**不能。** 当前能演示的是：
+**后端已经可以演示，浏览器完整链路还不能。** 当前能演示的是：
 
-- B 模块的命令行和测试证据。
+- 真实 Docker 下的选目录、扫描、后台解析、关键词搜索、证据读取后端链路；
+- B 模块的命令行和测试证据；
+- D 的授权、进度、文件列表和证据页面。
 
 不能演示的是：
 
-- 从浏览器选择文件夹后自动扫描/解析/搜索；
-- 搜索结果回到同一原文证据；
+- D 的结果页把输入框接到 `POST /search`；
+- 从浏览器搜索结果直接打开同一 chunk 证据；
 - 失败任务在页面可见并重试；
-- 干净数据库上的完整 W07 垂直切片。
+- 尚未适配 C 的语义检索。
 
 因此现在不能把“模块测试通过”写成“W07 已达标”。

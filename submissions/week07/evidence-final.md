@@ -19,6 +19,9 @@ Run inside the api container, at the commit that contains this file.
 | Beginner audit report | `docs/audit-report-for-beginners.md` | seven mechanisms each with a hand check; defects 1-16 reproduced, fixed and pinned, including cross-version evidence, partial relation writes, malformed offsets and final-commit state loss |
 | Third audit pass from a rebuilt image | whole suite plus real-deck scripts | previously **114 personal / 112 team**; the current HTTP-boundary pass raises them to **118 / 116** |
 | B's HTTP boundary | `pytest -q tests/integration/test_parsing_api.py` | files, evidence, relations and reviews return the documented fields and reason codes; stale evidence is 409, stale review is 409, and paused roots remain readable |
+| A+B+D integration bootstrap | full Python suite on `w7-integration-bootstrap` | **128 passed, 1 skipped**; scan, worker, keyword search, relations and evidence are connected |
+| D frontend checks | Vitest, Node integration and mock suites | **9 frontend tests + 36 Node tests passed**, and production build succeeds |
+| Frozen 16-file M1 backend flow | `pytest -q tests/integration/test_w7_m1_flow.py` | 12 ready, 4 unsupported-with-reason, keyword **5/5**, evidence **5/5**; repeat scan adds 0 files/versions |
 | A file written while it is being read | `pytest -q tests/unit/test_parsing_pdf.py -k written` | refused with `source_changed`; the window was reproduced by an independent reviewer before the fix |
 | A failure while storing | `pytest -q tests/unit/test_parsing_handler.py -k extracting` | the version is recorded `failed` with `processing_failed` instead of staying `extracting` |
 | Foreign keys in the test database | `pytest -q tests/unit/test_parsing_graph.py -k restores` | SQLite now enforces them, and the test asserts the cascade really removes the evidence rows |
@@ -36,7 +39,7 @@ Run inside the api container, at the commit that contains this file.
 | Slide 4's picture, produced rather than screenshotted | `scripts/render_evidence_card.py` | `artifacts/page-6-passage.jpg`, `artifacts/api-deck-page-13-passage.jpg` - the real page rendered, our passage highlighted, provenance printed underneath |
 | 12 normal / 3 abnormal / 1 unsupported | `pytest -q tests/integration/test_extraction_regression.py` | **7 passed** |
 | Relation and review end to end | `scripts/demo_relation_review.py` | 3 candidates, review revisions 1 and 2, and a correction that carries the entity it points at |
-| Port to the team repository | the branch is pushed (`w7-parsing`), a descendant of `main` so the merge is a fast-forward | team tree **116 passed, 1 skipped**; merging A's W03 filename fix adds the two hidden starter integration tests, making it 118 |
+| Port to the team repository | A+B+D are combined on local `w7-integration-bootstrap` | Python **128 passed, 1 skipped**; browser results page still needs `/search` wiring |
 
 The one skipped test is the starter's smoke test, which needs a running stack
 and `SMOKE_BASE_URL`. The page check's independent-reader case used to skip for
