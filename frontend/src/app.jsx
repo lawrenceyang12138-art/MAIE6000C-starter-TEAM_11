@@ -448,6 +448,9 @@ function ResultsPage({ rootId, onInspector }) {
   const [evidenceLoading, setEvidenceLoading] = useState({});
   const [error, setError] = useState(null);
   const [query, setQuery] = useState("");
+  const [searchPayload, setSearchPayload] = useState(null);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState(null);
   const [filter, setFilter] = useState("all");
   const [reload, setReload] = useState(0);
   const searchInput = useRef(null);
@@ -463,6 +466,8 @@ function ResultsPage({ rootId, onInspector }) {
     setEvidence({});
     setEvidenceErrors({});
     setEvidenceLoading({});
+    setSearchPayload(null);
+    setSearchError(null);
     adapter.listFiles(rootId).then((items) => {
       if (!cancelled) setFiles(dedupeFiles(items));
     }).catch((caught) => {
@@ -473,7 +478,51 @@ function ResultsPage({ rootId, onInspector }) {
     return () => { cancelled = true; generation.current += 1; };
   }, [rootId, reload]);
 
-  const selected = files.find((file) => file.file_id + ":" + file.version_id === selectedKey) || null;
+  useEffect(() => {
+    const needle = query.trim();
+    if (!needle) {
+      setSearchPayload(null);
+      setSearchError(null);
+      setSearching(false);
+      return undefined;
+    }
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      setSearching(true);
+      setSearchError(null);
+      adapter.search(needle, rootId, { mode: "keyword", topK: 20 })
+        .then((payload) => { if (!cancelled) setSearchPayload(payload); })
+        .catch((caught) => {
+          if (!cancelled) {
+            setSearchPayload(null);
+            setSearchError(caught);
+          }
+        })
+        .finally(() => { if (!cancelled) setSearching(false); });
+    }, 350);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [query, rootId]);
+
+  const searchFiles = useMemo(() => (searchPayload?.results || []).map((result) => ({
+    result_key: "search:" + result.chunk_id,
+    evidence_chunk_id: result.chunk_id,
+    file_id: result.file_id,
+    version_id: result.version_id,
+    display_name: result.file_name,
+    relative_path: result.file_path,
+    status: "basic_ready",
+    snippet: result.text,
+    page_count: null,
+    result_page: result.page,
+    search_reason: result.reason,
+    search_score: result.score,
+  })), [searchPayload]);
+  const displayedFiles = searchPayload ? searchFiles : files;
+  const fileKey = (file) => file.result_key || file.file_id + ":" + file.version_id;
+  const selected = displayedFiles.find((file) => fileKey(file) === selectedKey) || null;
   useEffect(() => {
     onInspector(selected ? {
       file: selected,
@@ -497,14 +546,20 @@ function ResultsPage({ rootId, onInspector }) {
 
   async function selectFile(file) {
     const requestGeneration = generation.current;
-    const key = file.file_id + ":" + file.version_id;
+    const key = fileKey(file);
     setSelectedKey(key);
     if (isSourceUnavailable(file) || evidence[key] || evidenceErrors[key] || file.page_count === 0) return;
     setEvidenceLoading((current) => ({ ...current, [key]: true }));
     try {
-      const items = await adapter.getEvidence(file.file_id, file.version_id);
+      const items = file.evidence_chunk_id
+        ? await adapter.getEvidenceByChunk(file.evidence_chunk_id)
+        : await adapter.getEvidence(file.file_id, file.version_id);
       if (generation.current !== requestGeneration) return;
-      if (!isEvidenceForVersion(items, file.file_id, file.version_id, { sourcePath: file.relative_path, pageCount: file.page_count })) throw new Error("The evidence file, version, source path or page does not match the current result.");
+      const evidenceMatches = file.evidence_chunk_id
+        ? items.length === 1 && items[0].file_id === file.file_id && items[0].version_id === file.version_id &&
+          items[0].source_path === file.relative_path && items[0].page === file.result_page
+        : isEvidenceForVersion(items, file.file_id, file.version_id, { sourcePath: file.relative_path, pageCount: file.page_count });
+      if (!evidenceMatches) throw new Error("The evidence file, version, source path or page does not match the current result.");
       setEvidence((current) => ({ ...current, [key]: items }));
     } catch (caught) {
       if (generation.current !== requestGeneration) return;
@@ -522,25 +577,25 @@ function ResultsPage({ rootId, onInspector }) {
   }, { ready: 0, failed: 0, unsupported: 0 }), [files]);
   const filteredFiles = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    return files.filter((file) => {
-      const invalidSource = isSourceUnavailable(file, evidenceErrors[file.file_id + ":" + file.version_id]);
-      const matchesQuery = !needle || [file.display_name, file.relative_path, file.file_id, invalidSource ? "" : file.snippet, file.scan_note].some((value) => String(value || "").toLowerCase().includes(needle));
+    return displayedFiles.filter((file) => {
+      const invalidSource = isSourceUnavailable(file, evidenceErrors[fileKey(file)]);
+      const matchesQuery = searchPayload || !needle || [file.display_name, file.relative_path, file.file_id, invalidSource ? "" : file.snippet, file.scan_note].some((value) => String(value || "").toLowerCase().includes(needle));
       const matchesFilter = filter === "all" || (filter === "ready" && ["basic_ready", "enriched"].includes(file.status)) || (filter === "attention" && !["basic_ready", "enriched"].includes(file.status));
       return matchesQuery && matchesFilter;
     });
-  }, [files, query, filter, evidenceErrors]);
+  }, [displayedFiles, query, filter, evidenceErrors, searchPayload]);
 
   return (
     <>
       <PageHeading eyebrow="SEARCH & DISCOVER" title="Find in your files" description={rootId + " · Current versions with traceable source evidence"} action={<button className="secondary-button" disabled={loading} onClick={() => setReload((value) => value + 1)}>Refresh current versions</button>} />
-      <div className="search-field spotlight-field"><span className="search-glyph">⌕</span><input ref={searchInput} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Filter loaded filenames, relative paths and available snippets…" aria-label="Filter loaded files" /><kbd>⌘ K</kbd></div>
+      <div className="search-field spotlight-field"><span className="search-glyph">⌕</span><input ref={searchInput} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search across current file contents…" aria-label="Search current file contents" /><kbd>⌘ K</kbd></div>
       <div className="search-telemetry" aria-live="polite">
         <span className="telemetry-led" />
-        <span>{loading ? "Loading file records" : error ? "File records unavailable" : "Found " + filteredFiles.length + " matching files"}</span>
+        <span>{loading ? "Loading file records" : error ? "File records unavailable" : searching ? "Searching current versions" : "Found " + filteredFiles.length + " matching files"}</span>
         <span className="telemetry-separator">·</span>
         <span>{loading ? "Preparing evidence" : (counts.failed + counts.unsupported) + " attention items"}</span>
         <span className="telemetry-separator">·</span>
-        <span className="telemetry-ready">{loading ? "Reading service state" : error ? "Check local API" : "Client-side filter · not semantic search"}</span>
+        <span className="telemetry-ready">{loading ? "Reading service state" : error ? "Check local API" : searchPayload ? "Keyword search · semantic not connected" : "Type to search current file contents"}</span>
       </div>
       <div className="filter-row" aria-label="File filters">
         {[["all", "All files"], ["ready", "Ready"], ["attention", "Needs attention"]].map(([key, label]) => <button key={key} className={filter === key ? "filter-chip selected" : "filter-chip"} onClick={() => setFilter(key)}>{label}{key === "all" && !loading && <span>{files.length}</span>}{key === "ready" && !loading && <span>{counts.ready}</span>}{key === "attention" && !loading && <span>{counts.failed + counts.unsupported}</span>}</button>)}
@@ -548,6 +603,7 @@ function ResultsPage({ rootId, onInspector }) {
         <span className="filter-summary">{loading ? "Loading files…" : filteredFiles.length + " results"}</span>
       </div>
       <ErrorNotice error={error} />
+      <ErrorNotice error={searchError} />
       <div className="result-overview glass-card">
         <div><span>SEARCHABLE</span><strong className="tone-green">{loading || error ? "—" : counts.ready}</strong></div>
         <div><span>FAILED</span><strong className="tone-rose">{loading || error ? "—" : counts.failed}</strong></div>
@@ -559,7 +615,7 @@ function ResultsPage({ rootId, onInspector }) {
         {loading ? <div className="results-loading" role="status"><span className="loading-bar" /><span>Loading current file versions…</span></div> : error ? <div className="empty-state"><FolderOpen size={30} /><h3>Results unavailable</h3><p>Check the request error above and reopen this view.</p></div> : files.length === 0 ? <div className="empty-state"><FolderOpen size={30} /><h3>No indexed files yet</h3><p>Authorize a configured directory and complete a scan to populate this workspace.</p><ActionButton className="secondary-button" onClick={() => navigate("/select")}>Authorize local directory</ActionButton></div> : filteredFiles.length === 0 ? <div className="empty-state"><h3>No matches found</h3><p>Try a broader phrase or clear the current filters.</p><button className="text-button" onClick={() => { setQuery(""); setFilter("all"); }}>Clear search and filters</button></div> : (
           <div className="file-list">
             {filteredFiles.map((file, index) => {
-              const key = file.file_id + ":" + file.version_id;
+              const key = fileKey(file);
               const invalidSource = isSourceUnavailable(file, evidenceErrors[key]);
               const tone = file.status === "failed" ? "rose" : file.status === "unsupported" ? "amber" : "indigo";
               const status = statusMeta(file.status === "failed" ? "failed_file" : file.status);
@@ -572,8 +628,8 @@ function ResultsPage({ rootId, onInspector }) {
                     <span className="file-open">Inspect <ArrowUpRight size={14} /></span>
                   </button>
                   <div className="file-row-details">
-                    <div className="file-match"><span className="match-label">FILE STATE</span><strong>{invalidSource ? "Source unavailable · verify before inspecting evidence" : ["basic_ready", "enriched"].includes(file.status) ? "Indexed record · inspect version-bound evidence" : file.status === "failed" ? "Processing stopped · filename remains visible" : file.status === "unsupported" ? "Format not supported · filename remains visible" : "Processing is not yet complete"}</strong></div>
-                    <div className="file-passage"><span className="quote-mark">“</span><span>{invalidSource ? "Cached passage hidden until the source is verified." : file.snippet}</span><code className="passage-locator">{file.page_count ? file.page_count + " source pages · inspect to locate passage" : file.expected_error_code || file.error_code || "No page locator"}</code></div>
+                    <div className="file-match"><span className="match-label">{file.search_reason ? "MATCH REASON" : "FILE STATE"}</span><strong>{file.search_reason || (invalidSource ? "Source unavailable · verify before inspecting evidence" : ["basic_ready", "enriched"].includes(file.status) ? "Indexed record · inspect version-bound evidence" : file.status === "failed" ? "Processing stopped · filename remains visible" : file.status === "unsupported" ? "Format not supported · filename remains visible" : "Processing is not yet complete")}</strong></div>
+                    <div className="file-passage"><span className="quote-mark">“</span><span>{invalidSource ? "Cached passage hidden until the source is verified." : file.snippet}</span><code className="passage-locator">{file.result_page ? "Page " + file.result_page + " · returned chunk" : file.page_count ? file.page_count + " source pages · inspect to locate passage" : file.expected_error_code || file.error_code || "No page locator"}</code></div>
                     <div className="file-meta-line"><span><i className={"tiny-state " + (["basic_ready", "enriched"].includes(file.status) ? "confirmed" : file.status === "failed" ? "failed" : "paused")} />{["basic_ready", "enriched"].includes(file.status) ? "Indexed source" : file.status === "failed" ? "Action needed" : file.status === "unsupported" ? "Unsupported format" : "Processing pending"}</span><span className="file-version">ID {file.file_id} · {file.version_id}</span></div>
                     {(invalidSource || file.capability_status === "keyword_only" || file.expected_error_code || file.error_code) && <div className={"file-warning " + (file.status === "failed" ? "warning-danger" : "")}>{file.expected_error_code || file.error_code || (invalidSource ? "Source file unavailable or changed" : "Keyword-only search capability")}</div>}
                   </div>

@@ -49,4 +49,21 @@ describe("mock file-management adapter", () => {
     expect(files.find((file) => file.file_id === "file-005").capability_status).toBe("keyword_only");
     await expect(adapter.getEvidence("file-004", "version-004-v1")).rejects.toMatchObject({ status: 404, code: "SOURCE_UNAVAILABLE" });
   });
+
+  it("returns a keyword result that can be expanded by chunk id", async () => {
+    const adapter = createMockAdapter(mockData, { latency: 0 });
+    const payload = await adapter.search("team11-demo-09", "root-demo-01");
+    expect(payload.effective_mode).toBe("keyword");
+    expect(payload.results[0]).toMatchObject({
+      file_id: "file-009",
+      version_id: "version-009-v1",
+      file_name: "team11-demo-09.pdf",
+    });
+    const evidence = await adapter.getEvidenceByChunk(payload.results[0].chunk_id);
+    expect(evidence[0]).toMatchObject({
+      file_id: "file-009",
+      version_id: "version-009-v1",
+      page: 1,
+    });
+  });
 });

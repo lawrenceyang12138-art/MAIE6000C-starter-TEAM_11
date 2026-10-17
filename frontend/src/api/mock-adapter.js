@@ -151,5 +151,46 @@ export function createMockAdapter(data, { latency = 80 } = {}) {
       }
       return clone(evidence);
     },
+    async search(query, rootId, { mode = "keyword", topK = 10 } = {}) {
+      await delay(latency);
+      const needle = String(query || "").trim().toLowerCase();
+      if (!needle) throw new AdapterError("Enter a search phrase.", { status: 422, code: "INVALID_QUERY" });
+      const results = [];
+      for (const file of data.files) {
+        if (rootId !== data.root.root_id || file.status !== "basic_ready") continue;
+        const evidence = data.evidence[`${file.file_id}:${file.version_id}`]?.[0];
+        const haystack = [file.display_name, file.relative_path, file.snippet, evidence?.excerpt].join(" ").toLowerCase();
+        if (!haystack.includes(needle)) continue;
+        results.push({
+          root_id: rootId,
+          file_id: file.file_id,
+          file_name: file.display_name,
+          file_path: file.relative_path,
+          version_id: file.version_id,
+          chunk_id: evidence?.evidence_id || `${file.file_id}:${file.version_id}:chunk-1`,
+          page: evidence?.page || 1,
+          text: evidence?.excerpt || file.snippet || file.display_name,
+          reason: "synthetic keyword match",
+          score: 1,
+        });
+      }
+      return {
+        query,
+        mode,
+        effective_mode: "keyword",
+        results: results.slice(0, topK),
+        total: results.length,
+        degraded: mode !== "keyword",
+        degradation_reason: mode !== "keyword" ? "simulation_keyword_only" : null,
+      };
+    },
+    async getEvidenceByChunk(chunkId) {
+      await delay(latency);
+      for (const items of Object.values(data.evidence)) {
+        const found = items.find((item) => item.evidence_id === chunkId);
+        if (found) return clone([found]);
+      }
+      throw new AdapterError("This synthetic passage is unavailable.", { status: 404, code: "CHUNK_NOT_FOUND" });
+    },
   };
 }

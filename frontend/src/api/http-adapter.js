@@ -100,5 +100,43 @@ export function createApiAdapter({ baseUrl = "/api", fetchImpl = globalThis.fetc
         item?.file_id === fileId && item.version_id === versionId && Number.isInteger(item.page) && item.page > 0 &&
         isRelativePath(item.source_path) && isId(item.excerpt));
     },
+    async search(query, rootId, { mode = "keyword", topK = 10 } = {}) {
+      const payload = await request("/search", {
+        method: "POST",
+        body: { query, mode, top_k: topK, root_id: rootId },
+      });
+      requireValue(
+        payload &&
+        isId(payload.query) &&
+        isId(payload.effective_mode) &&
+        Array.isArray(payload.results) &&
+        payload.results.every((item) =>
+          isId(item.file_id) &&
+          isId(item.version_id) &&
+          isId(item.chunk_id) &&
+          isId(item.file_name) &&
+          isRelativePath(item.file_path) &&
+          isId(item.text)),
+      );
+      return payload;
+    },
+    async getEvidenceByChunk(chunkId) {
+      const item = await request(`/evidence/${encodeURIComponent(chunkId)}`);
+      requireValue(
+        item?.chunk_id === chunkId &&
+        isId(item.file_id) &&
+        isId(item.version_id) &&
+        isId(item.relative_path) &&
+        isId(item.text),
+      );
+      return [{
+        evidence_id: item.chunk_id,
+        file_id: item.file_id,
+        version_id: item.version_id,
+        page: item.page_number,
+        source_path: item.relative_path,
+        excerpt: item.text,
+      }];
+    },
   };
 }
