@@ -75,6 +75,16 @@ def handle_extract_file(db: Session, version_id: str, source_path: str | Path) -
 
     try:
         document = extract_document(source_path)
+
+        if document.content_sha256 != expected_sha256:
+            # The file changed underneath us. Publishing now would attach text
+            # from one set of bytes to a version row that claims different ones.
+            return _finish(
+                db, version_id, VersionStatus.FAILED.value, REASON_SOURCE_CHANGED
+            )
+
+        chunks = chunk_document(document)
+        persist_chunks(db, version_id, chunks)
     except UnsupportedDocument as exc:
         return _finish(
             db, version_id, VersionStatus.UNSUPPORTED.value, exc.reason_code
@@ -82,35 +92,21 @@ def handle_extract_file(db: Session, version_id: str, source_path: str | Path) -
     except SourceMissing as exc:
         # The file was there when it was scanned and has gone since. That is a
         # property of the folder, not of the document, and it is retryable, so
-        # it is failed rather than unsupported. Without this the exception
-        # escapes, the version stays "extracting" forever, and the job's error
-        # message is the only trace of why.
+        # it is failed rather than unsupported.
         return _finish(
             db, version_id, VersionStatus.FAILED.value, exc.reason_code
         )
     except SourceChanged as exc:
-        # Caught here as well as checked below: the check below compares the
-        # version row against the file, while this one fires when the file was
-        # written during the read itself.
+        # The file was written while it was being read.
         return _finish(
             db, version_id, VersionStatus.FAILED.value, exc.reason_code
         )
-
-    if document.content_sha256 != expected_sha256:
-        # The file changed underneath us. Publishing now would attach text from
-        # one set of bytes to a version row that claims different bytes.
-        return _finish(
-            db, version_id, VersionStatus.FAILED.value, REASON_SOURCE_CHANGED
-        )
-
-    try:
-        chunks = chunk_document(document)
-        persist_chunks(db, version_id, chunks)
     except Exception:
-        # The version was committed as "extracting" before any of this ran. If
-        # the work fails, leaving the row mid-extraction makes it
-        # indistinguishable from one that is still running, so the outcome is
-        # recorded before the error goes up for the worker to retry.
+        # Everything from here on runs after the row was committed as
+        # "extracting". If any step fails - the reader, the chunker or the
+        # store - leaving the row mid-extraction makes it indistinguishable
+        # from one that is still running, so the outcome is recorded before the
+        # error goes up for the worker to decide whether to retry.
         _finish(db, version_id, VersionStatus.FAILED.value, REASON_PROCESSING_FAILED)
         raise
 

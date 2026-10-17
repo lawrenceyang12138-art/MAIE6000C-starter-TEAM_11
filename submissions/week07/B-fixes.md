@@ -146,3 +146,18 @@ The skipped test is the starter's smoke test, which needs a running stack and
 - **The official fixture corpus has not landed**, so the regression above used
   a rehearsal corpus. Re-run it against D's fixtures when they arrive - that is
   a five-minute check, not a rebuild.
+
+## A second audit pass (2026-10-17), two more defects
+
+The whole slice was re-read from scratch rather than trusted. Two more silent
+problems turned up, both of the same kind: green tests over behaviour that was
+never actually guaranteed.
+
+| # | Defect | How it was found | Fix |
+| --- | --- | --- | --- |
+| 8 | A crash **inside the reader** left the version stuck in `extracting` forever. The earlier fix covered failures while *storing*, not while *reading* | made `extract_document` raise, then read the row back: `status=extracting, error_code=None` | extraction, chunking and storing now share one handler; any unexpected failure is recorded as `failed`/`processing_failed` before it is re-raised. One new test |
+| 9 | A chunk set with a hole (`1, 2, 5`) passed validation and was written. Every downstream count ("chunk 3 of 7") would then describe a document that does not exist | called `persist_chunks` with a gapped set | ordinals must now be `1..N` with no gaps. One new test |
+
+The same pass also strengthened a claim that had only one example behind it:
+"no chunk exceeds 700 characters" is now a property test over 300 hostile page
+shapes, not a single long string.

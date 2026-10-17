@@ -171,6 +171,31 @@ def test_duplicate_ordinals_are_rejected_before_writing(
     assert _stored(db_session, version_id) == []
 
 
+def test_a_gap_in_the_ordinals_is_rejected_before_writing(
+    db_session: Session, make_file_version
+):
+    """A replacement stores the whole set, so a hole means a partial set.
+
+    Nothing in the pipeline produces one, but accepting it would let a caller
+    store "chunk 1, 2, 5" and have every count downstream describe a document
+    that does not exist.
+    """
+    version_id = make_file_version()
+
+    with pytest.raises(InvalidChunkSet):
+        persist_chunks(
+            db_session,
+            version_id,
+            [
+                Chunk(ordinal=1, page_number=1, text="one"),
+                Chunk(ordinal=2, page_number=1, text="two"),
+                Chunk(ordinal=5, page_number=2, text="five"),
+            ],
+        )
+
+    assert _stored(db_session, version_id) == []
+
+
 def test_chunks_of_different_versions_are_independent(
     db_session: Session, make_file_version
 ):

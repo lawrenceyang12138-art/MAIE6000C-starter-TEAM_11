@@ -53,6 +53,12 @@ def _validate_ordinals(chunks: Sequence[Chunk]) -> None:
         raise InvalidChunkSet("chunk ordinals must start at 1")
     if len(set(ordinals)) != len(ordinals):
         raise InvalidChunkSet("chunk ordinals must be unique within a version")
+    # A replacement stores the whole chunk set for a version, so a hole means
+    # the caller is writing a partial set under the name of a full one. Every
+    # way of counting passages ("chunk 3 of 7", the next ordinal, a coverage
+    # check) then describes a document that does not exist.
+    if set(ordinals) != set(range(1, len(ordinals) + 1)):
+        raise InvalidChunkSet("chunk ordinals must run 1..N with no gaps")
 
 
 def persist_chunks(db: Session, version_id: str, chunks: Sequence[Chunk]) -> int:

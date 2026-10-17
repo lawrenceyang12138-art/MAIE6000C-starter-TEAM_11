@@ -12,10 +12,11 @@ Run inside the api container, at the commit that contains this file.
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Whole suite | `pytest -q` | **103 passed, 1 skipped** |
+| Whole suite | `pytest -q` | **106 passed, 1 skipped** |
 | Migrations from an empty database | `alembic upgrade head` against a freshly created PostgreSQL database | four migrations apply in order and reach `445f908b73b4` |
-| The commands CI runs | `ruff check .`, the migration step, `pytest -q tests/unit tests/integration` | clean, head reached, **103 passed, none skipped** |
+| The commands CI runs | `ruff check .`, the migration step, `pytest -q tests/unit tests/integration` | clean, head reached, **106 passed, none skipped** |
 | Independent audit by two blank-context reviewers | materials verified by re-running their own commands; the code attacked with adversarial inputs | every claim reproduced except four stale statements (fixed); the code audit found and reproduced four real defects, all now fixed and pinned by tests (`submissions/week07/B-fixes.md`) |
+| Second audit pass, written for a reader without an engineering background | `docs/audit-report-for-beginners.md` | six mechanisms each with a hand check; two more defects found and fixed (a crash inside the reader leaving the version `extracting`, and a gapped chunk set being accepted) |
 | A file written while it is being read | `pytest -q tests/unit/test_parsing_pdf.py -k written` | refused with `source_changed`; the window was reproduced by an independent reviewer before the fix |
 | A failure while storing | `pytest -q tests/unit/test_parsing_handler.py -k extracting` | the version is recorded `failed` with `processing_failed` instead of staying `extracting` |
 | Foreign keys in the test database | `pytest -q tests/unit/test_parsing_graph.py -k restores` | SQLite now enforces them, and the test asserts the cascade really removes the evidence rows |
