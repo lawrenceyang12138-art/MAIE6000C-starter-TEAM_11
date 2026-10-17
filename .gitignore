@@ -211,6 +211,7 @@ cython_debug/
 tempCodeRunnerFile.py
 .DS_Store
 .codex-build/
+models/
 
 # Frontend source is not a Python build library.
 !frontend/src/lib/
@@ -242,6 +243,7 @@ submissions/week07/sections/*
 !submissions/week07/evidence/
 submissions/week07/evidence/*
 !submissions/week07/evidence/m1-browser-2026-10-17.md
+!submissions/week07/evidence/semantic-live-2026-10-17.md
 !submissions/week07/evidence/1016-D/
 
 # Ruff stuff:

@@ -18,7 +18,10 @@ services:
       retries: 10
 
   ai:
-    build: .
+    build:
+      context: .
+      args:
+        INSTALL_EMBEDDINGS: ${INSTALL_EMBEDDINGS:-0}
     command: uvicorn services.ai.app.main:app --host 0.0.0.0 --port 8100
     env_file:
       - .env

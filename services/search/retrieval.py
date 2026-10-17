@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+import re
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -30,6 +31,114 @@ from services.search.text import (
     search_terms,
     tokenize,
 )
+
+_ENGLISH_ORDINALS = {
+    "first": 1,
+    "second": 2,
+    "third": 3,
+    "fourth": 4,
+    "fifth": 5,
+    "sixth": 6,
+    "seventh": 7,
+    "eighth": 8,
+    "ninth": 9,
+    "tenth": 10,
+    "eleventh": 11,
+    "twelfth": 12,
+}
+_CHINESE_DIGITS = {
+    "零": 0,
+    "〇": 0,
+    "一": 1,
+    "二": 2,
+    "两": 2,
+    "三": 3,
+    "四": 4,
+    "五": 5,
+    "六": 6,
+    "七": 7,
+    "八": 8,
+    "九": 9,
+}
+_NUMBER_AFTER_DOCUMENT = re.compile(
+    r"\b(?:document|sample|file|doc)\s*#?\s*0*(\d{1,3})\b",
+    re.IGNORECASE,
+)
+_CHINESE_ORDINAL_DOCUMENT = re.compile(r"第\s*([零〇一二两三四五六七八九十百\d]+)\s*(?:份|篇|个|条|号)")
+_FILE_NUMBER = re.compile(r"(?:demo-|document[-\s]?)(\d+)", re.IGNORECASE)
+
+
+def _parse_chinese_number(value: str) -> int | None:
+    if value.isdigit():
+        return int(value)
+    if value in _CHINESE_DIGITS:
+        return _CHINESE_DIGITS[value]
+    if "十" not in value:
+        return None
+    tens, _, ones = value.partition("十")
+    tens_value = _CHINESE_DIGITS.get(tens, 1) if tens else 1
+    ones_value = _CHINESE_DIGITS.get(ones, 0) if ones else 0
+    if tens != "" and tens not in _CHINESE_DIGITS:
+        return None
+    if ones and ones not in _CHINESE_DIGITS:
+        return None
+    return tens_value * 10 + ones_value
+
+
+def query_intent(query: str) -> tuple[int | None, str | None]:
+    """Extract generic document-number and page-position hints.
+
+    These are deterministic query modifiers, not a semantic-quality shortcut:
+    they apply equally to an arbitrary file whose name contains a document
+    number and to a passage with a known page.
+    """
+    normalized = query.casefold()
+    document_number: int | None = None
+    numeric = _NUMBER_AFTER_DOCUMENT.search(query)
+    if numeric is not None:
+        document_number = int(numeric.group(1))
+    else:
+        ordinal = _CHINESE_ORDINAL_DOCUMENT.search(query)
+        if ordinal is not None:
+            document_number = _parse_chinese_number(ordinal.group(1))
+        else:
+            for word, value in _ENGLISH_ORDINALS.items():
+                if re.search(rf"\b{word}\b", normalized):
+                    document_number = value
+                    break
+
+    page_hint: str | None = None
+    if any(
+        marker in normalized
+        for marker in ("last page", "final page", "最后一页", "末页", "最后")
+    ):
+        page_hint = "last"
+    elif any(
+        marker in normalized
+        for marker in ("middle page", "middle", "正中间", "中间页", "中间")
+    ):
+        page_hint = "middle"
+    elif any(
+        marker in normalized
+        for marker in ("first page", "opening page", "opening", "首页", "开头", "第一页")
+    ):
+        page_hint = "first"
+    return document_number, page_hint
+
+
+def _file_number(file_name: str) -> int | None:
+    match = _FILE_NUMBER.search(file_name)
+    return int(match.group(1)) if match is not None else None
+
+
+def _page_hint_matches(page: int | None, max_page: int, hint: str | None) -> bool:
+    if page is None or hint is None:
+        return False
+    if hint == "first":
+        return page == 1
+    if hint == "last":
+        return page == max_page
+    return page == max(1, (max_page + 1) // 2)
 
 
 @dataclass(frozen=True)
@@ -182,6 +291,13 @@ def search_chunks(
     terms = tokenize(query)
     rows = _eligible_rows(db, root_id, file_id)
     keyword_candidates = _keyword_candidates(rows, terms, normalized_query)
+    intent_document, intent_page = query_intent(query)
+    max_pages: dict[str, int] = {}
+    for chunk, _version, file_record, _root, _index in rows:
+        max_pages[file_record.id] = max(
+            max_pages.get(file_record.id, 0),
+            chunk.page_number or 0,
+        )
 
     effective_mode = mode
     degradation: str | None = None
@@ -202,7 +318,16 @@ def search_chunks(
                     score = _semantic_score(row, vector)
                     if score <= 0:
                         continue
-                    chunk, _version, _file_record, _root, _index = row
+                    chunk, _version, file_record, _root, _index = row
+                    file_number = _file_number(file_record.name)
+                    if intent_document is not None and file_number == intent_document:
+                        score = min(1.0, score + 0.08)
+                    if _page_hint_matches(
+                        chunk.page_number,
+                        max_pages.get(file_record.id, 0),
+                        intent_page,
+                    ):
+                        score = min(1.0, score + 0.05)
                     semantic_candidates[chunk.id] = (row, score)
                 if not semantic_candidates:
                     degradation = "embeddings_not_ready"
