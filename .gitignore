@@ -1,3 +1,9 @@
+# skills
+.codex
+
+# tmp
+submissions/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -203,6 +209,26 @@ cython_debug/
 .vscode/settings.json
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
+
+# Frontend source is not a Python build library.
+!frontend/src/lib/
+!frontend/src/lib/**
+
+# Retain the existing submission ignore while versioning the D handoff.
+!submissions/
+submissions/*
+!submissions/week07/
+submissions/week07/*
+!submissions/week07/ui-acceptance.md
+!submissions/week07/ui-progress.md
+!submissions/week07/gold-queries.json
+!submissions/week07/gold-queries.freeze.json
+!submissions/week07/sections/
+submissions/week07/sections/*
+!submissions/week07/sections/D.md
+!submissions/week07/evidence/
+submissions/week07/evidence/*
+!submissions/week07/evidence/1016-D/
 
 # Ruff stuff:
 .ruff_cache/

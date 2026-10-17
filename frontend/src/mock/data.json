@@ -1,0 +1,557 @@
+{
+  "contract_version": "d-mock-contract-v1",
+  "generated_at": "2026-10-14T09:00:00Z",
+  "root": {
+    "root_id": "root-demo-01",
+    "mount_id": "mount-team11-demo",
+    "label": "Team 11 synthetic demo mount",
+    "relative_path": "normal",
+    "status": "active"
+  },
+  "mounts": [
+    {
+      "mount_id": "mount-team11-demo",
+      "label": "Team 11 synthetic demo mount",
+      "read_only": true,
+      "availability": "available"
+    }
+  ],
+  "directories": {
+    "mount-team11-demo": [
+      {
+        "relative_path": "normal",
+        "label": "normal",
+        "kind": "directory"
+      },
+      {
+        "relative_path": "normal/team-alpha",
+        "label": "team-alpha",
+        "kind": "directory"
+      },
+      {
+        "relative_path": "normal/team-beta",
+        "label": "team-beta",
+        "kind": "directory"
+      },
+      {
+        "relative_path": "abnormal",
+        "label": "abnormal",
+        "kind": "directory"
+      },
+      {
+        "relative_path": "unsupported",
+        "label": "unsupported",
+        "kind": "directory"
+      },
+      {
+        "relative_path": "empty",
+        "label": "empty (no files)",
+        "kind": "directory"
+      }
+    ]
+  },
+  "accepted_scan": {
+    "status_code": 202,
+    "root_id": "root-demo-01",
+    "job_id": "job-scan-demo-01",
+    "status": "pending"
+  },
+  "progress_sequence": [
+    {
+      "status": "pending",
+      "processed": 0,
+      "total": 16,
+      "normal": 0,
+      "abnormal": 0,
+      "unsupported": 0,
+      "percent": 0
+    },
+    {
+      "status": "running",
+      "processed": 6,
+      "total": 16,
+      "normal": 6,
+      "abnormal": 0,
+      "unsupported": 0,
+      "percent": 38
+    },
+    {
+      "status": "running",
+      "processed": 12,
+      "total": 16,
+      "normal": 12,
+      "abnormal": 0,
+      "unsupported": 0,
+      "percent": 75
+    },
+    {
+      "status": "completed",
+      "processed": 16,
+      "total": 16,
+      "normal": 12,
+      "abnormal": 3,
+      "unsupported": 1,
+      "percent": 100
+    }
+  ],
+  "files": [
+    {
+      "file_id": "file-001",
+      "version_id": "version-001-v1",
+      "relative_path": "normal/team-alpha/team11-demo-01.pdf",
+      "display_name": "team11-demo-01.pdf",
+      "sha256": "090c3446987187caa11cdb8608a35a56dfcd449066e2123f0672752ebb3bd3d6",
+      "page_count": 1,
+      "expected_status": "basic_ready",
+      "expected_error_code": null,
+      "source_kind": "synthetic_pdf",
+      "root_id": "root-demo-01",
+      "status": "basic_ready",
+      "source_available": true,
+      "capability_status": "full",
+      "snippet": "Synthetic evidence for team11-demo-01.pdf",
+      "evidence_count": 1
+    },
+    {
+      "file_id": "file-002",
+      "version_id": "version-002-v1",
+      "relative_path": "normal/team-alpha/team11-demo-02.pdf",
+      "display_name": "team11-demo-02.pdf",
+      "sha256": "96a48022ff2bafc85543718c3f55f577fed40a173f4d63e8d066d8a5fea8b29f",
+      "page_count": 1,
+      "expected_status": "basic_ready",
+      "expected_error_code": null,
+      "source_kind": "synthetic_pdf",
+      "root_id": "root-demo-01",
+      "status": "basic_ready",
+      "source_available": true,
+      "capability_status": "full",
+      "snippet": "Synthetic evidence for team11-demo-02.pdf",
+      "evidence_count": 1
+    },
+    {
+      "file_id": "file-003",
+      "version_id": "version-003-v1",
+      "relative_path": "normal/team-alpha/team11-demo-03.pdf",
+      "display_name": "team11-demo-03.pdf",
+      "sha256": "b63b33819f4ce501d0f279c6df5f66141f3659f76eaaa96369b23ddab234bdf0",
+      "page_count": 1,
+      "expected_status": "basic_ready",
+      "expected_error_code": null,
+      "source_kind": "synthetic_pdf",
+      "root_id": "root-demo-01",
+      "status": "basic_ready",
+      "source_available": true,
+      "capability_status": "full",
+      "snippet": "Synthetic evidence for team11-demo-03.pdf",
+      "evidence_count": 1
+    },
+    {
+      "file_id": "file-004",
+      "version_id": "version-004-v1",
+      "relative_path": "normal/team-alpha/team11-demo-04.pdf",
+      "display_name": "team11-demo-04.pdf",
+      "sha256": "5c448081313b1d701aa37f41b650b531f6aaea18f4de558656a51616f17926b9",
+      "page_count": 1,
+      "expected_status": "basic_ready",
+      "expected_error_code": null,
+      "source_kind": "synthetic_pdf",
+      "root_id": "root-demo-01",
+      "status": "basic_ready",
+      "source_available": false,
+      "capability_status": "full",
+      "snippet": "Synthetic evidence for team11-demo-04.pdf",
+      "evidence_count": 1
+    },
+    {
+      "file_id": "file-005",
+      "version_id": "version-005-v1",
+      "relative_path": "normal/team-alpha/team11-demo-05.pdf",
+      "display_name": "team11-demo-05.pdf",
+      "sha256": "8b7ec4dd5aedab420d8a35c03f8f445971721574ac9e7291014ff1799e6f9db7",
+      "page_count": 1,
+      "expected_status": "basic_ready",
+      "expected_error_code": null,
+      "source_kind": "synthetic_pdf",
+      "root_id": "root-demo-01",
+      "status": "basic_ready",
+      "source_available": true,
+      "capability_status": "keyword_only",
+      "snippet": "Synthetic evidence for team11-demo-05.pdf",
+      "evidence_count": 1
+    },
+    {
+      "file_id": "file-006",
+      "version_id": "version-006-v1",
+      "relative_path": "normal/team-alpha/team11-demo-06.pdf",
+      "display_name": "team11-demo-06.pdf",
+      "sha256": "7baa07db66c24c805cdc212fa68a1674a46209ad24766f19be6473d3545a4858",
+      "page_count": 1,
+      "expected_status": "basic_ready",
+      "expected_error_code": null,
+      "source_kind": "synthetic_pdf",
+      "root_id": "root-demo-01",
+      "status": "basic_ready",
+      "source_available": true,
+      "capability_status": "full",
+      "snippet": "Synthetic evidence for team11-demo-06.pdf",
+      "evidence_count": 1
+    },
+    {
+      "file_id": "file-007",
+      "version_id": "version-007-v1",
+      "relative_path": "normal/team-beta/team11-demo-07.pdf",
+      "display_name": "team11-demo-07.pdf",
+      "sha256": "fbfecd36cc0a14ebb497f936bc1f1fd226f908339d99f77f0957c9f2c5c44b63",
+      "page_count": 1,
+      "expected_status": "basic_ready",
+      "expected_error_code": null,
+      "source_kind": "synthetic_pdf",
+      "root_id": "root-demo-01",
+      "status": "basic_ready",
+      "source_available": true,
+      "capability_status": "full",
+      "snippet": "Synthetic evidence for team11-demo-07.pdf",
+      "evidence_count": 1
+    },
+    {
+      "file_id": "file-008",
+      "version_id": "version-008-v1",
+      "relative_path": "normal/team-beta/team11-demo-08.pdf",
+      "display_name": "team11-demo-08.pdf",
+      "sha256": "a1ceacfb5b35a4017283afd611a37b1580bbacc921bb9e0e0b13a556b6936c48",
+      "page_count": 1,
+      "expected_status": "basic_ready",
+      "expected_error_code": null,
+      "source_kind": "synthetic_pdf",
+      "root_id": "root-demo-01",
+      "status": "basic_ready",
+      "source_available": true,
+      "capability_status": "full",
+      "snippet": "Synthetic evidence for team11-demo-08.pdf",
+      "evidence_count": 1
+    },
+    {
+      "file_id": "file-009",
+      "version_id": "version-009-v1",
+      "relative_path": "normal/team-beta/team11-demo-09.pdf",
+      "display_name": "team11-demo-09.pdf",
+      "sha256": "21882931591383a51bcefd18c4843dca1e9a6163e086c4f959527393194fe90a",
+      "page_count": 3,
+      "expected_status": "basic_ready",
+      "expected_error_code": null,
+      "source_kind": "synthetic_pdf",
+      "root_id": "root-demo-01",
+      "status": "basic_ready",
+      "source_available": true,
+      "capability_status": "full",
+      "snippet": "Synthetic evidence for team11-demo-09.pdf",
+      "evidence_count": 3
+    },
+    {
+      "file_id": "file-010",
+      "version_id": "version-010-v1",
+      "relative_path": "normal/team-beta/team11-demo-10.pdf",
+      "display_name": "team11-demo-10.pdf",
+      "sha256": "44ca584ae43590e6c1a4ded0b3f8099a4d9261ccb0d9d92beede8a6dc39a872c",
+      "page_count": 3,
+      "expected_status": "basic_ready",
+      "expected_error_code": null,
+      "source_kind": "synthetic_pdf",
+      "root_id": "root-demo-01",
+      "status": "basic_ready",
+      "source_available": true,
+      "capability_status": "full",
+      "snippet": "Synthetic evidence for team11-demo-10.pdf",
+      "evidence_count": 3
+    },
+    {
+      "file_id": "file-011",
+      "version_id": "version-011-v1",
+      "relative_path": "normal/team-beta/team11-demo-11.pdf",
+      "display_name": "team11-demo-11.pdf",
+      "sha256": "cb95cbad289cee731140414ed8d0e5ee1b9f68b89e5044179c110152686f337f",
+      "page_count": 3,
+      "expected_status": "basic_ready",
+      "expected_error_code": null,
+      "source_kind": "synthetic_pdf",
+      "root_id": "root-demo-01",
+      "status": "basic_ready",
+      "source_available": true,
+      "capability_status": "full",
+      "snippet": "Synthetic evidence for team11-demo-11.pdf",
+      "evidence_count": 3
+    },
+    {
+      "file_id": "file-012",
+      "version_id": "version-012-v1",
+      "relative_path": "normal/team-beta/team11-demo-12.pdf",
+      "display_name": "team11-demo-12.pdf",
+      "sha256": "692fb24ab37adbea8bae2b5849353458e03490af33bad00aac05834af46edb84",
+      "page_count": 3,
+      "expected_status": "basic_ready",
+      "expected_error_code": null,
+      "source_kind": "synthetic_pdf",
+      "root_id": "root-demo-01",
+      "status": "basic_ready",
+      "source_available": true,
+      "capability_status": "full",
+      "snippet": "Synthetic evidence for team11-demo-12.pdf",
+      "evidence_count": 3
+    },
+    {
+      "file_id": "file-013",
+      "version_id": "version-013-v1",
+      "relative_path": "abnormal/empty.pdf",
+      "display_name": "empty.pdf",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "page_count": 0,
+      "expected_status": "failed",
+      "expected_error_code": "EMPTY_FILE",
+      "source_kind": "synthetic_invalid_pdf",
+      "root_id": "root-demo-01",
+      "status": "failed",
+      "source_available": true,
+      "capability_status": "full",
+      "snippet": "Processing stopped: EMPTY_FILE",
+      "evidence_count": 0
+    },
+    {
+      "file_id": "file-014",
+      "version_id": "version-014-v1",
+      "relative_path": "abnormal/truncated.pdf",
+      "display_name": "truncated.pdf",
+      "sha256": "6f32667a14f03c7f6eafc0e3328df8969bbdb913534e22675f85d858c3407c87",
+      "page_count": 0,
+      "expected_status": "failed",
+      "expected_error_code": "TRUNCATED_PDF",
+      "source_kind": "synthetic_invalid_pdf",
+      "root_id": "root-demo-01",
+      "status": "failed",
+      "source_available": true,
+      "capability_status": "full",
+      "snippet": "Processing stopped: TRUNCATED_PDF",
+      "evidence_count": 0
+    },
+    {
+      "file_id": "file-015",
+      "version_id": "version-015-v1",
+      "relative_path": "abnormal/corrupt.pdf",
+      "display_name": "corrupt.pdf",
+      "sha256": "772ad3ea1f583ad7d8b54af6ef33f6280f2a23752cbd329f43c6e84fd1296e17",
+      "page_count": 0,
+      "expected_status": "failed",
+      "expected_error_code": "CORRUPT_PDF",
+      "source_kind": "synthetic_invalid_pdf",
+      "root_id": "root-demo-01",
+      "status": "failed",
+      "source_available": true,
+      "capability_status": "full",
+      "snippet": "Processing stopped: CORRUPT_PDF",
+      "evidence_count": 0
+    },
+    {
+      "file_id": "file-016",
+      "version_id": "version-016-v1",
+      "relative_path": "unsupported/team11-unsupported-notes.docx",
+      "display_name": "team11-unsupported-notes.docx",
+      "sha256": "7a21a8af532494ba07fb04dfc18b710e0a7af1e6917aa726cd204ae9705531fd",
+      "page_count": 0,
+      "expected_status": "unsupported",
+      "expected_error_code": "UNSUPPORTED_FORMAT",
+      "source_kind": "synthetic_unsupported",
+      "root_id": "root-demo-01",
+      "status": "unsupported",
+      "source_available": true,
+      "capability_status": "full",
+      "snippet": "Processing stopped: UNSUPPORTED_FORMAT",
+      "evidence_count": 0
+    }
+  ],
+  "evidence": {
+    "file-001:version-001-v1": [
+      {
+        "evidence_id": "evidence-file-001-1",
+        "file_id": "file-001",
+        "version_id": "version-001-v1",
+        "page": 1,
+        "source_path": "normal/team-alpha/team11-demo-01.pdf",
+        "excerpt": "team11-demo-01.pdf page 1 synthetic excerpt"
+      }
+    ],
+    "file-002:version-002-v1": [
+      {
+        "evidence_id": "evidence-file-002-1",
+        "file_id": "file-002",
+        "version_id": "version-002-v1",
+        "page": 1,
+        "source_path": "normal/team-alpha/team11-demo-02.pdf",
+        "excerpt": "team11-demo-02.pdf page 1 synthetic excerpt"
+      }
+    ],
+    "file-003:version-003-v1": [
+      {
+        "evidence_id": "evidence-file-003-1",
+        "file_id": "file-003",
+        "version_id": "version-003-v1",
+        "page": 1,
+        "source_path": "normal/team-alpha/team11-demo-03.pdf",
+        "excerpt": "team11-demo-03.pdf page 1 synthetic excerpt"
+      }
+    ],
+    "file-004:version-004-v1": [
+      {
+        "evidence_id": "evidence-file-004-1",
+        "file_id": "file-004",
+        "version_id": "version-004-v1",
+        "page": 1,
+        "source_path": "normal/team-alpha/team11-demo-04.pdf",
+        "excerpt": "team11-demo-04.pdf page 1 synthetic excerpt"
+      }
+    ],
+    "file-005:version-005-v1": [
+      {
+        "evidence_id": "evidence-file-005-1",
+        "file_id": "file-005",
+        "version_id": "version-005-v1",
+        "page": 1,
+        "source_path": "normal/team-alpha/team11-demo-05.pdf",
+        "excerpt": "team11-demo-05.pdf page 1 synthetic excerpt"
+      }
+    ],
+    "file-006:version-006-v1": [
+      {
+        "evidence_id": "evidence-file-006-1",
+        "file_id": "file-006",
+        "version_id": "version-006-v1",
+        "page": 1,
+        "source_path": "normal/team-alpha/team11-demo-06.pdf",
+        "excerpt": "team11-demo-06.pdf page 1 synthetic excerpt"
+      }
+    ],
+    "file-007:version-007-v1": [
+      {
+        "evidence_id": "evidence-file-007-1",
+        "file_id": "file-007",
+        "version_id": "version-007-v1",
+        "page": 1,
+        "source_path": "normal/team-beta/team11-demo-07.pdf",
+        "excerpt": "team11-demo-07.pdf page 1 synthetic excerpt"
+      }
+    ],
+    "file-008:version-008-v1": [
+      {
+        "evidence_id": "evidence-file-008-1",
+        "file_id": "file-008",
+        "version_id": "version-008-v1",
+        "page": 1,
+        "source_path": "normal/team-beta/team11-demo-08.pdf",
+        "excerpt": "team11-demo-08.pdf page 1 synthetic excerpt"
+      }
+    ],
+    "file-009:version-009-v1": [
+      {
+        "evidence_id": "evidence-file-009-1",
+        "file_id": "file-009",
+        "version_id": "version-009-v1",
+        "page": 1,
+        "source_path": "normal/team-beta/team11-demo-09.pdf",
+        "excerpt": "team11-demo-09.pdf page 1 synthetic excerpt"
+      },
+      {
+        "evidence_id": "evidence-file-009-2",
+        "file_id": "file-009",
+        "version_id": "version-009-v1",
+        "page": 2,
+        "source_path": "normal/team-beta/team11-demo-09.pdf",
+        "excerpt": "team11-demo-09.pdf page 2 synthetic excerpt"
+      },
+      {
+        "evidence_id": "evidence-file-009-3",
+        "file_id": "file-009",
+        "version_id": "version-009-v1",
+        "page": 3,
+        "source_path": "normal/team-beta/team11-demo-09.pdf",
+        "excerpt": "team11-demo-09.pdf page 3 synthetic excerpt"
+      }
+    ],
+    "file-010:version-010-v1": [
+      {
+        "evidence_id": "evidence-file-010-1",
+        "file_id": "file-010",
+        "version_id": "version-010-v1",
+        "page": 1,
+        "source_path": "normal/team-beta/team11-demo-10.pdf",
+        "excerpt": "team11-demo-10.pdf page 1 synthetic excerpt"
+      },
+      {
+        "evidence_id": "evidence-file-010-2",
+        "file_id": "file-010",
+        "version_id": "version-010-v1",
+        "page": 2,
+        "source_path": "normal/team-beta/team11-demo-10.pdf",
+        "excerpt": "team11-demo-10.pdf page 2 synthetic excerpt"
+      },
+      {
+        "evidence_id": "evidence-file-010-3",
+        "file_id": "file-010",
+        "version_id": "version-010-v1",
+        "page": 3,
+        "source_path": "normal/team-beta/team11-demo-10.pdf",
+        "excerpt": "team11-demo-10.pdf page 3 synthetic excerpt"
+      }
+    ],
+    "file-011:version-011-v1": [
+      {
+        "evidence_id": "evidence-file-011-1",
+        "file_id": "file-011",
+        "version_id": "version-011-v1",
+        "page": 1,
+        "source_path": "normal/team-beta/team11-demo-11.pdf",
+        "excerpt": "team11-demo-11.pdf page 1 synthetic excerpt"
+      },
+      {
+        "evidence_id": "evidence-file-011-2",
+        "file_id": "file-011",
+        "version_id": "version-011-v1",
+        "page": 2,
+        "source_path": "normal/team-beta/team11-demo-11.pdf",
+        "excerpt": "team11-demo-11.pdf page 2 synthetic excerpt"
+      },
+      {
+        "evidence_id": "evidence-file-011-3",
+        "file_id": "file-011",
+        "version_id": "version-011-v1",
+        "page": 3,
+        "source_path": "normal/team-beta/team11-demo-11.pdf",
+        "excerpt": "team11-demo-11.pdf page 3 synthetic excerpt"
+      }
+    ],
+    "file-012:version-012-v1": [
+      {
+        "evidence_id": "evidence-file-012-1",
+        "file_id": "file-012",
+        "version_id": "version-012-v1",
+        "page": 1,
+        "source_path": "normal/team-beta/team11-demo-12.pdf",
+        "excerpt": "team11-demo-12.pdf page 1 synthetic excerpt"
+      },
+      {
+        "evidence_id": "evidence-file-012-2",
+        "file_id": "file-012",
+        "version_id": "version-012-v1",
+        "page": 2,
+        "source_path": "normal/team-beta/team11-demo-12.pdf",
+        "excerpt": "team11-demo-12.pdf page 2 synthetic excerpt"
+      },
+      {
+        "evidence_id": "evidence-file-012-3",
+        "file_id": "file-012",
+        "version_id": "version-012-v1",
+        "page": 3,
+        "source_path": "normal/team-beta/team11-demo-12.pdf",
+        "excerpt": "team11-demo-12.pdf page 3 synthetic excerpt"
+      }
+    ]
+  }
+}
