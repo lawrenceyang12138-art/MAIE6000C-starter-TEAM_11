@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
+from pathlib import Path
 
 import httpx
 from sqlalchemy import select
@@ -30,6 +31,8 @@ from services.parsing import (
     persist_relations,
 )
 from services.scan import resolve_file_path, scan_root
+from services.search.embeddings import HTTPEmbeddingBackend
+from services.search.indexing import embed_version
 
 configure_logging()
 logger = logging.getLogger("services.worker.main")
@@ -53,6 +56,9 @@ def claim_next_pending_job(db: Session) -> Job | None:
         .where(Job.job_type.in_(HANDLED_JOB_TYPES))
         .order_by(Job.created_at.asc())
         .limit(1)
+        # PostgreSQL serialises competing workers here; SQLite ignores this
+        # clause, so the single-worker unit tests still exercise the handler.
+        .with_for_update(skip_locked=True)
     )
     job = db.execute(stmt).scalars().first()
     if job is None:
@@ -148,6 +154,33 @@ def _process_extract_file(db: Session, job: Job) -> None:
             .all()
         )
         persist_relations(db, version.id, candidate_relations(chunks))
+        if settings.embedding_enabled and Path(settings.embedding_model_path).is_dir():
+            try:
+                result = embed_version(
+                    db,
+                    version.id,
+                    HTTPEmbeddingBackend(
+                        settings.ai_service_url,
+                        settings.search_request_timeout_seconds,
+                    ),
+                )
+                logger.info(
+                    "search_embeddings_updated",
+                    extra={
+                        "job_id": job.id,
+                        "version_id": version.id,
+                        "embedded_count": result.embedded_count,
+                        "error": result.embedding_error,
+                    },
+                )
+            except Exception:
+                # Keyword search remains a valid product path when the local
+                # model is missing or the AI service is unavailable.
+                logger.exception(
+                    "search_embeddings_unavailable",
+                    extra={"job_id": job.id, "version_id": version.id},
+                )
+                db.rollback()
         _complete_job(db, job.id)
     elif outcome == VersionStatus.UNSUPPORTED.value:
         _complete_job(db, job.id)

@@ -176,7 +176,7 @@ def test_hybrid_search_degrades_to_keyword(
     payload = response.json()
     assert payload["effective_mode"] == "keyword"
     assert payload["degraded"] is True
-    assert payload["degradation_reason"] == "semantic_not_integrated"
+    assert payload["degradation_reason"] in {"ai_unavailable", "ai_disabled"}
 
 
 def test_search_excludes_revoked_roots(
@@ -196,3 +196,33 @@ def test_search_excludes_revoked_roots(
     assert client.post(
         "/search", json={"query": "recovery", "mode": "keyword"}
     ).json()["total"] == 0
+
+
+def test_failed_job_can_be_explicitly_retried_without_losing_attempts(
+    client, db_session: Session
+):
+    root = AuthorizedRoot(
+        mount_id="retry-test",
+        relative_path=".",
+        status=RootStatus.ACTIVE.value,
+    )
+    db_session.add(root)
+    db_session.flush()
+    job = Job(
+        root_id=root.id,
+        job_type="scan_root",
+        status=JobStatus.FAILED.value,
+        attempts=2,
+        error="temporary_worker_failure",
+    )
+    db_session.add(job)
+    db_session.commit()
+
+    response = client.post(f"/jobs/{job.id}/retry")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "pending"
+    assert payload["error"] is None
+    assert payload["attempts"] == 2
+    assert client.post(f"/jobs/{job.id}/retry").status_code == 409

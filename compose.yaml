@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     environment:
       POSTGRES_DB: maie6000c
       POSTGRES_USER: postgres
@@ -24,6 +24,9 @@ services:
       - .env
     environment:
       AI_SERVICE_URL: http://ai:8100
+      EMBEDDING_MODEL_PATH: /models/multilingual-e5-small
+    volumes:
+      - ./models:/models:ro
     ports:
       - "${AI_HOST_PORT:-8100}:8100"
     healthcheck:
@@ -46,6 +49,7 @@ services:
       # Read-only source mounts (allowlist keys live in services/common/config.py).
       # The api serves source previews from here; nothing in the stack writes to it.
       - ${SOURCE_HOST_PATH:-./fixtures/demo-corpus}:/source/corpus:ro
+      - ./models:/app/models:ro
     depends_on:
       db:
         condition: service_healthy
@@ -68,6 +72,7 @@ services:
     volumes:
       # Same read-only source mount as the api service.
       - ${SOURCE_HOST_PATH:-./fixtures/demo-corpus}:/source/corpus:ro
+      - ./models:/app/models:ro
     depends_on:
       db:
         condition: service_healthy

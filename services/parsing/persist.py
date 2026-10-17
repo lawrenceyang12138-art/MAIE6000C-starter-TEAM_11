@@ -36,6 +36,7 @@ from services.common.models import (
 )
 from services.parsing.chunking import Chunk
 from services.parsing.relations import CandidateRelation
+from services.search.indexing import sync_chunk_index
 
 
 class InvalidChunkSet(ValueError):
@@ -133,6 +134,8 @@ def persist_chunks(db: Session, version_id: str, chunks: Sequence[Chunk]) -> int
                 )
             )
 
+        db.flush()
+        sync_chunk_index(db, version_id)
         db.commit()
     except Exception:
         # Undo the delete along with the partial insert.

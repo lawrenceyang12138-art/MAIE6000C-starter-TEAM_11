@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from enum import StrEnum
 
 from sqlalchemy import (
+    JSON,
     DateTime,
     Float,
     ForeignKey,
@@ -13,9 +14,11 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
+from pgvector.sqlalchemy import Vector
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from services.common.db import Base
+from services.search.text import DIMENSIONS
 
 
 def utcnow() -> datetime:
@@ -322,6 +325,43 @@ class SourceChunk(Base):
 
     __table_args__ = (
         UniqueConstraint("version_id", "ordinal", name="uq_chunk_version_ordinal"),
+    )
+
+
+class ChunkSearchIndex(Base):
+    """Derived search fields for one canonical source chunk.
+
+    The chunk text remains the source of truth in ``source_chunks``. This table
+    contains only values that can be rebuilt from that text, plus an optional
+    embedding. Keeping it separate lets the search workstream evolve without
+    creating a second file/version/chunk model.
+    """
+
+    __tablename__ = "chunk_search_index"
+
+    chunk_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("source_chunks.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    search_text: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    search_terms: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    embedding: Mapped[list[float] | None] = mapped_column(
+        Vector(DIMENSIONS).with_variant(JSON(none_as_null=True), "sqlite"),
+        nullable=True,
+    )
+    embedding_model: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    embedding_dimensions: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utcnow,
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utcnow,
+        onupdate=utcnow,
+        nullable=False,
     )
 
 

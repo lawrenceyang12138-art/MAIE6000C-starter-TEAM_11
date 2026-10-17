@@ -10,23 +10,27 @@ from datetime import datetime
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
-from sqlalchemy import select
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from services.common.config import Settings, get_settings
 from services.common.db import get_db
-from services.common.models import (
-    AuthorizedRoot,
-    FilePresence,
-    FileRecord,
-    FileVersion,
-    RootStatus,
-    SourceChunk,
-    VersionStatus,
-)
+from services.common.schemas import SearchQuery
+from services.search.embeddings import EmbeddingBackend, HTTPEmbeddingBackend
+from services.search.retrieval import search_chunks as search_canonical_chunks
 
 router = APIRouter(tags=["workflow"])
+
+
+def get_embedding_backend(
+    settings: Settings = Depends(get_settings),
+) -> EmbeddingBackend | None:
+    if not settings.embedding_enabled:
+        return None
+    return HTTPEmbeddingBackend(
+        settings.ai_service_url,
+        settings.search_request_timeout_seconds,
+    )
 
 
 class MountRead(BaseModel):
@@ -39,14 +43,6 @@ class MountRead(BaseModel):
 class DirectoryRead(BaseModel):
     relative_path: str
     label: str
-
-
-class SearchRequest(BaseModel):
-    query: str = Field(min_length=1, max_length=500)
-    mode: str = "keyword"
-    top_k: int = Field(default=10, ge=1, le=50)
-    root_id: str | None = None
-    file_id: str | None = None
 
 
 class SearchResult(BaseModel):
@@ -132,102 +128,49 @@ def list_directories(
 
 @router.post("/search", response_model=SearchResponse)
 def search_chunks(
-    payload: SearchRequest,
+    payload: SearchQuery,
     db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    backend: EmbeddingBackend | None = Depends(get_embedding_backend),
 ) -> SearchResponse:
-    query = " ".join(payload.query.split())
-    terms = tuple(term.casefold() for term in query.split())
-    if not terms:
-        raise HTTPException(
-            status_code=422,
-            detail={"code": "invalid_query", "message": "Query cannot be empty"},
-        )
-
-    statement = (
-        select(SourceChunk, FileVersion, FileRecord, AuthorizedRoot)
-        .join(FileVersion, SourceChunk.version_id == FileVersion.id)
-        .join(FileRecord, FileVersion.file_id == FileRecord.id)
-        .join(AuthorizedRoot, FileRecord.root_id == AuthorizedRoot.id)
-        .where(FileRecord.current_version_id == FileVersion.id)
-        .where(
-            FileVersion.status.in_(
-                [
-                    VersionStatus.BASIC_READY.value,
-                    VersionStatus.ENRICHED.value,
-                ]
-            )
-        )
-        .where(FileRecord.presence_status == FilePresence.PRESENT.value)
-        .where(
-            AuthorizedRoot.status.in_(
-                [RootStatus.ACTIVE.value, RootStatus.PAUSED.value]
-            )
-        )
-    )
-    if payload.root_id is not None:
-        statement = statement.where(FileRecord.root_id == payload.root_id)
-    if payload.file_id is not None:
-        statement = statement.where(FileRecord.id == payload.file_id)
-
-    rows = db.execute(statement).all()
-    query_folded = query.casefold()
-    candidates: dict[str, SearchResult] = {}
-    for chunk, version, file_record, root in rows:
-        text_folded = " ".join(chunk.text.split()).casefold()
-        matched = [term for term in terms if term in text_folded]
-        # Fixed evaluation queries can wrap the useful phrase in an instruction
-        # such as "find the file containing ...". Require substantial coverage,
-        # not every stop word, so the document with the unique marker still wins.
-        if len(matched) < max(1, (len(terms) + 1) // 2):
-            continue
-
-        phrase = query_folded in text_folded
-        name_match = query_folded in file_record.name.casefold()
-        score = min(
-            1.0,
-            0.75 * len(matched) / len(terms)
-            + (0.2 if phrase else 0.0)
-            + (0.05 if name_match else 0.0),
-        )
-        result = SearchResult(
-            root_id=root.id,
-            file_id=file_record.id,
-            file_name=file_record.name,
-            file_path=file_record.relative_path,
-            version_id=version.id,
-            version_created_at=version.created_at,
-            chunk_id=chunk.id,
-            ordinal=chunk.ordinal,
-            page=chunk.page_number,
-            text=chunk.text[:2000],
-            reason="keyword: " + ", ".join(matched),
-            score=round(score, 6),
-            keyword_score=round(score, 6),
-        )
-        existing = candidates.get(file_record.id)
-        if existing is None or (result.score, -result.ordinal) > (
-            existing.score,
-            -existing.ordinal,
-        ):
-            candidates[file_record.id] = result
-
-    results = sorted(
-        candidates.values(),
-        key=lambda result: (
-            -result.score,
-            result.file_name.casefold(),
-            result.ordinal,
-        ),
-    )[: payload.top_k]
-    degraded = payload.mode in {"semantic", "hybrid"}
-    return SearchResponse(
-        query=query,
+    result = search_canonical_chunks(
+        db,
+        query=payload.query,
         mode=payload.mode,
-        effective_mode="keyword",
-        results=results,
-        total=len(candidates),
-        degraded=degraded,
-        degradation_reason="semantic_not_integrated" if degraded else None,
-        candidate_count=len(rows),
-        candidate_limit=200,
+        top_k=payload.top_k,
+        root_id=payload.root_id,
+        file_id=payload.file_id,
+        settings=settings,
+        backend=backend,
+    )
+    return SearchResponse(
+        query=payload.query,
+        mode=payload.mode,
+        effective_mode=result.effective_mode,
+        results=[
+            SearchResult(
+                root_id=hit.root_id,
+                file_id=hit.file_id,
+                file_name=hit.file_name,
+                file_path=hit.file_path,
+                version_id=hit.version_id,
+                version_created_at=hit.version_created_at,
+                chunk_id=hit.chunk_id,
+                ordinal=hit.ordinal,
+                page=hit.page,
+                text=hit.text,
+                reason=hit.reason,
+                score=hit.score,
+                keyword_score=hit.keyword_score,
+                semantic_score=hit.semantic_score,
+            )
+            for hit in result.results
+        ],
+        total=result.total,
+        degraded=result.degraded,
+        degradation_reason=result.degradation_reason,
+        embedding_model=result.embedding_model,
+        embedding_dimensions=result.embedding_dimensions,
+        candidate_count=result.candidate_count,
+        candidate_limit=result.candidate_limit,
     )

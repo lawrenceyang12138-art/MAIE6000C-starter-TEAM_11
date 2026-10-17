@@ -311,6 +311,35 @@ def read_job(job_id: int, db: Session = Depends(get_db)) -> JobRead:
     return JobRead.model_validate(job)
 
 
+@app.post("/jobs/{job_id}/retry", response_model=JobRead)
+def retry_job(job_id: int, db: Session = Depends(get_db)) -> JobRead:
+    """Explicitly requeue a failed job without replaying its old result.
+
+    The worker still owns processing. The client may only ask for a retry; it
+    cannot set a job to running or completed. ``attempts`` is intentionally
+    retained so the retry history remains visible.
+    """
+    job = db.get(Job, job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job.status != JobStatus.FAILED.value:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "job_not_retryable",
+                "message": "Only a failed job can be retried",
+            },
+        )
+    job.status = JobStatus.PENDING.value
+    job.error = None
+    job.claimed_at = None
+    job.completed_at = None
+    db.commit()
+    db.refresh(job)
+    logger.info("job_retried", extra={"job_id": job.id})
+    return JobRead.model_validate(job)
+
+
 @app.post("/roots", response_model=RootCreateResponse, status_code=202)
 def create_root(
     payload: RootCreate, db: Session = Depends(get_db)
