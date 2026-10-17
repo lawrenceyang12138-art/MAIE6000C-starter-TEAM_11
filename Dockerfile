@@ -6,6 +6,7 @@ WORKDIR /app
 COPY pyproject.toml README.md /app/
 COPY services /app/services
 COPY scripts /app/scripts
+COPY fixtures /app/fixtures
 COPY alembic /app/alembic
 COPY alembic.ini /app/alembic.ini
 RUN pip install --upgrade pip && pip install -e ".[dev]"
