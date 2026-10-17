@@ -163,6 +163,7 @@ committed to Git.
 - Search integration: `submissions/week07/integration-c-2026-10-17.md`
 - Slides 4–6: `submissions/week07/slides/B-slides.pptx`
 - Demo runbook: `submissions/week07/demo-runbook-B.md`
+- Recording and second-computer runbook: `submissions/week07/demo-recording-runbook.md`
 - AI disclosure: `submissions/week07/ai-use-statement.md`
 
 ## 10. AI Use Statement

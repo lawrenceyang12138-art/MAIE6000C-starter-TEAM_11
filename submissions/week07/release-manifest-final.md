@@ -37,7 +37,7 @@ October presentation.
 | `W07_Team11.pptx` | `3410a7a4dbc65b877478682b76256e8d7d90a84e0b0aa41bdcc2cb6922947eb9` |
 | `W07_Team11.pdf` | `cedda15282d141d03df2e735aee1149b8e86637976ca3f8f83b05a59fee1bfe1` |
 | `report.md` | `1ec0d90b5d851fa1d6291a21d58e1359dea949f69deb6c6336f688fab5711b44` |
-| `README.md` | `281f373413da5c8b105e60688e8c4ccd445616edc2c45fa92b089f6876177b37` |
+| `README.md` | `529ee971114982ca2e877a725670b010d11c2241796177e3d7c6614f7ed89a22` |
 
 ## Model cache
 
