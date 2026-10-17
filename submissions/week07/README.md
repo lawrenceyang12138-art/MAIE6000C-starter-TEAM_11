@@ -111,6 +111,8 @@ not create a parallel file catalogue. The migration chain has one head,
   and P1 evidence inspector both opened.
 - B's independent page attribution: **12/12**; parsing quality: 66 pages, 0
   corrupt characters, 20/20 sampled fragments on their claimed page.
+- `make w7-check`: checks the report/section word counts, 6-step script, 12-question
+  QA, 12-slide PPTX, 12-page PDF, manifest hashes and 12/3/1 corpus.
 
 ## 7. Risks and revised scope
 

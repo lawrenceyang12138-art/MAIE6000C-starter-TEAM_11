@@ -1,4 +1,4 @@
-.PHONY: install-dev up down reset test smoke migrate seed lint
+.PHONY: install-dev up down reset test smoke migrate seed lint w7-check
 
 install-dev:
 	pip install -e .[dev]
@@ -26,3 +26,6 @@ seed:
 
 lint:
 	ruff check .
+
+w7-check:
+	python scripts/check_w7_deliverables.py
