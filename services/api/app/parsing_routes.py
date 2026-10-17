@@ -14,7 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from services.common.db import get_db
-from services.common.models import FileRecord, FileVersion
+from services.common.models import FileRecord, FileVersion, SourceChunk
 from services.parsing.evidence import (
     REASON_CHUNK_NOT_FOUND,
     REASON_FILE_MISSING,
@@ -144,6 +144,66 @@ def get_evidence(
         text=evidence.text,
         content_sha256=evidence.content_sha256,
     )
+
+
+@router.get("/files/{file_id}/evidence")
+def get_file_evidence(
+    file_id: str,
+    version_id: str,
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    """Compatibility view used by the current D file inspector."""
+    file_record = db.get(FileRecord, file_id)
+    version = db.get(FileVersion, version_id)
+    if (
+        file_record is None
+        or version is None
+        or version.file_id != file_id
+        or file_record.current_version_id != version_id
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail=_reason("version_superseded", "The requested version is not current"),
+        )
+
+    chunks = db.execute(
+        select(SourceChunk)
+        .where(SourceChunk.version_id == version_id)
+        .order_by(SourceChunk.ordinal)
+    ).scalars().all()
+    if not chunks:
+        raise HTTPException(
+            status_code=422,
+            detail=_reason("no_evidence", "This version has no stored passages"),
+        )
+
+    items: list[dict] = []
+    for chunk in chunks:
+        try:
+            evidence = read_evidence(db, chunk.id)
+        except SourceUnavailable as exc:
+            status_code = {
+                REASON_CHUNK_NOT_FOUND: 404,
+                REASON_FILE_MISSING: 404,
+                REASON_ROOT_REVOKED: 403,
+                REASON_VERSION_SUPERSEDED: 409,
+                REASON_NO_CURRENT_VERSION: 503,
+            }[exc.reason_code]
+            raise HTTPException(
+                status_code=status_code,
+                detail=_reason(exc.reason_code, exc.message),
+            ) from exc
+        items.append(
+            {
+                "file_id": evidence.file_id,
+                "version_id": evidence.version_id,
+                "page": evidence.page_number,
+                "source_path": evidence.relative_path,
+                "excerpt": evidence.text,
+                "evidence_id": evidence.chunk_id,
+            }
+        )
+    return items
 
 
 @router.get("/versions/{version_id}/relations")

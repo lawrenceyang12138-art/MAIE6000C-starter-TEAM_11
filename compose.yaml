@@ -45,7 +45,7 @@ services:
     volumes:
       # Read-only source mounts (allowlist keys live in services/common/config.py).
       # The api serves source previews from here; nothing in the stack writes to it.
-      - ./corpus:/source/corpus:ro
+      - ${SOURCE_HOST_PATH:-./fixtures/demo-corpus}:/source/corpus:ro
     depends_on:
       db:
         condition: service_healthy
@@ -67,7 +67,7 @@ services:
       AI_SERVICE_URL: http://ai:8100
     volumes:
       # Same read-only source mount as the api service.
-      - ./corpus:/source/corpus:ro
+      - ${SOURCE_HOST_PATH:-./fixtures/demo-corpus}:/source/corpus:ro
     depends_on:
       db:
         condition: service_healthy

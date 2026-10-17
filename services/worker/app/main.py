@@ -9,8 +9,27 @@ from sqlalchemy.orm import Session
 
 from services.common.config import configure_logging, get_settings
 from services.common.db import get_session_factory
-from services.common.models import Case, CaseStatus, Job, JobStatus, JobType, utcnow
+from services.common.models import (
+    AuthorizedRoot,
+    Case,
+    CaseStatus,
+    FileRecord,
+    FileVersion,
+    Job,
+    JobStatus,
+    JobType,
+    RootJobType,
+    SourceChunk,
+    VersionStatus,
+    utcnow,
+)
 from services.common.schemas import TriageResponse
+from services.parsing import (
+    candidate_relations,
+    handle_extract_file,
+    persist_relations,
+)
+from services.scan import resolve_file_path, scan_root
 
 configure_logging()
 logger = logging.getLogger("services.worker.main")
@@ -20,7 +39,11 @@ settings = get_settings()
 # instead of being claimed and failed - for example a scan_root job created by
 # POST /roots before the scan handler exists. Add a type here when its handler
 # is implemented.
-HANDLED_JOB_TYPES = {JobType.TRIAGE_CASE.value}
+HANDLED_JOB_TYPES = {
+    JobType.TRIAGE_CASE.value,
+    RootJobType.SCAN_ROOT.value,
+    RootJobType.EXTRACT_FILE.value,
+}
 
 
 def claim_next_pending_job(db: Session) -> Job | None:
@@ -61,12 +84,93 @@ def mark_job_failed(job_id: int, error_message: str) -> None:
         db.commit()
 
 
+def _complete_job(db: Session, job_id: int, error: str | None = None) -> None:
+    job = db.get(Job, job_id)
+    if job is None:
+        return
+    job.status = JobStatus.COMPLETED.value if error is None else JobStatus.FAILED.value
+    job.error = error[:1000] if error is not None else None
+    job.completed_at = utcnow()
+    db.commit()
+
+
+def _process_scan_root(db: Session, job: Job) -> None:
+    if job.root_id is None:
+        raise RuntimeError(f"scan_root job {job.id} has no root_id")
+    root = db.get(AuthorizedRoot, job.root_id)
+    if root is None:
+        raise RuntimeError(f"Root not found for scan job {job.id}")
+
+    summary = scan_root(db, root, settings.source_mounts)
+    _complete_job(db, job.id)
+    logger.info(
+        "scan_completed",
+        extra={
+            "job_id": job.id,
+            "root_id": root.id,
+            "files_seen": summary.files_seen,
+            "files_created": summary.files_created,
+            "versions_created": summary.versions_created,
+            "jobs_created": summary.jobs_created,
+        },
+    )
+
+
+def _process_extract_file(db: Session, job: Job) -> None:
+    if job.version_id is None:
+        raise RuntimeError(f"extract_file job {job.id} has no version_id")
+    version = db.get(FileVersion, job.version_id)
+    if version is None:
+        raise RuntimeError(f"File version not found for job {job.id}")
+    file_record = db.get(FileRecord, version.file_id)
+    if file_record is None:
+        raise RuntimeError(f"File record not found for version {version.id}")
+    root = db.get(AuthorizedRoot, file_record.root_id)
+    if root is None:
+        raise RuntimeError(f"Authorized root not found for file {file_record.id}")
+
+    source_path = resolve_file_path(
+        root.mount_id,
+        root.relative_path,
+        file_record.relative_path,
+        settings.source_mounts,
+    )
+    outcome = handle_extract_file(db, version.id, source_path)
+
+    if outcome == VersionStatus.BASIC_READY.value:
+        chunks = list(
+            db.execute(
+                select(SourceChunk)
+                .where(SourceChunk.version_id == version.id)
+                .order_by(SourceChunk.ordinal)
+            )
+            .scalars()
+            .all()
+        )
+        persist_relations(db, version.id, candidate_relations(chunks))
+        _complete_job(db, job.id)
+    elif outcome == VersionStatus.UNSUPPORTED.value:
+        _complete_job(db, job.id)
+    else:
+        version = db.get(FileVersion, version.id)
+        error = version.error_code if version is not None else None
+        _complete_job(db, job.id, error or "extraction_failed")
+
+
 def process_job(job_id: int) -> None:
     session_factory = get_session_factory()
 
     with session_factory() as db:
         job = db.get(Job, job_id)
         if job is None:
+            return
+
+        if job.job_type == RootJobType.SCAN_ROOT.value:
+            _process_scan_root(db, job)
+            return
+
+        if job.job_type == RootJobType.EXTRACT_FILE.value:
+            _process_extract_file(db, job)
             return
 
         case = db.get(Case, job.case_id)

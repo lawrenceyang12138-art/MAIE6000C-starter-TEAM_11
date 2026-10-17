@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from services.common.models import CaseStatus, JobStatus, RootStatus
 
@@ -32,21 +32,27 @@ class CaseRead(BaseModel):
 
 
 class JobRead(BaseModel):
-    id: int
+    job_id: int = Field(validation_alias="id")
     case_id: str | None = None
     root_id: str | None = None
     version_id: str | None = None
     # Jobs are general now: the starter's triage_case, plus scan_root and
     # extract_file. Kept as a plain string rather than a single enum.
     job_type: str
-    status: JobStatus
+    status: str
     attempts: int
     error: str | None = None
     created_at: datetime
     claimed_at: datetime | None = None
     completed_at: datetime | None = None
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def public_job_status(cls, value: object) -> str:
+        raw = str(value)
+        return "running" if raw == JobStatus.CLAIMED.value else raw
 
 
 class RootCreate(BaseModel):
@@ -60,21 +66,32 @@ class RootCreate(BaseModel):
     relative_path: str = Field(min_length=1, max_length=500)
 
 
+class RootFileCounts(BaseModel):
+    total: int = 0
+    discovered: int = 0
+    extracting: int = 0
+    basic_ready: int = 0
+    enriched: int = 0
+    failed: int = 0
+    unsupported: int = 0
+
+
 class RootRead(BaseModel):
-    id: str
+    root_id: str
     mount_id: str
     relative_path: str
     status: RootStatus
-    file_count: int = 0
-    indexed_count: int = 0
+    availability: str
+    file_counts: RootFileCounts
     last_successful_scan_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
 
 class RootCreateResponse(BaseModel):
-    root: RootRead
-    job: JobRead
+    root_id: str
+    job_id: int
+    status: str
 
 
 class CaseCreateResponse(BaseModel):

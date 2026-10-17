@@ -65,7 +65,13 @@ def validate() -> dict:
                 assert not source_words.intersection(query_words), query["query_id"]
                 no_keyword_count += 1
             folders.add(str(Path(record["relative_path"]).parent))
-            locations.append({"query_id": query["query_id"], "file_id": record["file_id"], "page": page})
+            locations.append(
+                {
+                    "query_id": query["query_id"],
+                    "file_id": record["file_id"],
+                    "page": page,
+                }
+            )
     assert no_keyword_count >= 2
     assert len(folders) >= 2
     return {
@@ -86,7 +92,11 @@ def validate() -> dict:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--report", type=Path, help="Optional JSON evidence output within this repo")
+    parser.add_argument(
+        "--report",
+        type=Path,
+        help="Optional JSON evidence output within this repo",
+    )
     args = parser.parse_args()
     output = json.dumps(validate(), ensure_ascii=False, indent=2)
     if args.report:

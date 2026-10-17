@@ -19,7 +19,7 @@ def test_create_and_read_case_and_job(client):
 
     payload = create_response.json()
     case_id = payload["case"]["id"]
-    job_id = payload["job"]["id"]
+    job_id = payload["job"]["job_id"]
 
     assert payload["case"]["status"] == "queued"
     assert payload["job"]["status"] == "pending"

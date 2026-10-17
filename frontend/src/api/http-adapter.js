@@ -6,6 +6,20 @@ const messages = {
   STALE_VERSION: "The source version changed. Reload the current file before viewing evidence.",
   ACTIVE_JOB_EXISTS: "A scan is already active. Open the existing job before submitting again.",
   AI_UNAVAILABLE: "Local AI is unavailable. Available keyword results remain usable.",
+  path_out_of_scope: "Choose a relative directory inside an approved read-only mount.",
+  active_job_exists: "A scan is already active for this directory.",
+  unknown_mount: "The configured mount is not available.",
+  mount_unavailable: "The configured source folder is unavailable.",
+  version_superseded: "The source version changed. Reload the current file before viewing evidence.",
+  chunk_not_found: "The requested passage is no longer available.",
+  file_missing: "The source file is no longer available.",
+  root_revoked: "Access to this directory has been revoked.",
+  no_current_version: "The current version is not ready yet.",
+  review_conflict: "Someone else reviewed this item first. Reload and try again.",
+  invalid_decision: "The selected review decision is invalid.",
+  correction_without_target: "A correction must name the replacement entity.",
+  correction_target_not_allowed: "Only a correction may name a replacement entity.",
+  corrected_entity_not_found: "The replacement entity no longer exists.",
 };
 const contractError = () => new AdapterError("The service response does not match the D integration contract.", { status: 502, code: "CONTRACT_MISMATCH" });
 const isId = (value) => typeof value === "string" && value.length > 0;
@@ -13,7 +27,7 @@ const isRelativePath = (value) => isId(value) && !/^(?:[\\/]|[a-z]:)/i.test(valu
 const requireValue = (condition) => { if (!condition) throw contractError(); };
 const jobStates = ["pending", "running", "retry_wait", "completed", "failed", "canceled"];
 const safeErrorCode = (value) => value == null ? null : (
-  [...Object.keys(messages), "SCAN_FAILED", "EMPTY_FILE", "CORRUPT_PDF", "TRUNCATED_PDF", "ENCRYPTED_PDF", "NO_TEXT_LAYER", "UNSUPPORTED_FORMAT", "JOB_FAILED"].includes(value) ? value : "JOB_FAILED"
+  [...Object.keys(messages), "SCAN_FAILED", "EMPTY_FILE", "CORRUPT_PDF", "TRUNCATED_PDF", "ENCRYPTED_PDF", "NO_TEXT_LAYER", "UNSUPPORTED_FORMAT", "JOB_FAILED", "encrypted", "corrupt", "no_text_layer", "unsupported_format", "source_changed", "file_missing", "processing_failed"].includes(value) ? value : "JOB_FAILED"
 );
 
 export function createApiAdapter({ baseUrl = "/api", fetchImpl = globalThis.fetch, timeoutMs = 15000 } = {}) {
@@ -61,12 +75,12 @@ export function createApiAdapter({ baseUrl = "/api", fetchImpl = globalThis.fetc
     },
     async createRootScan(mountId, relativePath) {
       const payload = await request("/roots", { method: "POST", expectedStatus: 202, body: { mount_id: mountId, relative_path: relativePath } });
-      requireValue(isId(payload.root_id) && isId(payload.job_id) && payload.status === "pending");
+      requireValue(isId(payload.root_id) && Number.isInteger(payload.job_id) && payload.status === "pending");
       return { ...payload, status_code: 202 };
     },
     async getJob(jobId) {
       const job = await request(`/jobs/${encodeURIComponent(jobId)}`);
-      requireValue(job.job_id === jobId && isId(job.root_id) && jobStates.includes(job.status));
+      requireValue(String(job.job_id) === String(jobId) && isId(job.root_id) && jobStates.includes(job.status));
       return { ...job, error_code: safeErrorCode(job.error_code) };
     },
     async getRoot(rootId) {

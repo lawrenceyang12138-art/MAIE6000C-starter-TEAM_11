@@ -10,7 +10,7 @@ from prometheus_client import (
     Histogram,
     generate_latest,
 )
-from sqlalchemy import func, select, text
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from services.common.config import configure_logging
@@ -26,7 +26,6 @@ from services.common.models import (
     JobType,
     RootJobType,
     RootStatus,
-    VersionStatus,
 )
 from services.common.schemas import (
     CaseCreate,
@@ -36,15 +35,18 @@ from services.common.schemas import (
     JobRead,
     RootCreate,
     RootCreateResponse,
+    RootFileCounts,
     RootRead,
 )
 from services.api.app.parsing_routes import router as parsing_router
+from services.api.app.integration_routes import router as integration_router
 
 configure_logging()
 logger = logging.getLogger("services.api.main")
 
 app = FastAPI(title="MAIE 6000C Starter API", version="0.1.0")
 app.include_router(parsing_router)
+app.include_router(integration_router)
 
 HTTP_REQUESTS = Counter(
     "api_http_requests_total",
@@ -132,19 +134,37 @@ def create_root_with_scan_job(
         .first()
     )
     if existing is not None:
-        job = (
+        active_job = (
             db.execute(
                 select(Job)
-                .where(Job.root_id == existing.id)
+                .where(
+                    Job.root_id == existing.id,
+                    Job.job_type == RootJobType.SCAN_ROOT.value,
+                    Job.status.in_(
+                        [JobStatus.PENDING.value, JobStatus.CLAIMED.value]
+                    ),
+                )
                 .order_by(Job.created_at.desc())
             )
             .scalars()
             .first()
         )
-        if job is None:
+        if active_job is not None:
             raise HTTPException(
-                status_code=409, detail="Root exists but has no scan job"
+                status_code=409,
+                detail={
+                    "code": "active_job_exists",
+                    "message": "A scan is already active for this root",
+                },
             )
+        job = Job(
+            root_id=existing.id,
+            job_type=RootJobType.SCAN_ROOT.value,
+            status=JobStatus.PENDING.value,
+        )
+        db.add(job)
+        db.commit()
+        db.refresh(job)
         return existing, job
 
     root = AuthorizedRoot(
@@ -167,37 +187,44 @@ def create_root_with_scan_job(
     return root, job
 
 
-def read_root_counts(db: Session, root_id: str) -> tuple[int, int]:
-    file_count = db.execute(
-        select(func.count())
-        .select_from(FileRecord)
-        .where(FileRecord.root_id == root_id)
-    ).scalar_one()
-
-    indexed_count = db.execute(
-        select(func.count())
-        .select_from(FileVersion)
-        .join(FileRecord, FileVersion.file_id == FileRecord.id)
-        .where(FileRecord.root_id == root_id)
-        .where(
-            FileVersion.status.in_(
-                [VersionStatus.BASIC_READY.value, VersionStatus.ENRICHED.value]
-            )
+def read_root_counts(db: Session, root_id: str) -> RootFileCounts:
+    files = db.execute(
+        select(FileRecord).where(FileRecord.root_id == root_id)
+    ).scalars().all()
+    counts = {
+        "total": len(files),
+        "discovered": 0,
+        "extracting": 0,
+        "basic_ready": 0,
+        "enriched": 0,
+        "failed": 0,
+        "unsupported": 0,
+    }
+    for file_record in files:
+        version = (
+            db.get(FileVersion, file_record.current_version_id)
+            if file_record.current_version_id is not None
+            else None
         )
-    ).scalar_one()
-
-    return int(file_count), int(indexed_count)
+        status = version.status if version is not None else "discovered"
+        if status in counts:
+            counts[status] += 1
+    return RootFileCounts(**counts)
 
 
 def to_root_read(db: Session, root: AuthorizedRoot) -> RootRead:
-    file_count, indexed_count = read_root_counts(db, root.id)
+    file_counts = read_root_counts(db, root.id)
     return RootRead(
-        id=root.id,
+        root_id=root.id,
         mount_id=root.mount_id,
         relative_path=root.relative_path,
         status=RootStatus(root.status),
-        file_count=file_count,
-        indexed_count=indexed_count,
+        availability=(
+            "available"
+            if root.status in {RootStatus.ACTIVE.value, RootStatus.PAUSED.value}
+            else "unavailable"
+        ),
+        file_counts=file_counts,
         last_successful_scan_at=root.last_successful_scan_at,
         created_at=root.created_at,
         updated_at=root.updated_at,
@@ -303,10 +330,22 @@ def create_root(
         extra={"root_id": root.id, "job_id": job.id, "mount_id": mount_id},
     )
 
+    public_job = JobRead.model_validate(job)
     return RootCreateResponse(
-        root=to_root_read(db, root),
-        job=JobRead.model_validate(job),
+        root_id=root.id,
+        job_id=public_job.job_id,
+        status=public_job.status,
     )
+
+
+@app.get("/roots", response_model=list[RootRead])
+def read_roots(db: Session = Depends(get_db)) -> list[RootRead]:
+    roots = db.execute(
+        select(AuthorizedRoot)
+        .where(AuthorizedRoot.status != RootStatus.REVOKED.value)
+        .order_by(AuthorizedRoot.created_at.desc())
+    ).scalars().all()
+    return [to_root_read(db, root) for root in roots]
 
 
 @app.get("/roots/{root_id}", response_model=RootRead)

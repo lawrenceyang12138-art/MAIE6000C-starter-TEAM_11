@@ -21,20 +21,20 @@ test("authorization sends only mount/path, checks actual HTTP 202 and preserves 
   let call;
   const api = createApiAdapter({ baseUrl: "/api/", fetchImpl: async (url, options) => {
     call = { url, options };
-    return response({ root_id: "root-real", job_id: "job-real", status: "pending" }, 202);
+    return response({ root_id: "root-real", job_id: 42, status: "pending" }, 202);
   } });
   const accepted = await api.createRootScan("mount-real", "two/subfolders");
   assert.equal(call.url, "/api/roots");
   assert.equal(call.options.method, "POST");
   assert.deepEqual(JSON.parse(call.options.body), { mount_id: "mount-real", relative_path: "two/subfolders" });
-  assert.equal(accepted.job_id, "job-real");
+  assert.equal(accepted.job_id, 42);
   assert.equal(accepted.status_code, 202);
 });
 
 for (const [label, payload, status] of [
-  ["HTTP 200 masquerading as 202", { root_id: "r", job_id: "j", status: "pending", status_code: 202 }, 200],
+  ["HTTP 200 masquerading as 202", { root_id: "r", job_id: 42, status: "pending", status_code: 202 }, 200],
   ["missing identifiers", { status: "pending" }, 202],
-  ["premature completion", { root_id: "r", job_id: "j", status: "completed" }, 202],
+  ["premature completion", { root_id: "r", job_id: 42, status: "completed" }, 202],
 ]) test(`rejects ${label}`, async () => {
   await assert.rejects(mockApi(payload, status).createRootScan("m", "."), { code: "CONTRACT_MISMATCH" });
 });

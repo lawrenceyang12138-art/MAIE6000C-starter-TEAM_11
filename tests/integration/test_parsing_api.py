@@ -67,6 +67,22 @@ def test_file_list_and_evidence_use_the_same_current_chunk(
     assert payload["ordinal"] == 1
     assert payload["text"] == "the current passage"
 
+    file_evidence = client.get(
+        f"/files/{file_id}/evidence",
+        params={"version_id": version_id},
+    )
+    assert file_evidence.status_code == 200
+    assert file_evidence.json() == [
+        {
+            "file_id": file_id,
+            "version_id": version_id,
+            "page": 3,
+            "source_path": "reports-aaaaaaaa/invoice.pdf",
+            "excerpt": "the current passage",
+            "evidence_id": chunk.id,
+        }
+    ]
+
 
 def test_stale_evidence_returns_a_structured_conflict(
     client, db_session: Session, make_file_version
