@@ -24,6 +24,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+embeddings = [
+  "huggingface-hub>=0.35,<1",
+  "sentencepiece==0.2.1",
+  "torch==2.8.0",
+  "transformers==4.57.1",
+]
 dev = [
   "PyMuPDF==1.28.2",
   "pytest==8.4.1",

@@ -139,6 +139,18 @@ not create a parallel file catalogue. The migration chain has one head,
 5. Move to the R1 increments: DOCX/TXT/Markdown, monitoring, OCR and richer
    review, without weakening the read-only and evidence guarantees.
 
+Model preparation is an explicit, network-only step:
+
+```text
+pip install -e ".[embeddings]"
+python scripts/prepare_e5_model.py
+docker compose up -d --build ai
+```
+
+The script downloads the pinned revision and writes the checksum manifest. It
+does not run in the normal request path, and the model directory is not
+committed to Git.
+
 ## 9. Artifact index
 
 - Architecture: `docs/architecture.md`, `docs/team11-w7-shared-contract.md`
