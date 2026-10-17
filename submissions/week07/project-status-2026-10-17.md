@@ -186,3 +186,27 @@ schema 适配和 D 的结果页真实搜索联调。
 - 尚未适配 C 的语义检索。
 
 因此现在不能把“模块测试通过”写成“W07 已达标”。
+
+## 2026-10-17 后续集成更新
+
+上面这份状态记录之后，集成分支又完成了两件事：
+
+1. C 的搜索不再依赖第二套文件/版本/chunk 表，而是在 B 的
+   `source_chunks` 上增加了 `chunk_search_index`。迁移
+   `7f3a1b2c4d5e` 已接在 `445f908b73b4` 后面，并在 fresh PostgreSQL
+   上验证通过；关键词索引现在由 `persist_chunks` 自动同步。
+2. 真实浏览器已完成一次验收：根目录 `corpus` 扫描 16/16，界面显示
+   12 个可搜索、4 个异常/不支持；搜索
+   `Team 11 synthetic document 01` 后打开第一条结果，证据页显示
+   `normal/team-alpha/team11-demo-01.pdf` 的 P1 原文。
+
+已新增 `POST /jobs/{job_id}/retry`，只允许把 `failed` 任务显式改回
+`pending`，保留 `attempts`，不由客户端直接写入 running/completed。
+
+当前仍未完成：
+
+- 本机没有 `models/multilingual-e5-small`，所以语义向量尚不能在实时演示中
+  生成，浏览器会明确显示 keyword-only；
+- 自动重试/backoff、stale claim 恢复和 UI 重试按钮仍未实现；
+- 正式 `report.md`、README 十节、12 页 PPT/PDF、录像、QA 和 release
+  manifest 仍需团队在 10 月 24 日前完成。

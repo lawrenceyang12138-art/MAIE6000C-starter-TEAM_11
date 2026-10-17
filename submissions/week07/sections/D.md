@@ -37,3 +37,42 @@ The frontend dependency versions were pinned directly in `frontend/package.json`
 - Progress and deduplication rules: `frontend/src/lib/scan.js`
 - Acceptance matrix: `submissions/week07/ui-acceptance.md`
 - Presentation copy for pages 10-12: `submissions/week07/ppt-outline-D.md`
+
+## 17 October real integration update
+
+The earlier mock and contract work is now superseded by a real browser run
+against the API, PostgreSQL, worker and parser. The browser selected the
+`corpus` root, observed job 19 at 16/16 processed with 12 searchable and 4
+unsupported records, searched `Team 11 synthetic document 01`, and opened the
+top result. The inspector showed `normal/team-alpha/team11-demo-01.pdf`, page
+P1, the version id and the stored passage. The detailed record is in
+`submissions/week07/evidence/m1-browser-2026-10-17.md`.
+
+This changes the acceptance story. A screenshot of a mock card is not counted
+as a product path. The real run also exposed the correct state language:
+search telemetry says keyword-only when the local E5 model is absent, and the
+four attention items remain visible instead of being presented as a failed
+scan. The repeated scan produced no duplicate files or versions.
+
+The interface still needs a retry button on failed jobs, a final screenshot
+set, responsive checks, the 12-page deck and the recording. Those are material
+and operational tasks, not reasons to relabel a contract screenshot as a live
+product result. The UI should continue to show the root id, job id, effective
+search mode and evidence version in the same view so a reviewer can verify
+the claims directly.
+
+For the final demo, D will use a clean database and the frozen corpus, then
+capture three separate states: the completed scan, the keyword result, and
+the evidence inspector. The screenshots will be supplemented by the API task
+ids and a copy of the observed counts. A separate failure capture will show
+an unsupported or abnormal file with its reason, because the product promise
+is not that every document succeeds—it is that every outcome is visible and
+explainable.
+
+The presentation must also distinguish the implemented frontend from the
+remaining product work. The current UI has a working API adapter, typed state
+messages and an evidence inspector; it does not yet have a semantic-mode
+quality claim, a live retry control or a full accessibility audit. The final
+slides should show those gaps in the limitations slide rather than burying
+them in an appendix. This makes the demo auditable and gives the next team
+owner a precise handoff.

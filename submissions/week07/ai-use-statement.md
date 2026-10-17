@@ -8,6 +8,13 @@ statement anyone can check. **Member B's part is complete. The other three are
 still blank** and are marked as such rather than filled in on someone else's
 behalf.
 
+Integration note (2026-10-17): the assistant also prepared draft A/C/D
+submission sections, the README and report skeleton, the demo script, the QA
+set and the 12-slide deck from the repository's measured state. Those drafts
+are explicitly marked for member review. A/C/D still need to confirm that the
+description matches their own work and must not treat the draft as their
+personal statement until they have read it.
+
 ## Tools used
 
 - **Member B (Jintong Zhang):** ChatGPT (Codex) desktop app, used during
