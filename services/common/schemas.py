@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from services.common.models import CaseStatus, JobStatus, JobType
+from services.common.models import CaseStatus, JobStatus, RootStatus
 
 
 class HealthResponse(BaseModel):
@@ -33,8 +33,12 @@ class CaseRead(BaseModel):
 
 class JobRead(BaseModel):
     id: int
-    case_id: str
-    job_type: JobType
+    case_id: str | None = None
+    root_id: str | None = None
+    version_id: str | None = None
+    # Jobs are general now: the starter's triage_case, plus scan_root and
+    # extract_file. Kept as a plain string rather than a single enum.
+    job_type: str
     status: JobStatus
     attempts: int
     error: str | None = None
@@ -43,6 +47,34 @@ class JobRead(BaseModel):
     completed_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class RootCreate(BaseModel):
+    """Authorize a folder and start its first scan.
+
+    relative_path is resolved inside the configured mount, never treated as an
+    arbitrary host path.
+    """
+
+    mount_id: str = Field(min_length=1, max_length=100)
+    relative_path: str = Field(min_length=1, max_length=500)
+
+
+class RootRead(BaseModel):
+    id: str
+    mount_id: str
+    relative_path: str
+    status: RootStatus
+    file_count: int = 0
+    indexed_count: int = 0
+    last_successful_scan_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class RootCreateResponse(BaseModel):
+    root: RootRead
+    job: JobRead
 
 
 class CaseCreateResponse(BaseModel):
