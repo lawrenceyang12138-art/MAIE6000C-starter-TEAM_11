@@ -108,6 +108,21 @@ starter main
 - `source_versions`
 - C 自己定义的 `source_chunks`
 
+**这不是删除 C 的整条搜索功能。** 删除范围仅限 C 为独立演示复制的持久化
+schema。C 仍然保留：
+
+- 中英文归一化、tokenize 和查询限制；
+- embedding HTTP client、本地 E5 模型和向量校验；
+- keyword / semantic / hybrid 排序与降级逻辑；
+- AI `/embeddings` 接口；
+- 评测 fixtures、gold queries、质量记录和评测脚本；
+- `chunk_search_index` 及其索引、向量、降级和评测测试。
+
+需要实质调整的生产文件主要只有 `services/search/indexing.py` 和
+`services/search/retrieval.py`，因为它们直接访问了另一套模型名称。其他搜索
+能力可以复用。测试也不是全部重写：行为断言保留，创建 fixture 和少量响应字段
+改成 canonical schema。
+
 ### 2.2 字段含义
 
 #### `files`
