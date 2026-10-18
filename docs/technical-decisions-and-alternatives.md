@@ -664,9 +664,11 @@ PostgreSQL + pgvector**，因为它省掉一整套运维；数据量大或要求
 1. **镜像里带着代码和迁移文件**。拉了新迁移却只 `restart`、不 `--build` 重建镜像，
    api 容器会以 `Can't locate revision identified by '445f908b73b4'` 退出——因为镜像
    里的 alembic 不认识数据库已有的新版本号。**加 `--build` 就好。**
-2. **测试也必须挂载源码**。镜像里那份代码是构建时的快照；不挂载就在**测旧代码**，
-   而且**不会报错**。刚测了一次：不挂载 `97 passed, 1 skipped`，挂载 `103 passed,
-   1 skipped`——**六条测试静默消失**，退出码依然是 0。
+2. **依赖和测试文件也存在镜像里**。源码挂载只替换文件，不会自动安装新的 Python 包。
+   本轮先用旧镜像挂载当前测试，结果 `pypdf` 缺失，12 个测试文件在收集阶段失败；运行
+   `docker compose build api` 重建之后，个人仓库才是 `114 passed, 1 skipped`（团队
+   分支在 W03 文件名修复合入前是 `112 passed, 1 skipped`）。因此新环境或
+   `pyproject.toml` 改动后，重建镜像是测试的前置步骤。
 3. **启动时跑迁移**很方便，但**多副本部署时会互相竞争**（两个实例同时迁移同一张表）。
    生产做法是把迁移拆成独立的部署步骤。课程只有一个实例，所以我们保留了启动时迁移。
 
@@ -757,8 +759,8 @@ PostgreSQL + pgvector**，因为它省掉一整套运维；数据量大或要求
 | 13 | 授权目录有状态、可撤销 | `services/common/models.py` 的 `AuthorizedRoot`；`evidence.py` 的 `root_revoked` |
 | 14 | 检索尚未实现（C 的活） | `rg -n "search|embedding|pgvector" services/` 找不到对应模块 |
 | 15 | AI 服务是关键词打分 | `services/ai/app/main.py` 的 `LABEL_KEYWORDS` 与 `triage_text` |
-| 16 | 不挂载源码会静默少跑测试 | 分别在挂载与不挂载下跑 `pytest -q`，比较 passed 数量（当前 103 与 97） |
-| 16 | 不重建镜像会让 api 崩 | `evidence-final.md` 里那一行（记录的是当时的一次观察，现已无法复现，原因写明） |
+| 16 | 不重建镜像会使用旧依赖或旧代码 | 旧镜像挂载当前测试时报 `ModuleNotFoundError: pypdf`；`docker compose build api` 后，个人仓库得到 `114 passed, 1 skipped`，团队分支为 `112` |
+| 17 | 不重建镜像还可能让 api 因旧迁移崩溃 | `evidence-final.md` 里记录了一次 `Can't locate revision` 的实际观察；重建后恢复 |
 
 **两条使用规则：**
 
