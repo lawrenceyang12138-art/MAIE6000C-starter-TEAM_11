@@ -62,11 +62,17 @@ def test_keyword_page_evidence_and_file_deduplication(client, db_session):
         name="manual.pdf",
         path="test/manual.pdf",
         chunks=[
-            {"text": "数据库备份说明 Database backup instructions", "page_start": 2, "page_end": 3},
+            {
+                "text": "\u6570\u636e\u5e93\u5907\u4efd\u8bf4\u660e Database backup instructions",
+                "page_start": 2,
+                "page_end": 3,
+            },
             {"text": "Database backup schedule", "page_start": 4, "page_end": 4},
         ],
     )
-    response = client.post("/search", json={"query": "数据库备份", "mode": "keyword"})
+    response = client.post(
+        "/search", json={"query": "\u6570\u636e\u5e93\u5907\u4efd", "mode": "keyword"}
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["total"] == 1

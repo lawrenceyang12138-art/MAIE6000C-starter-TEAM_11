@@ -57,12 +57,18 @@ def test_postgres_chinese_english_and_pgvector(postgres_session):
         file_id="pg-test",
         name="manual.pdf",
         path="synthetic/manual.pdf",
-        chunks=[{"text": "数据库备份 Database backup guide", "page_start": 2, "page_end": 3}],
+        chunks=[
+            {
+                "text": "\u6570\u636e\u5e93\u5907\u4efd Database backup guide",
+                "page_start": 2,
+                "page_end": 3,
+            }
+        ],
         backend=FixedBackend(),
     )
     settings = Settings(_env_file=None)
     for mode, query in [
-        ("keyword", "数据库备份"),
+        ("keyword", "\u6570\u636e\u5e93\u5907\u4efd"),
         ("keyword", "backup"),
         ("semantic", "recover lost records"),
         ("hybrid", "backup"),
