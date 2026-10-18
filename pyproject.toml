@@ -16,13 +16,21 @@ dependencies = [
   "psycopg[binary]==3.2.9",
   "pydantic==2.11.7",
   "pydantic-settings==2.10.1",
+  "pypdf==6.20.1",
   "python-json-logger==3.3.0",
   "sqlalchemy==2.0.43",
+  "pgvector==0.4.1",
   "uvicorn[standard]==0.35.0",
 ]
 
 [project.optional-dependencies]
+embeddings = [
+  "torch==2.8.0",
+  "transformers==4.57.1",
+  "sentencepiece==0.2.1",
+]
 dev = [
+  "PyMuPDF==1.28.2",
   "pytest==8.4.1",
   "pytest-cov==6.2.1",
   "ruff==0.12.4",
@@ -34,6 +42,7 @@ include = ["services", "services.*"]
 [tool.pytest.ini_options]
 markers = [
   "smoke: tests that require a running stack",
+  "postgres: tests requiring SEARCH_TEST_DATABASE_URL with PostgreSQL and pgvector",
 ]
 testpaths = ["tests"]
 

@@ -205,9 +205,12 @@ cython_debug/
 #   that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
 #   and can be added to the global gitignore or merged into this file. However, if you prefer, 
 #   you could uncomment the following to ignore the entire vscode folder
-# .vscode/
+# Visual Studio Code
+.vscode/settings.json
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
+models/
+work/
 
 # Frontend source is not a Python build library.
 !frontend/src/lib/
@@ -242,3 +245,21 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local scratch corpus for the read-only source mount (official fixtures land in tests/fixtures via the parsing branch)
+/corpus
+
+# Personal C drafts retained locally
+/submissions/week07/AI-Use-C.md
+/submissions/week07/C-branch-review.md
+/submissions/week07/C-final-check.md
+/submissions/week07/C-fixes.md
+/submissions/week07/C-requirements-review.md
+/submissions/week07/C-notes.md
+/submissions/week07/C-qa.md
+/submissions/week07/C-slides.md
+/submissions/week07/sections/C.md
+/submissions/week07/degrade.md
+/submissions/week07/m1-search.md
+/submissions/week07/offline-check.md
+/submissions/week07/search-eval-final.md

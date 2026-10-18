@@ -1,0 +1,20 @@
+{
+  "partial_semantic": {
+    "degraded": false,
+    "reason": null
+  },
+  "partial_semantic_evaluation": {
+    "passed": true,
+    "summary": {
+      "keyword_top1": "0/0",
+      "semantic_top3": "1/1",
+      "semantic_target": "1/1",
+      "degraded_queries": 0,
+      "duplicate_files": 0
+    }
+  },
+  "malformed_manifest": {
+    "exception": "AttributeError",
+    "reason": "'list' object has no attribute 'items'"
+  }
+}
