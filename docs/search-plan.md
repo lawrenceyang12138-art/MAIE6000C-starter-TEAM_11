@@ -1,63 +1,145 @@
-# C：检索、模型与评测
+# Search, local embeddings, and evaluation
 
-实现日期：2026-10-15；发布说明更新于 2026-10-16。C 的独立模块通过 `feat/c-search-model-evaluation` 分支供团队审阅；公共合同、真实 PDF 联调及团队封板仍待完成。发布范围和测试时效见 [分支审阅说明](../submissions/week07/C-branch-review.md)。
+Updated: 2026-10-18 for the canonical C branch. Initial standalone model and
+evaluation evidence was recorded on 2026-10-15. The
+[integration handoff](search-integration-handoff.md) describes the current
+boundaries, and the [schema adaptation record](search-contract-differences.md)
+explains how C now uses B's file, version, and chunk tables.
 
-## 实现与边界
+## Implementation
 
-- `services/search/text.py`：NFKC 规范化、英文单词与连续中文双字切分；词不会跨标点拼接。
-- `services/search/retrieval.py`：PostgreSQL 全文检索、pgvector 精确余弦查询、加权混合排序及按文件聚合。
-- `services/search/embeddings.py`：本地多语言 E5 与内部 HTTP 客户端；运行时只读取本地模型。
-- `services/search/indexing.py`：向量 Worker 处理函数；每批最多 16 段，所有批次成功后才发布向量，不自行提交事务。
-- `services/search/evaluation.py`：冻结答案评测，文件和页码必须同时正确；降级结果不计为语义成功。
-- `scripts/search_tools.py`：模型准备、迁移、样例导入、向量索引和评测命令。
+- `services/search/text.py`: NFKC normalization, English words, and contiguous CJK
+  bigrams. Tokens do not cross punctuation boundaries.
+- `services/search/retrieval.py`: PostgreSQL full-text search, exact pgvector
+  cosine retrieval, weighted hybrid ranking, and one result per file.
+- `services/search/embeddings.py`: pinned local multilingual E5 and an internal
+  HTTP backend, with explicit vector validation.
+- `services/search/indexing.py`: canonical fixture import and version indexing;
+  batches contain at most 16 passages and vectors are published after all pass.
+- `services/search/evaluation.py`: frozen-answer evaluation requiring both the
+  correct file and source page. Degraded semantic responses do not count as
+  semantic successes.
+- `scripts/search_tools.py`: explicit model preparation, migrations, synthetic
+  fixture import, indexing, and evaluation.
 
-扫描授权和公共队列分发归 A，PDF 解析及证据读取归 B，界面归 D。当前 C 分支尚无这些文件助手入口，C 提供独立可运行的导入适配器和向量处理函数。这里的 `source_*` 模型与迁移是供 A 整合的合同草案；合并前须核对 A/B 的最终字段，不能将 C 的样例导入描述为真实扫描/解析。复查时已发现远程 `w7-parsing` 分支包含 B 的实现，字段与迁移有实际差异，详见 [合同差异清单](search-contract-differences.md)。
+A owns scanning, source authorization, and job dispatch; B supplies parsed text
+and evidence; D consumes the API. The fixture importer uses hand-authored chunks
+and does not perform scanning or PDF extraction.
 
-## 本地模型合同
+## Local model
 
-模型为 `intfloat/multilingual-e5-small`，固定 revision `614241f622f53c4eeff9890bdc4f31cfecc418b3`，模型标识为两者以 `@` 连接的完整字符串，向量维度为 384。模型采用 E5 的 `query: ` / `passage: ` 前缀、attention-mask mean pooling 与 L2 归一化，CPU 推理默认 4 线程。模型文件为固定 revision 的 safetensors 与 tokenizer 文件；准备脚本生成逐文件 SHA-256 清单，运行时验证清单并指定 `local_files_only=True`、`trust_remote_code=False`。
+The model is `intfloat/multilingual-e5-small`, pinned to revision
+`614241f622f53c4eeff9890bdc4f31cfecc418b3`. Its full model identifier joins those
+values with `@`; vectors have 384 dimensions. Inference uses E5's `query: ` and
+`passage: ` prefixes, attention-mask mean pooling, and L2 normalization. CPU
+inference defaults to four threads.
 
-唯一联网下载入口是显式命令 `download-model`。搜索、索引和 AI 请求路径均不下载模型，不调用云端模型，不把文本传给公共 API。模型缓存位于 Git 忽略的 `models/multilingual-e5-small/`，需单独复制到备用设备。首次加载包含文件校验和模型初始化，应在演示前预热 `/embeddings`，避免首次请求触发 API 的 10 秒超时降级。模型使用方式受其原始模型许可证约束，项目不重新分发模型权重到 Git。
+Preparation downloads the pinned safetensors/tokenizer files and writes their
+SHA-256 manifest. Runtime checks that manifest and uses `local_files_only=True`
+and `trust_remote_code=False`. The explicit `download-model` command is the
+networked preparation step. Search and indexing use local files or the internal
+AI service. Model weights remain in ignored `models/multilingual-e5-small/` and
+must be copied separately to a backup computer under the model's license.
 
-内部 `POST /embeddings` 输入：
+Warm the internal `/embeddings` endpoint before a demonstration: first-load
+checksum verification and model initialization can otherwise exceed the search
+API's ten-second timeout and trigger keyword fallback.
 
 ```json
 {"texts": ["Database backup instructions"], "kind": "passage"}
 ```
 
-返回 `model`、`dimensions` 和 `vectors`。一次 1–16 段，每段 1–2000 字符；tokenizer 最多 512 token，超出会截断。解析方应提供短且带页码的块。索引现有长块时只嵌入前 2000 字符，原文本完整保留供关键词检索。查询最长 500 字符、最多 64 个去重检索词。向量须为 384 维有限数值且 L2 范数在 0.99–1.01 内，否则拒绝。
+The internal response contains `model`, `dimensions`, and `vectors`. Requests
+contain 1-16 passages of 1-2000 characters. The tokenizer truncates at 512 tokens.
+Indexing embeds at most the first 2000 characters of an existing long chunk while
+retaining its source text for keyword search. Queries contain at most 500
+characters and 64 distinct searchable tokens. Vectors must contain 384 finite
+numbers with an L2 norm between 0.99 and 1.01.
 
-## 数据与索引
+## Canonical persistence and eligibility
 
-`source_files` 记录文件身份、路径、当前哈希及状态；`source_versions` 记录版本、哈希、当前标识及模型元信息；`source_chunks` 保存版本外键、块序号、原文本、起止页码、检索词及 `vector(384)`。版本号和块序号分别有唯一约束，每个文件最多一个当前版本。SQLite 使用 JSON 保存向量，供测试和本地开发使用。
+`files`, `file_versions`, and `source_chunks` are the authoritative source tables.
+The one-to-one `chunk_search_index` sidecar contains normalized keyword fields,
+the nullable vector, and its model metadata. Its `chunk_id` references the same
+source chunk used by evidence and relations. SQLite stores vectors as JSON for
+unit tests; PostgreSQL uses `vector(384)`.
 
-PostgreSQL 对 `to_tsvector('simple', search_terms)` 建 GIN 索引。英文按完整词匹配；中文用双字词检索，支持没有中文分词插件的 PostgreSQL。短语和文件名命中提供额外分数。pgvector 使用 `<=>` 进行精确余弦距离计算；目前的小型演示语料不启用近似向量索引，不声称大规模检索性能。
+PostgreSQL indexes `to_tsvector('simple', search_terms)` with GIN. English matches
+whole tokens and CJK text uses contiguous bigrams, so no additional database
+tokenizer is required. Vector retrieval uses exact cosine distance through `<=>`;
+the small demonstration corpus does not establish large-scale performance.
 
-搜索只读取文件/版本均 `ready`、当前版本且文件哈希与版本哈希相同的数据。授权、挂载有效性和磁盘原件核验由 A/B 的入口负责；搜索不打开磁盘文件，也不会把返回路径当成授权。A/B 的批量 SQL 写入若绕过 ORM 事件，必须显式填充规范化的 `search_text` 和 `search_terms`。
+Search accepts `active` or `paused` roots, present files, and the file's current
+version in `basic_ready` or `enriched`. Root and file filters further restrict the
+query. Search returns relative display paths and stored text; source opening and
+on-disk verification use the authorized evidence path.
 
-## 排序与返回
+Keyword sidecars must exist before a chunk can be searched. `embed_version()`
+creates them before embedding, including when AI later fails. SQL/COPY operations
+that bypass ORM processing must explicitly generate matching `search_text` and
+`search_terms` values. The caller owns transaction completion and job retries.
 
-`keyword` 完全不依赖 AI。`semantic` 使用语义候选，`hybrid` 合并两个通道。关键词分数为去重词覆盖率 × 0.8、完整短语命中 +0.2、文件名命中 +0.25，最终限制到 0–1；语义分数为余弦相似度的非负部分。混合默认权重为关键词 0.65、语义 0.35，并除以权重和。它是可解释的加权排序，没有独立 cross-encoder reranker。
+## Ranking and response
 
-各通道先为每份文件选最佳块，再最多取 200 份文件，避免长文档挤占所有候选。合并后按分数排序、每文件只保留一个证据块，`top_k` 默认 10、最大 50。`total` 是有界候选池中的去重文件数，超过候选上限时不是整个语料的精确命中总数。返回文件、版本、块、页码、原文节选、理由以及三种分数。稳定排序优先同分块的原始序号，再用 ID 打破平局。
+`keyword` requires no AI request. `semantic` selects vector candidates; `hybrid`
+combines both channels. The keyword score is distinct-token coverage times 0.8,
+plus 0.2 for a complete phrase and 0.25 for a filename match, capped at 1. Semantic
+scores use the nonnegative part of cosine similarity. Hybrid ranking defaults to
+keyword weight 0.65 and semantic weight 0.35, normalized by their sum. There is no
+separate cross-encoder reranker.
 
-## 降级与失败隔离
+Each channel chooses the best chunk per file before selecting up to 200 candidate
+files. Final results contain one evidence chunk per file. `top_k` defaults to 10
+and is limited to 50. `total` counts distinct files in this bounded candidate
+pool; it is not an unbounded corpus hit count. Ties use source order and stable
+IDs. Canonical response fields include `root_id`, `file_id`, `version_id`,
+`version_created_at`, `chunk_id`, `ordinal`, and nullable `page`.
 
-- `EMBEDDING_ENABLED=false`：`ai_disabled`；AI 连接失败/503：`ai_unavailable`；超时：`ai_timeout`。
-- 模型或维度不同：`embedding_model_mismatch`；向量格式错误：`invalid_embedding_response`。
-- 没有兼容向量：`embeddings_not_ready`；部分块尚未向量化：`partial_embeddings`。
+## Degradation and failure isolation
 
-前几类失败将 `effective_mode` 切换为 `keyword`，返回 HTTP 200、`degraded=true` 与明确原因。部分向量可用时保留所请求的 hybrid/semantic 模式并标注 `partial_embeddings`；纯语义结果只包含已向量化的文件，混合模式仍包含关键词结果。语义评测遇到任何降级均不计为语义成功。模型校验清单结构损坏返回安全的 `local_model_unusable`，AI 接口响应 503，搜索通过 HTTP 客户端回退关键词。数据库不可用仍按实际错误失败，不会伪造为空结果。向量处理失败返回 `IndexResult.embedding_error`，基本文本和旧向量保留；A 的调度器负责记录错误、重试和事务。
+| Condition | Reported reason |
+| --- | --- |
+| Embeddings disabled | `ai_disabled` |
+| AI unavailable or returning 503 | `ai_unavailable` |
+| Internal request timeout | `ai_timeout` |
+| Model or dimensions mismatch | `embedding_model_mismatch` |
+| Malformed vector response | `invalid_embedding_response` |
+| No compatible stored vectors | `embeddings_not_ready` |
+| Some eligible chunks lack compatible vectors | `partial_embeddings` |
 
-## 评测解释
+Unavailable semantic retrieval switches `effective_mode` to `keyword`, returns
+HTTP 200, and reports `degraded=true` plus its reason. Partial vectors retain the
+requested semantic/hybrid mode and report `partial_embeddings`: semantic results
+contain embedded files, while hybrid can also retain keyword matches. Any
+degraded semantic response fails semantic evaluation.
 
-`fixtures/search/` 为手写合成资料，共 12 份文档、15 个带页码的块，查询为 5 关键词 + 5 语义。答案在首次 E5 评测前冻结，保留 JSON 哈希和逐项结果。关键词要求 Top-1 文件和页码正确；语义要求 Top-3 中至少一个结果的文件和页码同时正确，目标 4/5。
+A malformed local model manifest returns the safe `local_model_unusable` reason;
+the AI service returns 503 and the HTTP search backend follows keyword fallback.
+Database failures remain errors. Failed embedding batches leave source text and
+existing vectors available, with `IndexResult.embedding_error` for the caller.
 
-当前实际结果：关键词 5/5，语义 4/5，重复文件 0。`sem-2` 找到了账户手册但选到第 3 页，预期为第 1 页，所以计为失败。该结果未通过修改答案消除。样本很小，只能说明内部功能烟雾测试情况；团队真实 PDF 答案、UI 及证据链须由 B/D 再独立核对。
+## Frozen evaluation evidence
 
-## Windows CMD 本地验证
+`fixtures/search/` contains 12 synthetic documents, 15 page-located chunks, five
+keyword queries, and five semantic queries. Answers were frozen before the first
+E5 run. Keyword success requires the correct file and page at Top-1; semantic
+success requires both within Top-3. The semantic target is four of five queries.
 
-在仓库根目录执行。仓库声明 Python 3.11；当前 Anaconda base 为 Python 3.13，已验证本地逻辑，Docker 使用声明的 3.11。
+The historical run achieved keyword 5/5 and semantic 4/5 with no duplicate files.
+`sem-2` returned the correct account manual but selected page 3 instead of page 1,
+so it remains a failure. These small synthetic results do not establish quality
+on team PDFs or acceptance of the complete product.
+
+Committed fixture and evidence JSON now uses ASCII Unicode escapes. Decoding
+produces the same bilingual values. Historical reports retain their original
+byte hashes; [fixture-encoding.json](../submissions/week07/evidence/C/fixture-encoding.json)
+maps the original Git bytes to the escaped representation and records an
+encoding-independent canonical JSON hash.
+
+## Windows CMD verification
+
+Run from the repository root with Python 3.11, as required by `pyproject.toml`.
+Use a compatible environment if Anaconda base has another Python version.
 
 ```cmd
 python -m pip install -e ".[dev,embeddings]"
@@ -71,27 +153,26 @@ python -m pytest -q tests/unit tests/integration -m "not postgres"
 python -m ruff check .
 ```
 
-如果当前 base 的 Python 版本超出项目 `requires-python`，应切换到 Python 3.11 环境安装项目；不要使用 `--ignore-requires-python` 掩盖依赖约束。当前机器已有依赖后可直接运行后续验证命令。
-
-PostgreSQL 版本可给命令追加 `--database-url postgresql+psycopg://postgres:postgres@127.0.0.1:55432/team11_c_verify`。该地址是本次独立验证容器的本地测试库，部署时替换为实际地址。运行 PostgreSQL 测试：
-
-```cmd
-python -c "import os,pytest; os.environ['SEARCH_TEST_DATABASE_URL']='postgresql+psycopg://postgres:postgres@127.0.0.1:55432/team11_c_verify'; raise SystemExit(pytest.main(['-q','tests/unit','tests/integration']))"
-```
-
-Compose 已切换 pgvector 镜像、把本地模型只读挂载到 AI，并在镜像安装 CPU 模型依赖。先准备模型与 `.env`，再启动：
+`download-model` requires network access during preparation. Existing verified
+model files can be reused for subsequent offline runs. Prepare `.env` without
+overwriting an existing file, then start Compose:
 
 ```cmd
 python -c "from pathlib import Path; p=Path('.env'); p.write_bytes(Path('.env.example').read_bytes()) if not p.exists() else None"
 python -c "import subprocess; subprocess.run(['docker','compose','up','--build'],check=True)"
 ```
 
-独立验证程序临时启动本机 API/AI/worker，使用空闲 loopback 端口；验证结束自动停止这些子进程。不会执行 Git 提交或远程操作。
-
-完整测试（含真实 smoke 与 PostgreSQL），在独立测试数据库运行：
+Compose uses `pgvector/pgvector:pg16`, a PostgreSQL host port of 15432 by default,
+read-only source mounts, and a read-only local model mount. For isolated database
+checks, pass the URL of a disposable PostgreSQL/pgvector database:
 
 ```cmd
 python -m scripts.verify_search_http --database-url postgresql+psycopg://postgres:postgres@127.0.0.1:55432/team11_c_verify --pytest-output work/pytest-all.xml
+python -c "import os,pytest; os.environ['SEARCH_TEST_DATABASE_URL']='postgresql+psycopg://postgres:postgres@127.0.0.1:55432/team11_c_verify'; raise SystemExit(pytest.main(['-q','tests/unit','tests/integration']))"
 ```
 
-复查已修正 starter 测试文件的误后缀，原有两项 API 测试可以正常收集。当前完整套件为 49 项，包含一项真实 HTTP smoke；不要把未启动服务时的 smoke skip 当成完整验收。
+The HTTP verification runner starts temporary API, AI, and worker processes on
+available loopback ports and stops them when finished. Historical full-suite
+reports describe the source and test count at their recorded date. Count current
+passes and skips from the new run, including a live HTTP smoke test and real
+PostgreSQL tests, before making a new integrated acceptance claim.
