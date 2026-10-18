@@ -1,0 +1,21 @@
+{
+  "change": "Unicode escape serialization only; decoded fixtures are unchanged",
+  "historical_evidence": "Existing fixture_sha256 and gold_sha256 values describe the original UTF-8 serialization. They remain historical evidence and are not rewritten.",
+  "canonicalization": "json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(',', ':'))",
+  "files": [
+    {
+      "path": "fixtures/search/mock-chunks.json",
+      "original_utf8_sha256": "d1633a68b1af1f9967575bdad5c41b1812faee4f4acc1120d6b847e414590ca0",
+      "ascii_escaped_sha256": "cc90952044b6a85bc7aa12e3cd181cc5597066c12329675235ecc33c6e580925",
+      "canonical_json_sha256": "eb9ed38b47947603c37cc093c8f019d00e22ba9bfcd7d9626902f02c04f52d45",
+      "decoded_values_identical": true
+    },
+    {
+      "path": "fixtures/search/gold-queries.json",
+      "original_utf8_sha256": "85520e1ba83f8ceb89b38c6049f991c15cb58e0727dd3ce4b332c5aa328f143c",
+      "ascii_escaped_sha256": "54d2b2559b64dad8e29836448d022d72be4b49d2d9b1bcaf5969cc346ac68e31",
+      "canonical_json_sha256": "4a0f0059dce7cd0fe14737cf9c79adef342544747480810f1e7a92a4447286ee",
+      "decoded_values_identical": true
+    }
+  ]
+}
