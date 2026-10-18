@@ -119,7 +119,9 @@ def test_no_shape_of_page_produces_a_chunk_over_the_limit():
         elif style == 2:
             text = "\n".join("line " + "y" * rng.randint(1, 30) for _ in range(length // 20 + 1))
         elif style == 3:
-            text = "".join(rng.choice("数据 库设计\n") for _ in range(length // 2))
+            text = "".join(
+                rng.choice("\u6570\u636e \u5e93\u8bbe\u8ba1\n") for _ in range(length // 2)
+            )
         else:
             text = "Sentence one. " * (length // 14 + 1)
 
@@ -153,7 +155,9 @@ def test_cleaning_joins_hyphenated_line_breaks():
 
 
 def test_cleaning_removes_spaces_between_chinese_characters():
-    assert clean_page_text("数 据 库 设 计") == "数据库设计"
+    assert clean_page_text("\u6570 \u636e \u5e93 \u8bbe \u8ba1") == (
+        "\u6570\u636e\u5e93\u8bbe\u8ba1"
+    )
 
 
 def test_cleaning_collapses_whitespace_and_blank_lines():
