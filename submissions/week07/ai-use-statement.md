@@ -49,15 +49,24 @@ loop. In the form the repository keeps:
 
 ## Verification performed
 
-**Correctness checks.** The full suite is run in the container: 103 passed, 1
-skipped, `ruff check .` clean. The migration set was applied, reverted and
-re-applied against PostgreSQL rather than reasoned about. Three claims that
+**Correctness checks.** The full suite is run in the container from a rebuilt
+image: 114 passed, 1 skipped in the personal repository and 112 in the team
+branch before its Week 3 test-name fix; `ruff check .` clean. The migration set
+was applied, reverted and re-applied against PostgreSQL rather than reasoned
+about. Three claims that
 the documents make are produced by scripts that fail loudly rather than
 reporting a pass: page attribution is judged by a different PDF library
 (12/12), the twenty sampled fragments are found on the page they claim (20/20
 across 66 pages, 0 corrupt characters), and the entity candidate counts are
 re-measured with the line-initial rule on and off (47/44/36, then 39/38/33,
 then 10).
+
+**Third audit pass.** Re-reading the relation path found seven more defects:
+evidence could cite another version, a failed batch could be half-saved later,
+malformed offsets were accepted, repeated mentions overwrote earlier evidence,
+an old producer revision survived a re-run, the final status commit could still
+leave `extracting`, and unsupported outcomes omitted the parser revision. Each
+was reproduced before being fixed and now has its own regression test.
 
 **Modifications made.** Two errors that the assistant produced were found and
 corrected, and both are recorded rather than quietly fixed:
