@@ -41,12 +41,14 @@ overwritten silently.
 docker compose run --rm --no-deps api pytest -q tests/unit/test_parsing_graph.py
 ```
 
-Result: **15 passed** (the count grows as cases are added; the command above is
+Result: **17 passed** (the count grows as cases are added; the command above is
 the authority), including the three-decision case above, the stale
 revision refusal, the append-only history assertion, the refusals for an
 invalid decision value and an unknown relation, and the four correction cases:
 a correction storing its replacement entity, a correction with no target, a
 confirmation that tries to carry a target, and a target that is not an entity.
+It also covers evidence that names a chunk from another version and evidence
+whose stored chunk text has changed; neither may be displayed as valid evidence.
 
 ## What this does not cover
 

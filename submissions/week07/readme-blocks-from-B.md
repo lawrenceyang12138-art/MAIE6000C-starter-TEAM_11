@@ -33,8 +33,9 @@ calls it from the worker. Those two are A's.
 
 ## Section 6 - Testing and verification (B's part)
 
-- Full suite: **103 passed, 1 skipped**; `ruff check .` clean. The one skip needs
-  a running stack.
+- Full suite: **114 passed, 1 skipped in B's personal tree**; the team branch is
+  **112** until A's W03 test-file fix is merged. `ruff check .` clean. The one
+  skip needs a running stack.
 - Migrations apply from an empty database, not only over an existing one.
 - Page attribution was judged by a **different PDF library** than the pipeline
   uses: **12/12** sampled passages agreed across 66 pages.
@@ -83,6 +84,7 @@ calls it from the worker. Those two are A's.
 | Every technical decision, its alternatives and the trade-offs | `docs/technical-decisions-and-alternatives.md` |
 | How to verify this work without reading code | `docs/how-to-review-and-verify.md` |
 | English answers to system-design questions | `submissions/week07/B-answers-on-system-design.md` |
+| Beginner-level audit report: every claim with a hand check | `docs/audit-report-for-beginners.md` |
 
 ## Section 10 - AI Use Statement (B's part)
 
