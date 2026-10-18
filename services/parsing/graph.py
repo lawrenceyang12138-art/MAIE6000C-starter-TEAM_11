@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -36,6 +36,7 @@ from services.common.models import (
 
 # A read is bounded in code, not by convention.
 MAX_RELATIONSHIPS = 20
+MAX_EVIDENCE_PER_RELATIONSHIP = 20
 
 VALID_DECISIONS = {
     ReviewDecision.CONFIRMED.value,
@@ -107,6 +108,27 @@ def effective_decision(db: Session, relationship_id: str) -> tuple[str | None, i
     return latest.decision, latest.decision_revision
 
 
+def _valid_evidence(
+    entity: Entity, evidence: RelationshipEvidence, chunk: SourceChunk
+) -> bool:
+    """Check that the stored offsets and quote still describe this mention."""
+    if not (
+        0
+        <= evidence.start_offset
+        < evidence.end_offset
+        <= len(chunk.text)
+    ):
+        return False
+
+    mention = chunk.text[evidence.start_offset : evidence.end_offset]
+    normalized_mention = " ".join(mention.split()).casefold()
+    if normalized_mention != entity.normalized_label:
+        return False
+
+    normalized_quote = " ".join(evidence.quote.split()).casefold()
+    return bool(normalized_quote) and entity.normalized_label in normalized_quote
+
+
 def read_relationships(
     db: Session, version_id: str, limit: int = MAX_RELATIONSHIPS
 ) -> list[RelationshipView]:
@@ -131,11 +153,25 @@ def read_relationships(
     for relationship, entity in rows:
         evidence = db.execute(
             select(RelationshipEvidence, SourceChunk)
-            .join(SourceChunk, RelationshipEvidence.chunk_id == SourceChunk.id)
+            .join(
+                SourceChunk,
+                and_(
+                    RelationshipEvidence.chunk_id == SourceChunk.id,
+                    SourceChunk.version_id == relationship.source_version_id,
+                ),
+            )
             .where(RelationshipEvidence.relationship_id == relationship.id)
             .order_by(RelationshipEvidence.start_offset)
-            .limit(1)
-        ).first()
+            .limit(MAX_EVIDENCE_PER_RELATIONSHIP)
+        ).all()
+        first_valid = next(
+            (
+                (evidence_row, chunk)
+                for evidence_row, chunk in evidence
+                if _valid_evidence(entity, evidence_row, chunk)
+            ),
+            None,
+        )
 
         latest = _latest_review(db, relationship.id)
         views.append(
@@ -147,9 +183,9 @@ def read_relationships(
                 kind=relationship.kind,
                 origin=relationship.origin,
                 producer_revision=relationship.producer_revision,
-                page_number=evidence[1].page_number if evidence else None,
-                quote=evidence[0].quote if evidence else "",
-                evidence_missing=evidence is None,
+                page_number=first_valid[1].page_number if first_valid else None,
+                quote=first_valid[0].quote if first_valid else "",
+                evidence_missing=first_valid is None,
                 decision=latest.decision if latest else None,
                 corrected_entity_id=latest.corrected_entity_id if latest else None,
                 decision_revision=latest.decision_revision if latest else 0,

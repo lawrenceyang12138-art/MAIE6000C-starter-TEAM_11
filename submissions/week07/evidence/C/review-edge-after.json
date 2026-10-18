@@ -1,0 +1,20 @@
+{
+  "partial_semantic": {
+    "degraded": true,
+    "reason": "partial_embeddings"
+  },
+  "partial_semantic_evaluation": {
+    "passed": false,
+    "summary": {
+      "keyword_top1": "0/0",
+      "semantic_top3": "0/1",
+      "semantic_target": "1/1",
+      "degraded_queries": 1,
+      "duplicate_files": 0
+    }
+  },
+  "malformed_manifest": {
+    "exception": "EmbeddingUnavailable",
+    "reason": "local_model_unusable"
+  }
+}

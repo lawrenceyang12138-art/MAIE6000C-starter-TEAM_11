@@ -13,7 +13,7 @@ from prometheus_client import (
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
-from services.common.config import configure_logging, get_settings
+from services.common.config import Settings, configure_logging, get_settings
 from services.common.db import get_db
 from services.common.models import (
     AuthorizedRoot,
@@ -34,10 +34,14 @@ from services.common.schemas import (
     CaseRead,
     HealthResponse,
     JobRead,
+    SearchRequest,
+    SearchResponse,
     RootCreate,
     RootCreateResponse,
     RootRead,
 )
+from services.search.embeddings import EmbeddingBackend, HTTPEmbeddingBackend
+from services.search.retrieval import search_chunks
 
 configure_logging()
 logger = logging.getLogger("services.api.main")
@@ -55,6 +59,13 @@ HTTP_REQUEST_LATENCY = Histogram(
     ["method", "path"],
 )
 CASES_CREATED = Counter("api_cases_created_total", "Total cases created")
+SEARCH_REQUESTS = Counter("api_search_requests_total", "Search requests", ["mode", "degraded"])
+
+
+def get_embedding_backend(settings: Settings = Depends(get_settings)) -> EmbeddingBackend | None:
+    if not settings.embedding_enabled:
+        return None
+    return HTTPEmbeddingBackend(settings.ai_service_url, settings.search_request_timeout_seconds)
 
 
 def create_case_with_job(db: Session, payload: CaseCreate) -> tuple[Case, Job]:
@@ -280,6 +291,27 @@ def read_job(job_id: int, db: Session = Depends(get_db)) -> JobRead:
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
     return JobRead.model_validate(job)
+
+
+@app.post("/search", response_model=SearchResponse)
+def search(
+    payload: SearchRequest,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+    backend: EmbeddingBackend | None = Depends(get_embedding_backend),
+) -> SearchResponse:
+    result = search_chunks(db, payload, settings, backend)
+    SEARCH_REQUESTS.labels(payload.mode.value, str(result.degraded).lower()).inc()
+    logger.info(
+        "search_completed",
+        extra={
+            "mode": payload.mode.value,
+            "effective_mode": result.effective_mode.value,
+            "result_count": len(result.results),
+            "degradation_reason": result.degradation_reason,
+        },
+    )
+    return result
 
 
 @app.post("/roots", response_model=RootCreateResponse, status_code=202)

@@ -68,6 +68,7 @@ from services.parsing.pdf import (
 )
 from services.parsing.persist import (
     InvalidChunkSet,
+    InvalidRelationEvidence,
     persist_chunks,
     persist_relations,
 )
@@ -109,6 +110,7 @@ __all__ = [
     "Evidence",
     "ExtractedDocument",
     "InvalidChunkSet",
+    "InvalidRelationEvidence",
     "PageText",
     "RelationshipView",
     "ReviewRefused",

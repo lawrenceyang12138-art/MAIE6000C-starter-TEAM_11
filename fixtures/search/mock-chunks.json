@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "data_kind": "synthetic",
+  "description": "Hand-authored member C retrieval fixtures; not extracted PDF acceptance evidence.",
+  "documents": [
+    {
+      "file_id": "fixture-expenses", "version_id": "fixture-expenses-v1",
+      "name": "Employee_Expenses.pdf", "path": "synthetic/hr/Employee_Expenses.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 1, "page_end": 1, "text": "Employee travel reimbursement policy. Staff may claim business trip costs by uploading receipts within thirty days. Meals are limited to sixty dollars per day. \u5458\u5de5\u5dee\u65c5\u62a5\u9500\uff1a\u63d0\u4ea4\u53d1\u7968\u4e0e\u5ba1\u6279\u8bb0\u5f55\uff0c\u51fa\u5dee\u7ed3\u675f\u540e\u4e09\u5341\u5929\u5185\u7533\u8bf7\u3002"},
+        {"chunk_index": 1, "page_start": 2, "page_end": 2, "text": "The finance team reviews expense claims every Friday. An approved claim is paid to the employee bank account in the next payroll cycle. \u8d22\u52a1\u6bcf\u5468\u4e94\u5ba1\u6838\u62a5\u9500\uff0c\u6279\u51c6\u540e\u968f\u5de5\u8d44\u53d1\u653e\u3002"}
+      ]
+    },
+    {
+      "file_id": "fixture-access", "version_id": "fixture-access-v1",
+      "name": "Account_Access.pdf", "path": "synthetic/it/Account_Access.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 1, "page_end": 1, "text": "Password reset guide. To regain access to a locked account, use the recovery link and verify your identity with a one-time code. \u8054\u7cfb\u670d\u52a1\u53f0\u89e3\u9501\u8d26\u6237\uff0c\u4f7f\u7528\u8eab\u4efd\u9a8c\u8bc1\u7801\u91cd\u8bbe\u5bc6\u7801\u3002"},
+        {"chunk_index": 1, "page_start": 3, "page_end": 3, "text": "Multi-factor authentication is mandatory for administrator accounts. Never share a recovery code. \u7ba1\u7406\u5458\u5fc5\u987b\u542f\u7528\u591a\u56e0\u7d20\u8ba4\u8bc1\uff0c\u6062\u590d\u7801\u4e0d\u53ef\u5171\u4eab\u3002"}
+      ]
+    },
+    {
+      "file_id": "fixture-backup", "version_id": "fixture-backup-v1",
+      "name": "Backup_Recovery.pdf", "path": "synthetic/it/Backup_Recovery.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 2, "page_end": 3, "text": "Database backup and recovery procedure. A nightly snapshot preserves the database. After accidental deletion, restore the latest verified snapshot and replay the transaction log. \u6570\u636e\u5e93\u5907\u4efd\u6bcf\u5929\u591c\u95f4\u6267\u884c\uff1b\u8bef\u5220\u540e\u4ece\u5df2\u9a8c\u8bc1\u5feb\u7167\u6062\u590d\u5e76\u91cd\u653e\u4e8b\u52a1\u65e5\u5fd7\u3002"},
+        {"chunk_index": 1, "page_start": 4, "page_end": 4, "text": "Test a restoration every month on an isolated machine. Record the checksum and recovery duration. \u6bcf\u6708\u5728\u9694\u79bb\u8bbe\u5907\u8fdb\u884c\u6062\u590d\u6f14\u7ec3\uff0c\u8bb0\u5f55\u6821\u9a8c\u548c\u53ca\u8017\u65f6\u3002"}
+      ]
+    },
+    {
+      "file_id": "fixture-retention", "version_id": "fixture-retention-v1",
+      "name": "Retention_Policy.pdf", "path": "synthetic/compliance/Retention_Policy.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 2, "page_end": 2, "text": "\u4e2a\u4eba\u4fe1\u606f\u4fdd\u7559\u671f\u9650\uff1a\u5ba2\u6237\u5408\u540c\u5230\u671f\u540e\uff0c\u4e2a\u4eba\u8d44\u6599\u6700\u591a\u4fdd\u7559\u4e5d\u5341\u5929\uff0c\u968f\u540e\u5b89\u5168\u5220\u9664\u3002Data retention policy: personal customer records are kept for ninety days after a contract ends, then securely erased."}
+      ]
+    },
+    {
+      "file_id": "fixture-attendance", "version_id": "fixture-attendance-v1",
+      "name": "Course_Attendance.pdf", "path": "synthetic/course/Course_Attendance.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 3, "page_end": 3, "text": "Attendance policy. A student who misses a class because of illness must provide a medical certificate within seven days to request an excused absence. \u5b66\u751f\u56e0\u75c5\u7f3a\u8bfe\u987b\u5728\u4e03\u5929\u5185\u63d0\u4f9b\u533b\u751f\u8bc1\u660e\uff0c\u7533\u8bf7\u75c5\u5047\u8c41\u514d\u3002"}
+      ]
+    },
+    {
+      "file_id": "fixture-deploy", "version_id": "fixture-deploy-v1",
+      "name": "Deployment_Checklist.pdf", "path": "synthetic/it/Deployment_Checklist.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 1, "page_end": 1, "text": "Deployment checklist: run unit tests, record the release commit, apply migrations and perform health checks before switching traffic. \u53d1\u5e03\u68c0\u67e5\uff1a\u8fd0\u884c\u6d4b\u8bd5\uff0c\u767b\u8bb0\u7248\u672c\uff0c\u6267\u884c\u8fc1\u79fb\u5e76\u6838\u9a8c\u5065\u5eb7\u68c0\u67e5\u3002"}
+      ]
+    },
+    {
+      "file_id": "fixture-meeting", "version_id": "fixture-meeting-v1",
+      "name": "Meeting_Minutes.pdf", "path": "synthetic/project/Meeting_Minutes.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 1, "page_end": 1, "text": "Project meeting minutes: Alice owns scanning, Bob owns PDF parsing, Carol owns search and David owns the interface. Next review is Monday. \u9879\u76ee\u4f1a\u8bae\u660e\u786e\u626b\u63cf\u3001\u89e3\u6790\u3001\u68c0\u7d22\u4e0e\u754c\u9762\u7684\u8d1f\u8d23\u4eba\u3002"}
+      ]
+    },
+    {
+      "file_id": "fixture-leave", "version_id": "fixture-leave-v1",
+      "name": "Annual_Leave.pdf", "path": "synthetic/hr/Annual_Leave.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 2, "page_end": 2, "text": "Annual leave requests require manager approval at least five working days before the holiday. \u5458\u5de5\u7533\u8bf7\u5e74\u5047\u987b\u63d0\u524d\u4e94\u4e2a\u5de5\u4f5c\u65e5\u83b7\u5f97\u7ecf\u7406\u6279\u51c6\u3002"}
+      ]
+    },
+    {
+      "file_id": "fixture-safety", "version_id": "fixture-safety-v1",
+      "name": "Laboratory_Safety.pdf", "path": "synthetic/course/Laboratory_Safety.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 1, "page_end": 1, "text": "Laboratory safety: wear protective glasses and gloves while handling chemicals. Know the location of emergency exits and eye wash stations. \u5b9e\u9a8c\u5ba4\u64cd\u4f5c\u5316\u5b66\u54c1\u65f6\u5e94\u4f69\u6234\u62a4\u76ee\u955c\u548c\u624b\u5957\u3002"}
+      ]
+    },
+    {
+      "file_id": "fixture-invoice", "version_id": "fixture-invoice-v1",
+      "name": "Supplier_Invoice.pdf", "path": "synthetic/finance/Supplier_Invoice.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 1, "page_end": 1, "text": "Supplier invoice processing requires a purchase order number and vendor tax identifier. Payment terms are forty-five days. \u4f9b\u5e94\u5546\u53d1\u7968\u987b\u5305\u542b\u91c7\u8d2d\u5355\u53f7\u4e0e\u7a0e\u53f7\uff0c\u4ed8\u6b3e\u5468\u671f\u4e3a\u56db\u5341\u4e94\u5929\u3002"}
+      ]
+    },
+    {
+      "file_id": "fixture-library", "version_id": "fixture-library-v1",
+      "name": "Library_Opening.pdf", "path": "synthetic/course/Library_Opening.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 1, "page_end": 1, "text": "The library opens at eight in the morning and closes at ten at night on weekdays. \u56fe\u4e66\u9986\u5de5\u4f5c\u65e5\u65e9\u4e0a\u516b\u70b9\u5f00\u653e\uff0c\u665a\u4e0a\u5341\u70b9\u5173\u95ed\u3002"}
+      ]
+    },
+    {
+      "file_id": "fixture-network", "version_id": "fixture-network-v1",
+      "name": "Network_Troubleshooting.pdf", "path": "synthetic/it/Network_Troubleshooting.pdf",
+      "chunks": [
+        {"chunk_index": 0, "page_start": 2, "page_end": 2, "text": "Network troubleshooting: check the Ethernet cable, confirm the gateway address and run a DNS lookup before escalating to the network team. \u7f51\u7edc\u6545\u969c\u6392\u67e5\u5148\u68c0\u67e5\u7f51\u7ebf\u3001\u7f51\u5173\u548c\u57df\u540d\u89e3\u6790\u3002"}
+      ]
+    }
+  ]
+}
