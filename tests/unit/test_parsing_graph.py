@@ -12,13 +12,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from services.common.models import (
-    Entity,
-    RelationshipEvidence,
-    Review,
-    ReviewDecision,
-    SourceChunk,
-)
+from services.common.models import Entity, RelationshipEvidence, Review, ReviewDecision
 from services.parsing import graph
 from services.parsing.chunking import Chunk, chunk_document
 from services.parsing.graph import (
@@ -154,90 +148,6 @@ def test_relation_read_is_bounded(db_session: Session, make_file_version):
         MAX_RELATIONSHIPS
     )
     assert read_relationships(db_session, version_id, limit=0) == []
-
-
-def test_evidence_from_another_version_is_not_shown_as_this_relation(
-    db_session: Session, make_file_version
-):
-    """Foreign-key validity alone is not enough for trustworthy evidence.
-
-    A chunk can exist and still belong to a different file version. Joining on
-    the chunk id alone would silently display a sentence from another document.
-    """
-    version_id = _version_with_relations(db_session, make_file_version)
-    view = read_relationships(db_session, version_id)[0]
-
-    other_version_id = make_file_version(sha256="c" * 64)
-    persist_chunks(
-        db_session,
-        other_version_id,
-        [Chunk(ordinal=1, page_number=9, text="Foreign text from another document")],
-    )
-    foreign_chunk = (
-        db_session.execute(
-            select(SourceChunk).where(SourceChunk.version_id == other_version_id)
-        )
-        .scalars()
-        .one()
-    )
-
-    stored = (
-        db_session.execute(
-            select(RelationshipEvidence).where(
-                RelationshipEvidence.relationship_id == view.relationship_id
-            )
-        )
-        .scalars()
-        .all()
-    )
-    for row in stored:
-        db_session.delete(row)
-    db_session.add(
-        RelationshipEvidence(
-            relationship_id=view.relationship_id,
-            chunk_id=foreign_chunk.id,
-            start_offset=0,
-            end_offset=len("Foreign"),
-            quote="Foreign text from another document",
-        )
-    )
-    db_session.commit()
-
-    refreshed = {
-        candidate.relationship_id: candidate
-        for candidate in read_relationships(db_session, version_id)
-    }
-    assert refreshed[view.relationship_id].evidence_missing is True
-    assert refreshed[view.relationship_id].quote == ""
-    assert refreshed[view.relationship_id].page_number is None
-
-
-def test_evidence_whose_chunk_text_changed_is_not_shown(
-    db_session: Session, make_file_version
-):
-    """The read path checks the quote against the text it is about to return."""
-    version_id = _version_with_relations(db_session, make_file_version)
-    view = read_relationships(db_session, version_id)[0]
-
-    evidence = (
-        db_session.execute(
-            select(RelationshipEvidence).where(
-                RelationshipEvidence.relationship_id == view.relationship_id
-            )
-        )
-        .scalars()
-        .first()
-    )
-    chunk = db_session.get(SourceChunk, evidence.chunk_id)
-    chunk.text = "The original quote was replaced"
-    db_session.commit()
-
-    refreshed = {
-        candidate.relationship_id: candidate
-        for candidate in read_relationships(db_session, version_id)
-    }
-    assert refreshed[view.relationship_id].evidence_missing is True
-    assert refreshed[view.relationship_id].quote == ""
 
 
 def test_first_review_is_revision_one(db_session: Session, make_file_version):

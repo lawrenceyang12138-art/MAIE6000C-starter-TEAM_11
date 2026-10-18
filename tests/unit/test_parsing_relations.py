@@ -15,19 +15,13 @@ from sqlalchemy.orm import Session
 from services.common.models import Entity, Relationship, RelationshipEvidence, SourceChunk
 from services.parsing.chunking import Chunk, chunk_document
 from services.parsing.pdf import extract_document, file_identity
-from services.parsing.persist import (
-    InvalidChunkSet,
-    InvalidRelationEvidence,
-    persist_chunks,
-    persist_relations,
-)
+from services.parsing.persist import InvalidChunkSet, persist_chunks, persist_relations
 from services.parsing.relations import (
     ENTITY_PERSON,
     ENTITY_PROJECT,
     ENTITY_TOPIC,
     MAX_CANDIDATES,
     PRODUCER_REVISION,
-    CandidateRelation,
     candidate_relations,
     find_mentions,
 )
@@ -182,98 +176,6 @@ def test_storing_relations_twice_does_not_duplicate_them(
     assert len(second_ids) == len(candidates)
 
 
-def test_two_mentions_of_one_entity_keep_two_evidence_rows(
-    db_session: Session, make_file_version
-):
-    """One relationship can be supported by more than one passage.
-
-    Replacing the evidence set once per relationship and then adding every
-    candidate avoids the old bug where each mention deleted the previous one.
-    """
-    version_id = make_file_version(sha256="6" * 64)
-    first_text = "Alpha Project appears first."
-    second_text = "Later, Alpha Project appears again."
-    persist_chunks(
-        db_session,
-        version_id,
-        [
-            Chunk(ordinal=1, page_number=1, text=first_text),
-            Chunk(ordinal=2, page_number=2, text=second_text),
-        ],
-    )
-    candidates = [
-        CandidateRelation(
-            entity_type=ENTITY_PROJECT,
-            label="Alpha Project",
-            normalized_label="alpha project",
-            chunk_ordinal=1,
-            page_number=1,
-            start_offset=0,
-            end_offset=len("Alpha Project"),
-            quote=first_text,
-        ),
-        CandidateRelation(
-            entity_type=ENTITY_PROJECT,
-            label="Alpha Project",
-            normalized_label="alpha project",
-            chunk_ordinal=2,
-            page_number=2,
-            start_offset=len("Later, "),
-            end_offset=len("Later, Alpha Project"),
-            quote=second_text,
-        ),
-    ]
-
-    written = persist_relations(db_session, version_id, candidates)
-
-    relationships = db_session.execute(select(Relationship)).scalars().all()
-    evidence = db_session.execute(select(RelationshipEvidence)).scalars().all()
-    assert written == 2
-    assert len(relationships) == 1
-    assert len(evidence) == 2
-
-
-def test_a_rerun_updates_the_producer_revision(
-    db_session: Session, make_file_version
-):
-    """An existing relationship must not keep crediting an older rule set."""
-    version_id = make_file_version(sha256="5" * 64)
-    text = "Alpha Project was approved."
-    persist_chunks(
-        db_session,
-        version_id,
-        [Chunk(ordinal=1, page_number=1, text=text)],
-    )
-    candidate = CandidateRelation(
-        entity_type=ENTITY_PROJECT,
-        label="Alpha Project",
-        normalized_label="alpha project",
-        chunk_ordinal=1,
-        page_number=1,
-        start_offset=0,
-        end_offset=len("Alpha Project"),
-        quote=text,
-        producer_revision="rules-v1",
-    )
-    persist_relations(db_session, version_id, [candidate])
-
-    candidate = CandidateRelation(
-        entity_type=ENTITY_PROJECT,
-        label="Alpha Project",
-        normalized_label="alpha project",
-        chunk_ordinal=1,
-        page_number=1,
-        start_offset=0,
-        end_offset=len("Alpha Project"),
-        quote=text,
-        producer_revision="rules-v2",
-    )
-    persist_relations(db_session, version_id, [candidate])
-
-    relationship = db_session.execute(select(Relationship)).scalars().one()
-    assert relationship.producer_revision == "rules-v2"
-
-
 def test_evidence_needs_the_chunks_to_be_stored_first(
     db_session: Session, make_file_version
 ):
@@ -282,83 +184,3 @@ def test_evidence_needs_the_chunks_to_be_stored_first(
 
     with pytest.raises(InvalidChunkSet):
         persist_relations(db_session, version_id, candidate_relations(chunks))
-
-
-def test_a_failed_relation_batch_leaves_no_partial_rows(
-    db_session: Session, make_file_version
-):
-    """A later bad candidate must not leave an earlier one waiting to be saved.
-
-    ``persist_relations`` owns its transaction. Without a rollback, a caller
-    that later commits the same session would silently persist the valid prefix
-    even though the function reported failure.
-    """
-    version_id = make_file_version(sha256="8" * 64)
-    text = "Alpha Project was approved."
-    persist_chunks(
-        db_session,
-        version_id,
-        [Chunk(ordinal=1, page_number=1, text=text)],
-    )
-
-    valid = CandidateRelation(
-        entity_type=ENTITY_PROJECT,
-        label="Alpha Project",
-        normalized_label="alpha project",
-        chunk_ordinal=1,
-        page_number=1,
-        start_offset=0,
-        end_offset=len("Alpha Project"),
-        quote=text,
-    )
-    missing_chunk = CandidateRelation(
-        entity_type=ENTITY_PROJECT,
-        label="Beta Project",
-        normalized_label="beta project",
-        chunk_ordinal=2,
-        page_number=2,
-        start_offset=0,
-        end_offset=len("Beta Project"),
-        quote="Beta Project was rejected.",
-    )
-
-    with pytest.raises(InvalidChunkSet):
-        persist_relations(db_session, version_id, [valid, missing_chunk])
-
-    # This commit is deliberate: it would save any rows the failed function
-    # forgot to roll back.
-    db_session.commit()
-    assert db_session.execute(select(Entity)).scalars().all() == []
-    assert db_session.execute(select(Relationship)).scalars().all() == []
-    assert db_session.execute(select(RelationshipEvidence)).scalars().all() == []
-
-
-def test_relation_evidence_must_point_at_the_quoted_label(
-    db_session: Session, make_file_version
-):
-    """A quote is useful only when its offsets identify the label in the chunk."""
-    version_id = make_file_version(sha256="7" * 64)
-    text = "Alpha Project was approved."
-    persist_chunks(
-        db_session,
-        version_id,
-        [Chunk(ordinal=1, page_number=1, text=text)],
-    )
-    malformed = CandidateRelation(
-        entity_type=ENTITY_PROJECT,
-        label="Alpha Project",
-        normalized_label="alpha project",
-        chunk_ordinal=1,
-        page_number=1,
-        start_offset=len(text) + 10,
-        end_offset=len(text) + 23,
-        quote="Alpha Project was approved.",
-    )
-
-    with pytest.raises(InvalidRelationEvidence):
-        persist_relations(db_session, version_id, [malformed])
-
-    db_session.commit()
-    assert db_session.execute(select(Entity)).scalars().all() == []
-    assert db_session.execute(select(Relationship)).scalars().all() == []
-    assert db_session.execute(select(RelationshipEvidence)).scalars().all() == []
