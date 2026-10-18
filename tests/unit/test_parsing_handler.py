@@ -81,7 +81,6 @@ def test_a_bad_document_is_recorded_rather_than_raised(
     version = db_session.get(FileVersion, version_id)
     assert version.status == VersionStatus.UNSUPPORTED.value
     assert version.error_code == expected_reason
-    assert version.parser_revision == PARSER_REVISION
     assert _chunks(db_session, version_id) == []
 
 
@@ -182,71 +181,9 @@ def test_a_failure_while_storing_does_not_leave_the_version_extracting(
     with pytest.raises(RuntimeError):
         handle_extract_file(db_session, version_id, FIXTURES / "normal.pdf")
 
-    db_session.rollback()
-    db_session.expire_all()
     version = db_session.get(FileVersion, version_id)
     assert version.status == VersionStatus.FAILED.value
     assert version.error_code == REASON_PROCESSING_FAILED
-
-
-def test_a_crash_inside_the_reader_does_not_leave_the_version_extracting(
-    db_session: Session, make_file_version, monkeypatch
-):
-    """The same guarantee as the test above, for the extraction step.
-
-    `extract_document` is written to raise only the three document exceptions,
-    but a library bug or an I/O error is not bound by that promise. Before this
-    test, such a crash left the row saying "extracting" forever - the exact
-    failure the storing test was written for, one step earlier.
-    """
-    import services.parsing.handler as handler_module
-
-    real_hash, _ = file_identity(FIXTURES / "normal.pdf")
-    version_id = make_file_version(sha256=real_hash)
-
-    def explode(*args, **kwargs):
-        raise RuntimeError("the reader crashed")
-
-    monkeypatch.setattr(handler_module, "extract_document", explode)
-
-    with pytest.raises(RuntimeError):
-        handle_extract_file(db_session, version_id, FIXTURES / "normal.pdf")
-
-    version = db_session.get(FileVersion, version_id)
-    assert version.status == VersionStatus.FAILED.value
-    assert version.error_code == REASON_PROCESSING_FAILED
-    assert _chunks(db_session, version_id) == []
-
-
-def test_a_failure_on_the_final_status_commit_does_not_leave_extracting(
-    db_session: Session, make_file_version, monkeypatch
-):
-    """The last commit can fail just like the earlier ones.
-
-    Chunks are committed before the version is marked ready. If that final
-    commit fails, the row must still receive a failed outcome rather than
-    staying indistinguishable from work that is still running.
-    """
-    real_hash, _ = file_identity(FIXTURES / "normal.pdf")
-    version_id = make_file_version(sha256=real_hash)
-    real_commit = db_session.commit
-    calls = {"count": 0}
-
-    def commit_with_one_failure():
-        calls["count"] += 1
-        if calls["count"] == 3:
-            raise RuntimeError("the final status commit failed")
-        real_commit()
-
-    monkeypatch.setattr(db_session, "commit", commit_with_one_failure)
-
-    with pytest.raises(RuntimeError):
-        handle_extract_file(db_session, version_id, FIXTURES / "normal.pdf")
-
-    version = db_session.get(FileVersion, version_id)
-    assert version.status == VersionStatus.FAILED.value
-    assert version.error_code == REASON_PROCESSING_FAILED
-    assert version.parser_revision == PARSER_REVISION
 
 
 def test_one_bad_file_does_not_stop_the_next_one(

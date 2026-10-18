@@ -11,7 +11,7 @@ jobs:
 
     services:
       postgres:
-        image: pgvector/pgvector:pg16
+        image: postgres:16-alpine
         env:
           POSTGRES_DB: maie6000c
           POSTGRES_USER: postgres
@@ -26,7 +26,6 @@ jobs:
 
     env:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/maie6000c
-      SEARCH_TEST_DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/maie6000c
       AI_SERVICE_URL: http://localhost:8100
 
     steps:
