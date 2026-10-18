@@ -16,7 +16,7 @@ from services.search.text import DIMENSIONS, MODEL_FILES, MODEL_ID, MODEL_REVISI
 
 
 def test_chinese_tokens_do_not_cross_punctuation():
-    assert tokenize("数据库，备份") == ("数据", "据库", "备份")
+    assert tokenize("\u6570\u636e\u5e93\uff0c\u5907\u4efd") == ("\u6570\u636e", "\u636e\u5e93", "\u5907\u4efd")
     assert tokenize("PASSWORD reset") == ("password", "reset")
 
 
