@@ -1,12 +1,13 @@
 # C search integration handoff
 
-Updated: 2026-10-18. Branch: `feat/c-search-model-evaluation`.
+Updated: 2026-10-18. Source branch: `feat/c-search-model-evaluation`.
 
 C now uses B's canonical file, version, and chunk models with a separate search
-sidecar. The reverted `develop` history has been merged into C, and search and
-parsing fixes have been restored as separate commits. C has not yet been merged
-back into `develop`. This branch state does not establish completion of A's scan
-dispatcher, D's UI, or the team's final acceptance.
+sidecar. The reverted `develop` history was merged into C, and search and parsing
+fixes were restored as separate commits. The validated C result has been merged
+back into `develop`, preserving the individual commits. This integration does
+not establish completion of A's scan dispatcher, D's UI, or the team's final
+acceptance.
 
 Read the [implementation guide](search-plan.md),
 [schema adaptation record](search-contract-differences.md), and
