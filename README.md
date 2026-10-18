@@ -2,19 +2,20 @@
 
 ## Team 11 member C implementation
 
-Member C's feature branch adds bilingual keyword search, pinned offline E5 embeddings,
-pgvector retrieval, hybrid ranking, file deduplication, version/page evidence, and
-explicit keyword fallback when AI is unavailable. See [search implementation and
-verification](docs/search-plan.md) and [integration handoff](docs/search-integration-handoff.md).
-The sample importer uses synthetic text chunks; scanning, authorization, PDF parsing,
-and the final UI require integration with members A/B/D. Internal evaluation evidence
-is stored under `submissions/week07/evidence/C/`. The [local acceptance record](submissions/week07/C-final-check.md)
-records 49 passing tests, including live HTTP smoke, on both the host and Docker
-Python 3.11, the actual 5/5 keyword and 4/5 semantic results, and the remaining
-team integration work. The [requirements review](submissions/week07/C-requirements-review.md)
-also records the schema and migration differences with the remote parsing branch.
-See the [branch review notes](submissions/week07/C-branch-review.md) for the release
-scope, current integration status, and the dates of the verification evidence.
+Member C adds bilingual keyword search, pinned offline E5 embeddings, pgvector
+retrieval, hybrid ranking, file deduplication, and explicit keyword fallback when
+AI is unavailable. Search uses the canonical file/version/chunk models and returns
+stable evidence IDs with source pages. See the [implementation and verification
+guide](docs/search-plan.md), [integration handoff](docs/search-integration-handoff.md),
+and [schema adaptation record](docs/search-contract-differences.md).
+
+The sample importer uses synthetic text chunks. Team scanning, job dispatch,
+source authorization, PDF evidence, and UI acceptance retain their member-specific
+integration responsibilities. Machine-readable historical evaluation and test
+evidence is stored under `submissions/week07/evidence/C/`; its dates and test
+counts describe the recorded run. The integration handoff records current branch
+scope, remaining team work, and development AI use. Personal checklists and
+presentation drafts are kept locally outside Git tracking.
 
 This repository is the starter template for MAIE 6000C: **Engineering AI Products: From Prototype to Production**.
 

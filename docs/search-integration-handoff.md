@@ -1,30 +1,72 @@
-# C → A/B/D 交接合同
+# C search integration handoff
 
-状态：2026-10-16 更新交接状态；本地实现及完整测试证据仍为 2026-10-15，待整合，尚未团队确认或封板。
+Updated: 2026-10-18. Branch: `feat/c-search-model-evaluation`.
 
-复查已读取远程 B 的 `w7-parsing`（`c248e8a`）及 A 的 `w7-scan-dispatch`（`7b084e5`）分支；已确认公共表字段和迁移冲突，详见 [逐字段合同差异](search-contract-differences.md)。A 已给出当前版本指针、挂载和任务派发决定；对应完整实现仍待联调。当前不能直接合并两套迁移后运行，也没有完成团队真实 PDF 端到端验收。
+C now uses B's canonical file, version, and chunk models with a separate search
+sidecar. The reverted `develop` history has been merged into C, and search and
+parsing fixes have been restored as separate commits. C has not yet been merged
+back into `develop`. This branch state does not establish completion of A's scan
+dispatcher, D's UI, or the team's final acceptance.
 
-## 给 A：迁移、队列与授权
+Read the [implementation guide](search-plan.md),
+[schema adaptation record](search-contract-differences.md), and
+[shared integration contract](team11-w7-shared-contract.md) before changing a
+shared field or public interface.
 
-新迁移 `20261015_0002_source_search.py` 接在 starter 初始迁移后，提供三张 source 表、唯一当前版本约束、GIN 和 pgvector。分支上可独立运行；若 A 的分支已有正式文件/版本/chunk 表，统一以 A 的迁移为准，移植向量、模型元信息和检索字段，勿重复创建同名表。此处涉及公共模型/迁移的修改是可审阅的整合草案。
+## A: schema, authorization, and jobs
 
-`embed_version(db, version_id, backend)` 是可被公共 Worker 分发器调用的 C 处理器，不会 `commit()`，返回 `version_id/chunk_count/embedded_count/embedding_error`。它不复用 starter 的 `triage_case` Job，避免把 case 外键当文件版本 ID；A 需要在正式文件任务合同中建立向量任务及其重试/尝试记录。当前可用独立 CLI 在后台执行：
+The canonical tables are `authorized_roots`, `files`, `file_versions`, and
+`source_chunks`. C adds `chunk_search_index`, keyed by the existing source chunk
+ID. The actual search migration is `20261015_0002`, following `445f908b73b4`.
+It creates search-derived storage and its indexes; it does not create another
+file/version/chunk catalog. See the adaptation record for the revision label
+proposed in the shared contract and the executable chain in this branch.
+
+`embed_version(db, version_id, backend)` creates keyword sidecars before calling
+the embedding backend. It returns `version_id`, `chunk_count`, `embedded_count`,
+and `embedding_error`; it does not commit. Every vector batch must succeed before
+new vectors are published. Existing vectors and source text remain available on
+embedding failure. The caller owns commit/rollback, retry policy, and job status.
+
+Do not use starter case IDs as file-version job targets. A must connect indexing
+to the canonical file-job dispatcher after B has committed parsed text. The
+standalone indexing command remains useful for an explicit version:
 
 ```cmd
 python -m scripts.search_tools index --database-url YOUR_DATABASE_URL --version-id VERSION_ID --backend http --ai-url http://127.0.0.1:8100
 ```
 
-扫描未完成、解析完成、向量就绪是不同状态。A 的 D1 已确定 `files.current_version_id` 由 scan 事务设置，指向最新观察到的版本；C 后续须按该指针和文本状态筛选，不能在新版本尚未解析时展示历史块为当前结果。文本写入后即支持关键词搜索；向量失败不应把已解析的基本文本删除。当前 C 的文件筛选已有 ready/current/hash 检查，正式授权还需要 A/C 在 `_base_statement()` 连接有效 root/mount 范围。`file_id` 过滤器不代表授权控制，搜索也不返回可绕过授权的磁盘读取接口。
+Search joins authorized roots and accepts `active` or `paused` roots, present
+files, and only each file's current `basic_ready` or `enriched` version. Scan
+transactions own `current_version_id`. Old chunks must not be substituted for a
+new version that has not been parsed. Revoking or revoked roots are excluded.
+Server-side mount/path authorization and evidence checks remain required when
+opening a source file; request filters do not replace those checks.
 
-## 给 B：文本与页码
+Keep the read-only corpus mount, the configured PostgreSQL host port, the
+pgvector database image, and the read-only model mount when assembling Compose.
 
-以下是 C 当前样例适配器的输入合同：版本 ID、从 0 开始的唯一 `chunk_index`、完整 `text`、从 1 开始的 `page_start/page_end`，且结束页不小于开始页。B 的正式块使用 `version_id/ordinal/page_number`，应由 C 适配正式公共模型，保留 B 的 chunk ID，不要求 B 改成 C 的草案字段。建议每块不超过 2000 字符，避免 embedding 只读前缀。跨页块应保留真实页码范围；未知页码不能伪造，C 不生成或推断页码。
+## B: text, pages, and evidence identity
 
-通过 ORM 插入/更新会自动生成 `search_text/search_terms`；若使用 bulk SQL/COPY，则调用 `normalize_text(text)` 和 `search_terms(text)` 填列。文本不可为了语义调参改写原文。旧版本与当前文件哈希不一致的数据不参与搜索。
+Production input uses canonical `SourceChunk.version_id`, one-based contiguous
+`ordinal`, source `text`, and nullable one-based `page_number`. Retain chunk IDs
+when text and page identity are unchanged. Search results, relation evidence,
+and source evidence must all resolve to that same `source_chunks.id`.
 
-`index_document()` 是 C 的样例导入适配器，接收手写 chunk，不执行扫描或 PDF 解析。相同版本、同一内容的重复导入返回原记录；同一版本内容不同会报错，必须使用新版本号。插入较旧版本不会覆盖当前版本。B 正式解析链路整合后可以直接使用公共模型写库，不必调用该适配器。
+Source chunks do not span pages under the shared contract. Unknown pages remain
+unknown. Keep chunks within the embedding size limit where possible; indexing
+embeds only the first 2000 characters of a longer passage. Search normalization
+belongs in `chunk_search_index`, without rewriting stored source text.
 
-## 给 D：公开搜索接口
+`index_document()` imports synthetic fixture chunks through the canonical models.
+It accepts legacy fixture ordering/page fields at its boundary, handles unchanged
+content idempotently, and rejects changed text for an existing immutable version.
+It does not scan folders or extract PDFs. B's production parser can persist
+canonical chunks directly; the dispatcher must then create their keyword indexes
+and arrange embedding work. SQL bulk paths must generate normalized search fields
+explicitly when bypassing ORM processing.
+
+## D: public search API
 
 ```http
 POST /search
@@ -32,29 +74,68 @@ Content-Type: application/json
 ```
 
 ```json
-{"query":"数据库备份", "mode":"hybrid", "top_k":10, "file_id":null}
+{"query":"Database backup", "mode":"hybrid", "top_k":10, "root_id":null, "file_id":null}
 ```
 
-`mode` 可为 `keyword/semantic/hybrid`，默认 hybrid。响应中 `mode` 保留请求模式，`effective_mode` 表示实际使用模式。`degraded` 为真时，在 UI 显示 `degradation_reason` 对应的友好提示，比如“语义服务暂不可用，已返回关键词结果”。空结果仍是 HTTP 200、`results=[]`；空白/过长查询或越界 `top_k` 是 422。
+`mode` accepts `keyword`, `semantic`, or `hybrid`, with hybrid as default. The
+response preserves the requested `mode`; `effective_mode` reports what ran.
+Display a friendly fallback message when `degraded` is true, using
+`degradation_reason`. Valid searches with no matches return HTTP 200 and an empty
+`results` array. Blank or overlong queries and out-of-range `top_k` return 422.
 
-每个 `results[]` 的稳定字段：
+| Result fields | Meaning |
+| --- | --- |
+| `root_id` | Authorized directory identity |
+| `file_id/file_name/file_path` | File identity, display name, and relative path |
+| `version_id/version_created_at` | Immutable version and its display timestamp |
+| `chunk_id/ordinal` | Evidence chunk identity and one-based source order |
+| `page` | Nullable one-based source page |
+| `text` | Source excerpt, at most 2000 characters |
+| `score/keyword_score/semantic_score` | Scores between 0 and 1; not probabilities |
+| `reason` | Token, filename, and/or semantic-cosine explanation |
 
-| 字段 | 含义 |
-|---|---|
-| `file_id/file_name/file_path` | 文件身份、显示名、路径，仅作展示 |
-| `version_id/version_number` | 证据对应的不可变版本 |
-| `chunk_id/chunk_index` | 结果块身份与原始顺序 |
-| `page_start/page_end` | 1-based 源页码范围 |
-| `text` | 最多 2000 字符原文节选 |
-| `score/keyword_score/semantic_score` | 0–1 分数，不是概率 |
-| `reason` | 匹配词/文件名/语义余弦解释 |
+Open source evidence through `GET /evidence/{chunk_id}`. Pass the returned chunk
+ID through the authorized API and handle missing, superseded, and revoked
+evidence distinctly. `total` counts deduplicated files in a bounded candidate
+pool; the API returns at most `top_k` files and does not implement pagination.
 
-证据展开须把版本与块 ID 交给 B 的授权证据 API。当前 C 没有伪造该 API，也不提供 `file://` 链接。`total` 为候选池内去重文件数；当前无分页，最多展示 `top_k` 份。
+The historical frontend snapshot `Role_D` at `eb656ca` defaulted to the real API
+but still lacked `POST /search` in its adapter. That observation is dated
+2026-10-16; recheck D's current implementation before claiming frontend
+integration. Browser filtering of already loaded records is not backend search.
 
-2026-10-16 推送前再次读取 `origin/Role_D`（`eb656ca`）：前端已默认使用真实 API，mock 改为显式选择；真实 adapter 尚无 `POST /search`，结果框仍在浏览器过滤已载入的记录。D 的交接说明将搜索接入排在 10 月 17 日。C 当前只有 `file_id` 过滤，正式接入前需 A/C/D 共同确定授权 root 参数与服务端校验，不能将现有独立端点当作授权链路已完成。
+## Evidence and remaining acceptance
 
-## 可交接材料
+`submissions/week07/evidence/C/` retains machine-readable model manifests,
+evaluation reports, vector records, HTTP/offline checks, and test summaries.
+`submissions/week07/search-config-final.json` retains its candidate status.
+Historical reports keep their original dates, hashes, Git states, and test counts.
+Their initial full-suite result was 49 passes, with keyword Top-1 5/5 and semantic
+Top-3 4/5 on synthetic data. `sem-2` remains a page-selection failure.
 
-模型配置在 `submissions/week07/search-config-final.json`，其 freeze 状态明确为候选。逐项评测/停 AI/断网证据在 `submissions/week07/evidence/C/`。`sections/C.md`、`C-slides.md`、`C-notes.md`、`C-qa.md` 是供本人复核及 D 拼装的文字草稿，不代表团队报告/PPT 已最终提交。
+The 2026-10-18 integrated pre-cleanup verification ran 158 tests and checked real
+PostgreSQL/pgvector, migrations, live HTTP fallback, and the starter worker path.
+Further cleanup verification belongs to its own run and must not be backdated
+into those historical records. ASCII fixture serialization is documented in
+[fixture-encoding.json](../submissions/week07/evidence/C/fixture-encoding.json),
+including exact decoded-value equivalence and Git-byte hashes.
 
-本模块通过 `feat/c-search-model-evaluation` 独立分支供团队审阅和备份。用户于 2026-10-16 授权提交并推送该分支；发布范围见 [分支审阅说明](../submissions/week07/C-branch-review.md)。团队计划 10 月 21 日统一封板和合并，此次发布不合并 `main`，也不代表公共合同已经确认。
+Individual checklists, presentation text, speaking notes, and duplicate validation
+summaries are retained locally and excluded from Git. This handoff and the search
+guide carry the useful integration context. Team PDF acceptance, scan-to-index
+dispatch, frontend evidence opening, service restart checks, and backup-machine
+deployment still require team-level verification.
+
+## Development AI use
+
+Codex assisted with reading requirements, designing and implementing the
+Python/SQLAlchemy/FastAPI code, writing tests and documentation, and running
+SQLite, PostgreSQL/pgvector, local-model, and HTTP checks. This records tool use;
+it does not sign a personal declaration or submit a course statement for a member.
+C remains responsible for understanding tokenization, E5 prefixes and pooling,
+vector compatibility, ranking, page-aware evaluation, and fallback behavior.
+
+The product's local E5 feature is separate from development assistance. The
+evaluation corpus is synthetic and contains no private customer files. D must
+assemble and verify the final team AI Use Statement against actual member usage
+and the course format.
