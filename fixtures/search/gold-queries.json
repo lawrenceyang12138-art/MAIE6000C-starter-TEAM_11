@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "data_kind": "synthetic",
+  "frozen_at": "2026-10-15",
+  "description": "Internal smoke benchmark frozen before local E5 evaluation. Team D/B must validate a separate PDF-derived benchmark.",
+  "queries": [
+    {"id": "kw-1", "kind": "keyword", "query": "reimbursement", "expected_file_id": "fixture-expenses", "expected_page": 1},
+    {"id": "kw-2", "kind": "keyword", "query": "Password reset", "expected_file_id": "fixture-access", "expected_page": 1},
+    {"id": "kw-3", "kind": "keyword", "query": "Database backup", "expected_file_id": "fixture-backup", "expected_page": 2},
+    {"id": "kw-4", "kind": "keyword", "query": "个人信息保留期限", "expected_file_id": "fixture-retention", "expected_page": 2},
+    {"id": "kw-5", "kind": "keyword", "query": "Attendance policy", "expected_file_id": "fixture-attendance", "expected_page": 3},
+    {"id": "sem-1", "kind": "semantic", "query": "How can I get my money back for work journeys?", "expected_file_id": "fixture-expenses", "expected_page": 1},
+    {"id": "sem-2", "kind": "semantic", "query": "I forgot my credentials and cannot sign in", "expected_file_id": "fixture-access", "expected_page": 1},
+    {"id": "sem-3", "kind": "semantic", "query": "不小心清空存储，怎样找回丢失内容", "expected_file_id": "fixture-backup", "expected_page": 2},
+    {"id": "sem-4", "kind": "semantic", "query": "When should a business dispose of information about former clients?", "expected_file_id": "fixture-retention", "expected_page": 2},
+    {"id": "sem-5", "kind": "semantic", "query": "身体不适没去上课需要交什么材料", "expected_file_id": "fixture-attendance", "expected_page": 3}
+  ]
+}
