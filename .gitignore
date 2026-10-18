@@ -203,6 +203,8 @@ cython_debug/
 .vscode/settings.json
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
+models/
+work/
 
 # Ruff stuff:
 .ruff_cache/
@@ -220,3 +222,18 @@ __marimo__/
 
 # Local scratch corpus for the read-only source mount (official fixtures land in tests/fixtures via the parsing branch)
 /corpus
+
+# Personal C drafts retained locally
+/submissions/week07/AI-Use-C.md
+/submissions/week07/C-branch-review.md
+/submissions/week07/C-final-check.md
+/submissions/week07/C-fixes.md
+/submissions/week07/C-requirements-review.md
+/submissions/week07/C-notes.md
+/submissions/week07/C-qa.md
+/submissions/week07/C-slides.md
+/submissions/week07/sections/C.md
+/submissions/week07/degrade.md
+/submissions/week07/m1-search.md
+/submissions/week07/offline-check.md
+/submissions/week07/search-eval-final.md

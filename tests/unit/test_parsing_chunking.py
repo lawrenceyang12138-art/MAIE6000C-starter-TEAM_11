@@ -11,7 +11,6 @@ from pathlib import Path
 from services.parsing.chunking import (
     CHUNK_OVERLAP_CHARS,
     CHUNK_SIZE_CHARS,
-    MIN_CHUNK_CHARS,
     chunk_document,
     clean_page_text,
     strip_running_headers_footers,
@@ -91,11 +90,47 @@ def test_chunk_size_stays_within_the_documented_bound():
     page = "abcdefghij" * 300
     chunks = chunk_document(_document([page]))
 
-    # A short tail may be folded into its neighbour, which can add up to one
-    # minimum-chunk length. Nothing may exceed that documented bound.
-    limit = CHUNK_SIZE_CHARS + MIN_CHUNK_CHARS
-    assert max(len(chunk.text) for chunk in chunks) <= limit
+    # The policy promises 700 and nothing larger. The tail-folding rule in the
+    # chunker allows up to 700 + MIN in principle, but it cannot fire on
+    # cleaned text: a page ends on a non-space character, and every later piece
+    # starts 120 characters before the previous cut, so a tail is at least 120
+    # characters long and never "short". The bound below is the real one.
+    assert max(len(chunk.text) for chunk in chunks) <= CHUNK_SIZE_CHARS
     assert all(chunk.text.strip() for chunk in chunks)
+
+
+def test_no_shape_of_page_produces_a_chunk_over_the_limit():
+    """Property-style check over hostile page shapes.
+
+    A single example proves very little, so this builds pages out of words,
+    unbroken tokens, short lines, CJK and long paragraphs and asserts the two
+    invariants that matter: nothing over 700, and nothing spanning pages.
+    """
+    import random
+
+    rng = random.Random(20261017)
+    for _ in range(300):
+        length = rng.choice([1, 79, 80, 120, 699, 700, 701, 780, 1200, 2000])
+        style = rng.randrange(5)
+        if style == 0:
+            text = " ".join(rng.choice(["alpha", "beta", "gamma"]) for _ in range(length // 6 + 1))
+        elif style == 1:
+            text = "x" * length
+        elif style == 2:
+            text = "\n".join("line " + "y" * rng.randint(1, 30) for _ in range(length // 20 + 1))
+        elif style == 3:
+            text = "".join(
+                rng.choice("\u6570\u636e \u5e93\u8bbe\u8ba1\n") for _ in range(length // 2)
+            )
+        else:
+            text = "Sentence one. " * (length // 14 + 1)
+
+        chunks = chunk_document(_document([text]))
+        assert all(len(chunk.text) <= CHUNK_SIZE_CHARS for chunk in chunks), (
+            f"chunk over the limit for style {style}, length {length}: "
+            f"{[len(chunk.text) for chunk in chunks]}"
+        )
+        assert all(chunk.page_number == 1 for chunk in chunks)
 
 
 def test_short_page_stays_a_single_chunk():
@@ -120,7 +155,9 @@ def test_cleaning_joins_hyphenated_line_breaks():
 
 
 def test_cleaning_removes_spaces_between_chinese_characters():
-    assert clean_page_text("数 据 库 设 计") == "数据库设计"
+    assert clean_page_text("\u6570 \u636e \u5e93 \u8bbe \u8ba1") == (
+        "\u6570\u636e\u5e93\u8bbe\u8ba1"
+    )
 
 
 def test_cleaning_collapses_whitespace_and_blank_lines():

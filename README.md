@@ -1,68 +1,293 @@
-# File Management Assistant
+# MAIE 6000C Starter Template
 
-MAIE 6000C Team 11
+## Team 11 member C implementation
 
-File Management Assistant is a proposed local-first tool for people who accumulate personal and project files across folders. Starting from a selected, authorized folder, it will support keyword and semantic retrieval, source-linked evidence, and a graph connecting files with the people, projects, and topics they mention. Original files remain read-only for the core release; moving, renaming, and undoing file operations are stretch goals, not R1 acceptance gates.
+Member C adds bilingual keyword search, pinned offline E5 embeddings, pgvector
+retrieval, hybrid ranking, file deduplication, and explicit keyword fallback when
+AI is unavailable. Search uses the canonical file/version/chunk models and returns
+stable evidence IDs with source pages. See the [implementation and verification
+guide](docs/search-plan.md), [integration handoff](docs/search-integration-handoff.md),
+and [schema adaptation record](docs/search-contract-differences.md).
 
-## Documentation
+The sample importer uses synthetic text chunks. Team scanning, job dispatch,
+source authorization, PDF evidence, and UI acceptance retain their member-specific
+integration responsibilities. Machine-readable historical evaluation and test
+evidence is stored under `submissions/week07/evidence/C/`; its dates and test
+counts describe the recorded run. The integration handoff records current branch
+scope, remaining team work, and development AI use. Personal checklists and
+presentation drafts are kept locally outside Git tracking.
 
-- [Detailed architecture](docs/architecture.md): workflow, service boundaries, persistence, state transitions, AI processing, failure behavior, and design evidence.
-- [Week 4 proposal and project plan](submissions/week04/README.md): milestone summary, scope priorities, risks, artifact index, and AI Use Statement.
-- [Starter operations notes](docs/operations.md): existing service health, metrics, and development commands. These describe the baseline, not the proposed product.
+This repository is the starter template for MAIE 6000C: **Engineering AI Products: From Prototype to Production**.
 
-## Current repository status
+It is intentionally small, but it already demonstrates the core engineering shape expected in the course:
 
-This Week 4 change is documentation only. Folder selection, document indexing, search, the graph, and human review are **not implemented yet**.
+- a public-facing API service
+- a separate internal AI service
+- a worker process
+- a PostgreSQL database
+- Alembic migrations
+- Docker Compose deployment
+- unit, integration, and smoke testing support
+- structured logging
+- health checks
+- basic metrics
 
-The existing course starter demonstrates case creation through FastAPI, PostgreSQL persistence, a queued background job, an internal AI-service call, and worker result write-back. It includes SQLAlchemy/Alembic, Docker Compose, health endpoints, structured logging, metrics, and test scaffolding. The architecture document distinguishes these existing capabilities from the proposed File Management Assistant.
+## Purpose of this repository
 
-## Run the starter baseline
+This repository is **not** meant to be a feature-complete product.
 
-Prerequisites: Docker with Compose; Python 3.11 for local tests. On Windows PowerShell, create the local environment file only if `.env` does not already exist:
+Its purpose is to provide a working baseline that teams will extend into their semester project while preserving the course’s engineering contract.
 
-```powershell
-if (-not (Test-Path -LiteralPath .env)) {
-    Copy-Item -LiteralPath .env.example -Destination .env
-}
+## Course engineering contract
+
+Every passing team project built from this template must ultimately include:
+
+- a meaningful relational database layer
+- a service or API layer
+- a worker or async path outside the immediate request cycle
+- an AI-enabled function integrated into the workflow
+- reproducible local deployment
+- tests or credible verification
+- documentation
+- structured logs
+- health checks
+- basic observability
+
+## Baseline workflow in the starter
+
+The starter demonstrates a simple end-to-end flow:
+
+1. create a case through the API
+2. store that case in PostgreSQL
+3. create a background job
+4. let the worker claim and process the job
+5. call the internal AI service over HTTP
+6. persist the result
+7. retrieve updated state through the API
+
+This gives you a starting point for:
+
+- persistence
+- inter-service communication
+- worker-based execution
+- deployment
+- testing
+- observability
+
+## Repository structure
+
+Typical structure:
+
+```text
+.
+├─ .github/
+├─ alembic/
+├─ docs/
+├─ observability/
+├─ scripts/
+├─ services/
+│  └─ api/
+├─ submissions/
+│  ├─ week04/
+│  ├─ week07/
+│  └─ week13/
+├─ tests/
+├─ .env.example
+├─ compose.yaml
+├─ Makefile
+├─ pyproject.toml
+└─ README.md
+```
+
+## Core services
+
+### API service
+
+The API service is the main entry point for requests and exposes routes for core system actions.
+
+### AI service
+
+The AI service is a separate internal service used to demonstrate service-to-service communication for an AI-enabled function.
+
+### Worker
+
+The worker processes jobs outside the immediate request cycle.
+
+### Database
+
+PostgreSQL is used as the relational persistence layer.
+
+## Quick start
+
+### 1. Copy environment file
+
+```bash
+cp .env.example .env
+```
+
+### 2. Start the stack
+
+```bash
 docker compose up --build
 ```
 
-On a POSIX shell, use `test -f .env || cp .env.example .env` before starting Compose. Do not overwrite an existing local configuration or commit secrets.
+### 3. Optional observability profile
 
-Default endpoints (host ports can be changed in `.env`):
-
-- [API documentation](http://localhost:8000/docs)
-- [Starter AI-service documentation](http://localhost:8100/docs)
-- [Prometheus](http://localhost:9090), when started with `docker compose --profile observability up --build`
-
-The baseline workflow is to create a case with `POST /cases`, then retrieve it with `GET /cases/{id}` to observe worker processing. These are starter routes, not document-search endpoints. Use only public, synthetic, anonymized, or instructor-approved demo data.
-
-The current starter's published ports are not loopback-restricted. Do not expose it to an untrusted network; the proposed product's local-only deployment hardening is documented in the architecture, not implemented by this checkpoint.
-
-## Development and verification
-
-Install development dependencies and run the starter unit/integration tests:
-
-```powershell
-python -m pip install -e ".[dev]"
-python -m pytest -q tests/unit tests/integration
+```bash
+docker compose --profile observability up --build
 ```
 
-Against an already running stack, run the starter smoke test in PowerShell:
+### 4. Open the relevant endpoints
 
-```powershell
-$env:SMOKE_BASE_URL = "http://localhost:8000"
-python -m pytest tests/smoke -q
+- API docs: `http://localhost:8000/docs`
+- AI service docs: `http://localhost:8100/docs`
+- Prometheus: `http://localhost:9090` if the observability profile is enabled
+
+## Typical development commands
+
+### Start the stack
+
+```bash
+docker compose up --build
 ```
 
-The POSIX equivalent is `SMOKE_BASE_URL=http://localhost:8000 python -m pytest tests/smoke -q`. These tests exercise the existing case workflow; they do not establish product acceptance or PostgreSQL restart persistence.
+### Stop the stack
 
-Useful baseline commands:
-
-```powershell
-docker compose run --rm api alembic upgrade head
-docker compose run --rm api python scripts/seed_demo_data.py
+```bash
 docker compose down --remove-orphans
 ```
 
-Normal shutdown preserves the named database volume. Volume-reset commands in the operations notes remove local database state; do not use them when checking restart persistence.
+### Stop and remove volumes
+
+```bash
+docker compose down -v --remove-orphans
+```
+
+### Run tests
+
+```bash
+pytest -q
+```
+
+### Run smoke tests against a running stack
+
+```bash
+SMOKE_BASE_URL=http://localhost:8000 pytest tests/smoke -q
+```
+
+### Run migrations
+
+```bash
+docker compose run --rm api alembic upgrade head
+```
+
+### Seed demo data
+
+```bash
+docker compose run --rm api python scripts/seed_demo_data.py
+```
+
+## What teams are expected to change
+
+Teams are expected to extend or replace:
+
+- the domain model
+- routes and workflows
+- worker job types
+- AI-enabled logic
+- tests
+- documentation
+- observability depth
+
+Teams are not expected to replace the course operating model or ignore the required repository structure.
+
+## Required living documents for team repositories
+
+By the time this template becomes a semester team project repo, it should maintain:
+
+- `README.md`
+- `docs/architecture.md`
+- `docs/operations.md`
+- `docs/adrs/`
+- `submissions/week04/`
+- `submissions/week07/`
+- `submissions/week13/`
+
+## Required milestone tags for team projects
+
+When this repo is used as a semester project repository, the required milestone tags are:
+
+- `w04-proposal`
+- `w07-midterm`
+- `w13-final`
+
+## Branch conventions
+
+Recommended branch prefixes:
+
+- `feature/...`
+- `fix/...`
+- `docs/...`
+- `submission/...`
+
+Default branch:
+
+- `main`
+
+## Testing expectations
+
+A strong project should maintain some combination of:
+
+- unit tests
+- integration tests
+- smoke tests
+- credible end-to-end verification
+
+The exact test mix may vary, but important behavior must be checkable and explainable.
+
+## Observability expectations
+
+At minimum, projects should support:
+
+- structured logs
+- health checks
+- basic metrics or equivalent observability signals
+
+Do not wait until the end of the semester to add operational visibility.
+
+## Data and privacy expectations
+
+Projects in this course must use only:
+
+- public data
+- synthetic data
+- anonymized data
+- instructor-approved sources
+
+Do not commit secrets to the repository.
+
+Do not log sensitive or unnecessary data carelessly.
+
+## AI use reminder
+
+If you use generative AI tools during development, you must remain able to explain your work and include the required AI Use Statement in major submissions.
+
+The AI-enabled feature in your system is separate from optional AI tool use during development.
+
+## Suggested first steps for teams
+
+When beginning your project, do the following early:
+
+- confirm the repo boots from a clean clone
+- understand the current workflow end to end
+- choose a narrow core workflow
+- identify your main persistent entities
+- identify your worker path
+- decide where the AI-enabled function belongs
+- update documentation as soon as design changes
+
+## Final reminder
+
+This course rewards engineering maturity.
+
+A smaller, reliable, well-documented system built from this template is stronger than a large but fragile system built on rushed changes.

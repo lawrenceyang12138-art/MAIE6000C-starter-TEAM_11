@@ -78,8 +78,8 @@ def clean_page_text(text: str) -> str:
     # Collapse horizontal whitespace runs.
     cleaned = re.sub(r"[ \t\u00a0]+", " ", cleaned)
 
-    # "数 据 库" -> "数据库". A single space between two CJK characters is an
-    # artefact of extraction, not meaningful spacing.
+    # A single space between two CJK characters is an extraction artefact,
+    # not meaningful spacing.
     cleaned = re.sub(rf"(?<=[{_CJK}]) (?=[{_CJK}])", "", cleaned)
 
     # Trim around newlines and collapse blank-line runs to a single break.
@@ -157,7 +157,7 @@ def _find_break(text: str, start: int, hard_end: int) -> int:
         return hard_end
 
     # Prefer a paragraph break, then a sentence end, then any whitespace.
-    for pattern in (r"\n\n", r"[。！？!?]\s", r"[.;]\s", r"\s"):
+    for pattern in (r"\n\n", r"[\u3002\uff01\uff1f!?]\s", r"[.;]\s", r"\s"):
         matches = list(re.finditer(pattern, window))
         if matches:
             last = matches[-1]
