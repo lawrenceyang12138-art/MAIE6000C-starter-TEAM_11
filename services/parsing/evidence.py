@@ -107,10 +107,13 @@ def read_evidence(db: Session, chunk_id: str) -> Evidence:
         )
 
     root = db.get(AuthorizedRoot, file_record.root_id)
-    if root is None or root.status != RootStatus.ACTIVE.value:
+    if root is None or root.status not in {
+        RootStatus.ACTIVE.value,
+        RootStatus.PAUSED.value,
+    }:
         status = root.status if root is not None else "missing"
         raise SourceUnavailable(
-            REASON_ROOT_REVOKED, f"The folder authorisation is no longer active ({status})"
+            REASON_ROOT_REVOKED, f"The folder authorisation is not readable ({status})"
         )
 
     return Evidence(
