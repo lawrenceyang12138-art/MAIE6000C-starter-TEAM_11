@@ -73,7 +73,8 @@ def mark_job_failed(job_id: int, error_message: str) -> None:
         if job is None:
             return
 
-        case = db.get(Case, job.case_id)
+        # A scan or index job has no case; only triage jobs carry one.
+        case = db.get(Case, job.case_id) if job.case_id else None
         job.status = JobStatus.FAILED.value
         job.error = error_message[:1000]
         job.completed_at = utcnow()
