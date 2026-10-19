@@ -1,5 +1,52 @@
 # Role D: frontend, integration, and evidence
 
+## 19 October update (current)
+
+The content search UI now calls canonical `POST /search` instead of treating the
+catalog filter as retrieval. It uses keyword by default, exposes hybrid/semantic
+requests explicitly, and shows effective mode and degradation. Result evidence
+opens by chunk ID and verifies file/version/path/page/ordinal. Unknown locators
+remain unknown; lowercase source refusal codes hide cached text.
+
+Relations and Human Review now have separate functional consumer pages. They
+read bounded candidates, show provenance and decision state, verify supporting
+source before enabling review, and send an expected revision with each decision.
+Corrections name an existing entity ID; no entity is invented. Confirmed state
+appears only after a valid service receipt. Duplicate submissions are blocked;
+conflicts and uncertain writes require reloading the latest revision.
+
+Candidate quotes are marked unverified until their source is checked. A failed
+source read, including an ordinary HTTP 503, hides the stored quote and keeps
+review disabled.
+
+Current local verification passes 55 Node contract tests, 21 Vitest tests
+(including eleven React workflow tests), the 4,916-module production build, Mock
+regression, fixture validation and all ten frozen source-location checks. The
+current 10.19 API-consumer browser report has 19 passing scenarios and zero page
+errors, including failed-Job retry and failed source-read recovery. These checks
+establish D's consumer behavior, not real product acceptance. Node, Vitest and
+browser evidence files have been refreshed against the current source.
+
+The failed-Job page also consumes the proposed `POST /jobs/{job_id}/retry`
+action: it requires HTTP 202 with the same Job and Root in `pending`, blocks
+duplicate submissions, and re-reads status after rejected or uncertain responses.
+The current API still needs A to confirm and assemble this route; contract tests
+and browser fixtures do not prove backend retry or recovery.
+
+The browser report and watermarked screenshots cover accepted rescan and
+failed-Job retry. Pinned playwright-core uses an independently launched installed
+Chrome; no open browser profile is accessed. An independently
+selected `VITE_MOCK_SCENARIO=relations` sample makes the new screens operable
+without an assembled backend; its current report records five scenarios
+without HTTP interception and preserves the original frozen 16-file corpus.
+Its fictional source and in-memory reviews are simulation only.
+
+Week07 sections 1-5, the revised six-step demo script, M1 checklist and scope
+record now exist. Current API route assembly and true scan-to-search acceptance
+remain incomplete; no A/B/C approval is impersonated. The relation contract lacks
+a directly addressable chunk ID, and the review success envelope still needs A/B
+confirmation. See `../ui-progress.md` and `../../../docs/frontend-integration-contract.md`.
+
 ## 16 October update
 
 The D frontend now defaults to the real HTTP adapter with no automatic demo fallback. It checks actual 202 acceptance, keeps Job discovery separate from Root file-stage counters, preserves unknown counters, and supports read retries without replaying authorization. Empty, parse-failed, source-unavailable and keyword-only states remain distinct; cached invalid source passages are hidden. The client-side results filter is explicitly not semantic search.

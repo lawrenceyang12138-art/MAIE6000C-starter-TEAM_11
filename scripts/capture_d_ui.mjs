@@ -1,3 +1,5 @@
+// Historical 10.16 browser evidence was captured before canonical search wiring.
+// For the current UI run capture_d_1019.mjs; keep the original evidence immutable.
 // Browser contract fixtures only. Never use these screenshots as real backend
 // acceptance evidence. Prefer an already-started API-mode production preview.
 import assert from "node:assert/strict";
@@ -9,12 +11,12 @@ import data from "../frontend/src/mock/data.json" with { type: "json" };
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(path.join(repo, "frontend/package.json"));
-const { chromium } = require(process.env.D_PLAYWRIGHT_MODULE || "playwright");
+const { chromium } = require(process.env.D_PLAYWRIGHT_MODULE || "playwright-core");
 const baseUrl = process.env.D_UI_URL || "http://127.0.0.1:5173";
 assert.ok(["localhost", "127.0.0.1", "[::1]"].includes(new URL(baseUrl).hostname), "Use a local frontend only");
-const output = path.join(repo, "submissions/week07/evidence/1016-D");
+const output = path.join(repo, "work/d-legacy-contract-recheck");
 fs.mkdirSync(output, { recursive: true });
-const browser = await chromium.launch({ headless: true, ...(process.env.D_BROWSER_EXECUTABLE ? { executablePath: process.env.D_BROWSER_EXECUTABLE } : {}) });
+const browser = await chromium.launch({ headless: true, ...(process.env.D_BROWSER_EXECUTABLE ? { executablePath: process.env.D_BROWSER_EXECUTABLE } : { channel: "chrome" }) });
 const viewport = { width: 1440, height: 1000 };
 const page = await browser.newPage({ viewport, reducedMotion: "reduce" });
 page.setDefaultTimeout(15000);
@@ -27,7 +29,7 @@ let scenario = "normal";
 const pageErrors = [];
 page.on("pageerror", (error) => pageErrors.push(error.message));
 
-await page.route("**/api/**", async (route) => {
+await page.route(new URL("/api/**", baseUrl).href, async (route) => {
   const url = new URL(route.request().url());
   const endpoint = url.pathname.replace(/^\/api/, "");
   let payload;
@@ -49,6 +51,22 @@ await page.route("**/api/**", async (route) => {
       ? { total: 16, basic_ready: 2, enriched: 0, failed: 0, unsupported: 0 }
       : { total: 16, basic_ready: 12, enriched: 0, failed: 3, unsupported: 1 } };
   } else if (endpoint === "/files") payload = url.searchParams.get("root_id") === "root-empty-01" ? [] : data.files;
+  else if (endpoint === "/search") {
+    const request = route.request().postDataJSON();
+    const file = data.files.find((item) => item.display_name === request.query);
+    const passage = file && data.evidence[`${file.file_id}:${file.version_id}`]?.[0];
+    payload = { query: request.query, mode: request.mode, effective_mode: "keyword", degraded: false,
+      total: passage ? 1 : 0, results: passage ? [{ root_id: file.root_id, file_id: file.file_id, file_name: file.display_name,
+        file_path: file.relative_path, version_id: file.version_id, chunk_id: passage.evidence_id, ordinal: 1,
+        page: passage.page, text: passage.excerpt, reason: "Synthetic keyword match", score: 1, keyword_score: 1, semantic_score: 0 }] : [] };
+  } else if (endpoint.startsWith("/evidence/")) {
+    evidenceReads += 1;
+    const chunkId = decodeURIComponent(endpoint.split("/")[2]);
+    const passage = Object.values(data.evidence).flat().find((item) => item.evidence_id === chunkId);
+    const file = data.files.find((item) => item.file_id === passage?.file_id);
+    payload = { chunk_id: chunkId, file_id: file.file_id, version_id: file.version_id, relative_path: file.relative_path,
+      ordinal: 1, page_number: passage.page, text: passage.excerpt, content_sha256: file.sha256 };
+  }
   else if (endpoint.endsWith("/evidence")) {
     evidenceReads += 1;
     const fileId = decodeURIComponent(endpoint.split("/")[2]);
@@ -98,6 +116,11 @@ try {
     await page.locator(".file-row").first().waitFor();
     await page.getByRole("textbox", { name: "Filter loaded files" }).fill(filename);
     await page.waitForFunction(() => document.querySelectorAll(".file-row").length === 1);
+    if (name === "state-keyword-only-contract") {
+      await page.getByRole("textbox", { name: "Search query", exact: true }).fill(filename);
+      await page.getByRole("button", { name: "Search", exact: true }).click();
+      await page.getByRole("heading", { name: "Search results", exact: true }).waitFor();
+    }
     const readsBeforeSelection = evidenceReads;
     await page.locator(".file-row").filter({ hasText: filename }).locator(".file-row-main").click();
     await page.locator(".inspector-pane").getByText(text, { exact: true }).waitFor();

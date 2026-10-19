@@ -57,8 +57,10 @@ export function dedupeFiles(files) {
 
 export function isSourceUnavailable(file, error) {
   return file?.source_available === false ||
+    ["missing", "unavailable"].includes(file?.presence_status) ||
     ["stale", "missing", "unreadable"].includes(file?.status) ||
-    ["SOURCE_UNAVAILABLE", "STALE_VERSION"].includes(error?.code);
+    ["SOURCE_UNAVAILABLE", "STALE_VERSION", "source_unavailable", "version_superseded", "source_changed", "unreadable", "file_missing", "root_revoked", "chunk_not_found", "no_current_version"].includes(error?.code) ||
+    ["source_changed", "unreadable", "file_missing"].includes(file?.error_code);
 }
 
 export function isEvidenceForVersion(evidence, fileId, versionId, { sourcePath, pageCount } = {}) {

@@ -17,6 +17,17 @@ describe("mock file-management adapter", () => {
     expect(final.processed).toBeGreaterThan(second.processed);
   });
 
+  it("allows an explicit rescan only after the current mock job is complete", async () => {
+    const adapter = createMockAdapter(mockData, { latency: 0 });
+    const first = await adapter.createRootScan("mount-team11-demo", "normal");
+    await expect(adapter.rescanRoot(first.root_id)).rejects.toMatchObject({ status: 409, code: "active_job_exists" });
+    while ((await adapter.getJob(first.job_id)).status !== "completed") { /* consume the simulated job */ }
+    const next = await adapter.rescanRoot(first.root_id);
+    expect(next).toMatchObject({ status_code: 202, root_id: first.root_id, status: "pending" });
+    expect(next.job_id).not.toBe(first.job_id);
+    await expect(adapter.rescanRoot(first.root_id)).rejects.toMatchObject({ status: 409, code: "active_job_exists" });
+  });
+
   it("shows an empty directory as a successful zero-file scan", async () => {
     const adapter = createMockAdapter(mockData, { latency: 0 });
     const accepted = await adapter.createRootScan("mount-team11-demo", "empty");
@@ -30,8 +41,11 @@ describe("mock file-management adapter", () => {
     const adapter = createMockAdapter(mockData, { latency: 0 });
     await expect(adapter.createRootScan("missing", "normal")).rejects.toMatchObject({ status: 404, code: "UNKNOWN_MOUNT" });
     await expect(adapter.createRootScan("mount-team11-demo", "../outside")).rejects.toMatchObject({ status: 403, code: "PATH_OUT_OF_SCOPE" });
-    await adapter.createRootScan("mount-team11-demo", "normal");
+    const normal = await adapter.createRootScan("mount-team11-demo", "normal");
     await expect(adapter.createRootScan("mount-team11-demo", "normal")).rejects.toMatchObject({ status: 409, code: "ACTIVE_JOB_EXISTS" });
+    const empty = await adapter.createRootScan("mount-team11-demo", "empty");
+    expect(empty.root_id).not.toBe(normal.root_id);
+    await expect(adapter.createRootScan("mount-team11-demo", "empty")).rejects.toMatchObject({ status: 409, code: "ACTIVE_JOB_EXISTS" });
   });
 
   it("returns page evidence and rejects stale versions", async () => {

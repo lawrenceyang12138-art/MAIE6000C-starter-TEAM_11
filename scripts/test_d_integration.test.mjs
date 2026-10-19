@@ -31,6 +31,21 @@ test("authorization sends only mount/path, checks actual HTTP 202 and preserves 
   assert.equal(accepted.status_code, 202);
 });
 
+test("rescan posts to the existing root action and validates the accepted job", async () => {
+  let call;
+  const api = createApiAdapter({ baseUrl: "/api/", fetchImpl: async (url, options) => {
+    call = { url, options };
+    return response({ root_id: "root /one", job_id: 18, status: "pending" }, 202);
+  } });
+  const accepted = await api.rescanRoot("root /one");
+  assert.equal(call.url, "/api/roots/root%20%2Fone/scans");
+  assert.equal(call.options.method, "POST");
+  assert.equal(call.options.body, undefined);
+  assert.deepEqual(accepted, { root_id: "root /one", job_id: 18, status: "pending", status_code: 202 });
+  await assert.rejects(createApiAdapter({ fetchImpl: async () => response({ root_id: "other", job_id: 19, status: "pending" }, 202) }).rescanRoot("root"), { code: "CONTRACT_MISMATCH" });
+  await assert.rejects(createApiAdapter({ fetchImpl: async () => response({ root_id: "root", job_id: 19, status: "pending" }, 200) }).rescanRoot("root"), { code: "CONTRACT_MISMATCH" });
+});
+
 for (const [label, payload, status] of [
   ["HTTP 200 masquerading as 202", { root_id: "r", job_id: "j", status: "pending", status_code: 202 }, 200],
   ["missing identifiers", { status: "pending" }, 202],

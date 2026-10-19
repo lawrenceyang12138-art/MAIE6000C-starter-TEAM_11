@@ -1,0 +1,65 @@
+{
+  "status": "passed_source_location_checks",
+  "queries": 10,
+  "keyword": 5,
+  "semantic_descriptions": 5,
+  "no_source_keyword_descriptions": 5,
+  "pdf_locations_verified": 10,
+  "corpus_files_hash_verified": 16,
+  "gold_sha256": "d1d7b7daf285ed8ad596546dc1cacb28bca7b23cd26edc748e7636e1a23db053",
+  "human_B_review": "pending",
+  "retrieval_evaluation": "not_run",
+  "limitations": "The corpus has numbered placeholder text, not realistic topical content.",
+  "locations": [
+    {
+      "query_id": "K01",
+      "file_id": "file-001",
+      "page": 1
+    },
+    {
+      "query_id": "K02",
+      "file_id": "file-002",
+      "page": 1
+    },
+    {
+      "query_id": "K03",
+      "file_id": "file-003",
+      "page": 1
+    },
+    {
+      "query_id": "K04",
+      "file_id": "file-007",
+      "page": 1
+    },
+    {
+      "query_id": "K05",
+      "file_id": "file-008",
+      "page": 1
+    },
+    {
+      "query_id": "S01",
+      "file_id": "file-009",
+      "page": 2
+    },
+    {
+      "query_id": "S02",
+      "file_id": "file-010",
+      "page": 3
+    },
+    {
+      "query_id": "S03",
+      "file_id": "file-011",
+      "page": 1
+    },
+    {
+      "query_id": "S04",
+      "file_id": "file-012",
+      "page": 2
+    },
+    {
+      "query_id": "S05",
+      "file_id": "file-006",
+      "page": 1
+    }
+  ]
+}

@@ -1,5 +1,23 @@
 # Role D UI acceptance matrix
 
+## 19 October status (current)
+
+Current local checks pass 55 Node contract tests, 21 Vitest tests (11 React
+workflow tests), the production build and frozen source checks. Browser evidence
+was refreshed against the current source: 19 HTTP-contract scenarios and five
+explicit Mock scenarios, with zero page errors. These are UI consumer checks;
+the three real M1 browser scenarios remain unrun. See [completion audit](evidence/1019-D/completion-audit.md).
+
+| ID | D-owned behavior | Current evidence | Remaining boundary |
+| --- | --- | --- | --- |
+| D19-01 | Scoped content search, explicit degradation, chunk evidence | `keyword-evidence`, `keyword-fallback`, `empty-search`, `search-error`, `stale-evidence` screenshots and Node checks | Real assembled file/evidence services and C search evaluation |
+| D19-02 | Three entity types, provenance, current version, decision states | `relation-candidates`, `review-decisions`; person/project/topic and confirm/correct/reject | B real candidates and A/B HTTP routes |
+| D19-03 | Source failure hides quote; successful recheck enables review | `review-source-unavailable`, `review-source-recovered`; React 503 regression | Real source access and agreed direct chunk locator |
+| D19-04 | Append-only review consumer, conflict reload, no duplicate POST | `review-conflict` and React deferred-write tests | Real database revisions and agreed success envelope |
+| D19-05 | Explicit rescan and failed-Job retry acceptance | `rescan-accepted`, `retry-job-accepted`; Node and React checks | A's actual retry route and retained attempt records |
+| D19-06 | Mobile/tablet/laptop layouts | 375/768/1024 search and review screenshots, no viewport overflow | Real-service acceptance |
+| D19-07 | Operable separate synthetic example | Five `mock-relation-*` cases, no HTTP interception or API requests | Synthetic source and in-memory decisions only |
+
 ## 16 October status
 
 The current frontend defaults to API mode; Mock must be explicitly selected. The production build, 35 Node contract tests, 9 Vitest adapter/helper tests and 8 browser contract scenarios passed. The browser uses intercepted HTTP fixtures, not the actual backend; all eight screenshots retain NOT PRODUCT EVIDENCE watermarks and were visually inspected. The full record is `ui-progress.md`.
