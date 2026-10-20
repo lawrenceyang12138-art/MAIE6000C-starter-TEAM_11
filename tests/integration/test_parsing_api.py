@@ -7,7 +7,13 @@ from pathlib import Path
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from services.common.models import FileRecord, FileVersion, SourceChunk
+from services.common.models import (
+    AuthorizedRoot,
+    FileRecord,
+    FileVersion,
+    RootStatus,
+    SourceChunk,
+)
 from services.parsing.chunking import Chunk, chunk_document
 from services.parsing.pdf import extract_document, file_identity
 from services.parsing.persist import persist_chunks, persist_relations
@@ -105,6 +111,24 @@ def test_stale_evidence_returns_a_structured_conflict(
 
     assert response.status_code == 409
     assert response.json()["detail"]["code"] == "version_superseded"
+
+
+def test_file_evidence_missing_file_is_404_and_revoked_root_is_hidden(
+    client, db_session: Session, make_file_version
+):
+    version_id, file_id, root_id = _current_version(db_session, make_file_version, "d" * 64)
+    missing = client.get(
+        "/files/does-not-exist/evidence",
+        params={"version_id": version_id},
+    )
+    assert missing.status_code == 404
+    assert missing.json()["detail"]["code"] == "file_missing"
+
+    root = db_session.get(AuthorizedRoot, root_id)
+    root.status = RootStatus.REVOKED.value
+    db_session.commit()
+
+    assert client.get("/files", params={"root_id": root_id}).json() == []
 
 
 def test_relation_read_and_review_conflict_are_reachable_over_http(

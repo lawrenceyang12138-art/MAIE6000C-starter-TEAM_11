@@ -14,7 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from services.common.db import get_db
-from services.common.models import FileRecord, FileVersion, SourceChunk
+from services.common.models import AuthorizedRoot, FileRecord, FileVersion, RootStatus
 from services.parsing.evidence import (
     REASON_CHUNK_NOT_FOUND,
     REASON_FILE_MISSING,
@@ -23,6 +23,7 @@ from services.parsing.evidence import (
     REASON_VERSION_SUPERSEDED,
     SourceUnavailable,
     read_evidence,
+    read_version_evidence,
 )
 from services.parsing.graph import (
     REASON_CORRECTED_ENTITY_NOT_FOUND,
@@ -83,12 +84,22 @@ def _reason(code: str, message: str) -> dict[str, str]:
 @router.get("/files", response_model=list[FileListItem])
 def list_files(
     root_id: str = Query(min_length=1, max_length=36),
+    limit: int = Query(default=500, ge=1, le=5000),
+    offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),
 ) -> list[FileListItem]:
     records = db.execute(
         select(FileRecord)
-        .where(FileRecord.root_id == root_id)
+        .join(AuthorizedRoot, FileRecord.root_id == AuthorizedRoot.id)
+        .where(
+            FileRecord.root_id == root_id,
+            AuthorizedRoot.status.in_(
+                [RootStatus.ACTIVE.value, RootStatus.PAUSED.value]
+            ),
+        )
         .order_by(FileRecord.relative_path)
+        .offset(offset)
+        .limit(limit)
     ).scalars().all()
 
     items: list[FileListItem] = []
@@ -152,58 +163,57 @@ def get_file_evidence(
     version_id: str,
     db: Session = Depends(get_db),
 ) -> list[dict]:
-    """Compatibility view used by the current D file inspector."""
+    """Temporary compatibility shim for the D file inspector.
+
+    Deprecated by the shared contract: evidence is read chunk-by-chunk through
+    ``/evidence/{chunk_id}``. Remove this route once the front end calls that
+    endpoint; do not add new fields to it.
+    """
     file_record = db.get(FileRecord, file_id)
     version = db.get(FileVersion, version_id)
-    if (
-        file_record is None
-        or version is None
-        or version.file_id != file_id
-        or file_record.current_version_id != version_id
-    ):
+    if file_record is None or version is None or version.file_id != file_id:
+        raise HTTPException(
+            status_code=404,
+            detail=_reason(REASON_FILE_MISSING, "No such file or version"),
+        )
+    if file_record.current_version_id != version_id:
         raise HTTPException(
             status_code=409,
-            detail=_reason("version_superseded", "The requested version is not current"),
+            detail=_reason(REASON_VERSION_SUPERSEDED, "The requested version is not current"),
         )
 
-    chunks = db.execute(
-        select(SourceChunk)
-        .where(SourceChunk.version_id == version_id)
-        .order_by(SourceChunk.ordinal)
-    ).scalars().all()
-    if not chunks:
+    try:
+        evidence_items = read_version_evidence(db, version_id)
+    except SourceUnavailable as exc:
+        status_code = {
+            REASON_CHUNK_NOT_FOUND: 404,
+            REASON_FILE_MISSING: 404,
+            REASON_ROOT_REVOKED: 403,
+            REASON_VERSION_SUPERSEDED: 409,
+            REASON_NO_CURRENT_VERSION: 503,
+        }[exc.reason_code]
+        raise HTTPException(
+            status_code=status_code,
+            detail=_reason(exc.reason_code, exc.message),
+        ) from exc
+
+    if not evidence_items:
         raise HTTPException(
             status_code=422,
             detail=_reason("no_evidence", "This version has no stored passages"),
         )
 
-    items: list[dict] = []
-    for chunk in chunks:
-        try:
-            evidence = read_evidence(db, chunk.id)
-        except SourceUnavailable as exc:
-            status_code = {
-                REASON_CHUNK_NOT_FOUND: 404,
-                REASON_FILE_MISSING: 404,
-                REASON_ROOT_REVOKED: 403,
-                REASON_VERSION_SUPERSEDED: 409,
-                REASON_NO_CURRENT_VERSION: 503,
-            }[exc.reason_code]
-            raise HTTPException(
-                status_code=status_code,
-                detail=_reason(exc.reason_code, exc.message),
-            ) from exc
-        items.append(
-            {
-                "file_id": evidence.file_id,
-                "version_id": evidence.version_id,
-                "page": evidence.page_number,
-                "source_path": evidence.relative_path,
-                "excerpt": evidence.text,
-                "evidence_id": evidence.chunk_id,
-            }
-        )
-    return items
+    return [
+        {
+            "file_id": evidence.file_id,
+            "version_id": evidence.version_id,
+            "page": evidence.page_number,
+            "source_path": evidence.relative_path,
+            "excerpt": evidence.text,
+            "evidence_id": evidence.chunk_id,
+        }
+        for evidence in evidence_items
+    ]
 
 
 @router.get("/versions/{version_id}/relations")

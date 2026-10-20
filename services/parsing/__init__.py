@@ -35,6 +35,7 @@ from services.parsing.evidence import (
     REASON_VERSION_SUPERSEDED,
     Evidence,
     SourceUnavailable,
+    read_version_evidence,
     read_evidence,
 )
 from services.parsing.graph import (
@@ -129,6 +130,7 @@ __all__ = [
     "persist_chunks",
     "persist_relations",
     "read_evidence",
+    "read_version_evidence",
     "read_relationships",
     "record_review",
     "strip_running_headers_footers",
