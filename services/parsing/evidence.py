@@ -25,6 +25,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from services.common.models import (
@@ -77,7 +78,23 @@ def read_evidence(db: Session, chunk_id: str) -> Evidence:
     if chunk is None:
         raise SourceUnavailable(REASON_CHUNK_NOT_FOUND, "No such passage")
 
-    version = db.get(FileVersion, chunk.version_id)
+    version, file_record = _readable_source(db, chunk.version_id)
+
+    return Evidence(
+        chunk_id=chunk.id,
+        version_id=version.id,
+        file_id=file_record.id,
+        relative_path=file_record.relative_path,
+        page_number=chunk.page_number,
+        ordinal=chunk.ordinal,
+        text=chunk.text,
+        content_sha256=version.content_sha256,
+    )
+
+
+def _readable_source(db: Session, version_id: str) -> tuple[FileVersion, FileRecord]:
+    """Check version/file/presence/root once for one or many passages."""
+    version = db.get(FileVersion, version_id)
     if version is None:
         raise SourceUnavailable(
             REASON_VERSION_SUPERSEDED, "The version behind this passage is gone"
@@ -115,14 +132,32 @@ def read_evidence(db: Session, chunk_id: str) -> Evidence:
         raise SourceUnavailable(
             REASON_ROOT_REVOKED, f"The folder authorisation is not readable ({status})"
         )
+    return version, file_record
 
-    return Evidence(
-        chunk_id=chunk.id,
-        version_id=version.id,
-        file_id=file_record.id,
-        relative_path=file_record.relative_path,
-        page_number=chunk.page_number,
-        ordinal=chunk.ordinal,
-        text=chunk.text,
-        content_sha256=version.content_sha256,
-    )
+
+def read_version_evidence(db: Session, version_id: str) -> list[Evidence]:
+    """Read every passage for one version after a single source check.
+
+    This is the batch counterpart to ``read_evidence`` for the temporary
+    file-level compatibility view. It preserves the same reason codes while
+    avoiding one root/file/version check per chunk.
+    """
+    version, file_record = _readable_source(db, version_id)
+    chunks = db.execute(
+        select(SourceChunk)
+        .where(SourceChunk.version_id == version.id)
+        .order_by(SourceChunk.ordinal)
+    ).scalars().all()
+    return [
+        Evidence(
+            chunk_id=chunk.id,
+            version_id=version.id,
+            file_id=file_record.id,
+            relative_path=file_record.relative_path,
+            page_number=chunk.page_number,
+            ordinal=chunk.ordinal,
+            text=chunk.text,
+            content_sha256=version.content_sha256,
+        )
+        for chunk in chunks
+    ]
