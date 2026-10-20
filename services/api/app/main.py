@@ -40,6 +40,7 @@ from services.common.schemas import (
     RootCreateResponse,
     RootRead,
 )
+from services.api.app.parsing_routes import router as parsing_router
 from services.search.embeddings import EmbeddingBackend, HTTPEmbeddingBackend
 from services.search.retrieval import search_chunks
 
@@ -47,6 +48,7 @@ configure_logging()
 logger = logging.getLogger("services.api.main")
 
 app = FastAPI(title="MAIE 6000C Starter API", version="0.1.0")
+app.include_router(parsing_router)
 
 HTTP_REQUESTS = Counter(
     "api_http_requests_total",
