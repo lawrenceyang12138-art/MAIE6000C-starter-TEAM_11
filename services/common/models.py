@@ -175,6 +175,7 @@ class VersionStatus(StrEnum):
 class RootJobType(StrEnum):
     SCAN_ROOT = "scan_root"
     EXTRACT_FILE = "extract_file"
+    EMBED_FILE = "embed_file"
 
 
 class AuthorizedRoot(Base):

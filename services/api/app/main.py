@@ -64,6 +64,17 @@ CASES_CREATED = Counter("api_cases_created_total", "Total cases created")
 SEARCH_REQUESTS = Counter("api_search_requests_total", "Search requests", ["mode", "degraded"])
 
 
+def _reason(code: str, message: str) -> dict[str, str]:
+    """Error body for contract §6.1: snake_case code plus a display message.
+
+    D maps ``code`` to its own copy, so the code is the contract and the
+    message is only a fallback for logs and unmapped cases. Identical in shape
+    to the helper B uses in its parsing routes; the two should move to one
+    shared module when the routes are assembled.
+    """
+    return {"code": code, "message": message}
+
+
 def get_embedding_backend(settings: Settings = Depends(get_settings)) -> EmbeddingBackend | None:
     if not settings.embedding_enabled:
         return None
@@ -113,13 +124,17 @@ def normalise_relative_path(relative_path: str) -> str:
     cleaned = relative_path.strip().replace("\\", "/")
     if cleaned.startswith("/"):
         raise HTTPException(
-            status_code=403, detail="Path must be relative to the configured mount"
+            status_code=403,
+            detail=_reason(
+                "path_out_of_scope", "Path must be relative to the configured mount"
+            ),
         )
 
     parts = [part for part in cleaned.split("/") if part not in ("", ".")]
     if any(part == ".." for part in parts):
         raise HTTPException(
-            status_code=403, detail="Path escapes the allowed mount"
+            status_code=403,
+            detail=_reason("path_out_of_scope", "Path escapes the allowed mount"),
         )
     return "/".join(parts) or "."
 
@@ -326,6 +341,13 @@ def create_root(
     owns everything slow; this endpoint only validates and records intent.
     """
     mount_id = payload.mount_id.strip()
+    if mount_id not in get_settings().source_mounts:
+        # D3: an unknown mount_id is not in the allowlist at all, which is a
+        # missing resource (404 unknown_mount), not an out-of-scope path (403).
+        raise HTTPException(
+            status_code=404,
+            detail=_reason("unknown_mount", f"Unknown mount_id: {mount_id!r}"),
+        )
     relative_path = normalise_relative_path(payload.relative_path)
 
     root, job = create_root_with_scan_job(db, mount_id, relative_path)
