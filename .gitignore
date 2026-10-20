@@ -220,6 +220,9 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# Local scratch corpus for the read-only source mount (official fixtures land in tests/fixtures via the parsing branch)
+/corpus
+
 # Personal C drafts retained locally
 /submissions/week07/AI-Use-C.md
 /submissions/week07/C-branch-review.md
