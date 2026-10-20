@@ -7,8 +7,11 @@ adapter described in week04 ``docs/architecture.md``:
   location and content version");
 - ``files.current_version_id`` is set here, in the same transaction, because the
   pointer means "latest observed content", not "latest parsed content" (D1);
-- dispatch is idempotent: only newly created versions get an ``extract_file``
-  job, and unchanged content reuses the existing version row (D5);
+- dispatch is idempotent: only versions that were never processed get an
+  ``extract_file`` job, and unchanged content reuses the existing version row
+  (D5). Re-observing known content still moves the pointer back when the file
+  was reverted to an earlier revision, so the pointer always names the bytes
+  currently on disk;
 - the source tree is never written to; the mount is read-only (``:ro``).
 
 Separation from B's modules: hashing and extraction are reused from
@@ -87,11 +90,14 @@ def resolve_mount_path(mount_id: str) -> Path:
     return Path(mounts[mount_id])
 
 
-def resolve_source_path(db: Session, version_id: str) -> Path:
+def resolve_source_path(db: Session, version_id: str, *, for_write: bool = True) -> Path:
     """Resolve the container path of a file version for extraction or preview.
 
-    Every hop is containment-checked (mount, then authorized root, then file),
-    and a revoked root refuses the read.
+    Every hop is containment-checked (mount, then authorized root, then file).
+    A revoked root always refuses the read. ``for_write`` keeps the two callers
+    apart: new work (extraction) requires an ``active`` root, while reads of
+    already-indexed content (preview, evidence) must also work for a ``paused``
+    root: pausing stops new jobs, it does not hide existing content (§8-B.4).
     """
     version = db.get(FileVersion, version_id)
     if version is None:
@@ -102,8 +108,15 @@ def resolve_source_path(db: Session, version_id: str) -> Path:
     root = db.get(AuthorizedRoot, record.root_id)
     if root is None:
         raise LookupError(f"unknown root for file {record.id}")
-    if root.status != RootStatus.ACTIVE.value:
-        raise PathEscapesRoot(f"root {root.id} is {root.status}, not active")
+    allowed = (
+        {RootStatus.ACTIVE.value}
+        if for_write
+        else {RootStatus.ACTIVE.value, RootStatus.PAUSED.value}
+    )
+    if root.status not in allowed:
+        raise PathEscapesRoot(
+            f"root {root.id} is {root.status}, not readable for this operation"
+        )
     root_dir = _contained(resolve_mount_path(root.mount_id), root.relative_path)
     return _contained(root_dir, record.relative_path)
 
@@ -172,6 +185,7 @@ def handle_scan_root(db: Session, root_id: str, job_id: int | None = None) -> di
         "files_created": 0,
         "versions_created": 0,
         "jobs_dispatched": 0,
+        "pointers_restored": 0,
         "files_missing": 0,
     }
     seen_paths: set[str] = set()
@@ -217,8 +231,41 @@ def handle_scan_root(db: Session, root_id: str, job_id: int | None = None) -> di
             )
         ).scalars().first()
         if known_version is not None:
-            # Unchanged content: reuse the version row, create nothing, and
-            # leave the pointer where it is.
+            # Content we have observed before. The pointer must still track it:
+            # after a revert to an earlier revision it can legitimately point
+            # elsewhere, and leaving it there would serve text that no longer
+            # matches the disk (D1). Moving it back is not new work, so no
+            # version is created and no new job is needed when the version was
+            # already processed.
+            if record.current_version_id != known_version.id:
+                record.current_version_id = known_version.id
+                summary["pointers_restored"] += 1
+            # Re-dispatch only versions that were never processed, and only
+            # while no live job for them exists. A ``failed`` or
+            # ``unsupported`` version stays on the retry path instead of being
+            # re-queued by every scan (§3.4.6 idempotency).
+            if known_version.status == VersionStatus.DISCOVERED.value:
+                live = db.execute(
+                    select(Job)
+                    .where(
+                        Job.version_id == known_version.id,
+                        Job.job_type == RootJobType.EXTRACT_FILE.value,
+                        Job.status.in_(
+                            [JobStatus.PENDING.value, JobStatus.CLAIMED.value]
+                        ),
+                    )
+                    .limit(1)
+                ).scalars().first()
+                if live is None:
+                    db.add(
+                        Job(
+                            root_id=root_id,
+                            version_id=known_version.id,
+                            job_type=RootJobType.EXTRACT_FILE.value,
+                            status=JobStatus.PENDING.value,
+                        )
+                    )
+                    summary["jobs_dispatched"] += 1
             continue
 
         version = FileVersion(
