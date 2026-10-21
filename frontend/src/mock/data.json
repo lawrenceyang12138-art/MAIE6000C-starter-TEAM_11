@@ -376,7 +376,8 @@
         "version_id": "version-001-v1",
         "page": 1,
         "source_path": "normal/team-alpha/team11-demo-01.pdf",
-        "excerpt": "team11-demo-01.pdf page 1 synthetic excerpt"
+        "excerpt": "team11-demo-01.pdf page 1 synthetic excerpt",
+        "content_sha256": "6be279762c1183591b2e6c24897974ec46754c3d23dd6a398ee504c0f65423f9"
       }
     ],
     "file-002:version-002-v1": [
@@ -386,7 +387,8 @@
         "version_id": "version-002-v1",
         "page": 1,
         "source_path": "normal/team-alpha/team11-demo-02.pdf",
-        "excerpt": "team11-demo-02.pdf page 1 synthetic excerpt"
+        "excerpt": "team11-demo-02.pdf page 1 synthetic excerpt",
+        "content_sha256": "c96fd2424bedde0615870ae86b35d4ff5c5a9f290a63db65c4d7d28491db6c7e"
       }
     ],
     "file-003:version-003-v1": [
@@ -396,7 +398,8 @@
         "version_id": "version-003-v1",
         "page": 1,
         "source_path": "normal/team-alpha/team11-demo-03.pdf",
-        "excerpt": "team11-demo-03.pdf page 1 synthetic excerpt"
+        "excerpt": "team11-demo-03.pdf page 1 synthetic excerpt",
+        "content_sha256": "1da182559e37ad55c05394720305c578eae9d026b584820512a22aa2c6f090e5"
       }
     ],
     "file-004:version-004-v1": [
@@ -406,7 +409,8 @@
         "version_id": "version-004-v1",
         "page": 1,
         "source_path": "normal/team-alpha/team11-demo-04.pdf",
-        "excerpt": "team11-demo-04.pdf page 1 synthetic excerpt"
+        "excerpt": "team11-demo-04.pdf page 1 synthetic excerpt",
+        "content_sha256": "af2fd30eeeedc1db6c0a2d10b83b72e703b0b2de6769ed935b6327298c88e86d"
       }
     ],
     "file-005:version-005-v1": [
@@ -416,7 +420,8 @@
         "version_id": "version-005-v1",
         "page": 1,
         "source_path": "normal/team-alpha/team11-demo-05.pdf",
-        "excerpt": "team11-demo-05.pdf page 1 synthetic excerpt"
+        "excerpt": "team11-demo-05.pdf page 1 synthetic excerpt",
+        "content_sha256": "456c9cd6f3f86441dcf96262f15f044eff192c0ebfd2efdf5f0eb41856c46b6f"
       }
     ],
     "file-006:version-006-v1": [
@@ -426,7 +431,8 @@
         "version_id": "version-006-v1",
         "page": 1,
         "source_path": "normal/team-alpha/team11-demo-06.pdf",
-        "excerpt": "team11-demo-06.pdf page 1 synthetic excerpt"
+        "excerpt": "team11-demo-06.pdf page 1 synthetic excerpt",
+        "content_sha256": "db22a065c6c5204829b014d2d4e089df3b358306a0d34c97b7ade437cb249a84"
       }
     ],
     "file-007:version-007-v1": [
@@ -436,7 +442,8 @@
         "version_id": "version-007-v1",
         "page": 1,
         "source_path": "normal/team-beta/team11-demo-07.pdf",
-        "excerpt": "team11-demo-07.pdf page 1 synthetic excerpt"
+        "excerpt": "team11-demo-07.pdf page 1 synthetic excerpt",
+        "content_sha256": "92ffe77bcfc1518f60761aae81cca6a99652f2fc967043c81996732cbb32bbbe"
       }
     ],
     "file-008:version-008-v1": [
@@ -446,7 +453,8 @@
         "version_id": "version-008-v1",
         "page": 1,
         "source_path": "normal/team-beta/team11-demo-08.pdf",
-        "excerpt": "team11-demo-08.pdf page 1 synthetic excerpt"
+        "excerpt": "team11-demo-08.pdf page 1 synthetic excerpt",
+        "content_sha256": "9c3724f3b84fa6b3f2078487c4ac1ec905f3e98097aa8d7422ef25ba4aff00f3"
       }
     ],
     "file-009:version-009-v1": [
@@ -456,7 +464,8 @@
         "version_id": "version-009-v1",
         "page": 1,
         "source_path": "normal/team-beta/team11-demo-09.pdf",
-        "excerpt": "team11-demo-09.pdf page 1 synthetic excerpt"
+        "excerpt": "team11-demo-09.pdf page 1 synthetic excerpt",
+        "content_sha256": "984273e6f0812786140940de7c2d671e78424567d27168a78d3070d3ba6e747e"
       },
       {
         "evidence_id": "evidence-file-009-2",
@@ -464,7 +473,8 @@
         "version_id": "version-009-v1",
         "page": 2,
         "source_path": "normal/team-beta/team11-demo-09.pdf",
-        "excerpt": "team11-demo-09.pdf page 2 synthetic excerpt"
+        "excerpt": "team11-demo-09.pdf page 2 synthetic excerpt",
+        "content_sha256": "164270a7d401cb45ac1e371c66f247c9e38ad3cd9868cc59f22452d01fb61f52"
       },
       {
         "evidence_id": "evidence-file-009-3",
@@ -472,7 +482,8 @@
         "version_id": "version-009-v1",
         "page": 3,
         "source_path": "normal/team-beta/team11-demo-09.pdf",
-        "excerpt": "team11-demo-09.pdf page 3 synthetic excerpt"
+        "excerpt": "team11-demo-09.pdf page 3 synthetic excerpt",
+        "content_sha256": "d29976f0055acffdc93721e7a47ebaf4174fef3421037643178d1e1bbc579fb9"
       }
     ],
     "file-010:version-010-v1": [
@@ -482,7 +493,8 @@
         "version_id": "version-010-v1",
         "page": 1,
         "source_path": "normal/team-beta/team11-demo-10.pdf",
-        "excerpt": "team11-demo-10.pdf page 1 synthetic excerpt"
+        "excerpt": "team11-demo-10.pdf page 1 synthetic excerpt",
+        "content_sha256": "18028bed15cc7898031b7fdee725efb25c8ca2139bca42002c1d122382d002cd"
       },
       {
         "evidence_id": "evidence-file-010-2",
@@ -490,7 +502,8 @@
         "version_id": "version-010-v1",
         "page": 2,
         "source_path": "normal/team-beta/team11-demo-10.pdf",
-        "excerpt": "team11-demo-10.pdf page 2 synthetic excerpt"
+        "excerpt": "team11-demo-10.pdf page 2 synthetic excerpt",
+        "content_sha256": "0cb90520a074c1f28b9fa18813775f7f70497487e207842af52bf3ebfbb4b772"
       },
       {
         "evidence_id": "evidence-file-010-3",
@@ -498,7 +511,8 @@
         "version_id": "version-010-v1",
         "page": 3,
         "source_path": "normal/team-beta/team11-demo-10.pdf",
-        "excerpt": "team11-demo-10.pdf page 3 synthetic excerpt"
+        "excerpt": "team11-demo-10.pdf page 3 synthetic excerpt",
+        "content_sha256": "f42ab0ae1a0daf146e2b6d2c8203a541fe4f629f70d370e71021f8daee30b7d4"
       }
     ],
     "file-011:version-011-v1": [
@@ -508,7 +522,8 @@
         "version_id": "version-011-v1",
         "page": 1,
         "source_path": "normal/team-beta/team11-demo-11.pdf",
-        "excerpt": "team11-demo-11.pdf page 1 synthetic excerpt"
+        "excerpt": "team11-demo-11.pdf page 1 synthetic excerpt",
+        "content_sha256": "1051c155c59b2db19916c4d0155593dded3b2494c004ce32d44713c5e5a67497"
       },
       {
         "evidence_id": "evidence-file-011-2",
@@ -516,7 +531,8 @@
         "version_id": "version-011-v1",
         "page": 2,
         "source_path": "normal/team-beta/team11-demo-11.pdf",
-        "excerpt": "team11-demo-11.pdf page 2 synthetic excerpt"
+        "excerpt": "team11-demo-11.pdf page 2 synthetic excerpt",
+        "content_sha256": "d97e08b5b74d877ba2d7eae4f59c647625733dc90fe47a1ee98c49e4be6b3a04"
       },
       {
         "evidence_id": "evidence-file-011-3",
@@ -524,7 +540,8 @@
         "version_id": "version-011-v1",
         "page": 3,
         "source_path": "normal/team-beta/team11-demo-11.pdf",
-        "excerpt": "team11-demo-11.pdf page 3 synthetic excerpt"
+        "excerpt": "team11-demo-11.pdf page 3 synthetic excerpt",
+        "content_sha256": "0c12d45b2665efd04a0d4afa61009328c63e8261ef7557f8620cfe7ecc125f45"
       }
     ],
     "file-012:version-012-v1": [
@@ -534,7 +551,8 @@
         "version_id": "version-012-v1",
         "page": 1,
         "source_path": "normal/team-beta/team11-demo-12.pdf",
-        "excerpt": "team11-demo-12.pdf page 1 synthetic excerpt"
+        "excerpt": "team11-demo-12.pdf page 1 synthetic excerpt",
+        "content_sha256": "93cf4597930b8bd919e55bd2407d1d237586a6467313420cbaa38e0a55d47f97"
       },
       {
         "evidence_id": "evidence-file-012-2",
@@ -542,7 +560,8 @@
         "version_id": "version-012-v1",
         "page": 2,
         "source_path": "normal/team-beta/team11-demo-12.pdf",
-        "excerpt": "team11-demo-12.pdf page 2 synthetic excerpt"
+        "excerpt": "team11-demo-12.pdf page 2 synthetic excerpt",
+        "content_sha256": "161ac6fe6661ace1749f8be4b42c70ce89d2a4f045715c6f26298e66f060ab25"
       },
       {
         "evidence_id": "evidence-file-012-3",
@@ -550,7 +569,8 @@
         "version_id": "version-012-v1",
         "page": 3,
         "source_path": "normal/team-beta/team11-demo-12.pdf",
-        "excerpt": "team11-demo-12.pdf page 3 synthetic excerpt"
+        "excerpt": "team11-demo-12.pdf page 3 synthetic excerpt",
+        "content_sha256": "c6e0f9f2e8097e755020dd42cbb6f3a3fb4fc7e4963ff7b1b28007cdb3164cd9"
       }
     ]
   }

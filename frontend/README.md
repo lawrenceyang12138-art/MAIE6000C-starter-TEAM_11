@@ -1,6 +1,6 @@
 # Team 11 D demo frontend
 
-This is the React/Vite role-D frontend, updated through 19 October. It defaults to the real HTTP adapter and preserves explicit Mock mode for demonstrations. A/B/C-owned Python models, migrations, worker, and public API are unchanged. **The inspected backend still lacks the assembled file-management, evidence and review routes: API mode shows real errors until those services are provided.** See `../submissions/week07/ui-progress.md` for delivered work and incomplete acceptance items.
+This is the React/Vite role-D frontend, updated through 19 October. The adapter defaults to the real HTTP client, while the shipped Compose demo builds in explicit Mock mode because the backend routes it needs are not assembled yet. Mock stays an explicit build choice and is never a failure fallback. A/B/C-owned Python models, migrations, worker, and public API are unchanged. **The inspected backend still lacks the assembled file-management, evidence and review routes: API mode shows real errors until those services are provided.** See `../submissions/week07/ui-progress.md` for delivered work and incomplete acceptance items.
 
 ## Run with Docker Compose (recommended)
 
@@ -12,22 +12,27 @@ docker compose up --build frontend
 ```
 
 Open `http://localhost:3000/select`. The frontend is built as a static Nginx
-image, uses API mode by default, and exposes `/health` for the Compose
-healthcheck. The `/scan/:jobId`, `/results/:rootId`, `/graph` and `/review` routes also work on a
-direct refresh because the Nginx config falls back to `index.html`.
+image, defaults to `FRONTEND_DATA_MODE=mock` (a persistent simulation banner is
+shown), and exposes `/health` for the Compose healthcheck. The `/scan/:jobId`,
+`/results/:rootId`, `/graph` and `/review` routes also work on a direct refresh
+because the Nginx config falls back to `index.html`.
 The frontend health endpoint checks static serving only, not backend or model readiness.
 The healthcheck uses `127.0.0.1` explicitly because Nginx listens on IPv4 and Alpine may resolve `localhost` to `::1`. This source fix has not been deployed to the existing container; the 16 October verification only inspected Docker read-only.
 
-API mode uses these settings in `.env` before rebuilding (do not overwrite an existing `.env` just to select a mode):
+Compose passes `FRONTEND_DATA_MODE` into `VITE_DATA_MODE` at build time. Copy
+`.env.example` to `.env` before rebuilding (do not overwrite an existing `.env`
+just to select a mode):
 
 ```dotenv
-FRONTEND_DATA_MODE=api
+FRONTEND_DATA_MODE=mock   # default: explicit simulation, never a fallback
 FRONTEND_API_BASE_URL=/api
 ```
 
-The `/api` path is reverse-proxied by Nginx to the Compose `api` service. The
-current starter API does not expose the file-management routes yet, so this
-mode displays service errors until the corresponding backend work lands. It never silently switches to Mock. For explicit simulated demonstrations set `FRONTEND_DATA_MODE=mock` and rebuild; a persistent simulation notice is shown.
+The `/api` path is reverse-proxied by Nginx to the Compose `api` service. Switch
+to `FRONTEND_DATA_MODE=api` only after A/B assemble the mount, file, evidence and
+relation routes; that mode displays real service errors and never silently
+switches to Mock. A bare `docker build` of `frontend/` still defaults to `api`
+because the Dockerfile keeps `VITE_DATA_MODE=api`; Compose overrides it.
 
 ## Run locally with Node
 

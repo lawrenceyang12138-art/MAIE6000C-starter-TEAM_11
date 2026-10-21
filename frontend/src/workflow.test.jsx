@@ -2,6 +2,7 @@ import React, { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AdapterError } from "./api/errors.js";
+import { ErrorBoundary } from "./error-boundary.jsx";
 import { RelationsPage } from "./relations-page.jsx";
 import { useSearch } from "./lib/use-search.js";
 import { RescanControl } from "./rescan-control.jsx";
@@ -182,5 +183,16 @@ describe("failed job retry action", () => {
     await render(<RetryJobControl adapter={adapter} job={job} statusVersion={2} onAccepted={vi.fn()} onRefresh={onRefresh} />);
     expect(container.querySelector("button").disabled).toBe(false);
     expect(adapter.retryJob).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("render failure containment", () => {
+  it("shows a recoverable panel instead of a blank page", async () => {
+    const noise = vi.spyOn(console, "error").mockImplementation(() => {});
+    const Boom = () => { throw new Error("boom"); };
+    await render(<ErrorBoundary><Boom /></ErrorBoundary>);
+    expect(container.textContent).toContain("could not be rendered");
+    expect(container.textContent).toContain("boom");
+    noise.mockRestore();
   });
 });
