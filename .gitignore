@@ -230,13 +230,12 @@ submissions/week07/*
 !submissions/week07/ppt-outline-D.md
 !submissions/week07/gold-queries.json
 !submissions/week07/gold-queries.freeze.json
+# Allow the whole directory: a per-file allowlist silently ignored every new
+# evidence or section file added after it was written.
 !submissions/week07/sections/
-submissions/week07/sections/*
-!submissions/week07/sections/D.md
 !submissions/week07/evidence/
-submissions/week07/evidence/*
-!submissions/week07/evidence/1016-D/
-!submissions/week07/evidence/1019-D/
+# Evidence screenshots stay local (5.9 MB); scripts/capture_*.mjs regenerates them.
+submissions/week07/evidence/**/*.png
 
 # Ruff stuff:
 .ruff_cache/

@@ -1,6 +1,8 @@
 # 10 月 16 日角色 D 证据索引
 
-本目录收录实际运行的检查输出及 **8 张已视觉检查的模拟契约截图**。生产构建、9 项 Vitest、35 项 Node 测试和 8 个浏览器场景通过。**真实 API/数据库/Worker 联调尚未完成**；截图均带 NOT PRODUCT EVIDENCE 水印，不可当作真实服务验收。
+本目录收录实际运行的检查输出。生产构建、9 项 Vitest、35 项 Node 测试和 8 个浏览器场景通过。**真实 API/数据库/Worker 联调尚未完成**；浏览器截图均带 NOT PRODUCT EVIDENCE 水印，不可当作真实服务验收。
+
+截图**未纳入版本库**：32 张共 5.9 MB，已在 `.gitignore` 中忽略。下表"截图名"用于对照 `browser-contract-report.json` 里的场景名，需要时用 `node scripts/capture_d_ui.mjs` 在本地重新生成。
 
 | 文件 | 证据范围 | 不证明什么 |
 | --- | --- | --- |
@@ -12,17 +14,17 @@
 | `docker-readonly.md` | 容器状态、健康探针原因及宿主机只读 HTTP 检查 | 没有启动/重建服务、没有验证数据库内容 |
 | `verification.md` | 命令结果、视觉检查范围及历史环境阻塞处理 | 非产品验收签字 |
 
-## 截图索引
+## 截图索引（本地文件）
 
-| 场景 | 截图 | 可观察结果 |
+| 场景 | 截图名（本地） | 可观察结果 |
 | --- | --- | --- |
-| 授权 | [authorization-contract.png](authorization-contract.png) | 配置挂载点及相对目录，无绝对宿主路径 |
-| 进度 | [progress-contract-12-3-1.png](progress-contract-12-3-1.png) | 16 总数、12 可检索、3 失败、1 不支持；扫描与文件阶段分离 |
-| 空集合 | [state-empty-contract.png](state-empty-contract.png) | 正常空响应，不是接口错误 |
-| 解析失败 | [state-failed-contract.png](state-failed-contract.png) | EMPTY_FILE、保留文件记录、无页证据 |
-| 源不可用 | [state-source-unavailable-contract.png](state-source-unavailable-contract.png) | 隐藏缓存段落与证据，不请求已知失效源 |
-| keyword-only | [state-keyword-only-contract.png](state-keyword-only-contract.png) | 显式降级标记，版本绑定关键词证据仍可见 |
-| 未知计数 | [state-unknown-counts-contract.png](state-unknown-counts-contract.png) | 破折号，无进度条，不将扫描完成冒充就绪 |
-| 接口错误 | [state-api-error-contract.png](state-api-error-contract.png) | 安全的 HTTP 503 提示，禁用授权，不静默回退 Mock |
+| 授权 | `authorization-contract.png` | 配置挂载点及相对目录，无绝对宿主路径 |
+| 进度 | `progress-contract-12-3-1.png` | 16 总数、12 可检索、3 失败、1 不支持；扫描与文件阶段分离 |
+| 空集合 | `state-empty-contract.png` | 正常空响应，不是接口错误 |
+| 解析失败 | `state-failed-contract.png` | EMPTY_FILE、保留文件记录、无页证据 |
+| 源不可用 | `state-source-unavailable-contract.png` | 隐藏缓存段落与证据，不请求已知失效源 |
+| keyword-only | `state-keyword-only-contract.png` | 显式降级标记，版本绑定关键词证据仍可见 |
+| 未知计数 | `state-unknown-counts-contract.png` | 破折号，无进度条，不将扫描完成冒充就绪 |
+| 接口错误 | `state-api-error-contract.png` | 安全的 HTTP 503 提示，禁用授权，不静默回退 Mock |
 
 结果页截图使用本地文件名过滤，非语义检索结果。验证目标是 API 模式的本地生产构建预览，不是现有 Docker 容器；浏览器脚本依旧拦截所有 `/api`。真实联调截图必须另取并注明服务版本，不能删除水印冒充真实运行。

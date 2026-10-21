@@ -69,6 +69,8 @@ Final PPT/PDF rendering, recording and release freeze follow the later schedule.
 
 **Evidence:** `frontend/src/api/adapter.js`, `frontend/src/lib/scan.js`, `fixtures/manifest.json`.
 
-**Current UI evidence:** `evidence/1019-D/keyword-evidence.png`, `review-decisions.png`,
-`review-source-unavailable.png`, `retry-job-accepted.png`. Every image keeps its
-contract/Mock watermark; these do not substitute for the pending real M1 runs.
+**Current UI evidence:** the screenshots `evidence/1019-D/keyword-evidence.png`,
+`review-decisions.png`, `review-source-unavailable.png` and `retry-job-accepted.png` were
+captured locally but are **not versioned** (5.9 MB total); regenerate them with
+`node scripts/capture_d_1019.mjs`. Every image keeps its contract/Mock watermark; these do
+not substitute for the pending real M1 runs.
