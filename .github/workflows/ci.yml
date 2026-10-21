@@ -51,3 +51,61 @@ jobs:
 
       - name: Unit and integration tests
         run: pytest -q tests/unit tests/integration
+
+      - name: Gold source check
+        run: python scripts/validate_d_gold.py
+
+  # D's node-side contract tests and frozen-fixture checks. They need no
+  # Python, no database, and no browser; they exercise the same adapters the
+  # frontend imports.
+  nodescripts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Node contract tests
+        run: node --test scripts/test_d_integration.test.mjs scripts/test_d_search_review.test.mjs
+
+      - name: Mock adapter harness
+        run: node scripts/test_d_mock.mjs
+
+      - name: Frozen fixture validation
+        run: node scripts/validate_d_fixtures.mjs
+
+  # The frontend had no build or test coverage before this job; both are now
+  # required for any change that touches frontend/.
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Vitest
+        run: npm test -- --run
