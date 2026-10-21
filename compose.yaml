@@ -91,6 +91,21 @@ services:
       api:
         condition: service_healthy
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_DATA_MODE: ${FRONTEND_DATA_MODE:-api}
+        VITE_API_BASE_URL: ${FRONTEND_API_BASE_URL:-/api}
+    ports:
+      - "127.0.0.1:${FRONTEND_HOST_PORT:-3000}:80"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   prometheus:
     image: prom/prometheus:v2.54.1
     profiles: ["observability"]

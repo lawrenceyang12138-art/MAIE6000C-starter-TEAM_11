@@ -1,0 +1,30 @@
+{
+  "contract_version": "d-relations-synthetic-v1",
+  "source_kind": "synthetic_contract_sample_not_pdf_or_product_evidence",
+  "root": { "root_id": "root-relations-demo", "label": "Synthetic relation sample" },
+  "mounts": [{ "mount_id": "mount-relations-demo", "label": "Synthetic relation contract sample", "read_only": true, "availability": "available" }],
+  "directories": { "mount-relations-demo": [{ "relative_path": "sample", "label": "One synthetic document, three rule candidates" }] },
+  "accepted_scan": { "job_id": "job-scan-demo-01" },
+  "progress_sequence": [
+    { "status": "pending", "processed": 0, "total": 1, "normal": 0, "abnormal": 0, "unsupported": 0, "percent": 0 },
+    { "status": "completed", "processed": 1, "total": 1, "normal": 1, "abnormal": 0, "unsupported": 0, "percent": 100 }
+  ],
+  "files": [{
+    "root_id": "root-relations-demo", "file_id": "file-relations-demo", "version_id": "version-relations-demo-v1",
+    "display_name": "synthetic-relations.pdf", "relative_path": "sample/synthetic-relations.pdf",
+    "status": "basic_ready", "presence_status": "present", "page_count": 1,
+    "sha256": "c323fc7c1bdf1d42261a8ab8df85adb8516b627bb9b231e1fd0b81aa003a7294",
+    "snippet": "Dr Chen leads the Atlas Project on Database Reliability.",
+    "source_kind": "synthetic_contract_sample"
+  }],
+  "evidence": { "file-relations-demo:version-relations-demo-v1": [{
+    "evidence_id": "chunk-relations-demo", "file_id": "file-relations-demo", "version_id": "version-relations-demo-v1",
+    "page": 1, "source_path": "sample/synthetic-relations.pdf", "excerpt": "Dr Chen leads the Atlas Project on Database Reliability."
+  }] },
+  "entities": ["entity-chen", "entity-atlas", "entity-database", "entity-replacement"],
+  "relations": { "version-relations-demo-v1": [
+    { "relationship_id": "relation-person", "entity_type": "person", "label": "Chen", "relation_type": "mentions", "kind": "source_supported", "origin": "rule", "producer_revision": "synthetic-contract-v1", "page_number": 1, "quote": "Dr Chen leads the Atlas Project on Database Reliability.", "evidence_missing": false, "decision": null, "decision_revision": 0, "corrected_entity_id": null },
+    { "relationship_id": "relation-project", "entity_type": "project", "label": "Atlas Project", "relation_type": "mentions", "kind": "source_supported", "origin": "rule", "producer_revision": "synthetic-contract-v1", "page_number": 1, "quote": "Dr Chen leads the Atlas Project on Database Reliability.", "evidence_missing": false, "decision": null, "decision_revision": 0, "corrected_entity_id": null },
+    { "relationship_id": "relation-topic", "entity_type": "topic", "label": "Database Reliability", "relation_type": "mentions", "kind": "source_supported", "origin": "rule", "producer_revision": "synthetic-contract-v1", "page_number": 1, "quote": "Dr Chen leads the Atlas Project on Database Reliability.", "evidence_missing": false, "decision": null, "decision_revision": 0, "corrected_entity_id": null }
+  ] }
+}

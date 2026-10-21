@@ -1,3 +1,9 @@
+# skills
+.codex
+
+# tmp
+submissions/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -206,6 +212,32 @@ tempCodeRunnerFile.py
 models/
 work/
 
+# Frontend source is not a Python build library.
+!frontend/src/lib/
+!frontend/src/lib/**
+
+# Retain the existing submission ignore while versioning the D handoff.
+!submissions/
+submissions/*
+!submissions/week07/
+submissions/week07/*
+!submissions/week07/ui-acceptance.md
+!submissions/week07/ui-progress.md
+!submissions/week07/README.md
+!submissions/week07/demo-script.md
+!submissions/week07/m1-checklist.md
+!submissions/week07/scope-decision.md
+!submissions/week07/ppt-outline-D.md
+!submissions/week07/gold-queries.json
+!submissions/week07/gold-queries.freeze.json
+!submissions/week07/sections/
+submissions/week07/sections/*
+!submissions/week07/sections/D.md
+!submissions/week07/evidence/
+submissions/week07/evidence/*
+!submissions/week07/evidence/1016-D/
+!submissions/week07/evidence/1019-D/
+
 # Ruff stuff:
 .ruff_cache/
 
@@ -237,3 +269,4 @@ __marimo__/
 /submissions/week07/m1-search.md
 /submissions/week07/offline-check.md
 /submissions/week07/search-eval-final.md
+/tmp/npm-browser-cache/

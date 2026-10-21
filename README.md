@@ -66,3 +66,19 @@ docker compose down --remove-orphans
 ```
 
 Normal shutdown preserves the named database volume. Volume-reset commands in the operations notes remove local database state; do not use them when checking restart persistence.
+
+## D frontend
+
+The D demo frontend is available at `http://localhost:3000/select`. It defaults
+to API mode and uses the same-origin `/api` proxy. API errors remain explicit;
+the frontend never silently falls back to demo data. Use
+`FRONTEND_DATA_MODE=mock` before rebuilding for an explicitly labeled synthetic
+demonstration. Existing `.env` settings take precedence; do not overwrite them
+just to change modes. See [D's 16 October handoff](submissions/week07/ui-progress.md)
+and the [consumer contract](docs/frontend-integration-contract.md) for verified
+work and outstanding real-integration requirements.
+
+The 16 October D verification includes a successful production build, 35 Node
+contract tests, 9 Vitest adapter/helper tests and 8 watermarked browser fixture
+scenarios. These do not establish live API/DB/Worker integration. See the
+[evidence index](submissions/week07/evidence/1016-D/README.md).
