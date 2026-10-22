@@ -52,6 +52,7 @@ current build, not the target.
 
 | Component | Runs as | Reads / writes |
 | --- | --- | --- |
+| `frontend` | static Vite build behind nginx, port 3000 (loopback) | calls only the API through the same-origin `/api` proxy |
 | `api` | FastAPI, port 8000 | PostgreSQL; source files read-only for preview |
 | `worker` | polling process, no HTTP | claims jobs, reads source files, writes versions and chunks |
 | `ai` | FastAPI, port 8100 | embeddings and triage only; no database, no filesystem |

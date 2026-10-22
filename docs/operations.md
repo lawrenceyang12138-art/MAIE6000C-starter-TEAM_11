@@ -26,7 +26,26 @@ docker compose down -v           # stop and DELETE the database volume
 ```
 
 Host ports default to api `8000`, db `15432` (5432 sits in a Windows reserved
-range), ai `18100`.
+range), ai `18100`, frontend `3000` (bound to loopback only).
+
+## 2b. Frontend mode
+
+The UI is a static Vite build behind nginx; `/api` is proxied to the api
+service, so the browser never needs a second origin. The mode is a **build
+argument**, not a runtime switch:
+
+```bash
+# default: labelled simulation, safe for a bare `up`
+docker compose up -d --build
+
+# real stack
+FRONTEND_DATA_MODE=api docker compose build frontend
+FRONTEND_DATA_MODE=api docker compose up -d frontend
+```
+
+Every route the adapter calls is assembled (mounts, roots, rescans, jobs and
+retry by A; files, evidence, relations by B), so `api` mode is a working path.
+API failures surface as errors; they never fall back to mock data.
 
 ## 3. Health and capability
 
