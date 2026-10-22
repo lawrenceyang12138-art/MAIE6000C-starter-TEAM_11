@@ -231,6 +231,7 @@ def test_authorizing_a_paused_folder_is_refused(client, mount, db_session):
 def test_authorizing_a_revoking_folder_is_refused(client, mount, db_session):
     root_id = _create_root(client)["root_id"]
     _set_status(db_session, root_id, RootStatus.REVOKING)
+    jobs_before = db_session.query(Job).filter_by(root_id=root_id).count()
 
     response = client.post(
         "/roots", json={"mount_id": "corpus", "relative_path": "."}
@@ -238,6 +239,7 @@ def test_authorizing_a_revoking_folder_is_refused(client, mount, db_session):
 
     assert response.status_code == 409
     assert response.json()["detail"]["code"] == "root_revoking"
+    assert db_session.query(Job).filter_by(root_id=root_id).count() == jobs_before
 
 
 def test_rescanning_a_revoked_root_is_refused(client, mount, db_session):
@@ -364,6 +366,10 @@ def test_retrying_a_job_of_a_revoking_root_is_refused(client, mount, db_session)
 
     assert response.status_code == 409
     assert response.json()["detail"]["code"] == "root_revoking"
+    db_session.expire_all()
+    assert db_session.get(Job, job.id).status == JobStatus.FAILED.value
+    db_session.expire_all()
+    assert db_session.get(Job, job.id).status == JobStatus.FAILED.value
 
 
 def test_retrying_a_job_of_a_revoked_root_is_refused(client, mount, db_session):
@@ -377,6 +383,10 @@ def test_retrying_a_job_of_a_revoked_root_is_refused(client, mount, db_session):
 
     assert response.status_code == 409
     assert response.json()["detail"]["code"] == "root_revoked"
+    db_session.expire_all()
+    assert db_session.get(Job, job.id).status == JobStatus.FAILED.value
+    db_session.expire_all()
+    assert db_session.get(Job, job.id).status == JobStatus.FAILED.value
 
 
 def test_retrying_an_embed_job_finds_its_root_through_the_version(
