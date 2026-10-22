@@ -1,0 +1,40 @@
+{
+  "status": "passed",
+  "observed_at": "2026-10-19T05:34:04.562Z",
+  "evidence_type": "explicit_synthetic_mock_not_product",
+  "product_acceptance": false,
+  "http_interception": false,
+  "api_requests": [],
+  "page_errors": [],
+  "git_head": "ed05fa4b0c9665032fd069bdd46a22521ea69b1c",
+  "source_sha256": {
+    "frontend/src/api/adapter.js": "23dbd8f987c132a02171f0e9c6087adfbd82cd705771590376bf5ee7b3a14499",
+    "frontend/src/api/mock-adapter.js": "d24fa3db67320a1e4edef2f9e09d5f41907be4bc6c432c56901d6811074ec165",
+    "frontend/src/mock/relations.json": "0dac2e3cff55ce116c31915c9b6400e6695360d4eed1492cdeaecce5a10f3604",
+    "frontend/src/app.jsx": "92e75d684ce4ae687befbb9c8db4fee950f4ba3b9cdc5fbe8dbd11dd93192537",
+    "frontend/src/relations-page.jsx": "54e5623ab661e2b03ab706477fcd1bac3f7aeb9dd6255814480bb027f7b7c358"
+  },
+  "browser": "155.0.8059.82",
+  "cases": [
+    {
+      "name": "mock-relation-authorized",
+      "status": "passed"
+    },
+    {
+      "name": "mock-relation-search-evidence",
+      "status": "passed"
+    },
+    {
+      "name": "mock-relation-candidates",
+      "status": "passed"
+    },
+    {
+      "name": "mock-relation-decisions",
+      "status": "passed"
+    },
+    {
+      "name": "mock-relation-mobile",
+      "status": "passed"
+    }
+  ]
+}

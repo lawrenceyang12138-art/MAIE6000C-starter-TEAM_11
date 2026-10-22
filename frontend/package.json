@@ -1,0 +1,31 @@
+{
+  "name": "team11-file-assistant-demo",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:mock": "node ../scripts/test_d_mock.mjs",
+    "test:integration": "node --test ../scripts/test_d_integration.test.mjs ../scripts/test_d_search_review.test.mjs",
+    "test:browser:contract": "node ../scripts/capture_d_1019.mjs",
+    "test:browser:mock": "node ../scripts/capture_d_relations_mock.mjs",
+    "gold:check": "python ../scripts/validate_d_gold.py",
+    "fixtures:check": "node ../scripts/validate_d_fixtures.mjs"
+  },
+  "dependencies": {
+    "@phosphor-icons/react": "2.1.7",
+    "framer-motion": "11.11.17",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "4.3.4",
+    "jsdom": "25.0.1",
+    "playwright-core": "1.56.1",
+    "vite": "5.4.10",
+    "vitest": "2.1.5"
+  }
+}

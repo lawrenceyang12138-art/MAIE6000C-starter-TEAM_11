@@ -1,0 +1,7 @@
+# Preserve the bytes used by D's frozen synthetic corpus and answer hashes.
+/fixtures/normal/**/*.pdf -text
+/fixtures/abnormal/*.pdf -text
+/fixtures/unsupported/* -text
+/fixtures/manifest.json text eol=lf
+/submissions/week07/gold-queries.json text eol=lf
+/submissions/week07/gold-queries.freeze.json text eol=lf

@@ -1,0 +1,9 @@
+{
+  "freeze_version": "team11-gold-freeze-v1",
+  "frozen_on": "2026-10-16",
+  "gold_path": "submissions/week07/gold-queries.json",
+  "gold_sha256": "d1d7b7daf285ed8ad596546dc1cacb28bca7b23cd26edc748e7636e1a23db053",
+  "manifest_sha256": "3ad53b3f8ccdc7ac6b84457fcedf9a735fe0ddf7ceb8004eb97b46ab17e3280f",
+  "human_B_review": "pending",
+  "policy": "Validator is read-only. A deliberate corpus/answer revision needs a new freeze version and documented B approval; never rewrite expected answers to improve measured scores."
+}
