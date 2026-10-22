@@ -1,9 +1,6 @@
 # skills
 .codex
 
-# tmp
-submissions/
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -221,13 +218,7 @@ work/
 submissions/*
 !submissions/week07/
 submissions/week07/*
-!submissions/week07/ui-acceptance.md
-!submissions/week07/ui-progress.md
-!submissions/week07/README.md
-!submissions/week07/demo-script.md
-!submissions/week07/m1-checklist.md
-!submissions/week07/scope-decision.md
-!submissions/week07/ppt-outline-D.md
+!submissions/week07/*.md
 !submissions/week07/gold-queries.json
 !submissions/week07/gold-queries.freeze.json
 # Allow the whole directory: a per-file allowlist silently ignored every new

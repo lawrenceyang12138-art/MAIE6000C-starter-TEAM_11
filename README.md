@@ -69,12 +69,15 @@ Normal shutdown preserves the named database volume. Volume-reset commands in th
 
 ## D frontend
 
-The D demo frontend is available at `http://localhost:3000/select`. It defaults
-to API mode and uses the same-origin `/api` proxy. API errors remain explicit;
-the frontend never silently falls back to demo data. Use
-`FRONTEND_DATA_MODE=mock` before rebuilding for an explicitly labeled synthetic
-demonstration. Existing `.env` settings take precedence; do not overwrite them
-just to change modes. See [D's 16 October handoff](submissions/week07/ui-progress.md)
+The D demo frontend is available at `http://localhost:3000/select`. Compose
+builds it with `FRONTEND_DATA_MODE=mock`, so the assembled demo runs the
+explicitly labeled simulation until the backend assembly is ready; the
+same-origin `/api` proxy applies when the mode is `api`. API errors remain
+explicit and the frontend never silently falls back to demo data. Set
+`FRONTEND_DATA_MODE=api` before rebuilding only after the mount, file, evidence
+and relation routes are assembled. Existing `.env` settings take precedence; do
+not overwrite them just to change modes. See
+[D's 16 October handoff](submissions/week07/ui-progress.md)
 and the [consumer contract](docs/frontend-integration-contract.md) for verified
 work and outstanding real-integration requirements.
 
