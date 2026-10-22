@@ -12,6 +12,7 @@ from prometheus_client import (
     generate_latest,
 )
 from sqlalchemy import func, select, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from services.common.config import Settings, configure_logging, get_settings
@@ -168,6 +169,53 @@ def normalise_relative_path(relative_path: str) -> str:
     return "/".join(parts) or "."
 
 
+def _lock_root(db: Session, root_id: str) -> AuthorizedRoot | None:
+    """Read one root under a row lock, refreshed from the database.
+
+    Every queue decision for a root - lifecycle check, live-job check, enqueue -
+    runs while holding this lock, so two concurrent requests cannot both observe
+    "no live scan" and both queue one. PostgreSQL honours ``FOR UPDATE``; SQLite
+    ignores the clause but serialises writers anyway, so the route tests still
+    exercise the sequential path and a PostgreSQL test covers the interleaving.
+    """
+    return db.execute(
+        select(AuthorizedRoot)
+        .where(AuthorizedRoot.id == root_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    ).scalars().first()
+
+
+def _ensure_active_root(root: AuthorizedRoot) -> None:
+    """Refuse new work for any root that is not active (contract 3.1).
+
+    Paused roots accept no new jobs, revoking roots accept only cleanup work and
+    revoked roots accept nothing. Each state gets its own code so a client can
+    tell "resume it" apart from "authorize it again".
+    """
+    if root.status == RootStatus.ACTIVE.value:
+        return
+    if root.status == RootStatus.PAUSED.value:
+        raise HTTPException(
+            status_code=409,
+            detail=reason("root_paused", "This directory is paused; resume it first"),
+        )
+    if root.status == RootStatus.REVOKING.value:
+        raise HTTPException(
+            status_code=409,
+            detail=reason(
+                "root_revoking",
+                "This directory is being revoked and accepts no new work",
+            ),
+        )
+    raise HTTPException(
+        status_code=409,
+        detail=reason(
+            "root_revoked", "This directory authorization is no longer active"
+        ),
+    )
+
+
 def _active_scan_job(db: Session, root_id: str) -> Job | None:
     """The live scan for one root, if any.
 
@@ -185,6 +233,23 @@ def _active_scan_job(db: Session, root_id: str) -> Job | None:
     ).scalars().first()
 
 
+def _scan_conflict(root_id: str, active: Job, where: str) -> HTTPException:
+    """409 for a live scan, carrying the ids contract 6.2 asks for.
+
+    A client whose first request timed out can use ``root_id``/``job_id`` to
+    attach to the work already accepted instead of submitting again.
+    """
+    return HTTPException(
+        status_code=409,
+        detail=reason(
+            "active_job_exists",
+            f"A scan is already active for this root ({where})",
+            root_id=root_id,
+            job_id=active.id,
+        ),
+    )
+
+
 def _enqueue_scan(db: Session, root: AuthorizedRoot) -> Job:
     job = Job(
         root_id=root.id,
@@ -197,61 +262,67 @@ def _enqueue_scan(db: Session, root: AuthorizedRoot) -> Job:
     return job
 
 
+def _find_root(
+    db: Session, mount_id: str, relative_path: str
+) -> AuthorizedRoot | None:
+    return db.execute(
+        select(AuthorizedRoot).where(
+            AuthorizedRoot.mount_id == mount_id,
+            AuthorizedRoot.relative_path == relative_path,
+        )
+    ).scalars().first()
+
+
 def create_root_with_scan_job(
     db: Session, mount_id: str, relative_path: str
 ) -> tuple[AuthorizedRoot, Job]:
     """Authorize a folder and enqueue its first scan (contract 6.2).
 
     Idempotent on (mount_id, relative_path): the same folder is never
-    authorized twice. Re-posting while its scan is still live is refused with
-    ``409 active_job_exists`` instead of quietly pretending to accept a second
-    one; when nothing is running, a new scan is queued.
+    authorized twice. Re-posting while its scan is live is refused with
+    ``409 active_job_exists`` plus the existing ids; with nothing running, a new
+    scan is queued. Both decisions run under the root row lock, so concurrent
+    re-posts cannot queue two scans for one folder.
     """
-    existing = (
-        db.execute(
-            select(AuthorizedRoot).where(
-                AuthorizedRoot.mount_id == mount_id,
-                AuthorizedRoot.relative_path == relative_path,
-            )
+    existing = _find_root(db, mount_id, relative_path)
+    if existing is None:
+        root = AuthorizedRoot(
+            mount_id=mount_id,
+            relative_path=relative_path,
+            status=RootStatus.ACTIVE.value,
         )
-        .scalars()
-        .first()
-    )
-    if existing is not None:
-        if existing.status == RootStatus.REVOKED.value:
-            raise HTTPException(
-                status_code=409,
-                detail=reason(
-                    "root_revoked", "This directory authorization is no longer active"
-                ),
+        db.add(root)
+        try:
+            db.flush()
+        except IntegrityError:
+            # Another request authorized the same folder between our read and
+            # our insert. Fall through to the shared path so it decides.
+            db.rollback()
+            existing = _find_root(db, mount_id, relative_path)
+            if existing is None:
+                raise
+        else:
+            job = Job(
+                root_id=root.id,
+                job_type=RootJobType.SCAN_ROOT.value,
+                status=JobStatus.PENDING.value,
             )
-        if _active_scan_job(db, existing.id) is not None:
-            raise HTTPException(
-                status_code=409,
-                detail=reason(
-                    "active_job_exists", "A scan for this folder is already active"
-                ),
-            )
-        return existing, _enqueue_scan(db, existing)
+            db.add(job)
+            db.commit()
+            db.refresh(root)
+            db.refresh(job)
+            return root, job
 
-    root = AuthorizedRoot(
-        mount_id=mount_id,
-        relative_path=relative_path,
-        status=RootStatus.ACTIVE.value,
-    )
-    db.add(root)
-    db.flush()
-
-    job = Job(
-        root_id=root.id,
-        job_type=RootJobType.SCAN_ROOT.value,
-        status=JobStatus.PENDING.value,
-    )
-    db.add(job)
-    db.commit()
-    db.refresh(root)
-    db.refresh(job)
-    return root, job
+    root = _lock_root(db, existing.id)
+    if root is None:
+        raise HTTPException(
+            status_code=404, detail=reason("root_not_found", "Root not found")
+        )
+    _ensure_active_root(root)
+    active = _active_scan_job(db, root.id)
+    if active is not None:
+        raise _scan_conflict(root.id, active, "same folder")
+    return root, _enqueue_scan(db, root)
 
 
 def read_root_counts(db: Session, root_id: str) -> RootFileCounts:
@@ -410,6 +481,26 @@ def _live_job_for_target(db: Session, job: Job) -> Job | None:
     return db.execute(stmt.limit(1)).scalars().first()
 
 
+def _root_for_job(db: Session, job: Job) -> AuthorizedRoot | None:
+    """The root a job belongs to, following the version when necessary.
+
+    Scan and extract jobs carry ``root_id`` directly, but embed jobs created by
+    the worker carry only ``version_id``; without that fallback an embed retry
+    would skip the root lifecycle check entirely.
+    """
+    if job.root_id is not None:
+        return db.get(AuthorizedRoot, job.root_id)
+    if job.version_id is None:
+        return None
+    version = db.get(FileVersion, job.version_id)
+    if version is None:
+        return None
+    record = db.get(FileRecord, version.file_id)
+    if record is None:
+        return None
+    return db.get(AuthorizedRoot, record.root_id)
+
+
 @app.post("/jobs/{job_id}/retry", response_model=JobRetryAccepted, status_code=202)
 def retry_job(job_id: int, db: Session = Depends(get_db)) -> JobRetryAccepted:
     """Put a failed job back on the queue (contract 6.3).
@@ -417,6 +508,11 @@ def retry_job(job_id: int, db: Session = Depends(get_db)) -> JobRetryAccepted:
     Only ``failed`` jobs are retryable: a completed job has nothing to redo, and
     a pending one is already queued. The attempt count is kept as provenance;
     the recorded error is cleared because the next run starts fresh.
+
+    Retrying is new work, so the owning root must be active (contract 3.1). The
+    root row is locked before the live-job check and the state transition, so
+    two concurrent retries cannot both requeue, and a retry cannot slip in while
+    a revoke is being applied.
     """
     job = db.get(Job, job_id)
     if job is None:
@@ -431,6 +527,12 @@ def retry_job(job_id: int, db: Session = Depends(get_db)) -> JobRetryAccepted:
                 f"Only failed jobs can be retried; this job is {public_job_status(job.status)}",
             ),
         )
+
+    root = _root_for_job(db, job)
+    if root is not None:
+        root = _lock_root(db, root.id) or root
+        _ensure_active_root(root)
+
     blocked = _live_job_for_target(db, job)
     if blocked is not None:
         raise HTTPException(
@@ -438,6 +540,8 @@ def retry_job(job_id: int, db: Session = Depends(get_db)) -> JobRetryAccepted:
             detail=reason(
                 "active_job_exists",
                 f"Another job ({blocked.id}) is already working on this target",
+                root_id=root.id if root is not None else None,
+                job_id=blocked.id,
             ),
         )
 
@@ -623,33 +727,16 @@ def rescan_root(root_id: str, db: Session = Depends(get_db)) -> RootJobAccepted:
     Authorization and the first scan stay atomic in ``POST /roots``; this route
     only re-runs discovery for a folder that is already authorized.
     """
-    root = db.get(AuthorizedRoot, root_id)
+    root = _lock_root(db, root_id)
     if root is None:
         raise HTTPException(
             status_code=404, detail=reason("root_not_found", "Root not found")
         )
-    if root.status == RootStatus.REVOKED.value:
-        raise HTTPException(
-            status_code=409,
-            detail=reason(
-                "root_revoked", "This directory authorization is no longer active"
-            ),
-        )
-    if root.status == RootStatus.PAUSED.value:
-        raise HTTPException(
-            status_code=409,
-            detail=reason("root_paused", "This directory is paused; resume it first"),
-        )
+    _ensure_active_root(root)
 
     active = _active_scan_job(db, root.id)
     if active is not None:
-        raise HTTPException(
-            status_code=409,
-            detail=reason(
-                "active_job_exists",
-                f"A scan is already active for this root (job {active.id})",
-            ),
-        )
+        raise _scan_conflict(root.id, active, "rescan")
 
     job = _enqueue_scan(db, root)
     logger.info("root_rescan_queued", extra={"root_id": root.id, "job_id": job.id})

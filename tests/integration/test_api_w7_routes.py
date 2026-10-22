@@ -16,6 +16,8 @@ from sqlalchemy.orm import Session
 from services.api.app import main as api_main
 from services.common.models import (
     AuthorizedRoot,
+    FileRecord,
+    FileVersion,
     Job,
     JobStatus,
     RootJobType,
@@ -60,6 +62,18 @@ def _make_job(db: Session, **kwargs) -> int:
     db.commit()
     db.refresh(job)
     return job.id
+
+
+def _set_status(db: Session, root_id: str, status: RootStatus) -> None:
+    root = db.get(AuthorizedRoot, root_id)
+    root.status = status.value
+    db.commit()
+
+
+def _root_of_version(db: Session, version_id: str) -> AuthorizedRoot:
+    version = db.get(FileVersion, version_id)
+    record = db.get(FileRecord, version.file_id)
+    return db.get(AuthorizedRoot, record.root_id)
 
 
 def test_mounts_lists_the_configured_read_only_mount(client, mount):
@@ -115,14 +129,19 @@ def test_authorizing_a_root_returns_the_flat_accepted_body(client, mount):
 
 
 def test_authorizing_the_same_folder_twice_while_scanning_is_refused(client, mount):
-    _create_root(client)
+    first = _create_root(client)
 
     response = client.post(
         "/roots", json={"mount_id": "corpus", "relative_path": "."}
     )
 
     assert response.status_code == 409
-    assert response.json()["detail"]["code"] == "active_job_exists"
+    detail = response.json()["detail"]
+    assert detail["code"] == "active_job_exists"
+    # Contract 6.2: the conflict carries the ids already accepted, so a client
+    # whose first request timed out can attach to that work instead of guessing.
+    assert detail["root_id"] == first["root_id"]
+    assert detail["job_id"] == first["job_id"]
 
 
 def test_reading_a_root_returns_status_availability_and_counts(client, mount, db_session):
@@ -183,12 +202,42 @@ def test_rescanning_an_idle_root_queues_one_new_job(client, mount, db_session):
 
 
 def test_rescanning_while_a_scan_is_live_is_refused(client, mount):
-    root_id = _create_root(client)["root_id"]
+    first = _create_root(client)
 
-    response = client.post(f"/roots/{root_id}/scans")
+    response = client.post(f"/roots/{first['root_id']}/scans")
 
     assert response.status_code == 409
-    assert response.json()["detail"]["code"] == "active_job_exists"
+    detail = response.json()["detail"]
+    assert detail["code"] == "active_job_exists"
+    assert detail["root_id"] == first["root_id"]
+    assert detail["job_id"] == first["job_id"]
+
+
+def test_authorizing_a_paused_folder_is_refused(client, mount, db_session):
+    root_id = _create_root(client)["root_id"]
+    _set_status(db_session, root_id, RootStatus.PAUSED)
+    jobs_before = db_session.query(Job).filter_by(root_id=root_id).count()
+
+    response = client.post(
+        "/roots", json={"mount_id": "corpus", "relative_path": "."}
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "root_paused"
+    # A refused request must not leave work behind.
+    assert db_session.query(Job).filter_by(root_id=root_id).count() == jobs_before
+
+
+def test_authorizing_a_revoking_folder_is_refused(client, mount, db_session):
+    root_id = _create_root(client)["root_id"]
+    _set_status(db_session, root_id, RootStatus.REVOKING)
+
+    response = client.post(
+        "/roots", json={"mount_id": "corpus", "relative_path": "."}
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "root_revoking"
 
 
 def test_rescanning_a_revoked_root_is_refused(client, mount, db_session):
@@ -286,3 +335,98 @@ def test_a_missing_job_is_a_coded_404(client, mount):
 def test_the_authorized_root_is_reachable_on_disk_for_the_worker(mount):
     """Guard for the fixture itself: the mounted path must really exist."""
     assert Path(mount).is_dir()
+
+
+def test_retrying_a_job_of_a_paused_root_is_refused(client, mount, db_session):
+    root_id = _create_root(client)["root_id"]
+    job = db_session.query(Job).filter_by(root_id=root_id).one()
+    job.status = JobStatus.FAILED.value
+    db_session.commit()
+    _set_status(db_session, root_id, RootStatus.PAUSED)
+
+    response = client.post(f"/jobs/{job.id}/retry")
+
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "root_paused"
+    # The refused retry must leave the job where it was.
+    db_session.expire_all()
+    assert db_session.get(Job, job.id).status == JobStatus.FAILED.value
+
+
+def test_retrying_a_job_of_a_revoking_root_is_refused(client, mount, db_session):
+    root_id = _create_root(client)["root_id"]
+    job = db_session.query(Job).filter_by(root_id=root_id).one()
+    job.status = JobStatus.FAILED.value
+    db_session.commit()
+    _set_status(db_session, root_id, RootStatus.REVOKING)
+
+    response = client.post(f"/jobs/{job.id}/retry")
+
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "root_revoking"
+
+
+def test_retrying_a_job_of_a_revoked_root_is_refused(client, mount, db_session):
+    root_id = _create_root(client)["root_id"]
+    job = db_session.query(Job).filter_by(root_id=root_id).one()
+    job.status = JobStatus.FAILED.value
+    db_session.commit()
+    _set_status(db_session, root_id, RootStatus.REVOKED)
+
+    response = client.post(f"/jobs/{job.id}/retry")
+
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "root_revoked"
+
+
+def test_retrying_an_embed_job_finds_its_root_through_the_version(
+    client, mount, db_session, make_file_version
+):
+    """Embed jobs carry only version_id; the lifecycle check must still apply."""
+    version_id = make_file_version(sha256="c" * 64)
+    job_id = _make_job(
+        db_session, job_type=RootJobType.EMBED_FILE.value, version_id=version_id
+    )
+    root = _root_of_version(db_session, version_id)
+    root.status = RootStatus.REVOKED.value
+    db_session.commit()
+
+    response = client.post(f"/jobs/{job_id}/retry")
+
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "root_revoked"
+
+
+def test_retrying_a_case_job_keeps_the_starter_behaviour(client, db_session):
+    """Case jobs have no root; the lifecycle check must not block them."""
+    created = client.post(
+        "/cases",
+        json={"title": "Printer offline", "description": "The office printer is unreachable."},
+    ).json()
+    job_id = created["job"]["job_id"]
+    job = db_session.get(Job, job_id)
+    job.status = JobStatus.FAILED.value
+    db_session.commit()
+
+    response = client.post(f"/jobs/{job_id}/retry")
+
+    assert response.status_code == 202
+    assert response.json()["status"] == "pending"
+
+
+def test_retrying_is_refused_with_the_blocking_job_id(client, mount, db_session):
+    root_id = _create_root(client)["root_id"]
+    job = db_session.query(Job).filter_by(root_id=root_id).one()
+    job.status = JobStatus.FAILED.value
+    db_session.commit()
+    blocker_id = _make_job(
+        db_session, root_id=root_id, status=JobStatus.PENDING.value
+    )
+
+    response = client.post(f"/jobs/{job.id}/retry")
+
+    assert response.status_code == 409
+    detail = response.json()["detail"]
+    assert detail["code"] == "active_job_exists"
+    assert detail["root_id"] == root_id
+    assert detail["job_id"] == blocker_id

@@ -39,6 +39,11 @@ Every row is a test that asserts a specific refusal, not merely "no crash".
 | 12 | Resolving a source path on a revoking/revoked root | `test_resolving_a_source_path_refuses_a_revoked_root_for_reads[revoking\|revoked]` | PASS |
 | 13 | Symlinked directory inside the root | `test_a_symlinked_directory_inside_the_root_is_not_followed` | **SKIPPED on this host** |
 | 14 | Root path that is itself a symlink outside the mount | `test_a_root_that_is_a_symlink_outside_the_mount_is_rejected` | **SKIPPED on this host** |
+| 15 | Authorizing a paused root | `test_authorizing_a_paused_folder_is_refused` | PASS - `409 root_paused`, no job created |
+| 16 | Authorizing a revoking root | `test_authorizing_a_revoking_folder_is_refused` | PASS - `409 root_revoking` |
+| 17 | Retrying work for a paused / revoking / revoked root | `test_retrying_a_job_of_a_{paused,revoking,revoked}_root_is_refused` | PASS - 409 with the matching code, job left `failed` |
+| 18 | Retrying an embed job whose root was revoked | `test_retrying_an_embed_job_finds_its_root_through_the_version` | PASS - the root is resolved through `version_id` |
+| 19 | Two rescans of one root at the same time | `test_concurrent_rescans_queue_exactly_one_scan` (PostgreSQL) | PASS - one 202, one `409 active_job_exists`, exactly one live job |
 
 ## Why cases 13-14 are skipped, and what that means
 
@@ -69,7 +74,7 @@ plus a rescan (`scripts/w7_evidence_probe.py`):
 python -m pytest tests/unit/test_scan_handler.py \
   tests/integration/test_api_w7_routes.py \
   tests/integration/test_api_integration.py -q
-# 40 passed, 2 skipped (the two symlink cases above)
+# 48 passed, 2 skipped (the two symlink cases above)
 ```
 
 The end-to-end half:
@@ -77,6 +82,13 @@ The end-to-end half:
 ```bash
 docker compose up -d --build
 python scripts/w7_evidence_probe.py --out submissions/week07/evidence/scan-run.json
+```
+
+The PostgreSQL concurrency case needs a database:
+
+```bash
+SEARCH_TEST_DATABASE_URL="postgresql+psycopg://postgres:postgres@localhost:15432/maie6000c" \
+  pytest tests/integration/test_api_queue_postgres.py -q
 ```
 
 ## Known gaps

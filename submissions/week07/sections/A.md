@@ -109,8 +109,9 @@ All numbers below come from the evidence documents under
   database without error (`restart-v1.md`).
 - Security: fourteen refusal cases are covered by tests, and the originals
   matched before and after every run (`security-check.md`).
-- Suite: `pytest tests/unit tests/integration -q` reports 213 passed and 4
-  skipped on this branch; `ruff check .` is clean.
+- Suite: `pytest tests/unit tests/integration -q` reports 221 passed and 5
+  skipped on this branch (224 passed / 2 skipped with a PostgreSQL test database
+  configured, which runs the queue-concurrency case); `ruff check .` is clean.
 
 ## Honest limitations
 
