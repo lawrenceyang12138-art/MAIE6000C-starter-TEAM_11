@@ -23,7 +23,7 @@ from fastapi import HTTPException
 from sqlalchemy import create_engine, func, select, text
 
 from services.api.app import main as api_main
-from services.api.app.main import rescan_root
+from services.api.app.main import create_root_with_scan_job, rescan_root
 from services.common.db import Base, make_session_factory
 from services.common.models import (
     AuthorizedRoot,
@@ -152,3 +152,65 @@ def test_concurrent_rescans_queue_exactly_one_scan(queue_factory, monkeypatch):
     assert refused[0].detail["root_id"] == root_id
 
     assert _live_scan_count(queue_factory, root_id) == 1
+
+
+def test_concurrent_authorizations_create_one_root_and_one_scan(queue_factory, monkeypatch):
+    """Two simultaneous authorizations of one folder must not create two roots.
+
+    The loser hits the unique constraint on ``(mount_id, relative_path)``. It
+    must recover into the existing root and answer a scan conflict rather than
+    surface an integrity error, and the folder must end up with exactly one live
+    scan.
+    """
+    mount_id = "authorize-" + uuid.uuid4().hex[:8]
+    barrier = threading.Barrier(2, timeout=10)
+
+    # Same widening trick as above, on the lookup instead of the scan check: both
+    # requests must decide "this folder is unknown" before either inserts, which
+    # is the only way to reach the unique-constraint recovery path.
+    real_find = api_main._find_root
+
+    def slow_find(db, mount_id_inner, relative_path):
+        found = real_find(db, mount_id_inner, relative_path)
+        time.sleep(LOCK_WAIT_SECONDS)
+        return found
+
+    monkeypatch.setattr(api_main, "_find_root", slow_find)
+    outcomes: list[object] = []
+    collect = threading.Lock()
+
+    def attempt() -> None:
+        with queue_factory() as db:
+            barrier.wait()
+            try:
+                root, job = create_root_with_scan_job(db, mount_id, ".")
+                outcome: object = (root.id, job.id)
+            except HTTPException as exc:
+                outcome = exc
+            with collect:
+                outcomes.append(outcome)
+
+    threads = [threading.Thread(target=attempt) for _ in range(2)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=30)
+
+    accepted = [item for item in outcomes if isinstance(item, tuple)]
+    refused = [item for item in outcomes if isinstance(item, HTTPException)]
+
+    assert len(accepted) == 1, f"expected one authorization, got {outcomes}"
+    assert len(refused) == 1, f"expected one refusal, got {outcomes}"
+    assert refused[0].status_code == 409
+    assert refused[0].detail["code"] == "active_job_exists"
+    assert refused[0].detail["root_id"] == accepted[0][0]
+    assert refused[0].detail["job_id"] == accepted[0][1]
+
+    with queue_factory() as db:
+        roots = db.execute(
+            select(func.count())
+            .select_from(AuthorizedRoot)
+            .where(AuthorizedRoot.mount_id == mount_id)
+        ).scalar_one()
+    assert roots == 1, "the unique constraint must leave exactly one root"
+    assert _live_scan_count(queue_factory, accepted[0][0]) == 1
