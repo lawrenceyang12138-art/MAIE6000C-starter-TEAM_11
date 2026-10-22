@@ -1,3 +1,6 @@
+# skills
+.codex
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -206,6 +209,25 @@ tempCodeRunnerFile.py
 models/
 work/
 
+# Frontend source is not a Python build library.
+!frontend/src/lib/
+!frontend/src/lib/**
+
+# Retain the existing submission ignore while versioning the D handoff.
+!submissions/
+submissions/*
+!submissions/week07/
+submissions/week07/*
+!submissions/week07/*.md
+!submissions/week07/gold-queries.json
+!submissions/week07/gold-queries.freeze.json
+# Allow the whole directory: a per-file allowlist silently ignored every new
+# evidence or section file added after it was written.
+!submissions/week07/sections/
+!submissions/week07/evidence/
+# Evidence screenshots stay local (5.9 MB); scripts/capture_*.mjs regenerates them.
+submissions/week07/evidence/**/*.png
+
 # Ruff stuff:
 .ruff_cache/
 
@@ -237,3 +259,4 @@ __marimo__/
 /submissions/week07/m1-search.md
 /submissions/week07/offline-check.md
 /submissions/week07/search-eval-final.md
+/tmp/npm-browser-cache/
