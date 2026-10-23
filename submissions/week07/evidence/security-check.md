@@ -74,7 +74,7 @@ plus a rescan (`scripts/w7_evidence_probe.py`):
 python -m pytest tests/unit/test_scan_handler.py \
   tests/integration/test_api_w7_routes.py \
   tests/integration/test_api_integration.py -q
-# 48 passed, 2 skipped (the two symlink cases above)
+# 49 passed, 2 skipped (the two symlink cases above)
 ```
 
 The end-to-end half:

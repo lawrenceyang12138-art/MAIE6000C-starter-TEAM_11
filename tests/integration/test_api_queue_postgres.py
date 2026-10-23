@@ -23,15 +23,19 @@ from fastapi import HTTPException
 from sqlalchemy import create_engine, func, select, text
 
 from services.api.app import main as api_main
-from services.api.app.main import create_root_with_scan_job, rescan_root
+from services.api.app.main import create_root_with_scan_job, rescan_root, retry_job
 from services.common.db import Base, make_session_factory
 from services.common.models import (
     AuthorizedRoot,
+    FileRecord,
+    FileVersion,
     Job,
     JobStatus,
     RootJobType,
     RootStatus,
+    VersionStatus,
 )
+from services.worker.app import main as worker_main
 
 pytestmark = pytest.mark.postgres
 
@@ -56,7 +60,11 @@ def queue_factory():
     engine = create_engine(
         url,
         pool_pre_ping=True,
-        connect_args={"options": f"-c search_path={schema},public"},
+        connect_args={
+            "options": f"-c search_path={schema},public",
+            # Fail fast when the database is down instead of hanging the suite.
+            "connect_timeout": 5,
+        },
     )
 
     with engine.begin() as connection:
@@ -214,3 +222,126 @@ def test_concurrent_authorizations_create_one_root_and_one_scan(queue_factory, m
         ).scalar_one()
     assert roots == 1, "the unique constraint must leave exactly one root"
     assert _live_scan_count(queue_factory, accepted[0][0]) == 1
+
+
+def _seed_failed_job(factory, job_kind: str) -> int:
+    """A failed job that a retry could legitimately pick up."""
+    with factory() as db:
+        root = AuthorizedRoot(
+            mount_id="retry-" + uuid.uuid4().hex[:8],
+            relative_path=".",
+            status=RootStatus.ACTIVE.value,
+        )
+        db.add(root)
+        db.flush()
+        if job_kind == "scan":
+            job = Job(
+                root_id=root.id,
+                job_type=RootJobType.SCAN_ROOT.value,
+                status=JobStatus.FAILED.value,
+            )
+            db.add(job)
+            db.commit()
+            return job.id
+
+        record = FileRecord(
+            root_id=root.id, relative_path="retry.pdf", name="retry.pdf"
+        )
+        db.add(record)
+        db.flush()
+        version = FileVersion(
+            file_id=record.id,
+            content_sha256="e" * 64,
+            byte_size=10,
+            status=VersionStatus.DISCOVERED.value,
+        )
+        db.add(version)
+        db.flush()
+        job = Job(
+            version_id=version.id,
+            job_type=RootJobType.EMBED_FILE.value,
+            status=JobStatus.FAILED.value,
+        )
+        db.add(job)
+        db.commit()
+        return job.id
+
+
+@pytest.mark.parametrize("job_kind", ["scan", "embed"])
+@pytest.mark.parametrize("winner_state", ["claimed", "completed"])
+def test_a_stale_retry_cannot_reset_work_already_taken(
+    queue_factory, monkeypatch, job_kind, winner_state
+):
+    """A retry that read the job before the lock must not undo later work.
+
+    The loser reads the job while it is still ``failed``, then parks before
+    taking the root lock. The winner completes a normal retry, and the job moves
+    on - claimed by the worker, or completed. When the loser resumes it must be
+    refused: writing ``pending`` over claimed/completed work would clear the
+    timestamps and make a finished job run twice.
+    """
+    job_id = _seed_failed_job(queue_factory, job_kind)
+    read_done = threading.Event()
+    release_loser = threading.Event()
+    real_root_for_job = api_main._root_for_job
+
+    def gated_root_for_job(db, job):
+        root = real_root_for_job(db, job)
+        if threading.current_thread().name == "loser":
+            read_done.set()
+            release_loser.wait(timeout=15)
+        return root
+
+    monkeypatch.setattr(api_main, "_root_for_job", gated_root_for_job)
+
+    outcomes: dict[str, object] = {}
+
+    def attempt(name: str) -> None:
+        with queue_factory() as db:
+            try:
+                outcomes[name] = retry_job(job_id, db)
+            except HTTPException as exc:
+                outcomes[name] = exc
+
+    loser = threading.Thread(target=attempt, args=("loser",), name="loser")
+    loser.start()
+    assert read_done.wait(15), "the loser never reached the lock boundary"
+
+    winner = threading.Thread(target=attempt, args=("winner",), name="winner")
+    winner.start()
+    winner.join(timeout=30)
+    assert isinstance(outcomes.get("winner"), object)
+    assert not isinstance(outcomes["winner"], HTTPException), outcomes["winner"]
+
+    with queue_factory() as db:
+        if winner_state == "claimed":
+            claimed = worker_main.claim_next_pending_job(db)
+            assert claimed is not None and claimed.id == job_id
+        else:
+            finished = db.get(Job, job_id)
+            worker_main._complete_job(db, finished)
+
+    with queue_factory() as db:
+        before = db.get(Job, job_id)
+        status_before = before.status
+        claimed_at = before.claimed_at
+        completed_at = before.completed_at
+        attempts_before = before.attempts
+    assert status_before == winner_state
+
+    release_loser.set()
+    loser.join(timeout=30)
+
+    refused = outcomes.get("loser")
+    assert isinstance(refused, HTTPException), f"the loser was not refused: {refused}"
+    assert refused.status_code == 409
+    assert refused.detail["code"] == "job_not_retryable"
+
+    with queue_factory() as db:
+        after = db.get(Job, job_id)
+        assert after.status == status_before, "the stale retry rewrote the status"
+        assert after.claimed_at == claimed_at, "the stale retry cleared claimed_at"
+        assert after.completed_at == completed_at, "the stale retry cleared completed_at"
+        assert after.attempts == attempts_before
+        # Nothing was requeued, so the worker finds no claimable work.
+        assert worker_main.claim_next_pending_job(db) is None

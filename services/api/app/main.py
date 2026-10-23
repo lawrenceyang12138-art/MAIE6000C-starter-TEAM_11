@@ -11,7 +11,7 @@ from prometheus_client import (
     Histogram,
     generate_latest,
 )
-from sqlalchemy import func, select, text
+from sqlalchemy import func, select, text, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -545,10 +545,31 @@ def retry_job(job_id: int, db: Session = Depends(get_db)) -> JobRetryAccepted:
             ),
         )
 
-    job.status = JobStatus.PENDING.value
-    job.error = None
-    job.claimed_at = None
-    job.completed_at = None
+    # Re-check and transition in one statement. The status read above happened
+    # before the lock, so by now another retry may have requeued this job and a
+    # worker may even have claimed or completed it; assigning attributes on the
+    # stale instance would write ``pending`` over that work and clear its
+    # timestamps. ``rowcount == 0`` means somebody else moved the job first.
+    moved = db.execute(
+        update(Job)
+        .where(Job.id == job.id, Job.status == JobStatus.FAILED.value)
+        .values(
+            status=JobStatus.PENDING.value,
+            error=None,
+            claimed_at=None,
+            completed_at=None,
+        )
+        .execution_options(synchronize_session=False)
+    )
+    if moved.rowcount != 1:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail=reason(
+                "job_not_retryable",
+                "The job is no longer failed; another retry or the worker changed it",
+            ),
+        )
     db.commit()
     db.refresh(job)
 

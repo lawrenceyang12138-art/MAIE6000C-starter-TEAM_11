@@ -76,6 +76,18 @@ group by 1,2 order by 1,2;"
 The probe talks to the public API only; the two `psql` queries exist because
 the API deliberately does not expose version or job totals.
 
+## Retry is not a second chance to reset finished work
+
+A retry only acts on a job that is still `failed`. The status read at the top of the
+request can be stale by the time the row is written, so the transition is a conditional
+`UPDATE ... WHERE id = :id AND status = 'failed'` and the request is refused unless exactly
+one row moved. Four PostgreSQL cases cover it: a scan job and a version-targeted job,
+each under a worker claim and a worker completion. Each asserts that the refused request
+leaves the status, `claimed_at`, `completed_at` and `attempts` untouched and that the
+worker finds nothing claimable afterwards. Removing the `status = 'failed'` clause makes
+all four fail, which is the check that the test is measuring the guard rather than the
+happy path.
+
 ## Cases that are unit-level, not end-to-end
 
 The compose mount is read-only by design, so content cannot be edited inside

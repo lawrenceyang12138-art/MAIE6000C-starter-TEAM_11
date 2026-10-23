@@ -8,9 +8,11 @@ flat `{root_id, job_id, status}` on accept, `root_id`/`file_counts` on read,
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
+from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from services.api.app import main as api_main
@@ -405,6 +407,43 @@ def test_retrying_an_embed_job_finds_its_root_through_the_version(
 
     assert response.status_code == 409
     assert response.json()["detail"]["code"] == "root_revoked"
+
+
+def test_retrying_refuses_when_the_job_changed_after_the_initial_read(
+    client, mount, db_session, monkeypatch
+):
+    """The status seen at the top of retry_job is not the one used to write.
+
+    Between the initial read and the update a worker can claim the job. The
+    conditional update must refuse instead of overwriting that state; this test
+    injects the change right after the early check to pin the branch.
+    """
+    root_id = _create_root(client)["root_id"]
+    job = db_session.query(Job).filter_by(root_id=root_id).one()
+    job.status = JobStatus.FAILED.value
+    db_session.commit()
+    real_blocker_check = api_main._live_job_for_target
+
+    def raced(db, target):
+        # A worker claims the job after retry_job decided it was retryable.
+        db.execute(
+            update(Job)
+            .where(Job.id == target.id)
+            .values(status=JobStatus.CLAIMED.value, claimed_at=datetime.now(UTC))
+        )
+        db.commit()
+        return real_blocker_check(db, target)
+
+    monkeypatch.setattr(api_main, "_live_job_for_target", raced)
+
+    response = client.post(f"/jobs/{job.id}/retry")
+
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "job_not_retryable"
+    db_session.expire_all()
+    claimed = db_session.get(Job, job.id)
+    assert claimed.status == JobStatus.CLAIMED.value
+    assert claimed.claimed_at is not None
 
 
 def test_retrying_a_case_job_keeps_the_starter_behaviour(client, db_session):
