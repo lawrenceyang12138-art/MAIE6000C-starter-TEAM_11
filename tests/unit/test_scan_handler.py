@@ -298,10 +298,19 @@ def test_a_second_scan_of_a_live_root_is_skipped(mounted, db_session):
 
 
 def _make_symlink(link: Path, target: Path) -> None:
+    """Create a directory symlink, or skip where the platform refuses.
+
+    Some Windows setups neither raise nor create anything: ``symlink_to``
+    returns quietly and the path stays absent. Without the second check the
+    escape tests would pass while exercising nothing, which is worse than a
+    skip - the evidence must show that the case really ran.
+    """
     try:
         link.symlink_to(target, target_is_directory=True)
     except (OSError, NotImplementedError):
         pytest.skip("this platform does not allow the test to create a symlink")
+    if not link.is_symlink():
+        pytest.skip("this platform reported success but created no symlink")
 
 
 def test_a_symlinked_directory_inside_the_root_is_not_followed(

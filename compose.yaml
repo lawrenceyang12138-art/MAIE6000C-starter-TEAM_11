@@ -96,10 +96,11 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        # The api service does not assemble /mounts, /files, /evidence or
-        # /relations yet, so the shipped demo boots in explicit mock mode and
-        # shows its SIMULATION banner. Set FRONTEND_DATA_MODE=api once A/B have
-        # wired those routes; API failures never fall back to mock on their own.
+        # Mock stays the default so a bare `docker compose up` never pretends to
+        # serve real data. Every route the adapter calls is now assembled:
+        # mounts, roots, rescans, jobs and retry by A; files, evidence and
+        # relations by B. Set FRONTEND_DATA_MODE=api to run against the real
+        # stack; API failures never fall back to mock on their own.
         VITE_DATA_MODE: ${FRONTEND_DATA_MODE:-mock}
         VITE_API_BASE_URL: ${FRONTEND_API_BASE_URL:-/api}
     ports:
