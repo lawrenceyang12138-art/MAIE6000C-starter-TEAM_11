@@ -10,7 +10,7 @@ import {
 } from "@phosphor-icons/react";
 import { createAdapter } from "./api/adapter.js";
 import { AdapterError } from "./api/errors.js";
-import { dedupeFiles, isEvidenceForVersion, isSourceUnavailable, shouldPoll, statusMeta, summarizeProgress } from "./lib/scan.js";
+import { POLL_MAX_ATTEMPTS, dedupeFiles, isEvidenceForVersion, isSourceUnavailable, nextPollDelay, shouldPoll, statusMeta, summarizeProgress } from "./lib/scan.js";
 import { degradationMessage, evidenceMatchesHit, evidenceRecord, searchHitFile } from "./lib/search.js";
 import { useSearch } from "./lib/use-search.js";
 import { RelationsPage } from "./relations-page.jsx";
@@ -22,6 +22,15 @@ const adapter = createAdapter();
 function navigate(path) {
   window.history.pushState({}, "", path);
   window.dispatchEvent(new PopStateEvent("popstate"));
+}
+
+// A malformed percent escape in the address bar must not blank the whole app.
+function safeDecode(segment) {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return "";
+  }
 }
 
 function useRoute() {
@@ -301,11 +310,13 @@ function ScanPage({ jobId }) {
   const [reload, setReload] = useState(0);
   const [statusVersion, setStatusVersion] = useState(0);
   const [retryAccepted, setRetryAccepted] = useState(false);
+  const [pollPaused, setPollPaused] = useState(false);
   const previousJobId = useRef(jobId);
 
   useEffect(() => {
     let cancelled = false;
     let timer;
+    let attempts = 0;
     if (previousJobId.current !== jobId) {
       previousJobId.current = jobId;
       setJob(null);
@@ -314,7 +325,9 @@ function ScanPage({ jobId }) {
       setPollCount(0);
     }
     setError(null);
+    setPollPaused(false);
     async function poll() {
+      attempts += 1;
       try {
         const next = await adapter.getJob(jobId);
         if (cancelled) return;
@@ -326,7 +339,13 @@ function ScanPage({ jobId }) {
         setPollCount((count) => count + 1);
         setStatusVersion((version) => version + 1);
         if (next.status !== "pending") setRetryAccepted(false);
-        if (shouldPoll(next, scope)) timer = window.setTimeout(poll, 900);
+        if (!shouldPoll(next, scope)) return;
+        if (attempts >= POLL_MAX_ATTEMPTS) {
+          // Still unfinished after the automatic budget: stop and let the user decide.
+          setPollPaused(true);
+          return;
+        }
+        timer = window.setTimeout(poll, nextPollDelay(attempts));
       } catch (caught) {
         if (!cancelled) { setRoot(null); setError(caught); }
       }
@@ -360,6 +379,12 @@ function ScanPage({ jobId }) {
       <ErrorNotice error={error} />
       {error && <button className="secondary-button" onClick={() => setReload((value) => value + 1)}>Retry status reads</button>}
       {retryAccepted && <div className="notice notice-info" role="status">Retry accepted for this Job. It is queued; processing has not yet completed.</div>}
+      {pollPaused && (
+        <div className="notice notice-info" role="status">
+          <div><strong>Automatic refresh paused</strong><span>Read {pollCount} times without a confirmed file count. Check the local service, then resume deliberately.</span></div>
+          <button className="secondary-button" onClick={() => setReload((value) => value + 1)}>Resume polling</button>
+        </div>
+      )}
       <RetryJobControl
         adapter={adapter}
         job={job}
@@ -688,7 +713,7 @@ function UnavailablePage({ kind }) {
 export default function App() {
   const pathname = useRoute();
   const [inspectorData, setInspectorData] = useState(null);
-  const activeRoot = pathname.startsWith("/results/") ? decodeURIComponent(pathname.slice("/results/".length)) : null;
+  const activeRoot = pathname.startsWith("/results/") ? safeDecode(pathname.slice("/results/".length)) : null;
   useEffect(() => {
     setInspectorData(null);
   }, [pathname]);
@@ -698,7 +723,7 @@ export default function App() {
   let activeNav = "directories";
   if (pathname.startsWith("/scan/")) {
     activeLabel = "Processing queue";
-    page = <ScanPage jobId={decodeURIComponent(pathname.slice("/scan/".length))} />;
+    page = <ScanPage jobId={safeDecode(pathname.slice("/scan/".length))} />;
   } else if (pathname.startsWith("/results/")) {
     activeLabel = "Search & Discover";
     activeNav = "search";

@@ -65,7 +65,7 @@ await page.route(new URL("/api/**", baseUrl).href, async (route) => {
     const passage = Object.values(data.evidence).flat().find((item) => item.evidence_id === chunkId);
     const file = data.files.find((item) => item.file_id === passage?.file_id);
     payload = { chunk_id: chunkId, file_id: file.file_id, version_id: file.version_id, relative_path: file.relative_path,
-      ordinal: 1, page_number: passage.page, text: passage.excerpt, content_sha256: file.sha256 };
+      ordinal: 1, page_number: passage.page, text: passage.excerpt, content_sha256: passage.content_sha256 };
   }
   else if (endpoint.endsWith("/evidence")) {
     evidenceReads += 1;

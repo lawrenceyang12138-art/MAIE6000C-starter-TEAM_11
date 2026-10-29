@@ -19,7 +19,8 @@
   }],
   "evidence": { "file-relations-demo:version-relations-demo-v1": [{
     "evidence_id": "chunk-relations-demo", "file_id": "file-relations-demo", "version_id": "version-relations-demo-v1",
-    "page": 1, "source_path": "sample/synthetic-relations.pdf", "excerpt": "Dr Chen leads the Atlas Project on Database Reliability."
+    "page": 1, "source_path": "sample/synthetic-relations.pdf", "excerpt": "Dr Chen leads the Atlas Project on Database Reliability.",
+    "content_sha256": "93dde962efee9f5c2a230636fc40550abaca0620831b228ee78cb076ac7cfe17"
   }] },
   "entities": ["entity-chen", "entity-atlas", "entity-database", "entity-replacement"],
   "relations": { "version-relations-demo-v1": [

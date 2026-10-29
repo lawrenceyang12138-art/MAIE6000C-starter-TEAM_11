@@ -39,7 +39,24 @@ export function summarizeProgress(root) {
   };
 }
 
-export function shouldPoll(job, root) {
+/** First retry delay for progress polling; grows by POLL_BACKOFF per attempt. */
+export const POLL_BASE_MS = 900;
+/** Ceiling for the progress polling delay. */
+export const POLL_MAX_MS = 5000;
+/** Automatic poll budget before the UI pauses and asks the user to resume. */
+export const POLL_MAX_ATTEMPTS = 120;
+const POLL_BACKOFF = 1.5;
+
+export function nextPollDelay(pollCount = 0) {
+  const delay = POLL_BASE_MS * POLL_BACKOFF ** Math.max(0, pollCount);
+  return Math.min(POLL_MAX_MS, Math.round(delay));
+}
+
+export function shouldPoll(job, root, { pollCount = 0, maxAttempts = POLL_MAX_ATTEMPTS } = {}) {
+  // A backend that never reports usable counters must not turn the progress
+  // page into an unbounded 0.9s request loop; the caller surfaces the pause and
+  // lets the user resume deliberately.
+  if (pollCount >= maxAttempts) return false;
   if (["failed", "canceled"].includes(job?.status)) return false;
   const progress = summarizeProgress(root);
   return job?.status !== "completed" || !progress.known || progress.pending > 0;

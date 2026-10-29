@@ -13,9 +13,10 @@
 | [独立 Mock 浏览器报告](browser-mock-relations-report.json) | 5 场景通过，无 HTTP 拦截，无 API 请求；`product_acceptance: false` |
 | [冻结答案原文校验](gold-source-check.json) | 16 文件哈希、10/10 PDF 源位置；B 人工复核 pending，未运行检索质量评测 |
 
-两份浏览器报告均已重跑，并记录当前受测源码 SHA-256。截图均带模拟/合同水印；
-新增 [失败任务重试](retry-job-accepted.png)、[来源核验失败](review-source-unavailable.png)、
-[来源恢复](review-source-recovered.png)。当前生产构建、fixture 与 gold 校验均通过；具体重放命令与样例启动步骤见
+两份浏览器报告均已重跑，并记录当前受测源码 SHA-256；这些哈希对应基线 `ed05fa4`，本次评审修复发生在其后。
+截图均带模拟/合同水印，但**未纳入版本库**（32 张共 5.9 MB，见 `.gitignore`）：新增的
+`retry-job-accepted.png`、`review-source-unavailable.png`、`review-source-recovered.png`
+可用 `node scripts/capture_d_1019.mjs` 在本地重新生成。当前生产构建、fixture 与 gold 校验均通过；具体重放命令与样例启动步骤见
 [前端说明](../../../../frontend/README.md)。
 
 尚未满足的真实验收项、责任人与接口依赖见 [M1 检查表](../../m1-checklist.md)、

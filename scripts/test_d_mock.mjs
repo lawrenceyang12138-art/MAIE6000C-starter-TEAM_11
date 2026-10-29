@@ -29,6 +29,21 @@ const evidence = await adapter.getEvidence("file-009", "version-009-v1");
 assert.equal(evidence.length, 3);
 assert.equal(evidence[2].page, 3);
 
+// Every synthetic passage carries its own chunk digest: the HTTP contract
+// validates it, and reusing the file digest would label a passage with the
+// wrong hash. The mock adapter must return that digest, not the file's.
+const passages = Object.values(mockData.evidence).flat();
+assert.ok(passages.length > 0, "fixtures must contain passages");
+for (const passage of passages) {
+  assert.match(passage.content_sha256 ?? "", /^[a-f0-9]{64}$/, `chunk digest missing for ${passage.evidence_id}`);
+  const file = mockData.files.find((item) => item.file_id === passage.file_id);
+  assert.notEqual(passage.content_sha256, file?.sha256, `chunk digest must not reuse the file digest (${passage.evidence_id})`);
+}
+assert.equal(new Set(passages.map((passage) => passage.content_sha256)).size, passages.length, "chunk digests must be distinct");
+const chunk = await adapter.getEvidenceByChunk("evidence-file-009-1");
+assert.equal(chunk.content_sha256, mockData.evidence["file-009:version-009-v1"][0].content_sha256);
+assert.equal(chunk.ordinal, 1);
+
 const empty = createMockAdapter(mockData, { latency: 0 });
 const emptyAccepted = await empty.createRootScan("mount-team11-demo", "empty");
 assert.deepEqual(await empty.listFiles(emptyAccepted.root_id), []);

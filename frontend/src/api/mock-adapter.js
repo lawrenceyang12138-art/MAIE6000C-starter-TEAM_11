@@ -217,10 +217,14 @@ export function createMockAdapter(data, { latency = 80 } = {}) {
       if (!passage) throw new AdapterError("Passage not found.", { status: 404, code: "chunk_not_found" });
       // Reuse version/source checks instead of serving an old cached passage.
       const current = await this.getEvidence(passage.file_id, passage.version_id);
-      const file = data.files.find((item) => item.file_id === passage.file_id);
+      // The HTTP contract binds evidence to a per-chunk digest. Never fall back
+      // to the file digest: that would label a passage with the wrong hash.
+      if (!/^[a-f0-9]{64}$/.test(passage.content_sha256 || "")) {
+        throw new AdapterError("This synthetic passage has no chunk digest. Regenerate the mock fixtures.", { status: 500, code: "CONTRACT_MISMATCH" });
+      }
       return { chunk_id: chunkId, file_id: passage.file_id, version_id: passage.version_id,
         relative_path: passage.source_path, page_number: passage.page, ordinal: current.findIndex((item) => item.evidence_id === chunkId) + 1,
-        text: passage.excerpt, content_sha256: file.sha256 };
+        text: passage.excerpt, content_sha256: passage.content_sha256 };
     },
     async listRelations(versionId) {
       await delay(latency);

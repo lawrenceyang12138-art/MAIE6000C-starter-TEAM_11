@@ -66,6 +66,13 @@ function sha256(buffer) {
   return crypto.createHash("sha256").update(buffer).digest("hex");
 }
 
+// The HTTP contract validates a per-chunk digest (`GET /evidence/{chunk_id}`).
+// Never reuse the file hash for it: the chunk hash must identify this passage,
+// so the mock fixture and the real service agree on what is being verified.
+function chunkDigest(fileId, versionId, page, excerpt) {
+  return sha256(Buffer.from([fileId, versionId, page, excerpt].join("|"), "utf8"));
+}
+
 function writeFile(relativePath, contents) {
   const absolutePath = path.join(fixtureRoot, relativePath);
   ensureDirectory(path.dirname(absolutePath));
@@ -181,14 +188,18 @@ function buildMockData(manifest) {
     .forEach((file) => {
       evidence[`${file.file_id}:${file.version_id}`] = Array.from(
         { length: file.page_count },
-        (_, pageIndex) => ({
-          evidence_id: `evidence-${file.file_id}-${pageIndex + 1}`,
-          file_id: file.file_id,
-          version_id: file.version_id,
-          page: pageIndex + 1,
-          source_path: file.relative_path,
-          excerpt: `${file.display_name} page ${pageIndex + 1} synthetic excerpt`,
-        }),
+        (_, pageIndex) => {
+          const excerpt = `${file.display_name} page ${pageIndex + 1} synthetic excerpt`;
+          return {
+            evidence_id: `evidence-${file.file_id}-${pageIndex + 1}`,
+            file_id: file.file_id,
+            version_id: file.version_id,
+            page: pageIndex + 1,
+            source_path: file.relative_path,
+            excerpt,
+            content_sha256: chunkDigest(file.file_id, file.version_id, pageIndex + 1, excerpt),
+          };
+        },
       );
     });
 

@@ -1,4 +1,4 @@
-import { dedupeFiles, isEvidenceForVersion, statusMeta, summarizeProgress } from "./scan.js";
+import { POLL_MAX_ATTEMPTS, POLL_MAX_MS, dedupeFiles, isEvidenceForVersion, nextPollDelay, shouldPoll, statusMeta, summarizeProgress } from "./scan.js";
 
 describe("scan presentation helpers", () => {
   it("uses independent current-file counts rather than scan-job percentages", () => {
@@ -36,5 +36,22 @@ describe("scan presentation helpers", () => {
     expect(statusMeta("completed")).toMatchObject({ label: "Scan complete", tone: "success" });
     expect(statusMeta("unsupported")).toMatchObject({ label: "Unsupported", tone: "warning" });
     expect(statusMeta("something-new").tone).toBe("neutral");
+  });
+
+  it("pauses progress polling at the attempt budget", () => {
+    const done = { status: "completed" };
+    const complete = { file_counts: { total: 0, basic_ready: 0, enriched: 0, failed: 0, unsupported: 0 } };
+    expect(shouldPoll(done, complete)).toBe(false);
+    expect(shouldPoll(done, undefined)).toBe(true);
+    expect(shouldPoll(done, undefined, { pollCount: POLL_MAX_ATTEMPTS - 1 })).toBe(true);
+    expect(shouldPoll(done, undefined, { pollCount: POLL_MAX_ATTEMPTS })).toBe(false);
+    expect(shouldPoll({ status: "failed" }, undefined)).toBe(false);
+  });
+
+  it("backs off the polling delay and caps it", () => {
+    expect(nextPollDelay(0)).toBe(900);
+    expect(nextPollDelay(1)).toBe(1350);
+    expect(nextPollDelay(2)).toBe(2025);
+    expect(nextPollDelay(50)).toBe(POLL_MAX_MS);
   });
 });
