@@ -1,0 +1,82 @@
+{
+  "configuration_version": "C-team-PDF-reproducibility-20261029-v1",
+  "freeze_status": "C_candidate_not_team_freeze",
+  "gold_freeze": {
+    "freeze_version": "team11-gold-freeze-v1",
+    "frozen_on": "2026-10-16",
+    "gold_path": "submissions/week07/gold-queries.json",
+    "gold_sha256": "d1d7b7daf285ed8ad596546dc1cacb28bca7b23cd26edc748e7636e1a23db053",
+    "manifest_sha256": "3ad53b3f8ccdc7ac6b84457fcedf9a735fe0ddf7ceb8004eb97b46ab17e3280f",
+    "human_B_review": "pending",
+    "policy": "Validator is read-only. A deliberate corpus/answer revision needs a new freeze version and documented B approval; never rewrite expected answers to improve measured scores."
+  },
+  "backend": "local",
+  "model": "intfloat/multilingual-e5-small@614241f622f53c4eeff9890bdc4f31cfecc418b3",
+  "revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+  "dimensions": 384,
+  "model_path": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\models\\multilingual-e5-small",
+  "model_manifest_sha256": "d751e1a52216a9cdce501526905226d4a30e7b3849cda5c113310622469c5b2d",
+  "query_prefix": "query: ",
+  "passage_prefix": "passage: ",
+  "maximum_text_characters": 2000,
+  "maximum_model_tokens": 512,
+  "maximum_query_characters": 500,
+  "maximum_query_search_tokens": 64,
+  "batch_size": 16,
+  "cpu_threads": 4,
+  "keyword_weight": 0.65,
+  "semantic_weight": 0.35,
+  "candidate_limit_per_channel": 200,
+  "evaluation_top_k": 3,
+  "keyword_acceptance_top_k": 1,
+  "api_default_top_k": 10,
+  "api_maximum_top_k": 50,
+  "pooling": "attention_mask_mean_then_l2_normalize",
+  "ai_request_timeout_seconds": 10.0,
+  "local_in_process_timeout": "no_http_deadline",
+  "parser_chunk_characters": 700,
+  "parser_chunk_overlap": 120,
+  "parser_minimum_chunk_characters": 80,
+  "network_at_inference": "local_only_no_cloud_fallback",
+  "model_status": "available",
+  "runtime": {
+    "python": "3.11.5",
+    "packages": {
+      "sqlalchemy": "2.0.43",
+      "pypdf": "6.20.1",
+      "psycopg": "3.2.9",
+      "pgvector": "0.4.1",
+      "fastapi": "0.116.1",
+      "httpx": "0.28.1",
+      "torch": "2.8.0",
+      "transformers": "4.57.1",
+      "sentencepiece": "0.2.1",
+      "huggingface-hub": "0.36.2"
+    }
+  },
+  "database": {
+    "url": "postgresql+psycopg://postgres:***@127.0.0.1:55432/team11_c_pdf",
+    "dialect": "postgresql",
+    "schema_source": "alembic_upgrade_head",
+    "migration_validation": "upgrade_head_executed",
+    "pg_only_migration_validation": true,
+    "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+    "pgvector": "0.8.7"
+  },
+  "thresholds": {
+    "keyword_top1_rate": 1.0,
+    "semantic_top3_rate": 0.8,
+    "semantic_target_for_five": "4/5",
+    "freeze_status": "C_candidate_not_team_freeze",
+    "hybrid": "reported_separately_no_team_threshold_frozen"
+  },
+  "corpus_manifest_version": "d-fixtures-v1",
+  "model_files_sha256": {
+    "config.json": "69137736cab8b8903a07fe8afaafdda25aac55415a12a55d1bffa9f581abf959",
+    "model.safetensors": "1a55775f53449dac10a2bcbc312469fac40b96d53198c407081a831f81c98477",
+    "tokenizer.json": "0b44a9d7b51c3c62626640cda0e2c2f70fdacdc25bbbd68038369d14ebdf4c39",
+    "tokenizer_config.json": "a1d6bc8734a6f635dc158508bef000f8e2e5a759c7d92f984b2c86e5ff53425b",
+    "special_tokens_map.json": "d05497f1da52c5e09554c0cd874037a083e1dc1b9cfd48034d1c717f1afc07a7",
+    "sentencepiece.bpe.model": "cfc8146abe2a0488e9e2a0c56de7952f7c11ab059eca145a0a727afce0db2865"
+  }
+}

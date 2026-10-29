@@ -220,3 +220,22 @@ The dated raw JSON and final validation summary are under
 expected locations, resolved current IDs, actual ranks/pages/chunks, degradation
 and evidence. A failed candidate gate, B pending, corpus classification differences
 and any unrun environment check must remain visible in the final report.
+
+## Actual validation on 2026-10-29 to 2026-10-30
+
+The clean `.venv-clean` environment (Python 3.11.5, Torch 2.8.0, Transformers
+4.57.1) produced keyword Top-1 **5/5**, semantic Top-3 **3/5**, and hybrid Top-3
+**3/5**, on both PostgreSQL and SQLite. All 15 searches executed without
+degradation, duplicate files or evidence failures. The semantic **4/5 C candidate
+gate failed**; hybrid has no separate team-frozen acceptance gate. B review is
+still pending and these placeholder PDFs do not establish topical search quality.
+
+The live HTTP verification passed: 20 missing vectors were backfilled through
+the existing index CLI; real disconnect and 10-second delayed-response probes
+returned `ai_unavailable` and `ai_timeout`; keyword fallback and evidence remained
+readable. Restoring AI and repeating indexing preserved all source/chunk IDs and
+all 16 source hashes. Final tests: **349 passed, 2 skipped** (Windows symlink
+privilege), with PostgreSQL tests enabled; Ruff passed. The dated evidence README
+records exact commands, evaluated Git SHAs, complete Top-3 results and remaining
+A/B/D dependencies. The older backup runtime and failed inherited-environment
+warmup are retained separately and are not the final clean-environment results.
