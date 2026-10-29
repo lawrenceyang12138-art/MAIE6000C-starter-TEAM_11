@@ -1,5 +1,12 @@
 # C search integration handoff
 
+For the 2026-10-29 C follow-up, use the
+[team PDF evaluation and recovery guide](search-team-pdf-evaluation.md). It records
+the D/B corpus mismatch, immutable-answer mapping to scanned UUIDs, actual PDF
+evidence, the C candidate 4/5 semantic gate, and A-owned embedding-job recovery
+limitations. Historical results and integration observations below retain their
+original dates.
+
 Updated: 2026-10-18. Source branch: `feat/c-search-model-evaluation`.
 
 C now uses B's canonical file, version, and chunk models with a separate search

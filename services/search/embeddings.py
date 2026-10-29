@@ -19,6 +19,7 @@ from services.search.text import (
     MODEL_ID,
     MODEL_FILES,
     MODEL_REVISION,
+    PINNED_MODEL_SHA256,
 )
 
 EmbeddingKind = Literal["query", "passage"]
@@ -103,6 +104,8 @@ class LocalE5EmbeddingBackend:
             checksums = manifest["sha256"]
             if not isinstance(checksums, dict) or set(checksums) != set(MODEL_FILES):
                 raise ValueError("model manifest is incomplete")
+            if checksums != PINNED_MODEL_SHA256:
+                raise ValueError("model manifest does not match the pinned revision")
             for filename, expected in checksums.items():
                 target = (self.model_path / filename).resolve()
                 if not target.is_relative_to(self.model_path.resolve()):

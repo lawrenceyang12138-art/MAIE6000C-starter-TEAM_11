@@ -1,5 +1,11 @@
 # Search, local embeddings, and evaluation
 
+The 2026-10-29 [team PDF evaluation and recovery guide](search-team-pdf-evaluation.md)
+adds the frozen D-gold adapter, real scan/parse/index runner, actual-source checks,
+model checksum validation and backfill instructions. Its dated results are
+separate from the historical hand-authored chunk benchmark below. B review and
+team semantic-threshold approval remain pending.
+
 Updated: 2026-10-18 for the canonical C branch. Initial standalone model and
 evaluation evidence was recorded on 2026-10-15. The
 [integration handoff](search-integration-handoff.md) describes the current

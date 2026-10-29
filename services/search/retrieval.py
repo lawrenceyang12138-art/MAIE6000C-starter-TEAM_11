@@ -26,10 +26,14 @@ from services.search.embeddings import (
 from services.search.text import DIMENSIONS, MODEL_ID, normalize_text, tokenize
 
 
-def _base_statement(request: SearchRequest):
+def _base_statement(request: SearchRequest, *, include_unindexed: bool = False):
     stmt = (
         select(SourceChunk, ChunkSearchIndex, FileVersion, FileRecord, AuthorizedRoot)
-        .join(ChunkSearchIndex, ChunkSearchIndex.chunk_id == SourceChunk.id)
+        .join(
+            ChunkSearchIndex,
+            ChunkSearchIndex.chunk_id == SourceChunk.id,
+            isouter=include_unindexed,
+        )
         .join(FileVersion, SourceChunk.version_id == FileVersion.id)
         .join(FileRecord, FileVersion.file_id == FileRecord.id)
         .join(AuthorizedRoot, FileRecord.root_id == AuthorizedRoot.id)
@@ -167,7 +171,11 @@ def search_chunks(
     elif effective_mode == SearchMode.HYBRID:
         rows_by_id.update({row[0].id: row for row in semantic_rows})
     if effective_mode != SearchMode.KEYWORD:
-        incomplete = base.with_only_columns(SourceChunk.id).where(
+        # Parsed chunks without any sidecar are also incomplete. An inner join
+        # would hide them and incorrectly certify this scope as fully embedded.
+        incomplete = _base_statement(request, include_unindexed=True).with_only_columns(
+            SourceChunk.id
+        ).where(
             or_(
                 ChunkSearchIndex.embedding.is_(None),
                 ChunkSearchIndex.embedding_model.is_(None),

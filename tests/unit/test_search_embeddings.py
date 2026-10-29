@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import sys
+from types import SimpleNamespace
 
 import httpx
 import pytest
@@ -46,6 +49,30 @@ def test_missing_local_model_cannot_trigger_download(tmp_path):
 def test_malformed_model_manifest_returns_safe_unavailable(tmp_path):
     manifest = {"model": MODEL_ID, "revision": MODEL_REVISION, "sha256": list(MODEL_FILES)}
     (tmp_path / "model-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(EmbeddingUnavailable, match="^local_model_unusable$"):
+        LocalE5EmbeddingBackend(str(tmp_path)).embed(["hello"])
+
+
+def test_self_signed_manifest_cannot_claim_the_pinned_model_revision(tmp_path, monkeypatch):
+    checksums = {}
+    for filename in MODEL_FILES:
+        content = f"replacement artifact: {filename}".encode()
+        (tmp_path / filename).write_bytes(content)
+        checksums[filename] = hashlib.sha256(content).hexdigest()
+    manifest = {"model": MODEL_ID, "revision": MODEL_REVISION, "sha256": checksums}
+    (tmp_path / "model-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+    class UnexpectedLoader:
+        @staticmethod
+        def from_pretrained(*args, **kwargs):
+            pytest.fail("untrusted replacement model reached the inference loader")
+
+    monkeypatch.setitem(sys.modules, "torch", SimpleNamespace(set_num_threads=lambda _: None))
+    monkeypatch.setitem(
+        sys.modules,
+        "transformers",
+        SimpleNamespace(AutoModel=UnexpectedLoader, AutoTokenizer=UnexpectedLoader),
+    )
     with pytest.raises(EmbeddingUnavailable, match="^local_model_unusable$"):
         LocalE5EmbeddingBackend(str(tmp_path)).embed(["hello"])
 

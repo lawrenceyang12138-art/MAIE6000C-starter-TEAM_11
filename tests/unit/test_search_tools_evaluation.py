@@ -1,0 +1,74 @@
+"""Exercise the public evaluation CLI's frozen-input preflight boundary."""
+
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+from uuid import uuid4
+
+import pytest
+
+REPO = Path(__file__).resolve().parents[2]
+GOLD = REPO / "submissions/week07/gold-queries.json"
+MANIFEST = REPO / "fixtures/manifest.json"
+FREEZE = REPO / "submissions/week07/gold-queries.freeze.json"
+
+
+@pytest.mark.parametrize(
+    "changed_input,code", [
+        ("gold", "frozen_gold_hash_mismatch"),
+        ("manifest", "frozen_manifest_hash_mismatch"),
+    ],
+)
+def test_frozen_mismatch_cli_stops_before_database_or_ai_creation(tmp_path, changed_input, code):
+    gold, manifest = tmp_path / "gold.json", tmp_path / "manifest.json"
+    gold.write_bytes(GOLD.read_bytes())
+    manifest.write_bytes(MANIFEST.read_bytes())
+    selected = gold if changed_input == "gold" else manifest
+    # Valid JSON with identical decoded answers, but distinct frozen bytes.
+    selected.write_bytes(selected.read_bytes() + b"\n")
+    preserved = {path: path.read_bytes() for path in (gold, manifest, FREEZE)}
+    output = tmp_path / "preflight.json"
+    completed = subprocess.run([
+        sys.executable, "-m", "scripts.search_tools", "evaluate",
+        # This nonexistent dialect makes any engine construction fail. A
+        # complete structured preflight report proves execution stops earlier.
+        "--database-url", "nonexistent+driver://user:private-password@localhost/db",
+        "--gold", str(gold), "--manifest", str(manifest), "--freeze", str(FREEZE),
+        "--root-id", str(uuid4()), "--backend", "local",
+        "--model-path", str(tmp_path / "model-does-not-exist"), "--output", str(output),
+    ], cwd=REPO, capture_output=True, text=True, encoding="utf-8", check=False, timeout=30)
+    assert completed.returncode == 1, completed.stderr
+    assert "Traceback" not in completed.stderr
+    report = json.loads(output.read_text("utf-8"))
+    assert report["status"] == "preflight_failed"
+    assert not report["passed"] and not report["candidate_gate_passed"]
+    assert not report["evaluation_valid"] and not report["freeze_verified"]
+    assert report["queries"] == []
+    assert [item["code"] for item in report["diagnostics"]] == [code]
+    diagnostic = report["diagnostics"][0]
+    assert diagnostic["expected_sha256"] != diagnostic["actual_sha256"]
+    assert "private-password" not in json.dumps(report)
+    assert {path: path.read_bytes() for path in preserved} == preserved
+
+
+def test_matching_freeze_cli_preserves_team_shape_and_scope_denominators(db_session, tmp_path):
+    output = tmp_path / "matching-freeze.json"
+    completed = subprocess.run([
+        sys.executable, "-m", "scripts.search_tools", "evaluate",
+        "--database-url", str(db_session.get_bind().url),
+        "--gold", str(GOLD), "--manifest", str(MANIFEST), "--freeze", str(FREEZE),
+        "--root-id", str(uuid4()), "--backend", "off", "--output", str(output),
+    ], cwd=REPO, capture_output=True, text=True, encoding="utf-8", check=False, timeout=30)
+    assert completed.returncode == 1, completed.stderr
+    report = json.loads(output.read_text("utf-8"))
+    assert report["freeze_verified"]
+    assert report["summary"]["denominators"] == {"keyword": 5, "semantic": 5, "hybrid": 5}
+    assert report["summary"]["executed_search_count"] == 0
+    assert len(report["queries"]) == 15
+    assert all(item["query_id"] and item["expected"] for item in report["queries"])
+    assert all(item["response"] is None for item in report["queries"])
+    assert all(item["execution_status"] == "not_run_invalid_scope" for item in report["queries"])
+    assert not report["passed"]

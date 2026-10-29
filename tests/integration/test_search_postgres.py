@@ -4,11 +4,12 @@ import os
 import uuid
 
 import pytest
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from services.common.config import Settings
 from services.common.db import Base, make_engine
+from services.common.models import ChunkSearchIndex, SourceChunk
 from services.common.schemas import SearchRequest
 from services.search.indexing import index_document
 from services.search.retrieval import search_chunks
@@ -110,3 +111,27 @@ def test_postgres_current_version_unique_and_old_text_hidden(postgres_session):
         )
     )
     assert current_count == 1
+
+
+@pytest.mark.parametrize("mode", ["semantic", "hybrid"])
+def test_postgres_missing_sidecar_reports_partial_embeddings(postgres_session, mode):
+    db = postgres_session
+    for file_id in ["pg-indexed", "pg-unindexed"]:
+        version = index_document(
+            db,
+            file_id=file_id,
+            name="manual.pdf",
+            path=f"{file_id}/manual.pdf",
+            chunks=[{"text": "Database backup", "page_number": 2}],
+            backend=FixedBackend(),
+        )
+        if file_id == "pg-unindexed":
+            chunk = db.scalar(select(SourceChunk).where(SourceChunk.version_id == version.id))
+            db.delete(db.get(ChunkSearchIndex, chunk.id))
+    db.flush()
+    response = search_chunks(
+        db, SearchRequest(query="backup", mode=mode), Settings(_env_file=None), FixedBackend()
+    )
+    assert response.effective_mode == mode
+    assert response.degraded and response.degradation_reason == "partial_embeddings"
+    assert {hit.file_id for hit in response.results} == {"pg-indexed"}
