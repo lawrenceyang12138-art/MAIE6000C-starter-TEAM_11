@@ -24,7 +24,7 @@ services:
       - .env
     environment:
       AI_SERVICE_URL: http://ai:8100
-      EMBEDDING_MODEL_PATH: /models/multilingual-e5-small
+      EMBEDDING_MODEL_PATH: /models/pplx-embed-v2-late-0.6b
     volumes:
       - ./models:/models:ro
     ports:

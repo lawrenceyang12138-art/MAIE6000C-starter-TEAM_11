@@ -23,6 +23,13 @@ from scripts.evaluate_team_pdf import (
 from services.common.config import Settings
 from services.common.models import ChunkSearchIndex, FileRecord, SourceChunk
 from services.parsing.evidence import read_evidence
+from services.search.text import (
+    MAX_DOCUMENT_MODEL_TOKENS,
+    MAX_QUERY_MODEL_TOKENS,
+    MODEL_ID,
+    TOKEN_DIMENSIONS,
+)
+from services.search.token_store import ChunkTokenIndex
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -42,6 +49,8 @@ def test_team_pdf_scan_parse_index_uses_real_uuids_and_source_evidence(db_sessio
     assert report["pipeline"]["scan"]["files_created"] == 16
     assert report["pipeline"]["parsed_files_this_run"] == 16
     assert report["pipeline"]["search_index_chunks"] == 20
+    assert report["pipeline"]["compatible_token_index_chunks"] == 0
+    assert report["pipeline"]["token_vector_count"] == 0
     assert report["pipeline"]["status_counts"]["basic_ready"] == 12
     assert report["source_bytes_unchanged"]
     assert validate_corpus(corpus, manifest) == before
@@ -185,12 +194,26 @@ def test_actual_cli_initializes_sqlite_and_reports_migration_limitations(tmp_pat
     assert report["database"]["schema_source"] == "sqlalchemy_metadata_sqlite_test_only"
     assert report["database"]["schema_action"] == "created_empty_database"
     assert report["database"]["pg_only_migration_validation"] is False
+    assert report["database"]["token_schema_source"] == "c_owned_prepare_search_schema"
+    assert report["configuration"]["model"] == MODEL_ID
+    assert report["configuration"]["dimensions"] == TOKEN_DIMENSIONS
+    assert report["configuration"]["representation"] == "token_multivector"
+    assert report["configuration"]["scoring"] == "maxsim_mean"
+    assert report["configuration"]["pooling"] == "none_token_vectors_retained"
+    assert report["configuration"]["query_prefix"] == "[Q] "
+    assert report["configuration"]["passage_prefix"] == "[D] "
+    assert report["configuration"]["maximum_query_model_tokens"] == MAX_QUERY_MODEL_TOKENS
+    assert report["configuration"]["maximum_document_model_tokens"] == MAX_DOCUMENT_MODEL_TOKENS
     assert report["pipeline"]["parsed_files_this_run"] == 16
     assert report["pipeline"]["search_index_chunks"] == 20
     assert report["summary"]["keyword_top1"] == "5/5"
     assert report["summary"]["semantic_top3"] == "0/5"
     # Exit 1 represents the deliberately unmet semantic gate with AI disabled.
     assert not report["passed"]
+    # An existing canonical database can acquire C's new derived table without
+    # pretending that an A-owned canonical migration has changed.
+    with sqlite3.connect(tmp_path / "cli.db") as connection:
+        connection.execute(f'DROP TABLE "{ChunkTokenIndex.__tablename__}"')
     repeated = subprocess.run(
         arguments, cwd=REPO, capture_output=True, text=True, encoding="utf-8",
         check=False, timeout=60,
@@ -199,6 +222,11 @@ def test_actual_cli_initializes_sqlite_and_reports_migration_limitations(tmp_pat
     after = json.loads(output.read_text(encoding="utf-8"))
     assert after["database"]["schema_action"] == "validated_existing_metadata_schema"
     assert after["pipeline"]["root_id"] == report["pipeline"]["root_id"]
+    with sqlite3.connect(tmp_path / "cli.db") as connection:
+        assert connection.execute(
+            "SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?",
+            (ChunkTokenIndex.__tablename__,),
+        ).fetchone()[0] == 1
 
 
 def test_actual_cli_refuses_partial_sqlite_without_repairing_it(tmp_path):

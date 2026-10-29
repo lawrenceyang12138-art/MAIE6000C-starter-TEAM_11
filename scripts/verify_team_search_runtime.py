@@ -36,8 +36,9 @@ from scripts.evaluate_team_pdf import (
     validate_report_destination,
 )
 from services.common.db import make_engine, make_session_factory
-from services.common.models import ChunkSearchIndex, FileRecord, FileVersion, SourceChunk
-from services.search.text import DIMENSIONS, MODEL_ID
+from services.common.models import FileRecord, FileVersion, SourceChunk
+from services.search.text import MODEL_DIRECTORY, MODEL_ID, TOKEN_DIMENSIONS
+from services.search.token_store import ChunkTokenIndex, index_matches_text
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -87,6 +88,11 @@ def source_snapshot(database_url: str, root_id: str) -> dict:
                        FileRecord.current_version_id == FileVersion.id)
                 .order_by(FileRecord.relative_path, SourceChunk.ordinal)
             ))
+            compatible = [
+                index for chunk, _, _ in records
+                if (index := db.get(ChunkTokenIndex, chunk.id)) is not None
+                and index_matches_text(index, chunk.text)
+            ]
             return {
                 "chunks": [{
                     "chunk_id": chunk.id, "version_id": version.id,
@@ -94,12 +100,10 @@ def source_snapshot(database_url: str, root_id: str) -> dict:
                     "page": chunk.page_number, "text": chunk.text,
                     "content_sha256": version.content_sha256,
                 } for chunk, file, version in records],
-                "vectors": sum(
-                    index is not None and index.embedding is not None
-                    and index.embedding_model == MODEL_ID
-                    and index.embedding_dimensions == DIMENSIONS
-                    for index in [db.get(ChunkSearchIndex, chunk.id) for chunk, _, _ in records]
-                ),
+                "vectors": len(compatible),
+                "token_vectors": sum(index.token_count for index in compatible),
+                "representation": "token_multivector",
+                "token_dimensions": TOKEN_DIMENSIONS,
             }
     finally:
         engine.dispose()
@@ -112,7 +116,7 @@ def run_index(database_url: str, version_id: str, ai_url: str, timeout: float) -
         "--backend", "http", "--ai-url", ai_url, "--timeout", str(timeout),
     ]
     completed = subprocess.run(command, cwd=REPO, capture_output=True, text=True,
-                               encoding="utf-8", timeout=90, check=False)
+                               encoding="utf-8", timeout=180, check=False)
     return {"command": public_command(command), "returncode": completed.returncode,
             "result": json.loads(completed.stdout), "stderr": completed.stderr}
 
@@ -160,7 +164,7 @@ def main() -> None:
     parser.add_argument("--database-url", required=True)
     parser.add_argument("--evaluation", type=Path, required=True)
     parser.add_argument("--model-path", type=Path,
-                        default=REPO / "models/multilingual-e5-small")
+                        default=REPO / MODEL_DIRECTORY)
     parser.add_argument("--timeout", type=float, default=10.0)
     parser.add_argument("--output", type=Path, default=REPO / "work/team-runtime.json")
     args = parser.parse_args()
@@ -210,6 +214,13 @@ def main() -> None:
         "http_timeout_seconds": args.timeout,
         "timeout_probe_delay_seconds": args.timeout + 0.5,
         "initial_vector_chunks": snapshot["vectors"],
+        "initial_token_vectors": snapshot["token_vectors"],
+        "model": MODEL_ID,
+        "dimensions": TOKEN_DIMENSIONS,
+        "representation": "token_multivector",
+        "scoring": "maxsim_mean",
+        "warmup_timeout_seconds": max(120, args.timeout + 5),
+        "index_subprocess_timeout_seconds": 180,
         "source_identity_sha256": hashlib.sha256(
             json.dumps(snapshot["chunks"], sort_keys=True).encode("utf-8")
         ).hexdigest(),
@@ -265,7 +276,7 @@ def main() -> None:
                 stack.callback(stop, process)
                 return process
 
-            client = stack.enter_context(httpx.Client(timeout=max(65, args.timeout + 5),
+            client = stack.enter_context(httpx.Client(timeout=max(120, args.timeout + 5),
                                                       trust_env=False))
             report["stage"] = "index_while_ai_disconnected"
             report["failed_index_before_ai"] = run_index(
@@ -282,8 +293,15 @@ def main() -> None:
             report["stage"] = "warm_local_model"
             warm = client.post(ai_url + "/embeddings", json={"texts": ["warm up"], "kind": "query"})
             warm.raise_for_status()
+            assert warm.json()["model"] == MODEL_ID
+            assert warm.json()["dimensions"] == TOKEN_DIMENSIONS
+            assert warm.json()["representation"] == "token_multivector"
+            assert warm.json()["scoring"] == "maxsim_mean"
             report["warmup"] = {"model": warm.json()["model"],
-                                "dimensions": warm.json()["dimensions"]}
+                                "dimensions": warm.json()["dimensions"],
+                                "representation": warm.json()["representation"],
+                                "scoring": warm.json()["scoring"],
+                                "query_token_count": len(warm.json()["vectors"][0])}
             report["initial_recovery_commands"] = []
             report["stage"] = "backfill_current_pdf_versions"
             for version in versions:
@@ -294,6 +312,7 @@ def main() -> None:
             assert recovered["chunks"] == snapshot["chunks"]
             assert recovered["vectors"] == len(snapshot["chunks"])
             report["recovered_vector_chunks"] = recovered["vectors"]
+            report["recovered_token_vectors"] = recovered["token_vectors"]
             report["online_queries"] = []
             report["stage"] = "live_api_search_and_evidence"
             for query in gold["queries"]:
@@ -376,6 +395,7 @@ def main() -> None:
             report["corpus_files"] = corpus_after
             report["all_corpus_bytes_unchanged"] = corpus_before == corpus_after
             report["final_vector_chunks"] = final["vectors"]
+            report["final_token_vectors"] = final["token_vectors"]
             assert report["source_identities_unchanged"] and report["all_corpus_bytes_unchanged"]
             report["stage"] = "complete"
             report["passed"] = True

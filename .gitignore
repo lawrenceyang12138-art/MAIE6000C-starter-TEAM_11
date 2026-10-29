@@ -155,6 +155,7 @@ activemq-data/
 .envrc
 .venv
 .venv-clean/
+.venv-pplx/
 env/
 venv/
 ENV/

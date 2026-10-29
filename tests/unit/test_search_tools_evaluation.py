@@ -9,11 +9,29 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
+from sqlalchemy import inspect
+
+from services.search.token_store import ChunkTokenIndex
 
 REPO = Path(__file__).resolve().parents[2]
 GOLD = REPO / "submissions/week07/gold-queries.json"
 MANIFEST = REPO / "fixtures/manifest.json"
 FREEZE = REPO / "submissions/week07/gold-queries.freeze.json"
+
+
+def test_prepare_token_index_cli_adds_only_derived_storage_without_loading_ai(db_session, tmp_path):
+    engine = db_session.get_bind()
+    ChunkTokenIndex.__table__.drop(engine, checkfirst=True)
+    before = set(inspect(engine).get_table_names())
+    assert "source_chunks" in before
+    completed = subprocess.run([
+        sys.executable, "-m", "scripts.search_tools", "prepare-token-index",
+        "--database-url", str(engine.url), "--backend", "local",
+        "--model-path", str(tmp_path / "missing-model"),
+    ], cwd=REPO, capture_output=True, text=True, encoding="utf-8", check=False, timeout=30)
+    assert completed.returncode == 0, completed.stderr
+    assert "canonical tables unchanged" in completed.stdout
+    assert set(inspect(engine).get_table_names()) - before == {ChunkTokenIndex.__tablename__}
 
 
 @pytest.mark.parametrize(

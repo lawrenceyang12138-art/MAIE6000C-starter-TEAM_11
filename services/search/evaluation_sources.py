@@ -15,7 +15,12 @@ from services.common.models import (
     FileVersion,
     SourceChunk,
 )
-from services.search.text import DIMENSIONS, MODEL_ID, normalize_text
+from services.search.text import TOKEN_DIMENSIONS, normalize_text
+from services.search.token_store import (
+    ChunkTokenIndex,
+    index_matches_text,
+    token_index_available,
+)
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
@@ -185,13 +190,20 @@ def resolve_expected(
     if len(indexes) != len(chunks) or any(not item.search_text for item in indexes):
         return fail("index_not_ready", "Keyword sidecars are missing or empty")
     result["keyword_ready"] = result["ready"] = True
+    token_indexes = {}
+    if token_index_available(db):
+        token_indexes = {item.chunk_id: item for item in db.scalars(
+            select(ChunkTokenIndex).where(
+                ChunkTokenIndex.chunk_id.in_([chunk.id for chunk in chunks])
+            )
+        )}
     compatible = sum(
-        item.embedding is not None
-        and item.embedding_model == MODEL_ID
-        and item.embedding_dimensions == DIMENSIONS
-        for item in indexes
+        index_matches_text(token_indexes.get(chunk.id), chunk.text) for chunk in chunks
     )
     result["compatible_vector_count"] = compatible
+    result["compatible_token_matrix_count"] = compatible
+    result["token_dimensions"] = TOKEN_DIMENSIONS
+    result["representation"] = "token_multivector"
     result["semantic_ready"] = compatible == len(chunks)
     if not result["semantic_ready"]:
         result["semantic_diagnostics"].append({

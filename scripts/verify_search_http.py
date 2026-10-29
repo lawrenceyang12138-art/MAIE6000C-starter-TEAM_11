@@ -14,7 +14,7 @@ from pathlib import Path
 
 import httpx
 
-from services.search.text import DIMENSIONS, MODEL_ID
+from services.search.text import MODEL_DIRECTORY, MODEL_ID, TOKEN_DIMENSIONS
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -52,7 +52,7 @@ def await_ready(client: httpx.Client, url: str, process: subprocess.Popen) -> No
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--database-url", default="sqlite:///work/search-demo.db")
-    parser.add_argument("--model-path", default="models/multilingual-e5-small")
+    parser.add_argument("--model-path", default=MODEL_DIRECTORY)
     parser.add_argument("--output", type=Path, default=Path("work/http-check.json"))
     parser.add_argument(
         "--pytest-output",
@@ -106,10 +106,13 @@ def main() -> None:
         await_ready(client, ai_url, processes[0])
         await_ready(client, api_url, processes[1])
         warm = client.post(
-            ai_url + "/embeddings", json={"texts": ["warm up"], "kind": "query"}, timeout=60
+            ai_url + "/embeddings", json={"texts": ["warm up"], "kind": "query"}, timeout=120
         )
         warm.raise_for_status()
-        assert warm.json()["model"] == MODEL_ID and warm.json()["dimensions"] == DIMENSIONS
+        assert warm.json()["model"] == MODEL_ID
+        assert warm.json()["dimensions"] == TOKEN_DIMENSIONS
+        assert warm.json()["representation"] == "token_multivector"
+        assert warm.json()["scoring"] == "maxsim_mean"
         print("Real local AI model ready; checking 10 queries", flush=True)
         before = []
         for query in gold["queries"]:
@@ -184,7 +187,9 @@ def main() -> None:
         report = {
             "data_kind": "synthetic",
             "model": MODEL_ID,
-            "dimensions": DIMENSIONS,
+            "dimensions": TOKEN_DIMENSIONS,
+            "representation": "token_multivector",
+            "scoring": "maxsim_mean",
             "real_http_processes": True,
             "ai_process_terminated": True,
             "summary": {

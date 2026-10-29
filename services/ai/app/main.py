@@ -10,12 +10,12 @@ from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_
 from services.common.config import configure_logging, get_settings
 from services.common.schemas import (
     EmbeddingRequest,
-    EmbeddingResponse,
     HealthResponse,
     TriageRequest,
     TriageResponse,
 )
-from services.search.embeddings import EmbeddingUnavailable, LocalE5EmbeddingBackend
+from services.search.embeddings import EmbeddingUnavailable, LocalPplxEmbeddingBackend
+from services.search.schemas import TokenEmbeddingResponse
 
 configure_logging()
 logger = logging.getLogger("services.ai.main")
@@ -28,9 +28,9 @@ EMBEDDING_REQUESTS = Counter("ai_embedding_requests_total", "Embedding requests"
 
 
 @lru_cache(maxsize=1)
-def get_local_embedding_backend() -> LocalE5EmbeddingBackend:
+def get_local_embedding_backend() -> LocalPplxEmbeddingBackend:
     settings = get_settings()
-    return LocalE5EmbeddingBackend(settings.embedding_model_path, settings.embedding_cpu_threads)
+    return LocalPplxEmbeddingBackend(settings.embedding_model_path, settings.embedding_cpu_threads)
 
 
 LABEL_KEYWORDS = {
@@ -103,11 +103,11 @@ def triage(payload: TriageRequest) -> TriageResponse:
     return result
 
 
-@app.post("/embeddings", response_model=EmbeddingResponse)
+@app.post("/embeddings", response_model=TokenEmbeddingResponse)
 def embeddings(
     payload: EmbeddingRequest,
-    backend: LocalE5EmbeddingBackend = Depends(get_local_embedding_backend),
-) -> EmbeddingResponse:
+    backend: LocalPplxEmbeddingBackend = Depends(get_local_embedding_backend),
+) -> TokenEmbeddingResponse:
     if not get_settings().embedding_enabled:
         raise HTTPException(status_code=503, detail="ai_disabled")
     try:
@@ -116,4 +116,4 @@ def embeddings(
         EMBEDDING_REQUESTS.labels("unavailable").inc()
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     EMBEDDING_REQUESTS.labels("ok").inc()
-    return EmbeddingResponse(model=backend.model_id, dimensions=backend.dimensions, vectors=vectors)
+    return TokenEmbeddingResponse.encoded(backend.model_id, vectors)

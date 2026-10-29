@@ -1,10 +1,21 @@
 # Team PDF search evaluation and recovery
 
-Prepared by C on 2026-10-29. Work branch: `codex/c-team-pdf-evaluation`.
+Prepared by C on 2026-10-29; model replacement updated 2026-10-30.
+Work branch: `codex/c-team-pdf-evaluation`.
 Integration baseline: `7522287126061da8977c253256e8f807143ab8b5`.
 The HTTPS fetch observed remote develop at
 `047b2ac8b6c584b366c3db8f211125a6b9febe4f`, already included in that local baseline.
 The original C checkout and its untracked frontend/tmp files remain untouched.
+
+The active model is now `perplexity-ai/pplx-embed-v2-late-0.6b` at fixed revision
+`7bba8e7cf2075dec747fa8557f41eb90e70361ed`. This is ColBERT late interaction:
+each input retains a matrix of 128-dimensional token vectors and search computes
+MaxSim. It is not a late-chunking model and is not pooled into a single dense
+vector. The previous E5 weights are retired. Their dated reports in
+`submissions/week07/evidence/C/team-pdf-20261029/` and the older manual-chunk
+reports remain unchanged. Record new results separately in
+`submissions/week07/evidence/C/20261030-pplx/`; never infer a new score from an
+old model's report.
 
 ## Answers, identity, and score interpretation
 
@@ -64,15 +75,21 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m scripts.validate_d_gold
 ```
 
-Model preparation is the explicit network step. The six downloaded files must
+Model preparation is the explicit network step. All fixed-revision files in
+`MODEL_FILES`, including nested Sentence Transformers modules, must
 match `PINNED_MODEL_SHA256` before a local manifest can be written. Offline
 loading checks those same fixed hashes, the manifest's model/revision, and vector
-dimensions. Arbitrary replacement files cannot authenticate themselves by
+dimensions. Native inference uses Sentence Transformers 6 or later and
+Transformers 5.4 or later; each raw run records the exact installed versions.
+Arbitrary replacement files cannot authenticate themselves by
 rewriting the manifest. Weights stay in ignored `models/`; copy those verified
-files and their manifest when preparing another computer.
+files and their manifest when preparing another computer. The active path is
+`models/pplx-embed-v2-late-0.6b/`. Runtime does not download missing weights or
+fall back to E5 or a hosted model.
 
 Create an isolated PostgreSQL/pgvector instance, or supply a disposable database
-URL. Do not point the runner at a shared production database. This run used:
+URL. Do not point the runner at a shared production database. The historical
+2026-10-29 E5 run used:
 
 ```powershell
 docker run --detach --name team11-c-pdf-eval-20261029 --label owner=codex-role-c --publish 127.0.0.1:55432:5432 --env POSTGRES_DB=team11_c_pdf --env POSTGRES_USER=postgres --env POSTGRES_PASSWORD=postgres pgvector/pgvector:pg16
@@ -99,7 +116,17 @@ statuses into B's production parser.
 
 This is synchronous execution of the production handlers, and **does not prove
 API-to-worker job dispatch**. PostgreSQL uses the actual Alembic chain ending at
-`20261015_0002`. SQLite is available for portable local checks:
+`20261015_0002`, then explicitly creates C's token table with
+`prepare_search_schema`. The original shared dense column and migration files
+remain unchanged. An existing canonical database can prepare only the new
+derived table with:
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.search_tools prepare-token-index --database-url YOUR_DATABASE_URL
+```
+
+This step does not populate vectors. Run the existing index command for each
+current readable version afterward. SQLite is available for portable local checks:
 
 ```powershell
 .\.venv\Scripts\python.exe -m scripts.evaluate_team_pdf --database-url sqlite:///work/team-pdf-off.db --backend off --output work/team-pdf-off.json
@@ -117,22 +144,25 @@ quality gate saves all results and exits 1; exit status alone is not a diagnosti
 
 | Parameter | Value |
 | --- | --- |
-| Model | `intfloat/multilingual-e5-small` |
-| Revision | `614241f622f53c4eeff9890bdc4f31cfecc418b3` |
-| Vector dimensions | 384 |
-| Prefixes | `query: ` and `passage: ` |
-| Pooling | attention-mask mean, then L2 normalization |
-| Input limit | first 2,000 chunk characters, tokenizer maximum 512 tokens |
-| Batch / CPU threads | 16 passages / 4 threads |
+| Model | `perplexity-ai/pplx-embed-v2-late-0.6b` |
+| Revision | `7bba8e7cf2075dec747fa8557f41eb90e70361ed` |
+| Representation | variable-length token matrices, 128 dimensions per token |
+| Native prefixes | `[Q] ` and `[D] ` |
+| Pooling / normalization | no dense pooling; L2 normalization per retained token |
+| Input limit | first 2,000 chunk characters; native query/document limits 1,024/4,096 tokens |
+| Request / model batch / CPU threads | up to 16 passages per request / up to 4 per model forward / 4 threads |
+| Model device / dtype | CPU / float32 |
 | Parser chunks | target 700 characters, overlap 120, minimum 80 |
 | Query limits | 500 characters, 64 distinct search tokens |
 | Keyword / semantic weights | 0.65 / 0.35, normalized by their sum |
-| Candidate cap | 200 distinct files per channel |
+| Candidate cap | 200 distinct files after choosing each file's best score for the requested mode |
 | Evaluation / API top_k | 3 recorded (keyword scored at 1) / API default 10, maximum 50 |
 | HTTP AI timeout | 10 seconds |
 | Direct local inference timeout | no HTTP deadline; report distinguishes this path |
 | Runtime network | local files / loopback AI service, no cloud fallback |
-| PostgreSQL vector search | exact cosine distance, no separate reranker |
+| Semantic search | exact MaxSim sum divided by query-token count; no separate reranker |
+| Token storage | C-owned JSON / PostgreSQL JSONB sidecar, linked to canonical chunk IDs |
+| Retired dense column | shared 384-dimension column preserved and unused |
 
 This configuration is a C reproducibility candidate. It does not change the
 historical `search-config-final.json` into a team freeze. Actual software versions,
@@ -156,12 +186,12 @@ missing/unavailable files, newly discovered/old versions, and one hit per file.
 Identical content at different paths remains separate files as required by the
 shared contract; file deduplication does not delete source copies.
 
-After restoring the local AI service, warm it once using a 60-second client
+After restoring the local AI service, warm it once using a 120-second client
 timeout so model initialization does not consume the normal search deadline:
 
 ```powershell
 $warmup = @{ texts = @("warm up"); kind = "query" } | ConvertTo-Json
-Invoke-RestMethod http://127.0.0.1:8100/embeddings -Method Post -ContentType application/json -Body $warmup -TimeoutSec 60
+Invoke-RestMethod http://127.0.0.1:8100/embeddings -Method Post -ContentType application/json -Body $warmup -TimeoutSec 120
 .\.venv\Scripts\python.exe -m scripts.search_tools index --database-url YOUR_DATABASE_URL --version-id CURRENT_VERSION_UUID --backend http --ai-url http://127.0.0.1:8100 --timeout 10
 ```
 
@@ -170,7 +200,7 @@ or incompatible vectors. Success requires `embedding_error=null` and
 `embedded_count=chunk_count`; verify it with semantic/hybrid searches afterward.
 Failure preserves keyword sidecars, source chunks and already published vectors.
 Re-indexing does not require a new scan or different file/version/chunk IDs.
-The direct `--backend local --model-path models/multilingual-e5-small` form is
+The direct `--backend local --model-path models/pplx-embed-v2-late-0.6b` form is
 also supported for offline recovery. No recovery API/UI was added.
 
 The integrated Worker currently marks an embedding job completed even when
@@ -182,7 +212,7 @@ unchanged and provides the existing operational backfill path.
 For live protocol evidence, start from an `off` PDF evaluation database/report:
 
 ```powershell
-.\.venv\Scripts\python.exe -m scripts.verify_team_search_runtime --database-url YOUR_DATABASE_URL --evaluation work/team-pdf-off.json --model-path models/multilingual-e5-small --timeout 10 --output work/team-pdf-runtime.json
+.\.venv\Scripts\python.exe -m scripts.verify_team_search_runtime --database-url YOUR_DATABASE_URL --evaluation work/team-pdf-off.json --model-path models/pplx-embed-v2-late-0.6b --timeout 10 --output work/team-pdf-runtime.json
 ```
 
 This tool starts temporary loopback API/AI processes, runs the existing index CLI
@@ -190,6 +220,12 @@ against every current parsed PDF version, records all 15 online searches and
 their HTTP evidence, actually stops AI, induces a real delayed HTTP timeout,
 restores the local model, and retries indexing. It saves raw responses and checks
 source bytes/IDs throughout. It stops only its own helper processes.
+The runtime report counts compatible chunk matrices separately from total token
+vectors. Compatibility includes the new model/revision, 128 dimensions and the
+source-text fingerprint. The model prewarm limit is 120 seconds and the index
+subprocess limit is 180 seconds; normal search requests still use a 10-second AI
+deadline. Those protocol checks do not convert a degraded result into a semantic
+hit or establish a semantic-quality acceptance claim.
 
 ## Handoff to A, B and D
 
@@ -221,7 +257,7 @@ expected locations, resolved current IDs, actual ranks/pages/chunks, degradation
 and evidence. A failed candidate gate, B pending, corpus classification differences
 and any unrun environment check must remain visible in the final report.
 
-## Actual validation on 2026-10-29 to 2026-10-30
+## Historical E5 validation on 2026-10-29 to 2026-10-30
 
 The clean `.venv-clean` environment (Python 3.11.5, Torch 2.8.0, Transformers
 4.57.1) produced keyword Top-1 **5/5**, semantic Top-3 **3/5**, and hybrid Top-3

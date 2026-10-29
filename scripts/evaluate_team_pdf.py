@@ -52,17 +52,28 @@ from services.search.embeddings import (
     EmbeddingBackend,
     EmbeddingUnavailable,
     HTTPEmbeddingBackend,
-    LocalE5EmbeddingBackend,
+    LocalPplxEmbeddingBackend,
 )
 from services.search.evaluation import evaluate_queries
 from services.search.indexing import embed_version
 from services.search.text import (
-    DIMENSIONS,
     MAX_BATCH_SIZE,
+    MAX_DOCUMENT_MODEL_TOKENS,
+    MAX_QUERY_MODEL_TOKENS,
     MAX_QUERY_TOKENS,
     MAX_TEXT_CHARS,
     MODEL_ID,
+    MODEL_DIRECTORY,
+    MODEL_FORWARD_BATCH_SIZE,
     MODEL_REVISION,
+    PASSAGE_PREFIX,
+    QUERY_PREFIX,
+    TOKEN_DIMENSIONS,
+)
+from services.search.token_store import (
+    ChunkTokenIndex,
+    index_matches_text,
+    prepare_search_schema,
 )
 
 REPO = Path(__file__).resolve().parents[1]
@@ -173,7 +184,7 @@ def source_mounts(settings: Settings):
 
 
 class _DisabledBackend:
-    model_id, dimensions = MODEL_ID, DIMENSIONS
+    model_id, dimensions = MODEL_ID, TOKEN_DIMENSIONS
 
     def embed(self, texts, kind="passage"):
         raise EmbeddingUnavailable("ai_disabled")
@@ -310,6 +321,17 @@ def evaluate_corpus(
             FileRecord.root_id == root.id,
             FileRecord.current_version_id == FileVersion.id,
         ))
+        token_rows = list(db.execute(
+            select(ChunkTokenIndex, SourceChunk)
+            .join(SourceChunk, SourceChunk.id == ChunkTokenIndex.chunk_id)
+            .join(FileVersion, FileVersion.id == SourceChunk.version_id)
+            .join(FileRecord, FileRecord.id == FileVersion.file_id)
+            .where(FileRecord.root_id == root.id,
+                   FileRecord.current_version_id == FileVersion.id)
+        ))
+        compatible_token_rows = [
+            index for index, chunk in token_rows if index_matches_text(index, chunk.text)
+        ]
         pipeline = {
             "execution": "synchronous_existing_scan_parse_index_handlers",
             "worker_dispatcher": "not_exercised_by_this_runner",
@@ -330,6 +352,10 @@ def evaluate_corpus(
                 item["index"]["embedded_count"] for item in processing if item.get("index")
             ),
             "search_index_chunks": indexed_count,
+            "token_index_chunks": len(token_rows),
+            "compatible_token_index_chunks": len(compatible_token_rows),
+            "token_vector_count": sum(index.token_count for index in compatible_token_rows),
+            "token_dimensions": TOKEN_DIMENSIONS,
             "parser_revision": PARSER_REVISION,
         }
     after = validate_corpus(corpus_dir, manifest)
@@ -348,6 +374,8 @@ def git_state() -> dict:
     source_files = [
         *sorted((REPO / "services/search").glob("*.py")), Path(__file__),
         REPO / "scripts/search_tools.py", REPO / "scripts/verify_team_search_runtime.py",
+        REPO / "services/ai/app/main.py", REPO / "services/common/config.py",
+        REPO / "pyproject.toml", REPO / "compose.yaml", REPO / ".env.example",
     ]
     return {
         "sha": git("rev-parse", "HEAD"),
@@ -365,7 +393,7 @@ def dependency_versions() -> dict:
     packages = {}
     for name in (
         "sqlalchemy", "pypdf", "psycopg", "pgvector", "fastapi", "httpx", "torch",
-        "transformers", "sentencepiece", "huggingface-hub",
+        "transformers", "sentence-transformers", "torchvision", "Pillow", "huggingface-hub",
     ):
         try:
             packages[name] = package_version(name)
@@ -417,14 +445,16 @@ def prepare_schema(engine, database_url: str) -> dict:
         config.set_main_option("script_location", str(REPO / "alembic"))
         config.attributes["database_url"] = database_url
         command.upgrade(config, "head")
+        prepare_search_schema(engine)
         return {
             "schema_source": "alembic_upgrade_head",
             "migration_validation": "upgrade_head_executed",
             "pg_only_migration_validation": True,
+            "token_schema_source": "c_owned_prepare_search_schema",
         }
     inspector = inspect(engine)
     existing = set(inspector.get_table_names())
-    expected = set(Base.metadata.tables)
+    expected = set(Base.metadata.tables) - {ChunkTokenIndex.__tablename__}
     if not existing:
         Base.metadata.create_all(engine)
         action = "created_empty_database"
@@ -446,11 +476,13 @@ def prepare_schema(engine, database_url: str) -> dict:
                 "remedy": "Use a new disposable SQLite database; PostgreSQL validates migrations",
             }])
         action = "validated_existing_metadata_schema"
+    prepare_search_schema(engine)
     return {
         "schema_source": "sqlalchemy_metadata_sqlite_test_only",
         "schema_action": action,
         "migration_validation": "not_run_sqlite_migration_chain_requires_postgresql",
         "pg_only_migration_validation": False,
+        "token_schema_source": "c_owned_prepare_search_schema",
         "limitation": "SQLite smoke tests do not verify PostgreSQL migrations or pgvector SQL",
     }
 
@@ -467,7 +499,7 @@ def main() -> None:
     parser.add_argument("--freeze", type=Path,
                         default=REPO / "submissions/week07/gold-queries.freeze.json")
     parser.add_argument("--backend", choices=["local", "http", "off"], default="local")
-    parser.add_argument("--model-path", type=Path, default=REPO / "models/multilingual-e5-small")
+    parser.add_argument("--model-path", type=Path, default=REPO / MODEL_DIRECTORY)
     parser.add_argument("--ai-url", default="http://127.0.0.1:8100")
     parser.add_argument("--timeout", type=float, default=10.0)
     parser.add_argument("--cpu-threads", type=int, default=4)
@@ -533,7 +565,7 @@ def main() -> None:
         )
         backend = None
         if args.backend == "local":
-            backend = LocalE5EmbeddingBackend(str(args.model_path), args.cpu_threads)
+            backend = LocalPplxEmbeddingBackend(str(args.model_path), args.cpu_threads)
         elif args.backend == "http":
             backend = HTTPEmbeddingBackend(args.ai_url, timeout=args.timeout)
         model_manifest = args.model_path / "model-manifest.json"
@@ -541,14 +573,21 @@ def main() -> None:
             "backend": args.backend,
             "model": MODEL_ID,
             "revision": MODEL_REVISION,
-            "dimensions": DIMENSIONS,
+            "dimensions": TOKEN_DIMENSIONS,
+            "representation": "token_multivector",
+            "scoring": "maxsim_mean",
             "model_path": str(args.model_path.resolve()) if args.backend == "local" else None,
             "model_manifest_sha256": digest(model_manifest) if model_manifest.is_file() else None,
-            "query_prefix": "query: ", "passage_prefix": "passage: ",
-            "maximum_text_characters": MAX_TEXT_CHARS, "maximum_model_tokens": 512,
+            "query_prefix": QUERY_PREFIX, "passage_prefix": PASSAGE_PREFIX,
+            "maximum_text_characters": MAX_TEXT_CHARS,
+            "maximum_query_model_tokens": MAX_QUERY_MODEL_TOKENS,
+            "maximum_document_model_tokens": MAX_DOCUMENT_MODEL_TOKENS,
             "maximum_query_characters": 500,
             "maximum_query_search_tokens": MAX_QUERY_TOKENS,
             "batch_size": MAX_BATCH_SIZE, "cpu_threads": args.cpu_threads,
+            "batch_size_scope": "maximum_passages_per_embedding_request",
+            "maximum_model_forward_batch_size": MODEL_FORWARD_BATCH_SIZE,
+            "model_device": "cpu", "model_dtype": "float32",
             "keyword_weight": settings.search_keyword_weight,
             "semantic_weight": settings.search_semantic_weight,
             "candidate_limit_per_channel": settings.search_max_candidates,
@@ -556,7 +595,11 @@ def main() -> None:
             "keyword_acceptance_top_k": 1,
             "api_default_top_k": 10,
             "api_maximum_top_k": 50,
-            "pooling": "attention_mask_mean_then_l2_normalize",
+            "pooling": "none_token_vectors_retained",
+            "normalization": "l2_per_token",
+            "semantic_score_normalization": "sum_query_token_maxsim_divided_by_query_token_count",
+            "token_index_storage": "c_owned_json_or_postgresql_jsonb",
+            "legacy_dense_column": "unused_preserved_384_dimensions",
             "ai_request_timeout_seconds": settings.search_request_timeout_seconds,
             "local_in_process_timeout": "no_http_deadline" if args.backend == "local" else None,
             "parser_chunk_characters": CHUNK_SIZE_CHARS,

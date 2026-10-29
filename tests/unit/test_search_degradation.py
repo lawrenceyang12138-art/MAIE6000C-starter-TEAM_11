@@ -18,19 +18,20 @@ from services.parsing.evidence import read_evidence
 from services.search.embeddings import (
     EmbeddingUnavailable,
     HTTPEmbeddingBackend,
-    LocalE5EmbeddingBackend,
+    LocalPplxEmbeddingBackend,
 )
 from services.search.indexing import embed_version, index_document
 from services.search.retrieval import search_chunks
-from services.search.text import DIMENSIONS, MODEL_ID
+from services.search.text import MODEL_ID, TOKEN_DIMENSIONS
+from services.search.token_store import ChunkTokenIndex
 
 
 class FixedBackend:
     model_id = MODEL_ID
-    dimensions = DIMENSIONS
+    dimensions = TOKEN_DIMENSIONS
 
     def embed(self, texts, kind="passage"):
-        return [[1.0] + [0.0] * (DIMENSIONS - 1) for _ in texts]
+        return [[[1.0] + [0.0] * (TOKEN_DIMENSIONS - 1)] for _ in texts]
 
 
 def add_document(db, file_id="document", **kwargs):
@@ -89,7 +90,7 @@ def test_missing_local_model_explicitly_degrades_without_losing_source(db_sessio
         db_session,
         SearchRequest(query="backup", mode="semantic"),
         Settings(_env_file=None),
-        LocalE5EmbeddingBackend(str(tmp_path / "missing-model")),
+        LocalPplxEmbeddingBackend(str(tmp_path / "missing-model")),
     )
     assert response.mode == "semantic" and response.effective_mode == "keyword"
     assert response.degradation_reason == "local_model_missing"
@@ -103,10 +104,10 @@ def test_incompatible_query_vectors_preserve_keyword_evidence(db_session, mode, 
 
     class IncompatibleBackend(FixedBackend):
         model_id = "wrong-revision" if fault == "model" else MODEL_ID
-        dimensions = 8 if fault == "dimensions" else DIMENSIONS
+        dimensions = 8 if fault == "dimensions" else TOKEN_DIMENSIONS
 
         def embed(self, texts, kind="passage"):
-            return [[0.0] * DIMENSIONS for _ in texts]
+            return [[[0.0] * TOKEN_DIMENSIONS] for _ in texts]
 
     response = search_chunks(
         db_session,
@@ -294,4 +295,5 @@ def test_embedding_recovery_reuses_chunk_ids_and_preserves_keyword_index(db_sess
     )
     assert not semantic.degraded
     assert semantic.results[0].chunk_id == chunk.id
+    assert db_session.get(ChunkTokenIndex, chunk.id).token_dimensions == TOKEN_DIMENSIONS
     assert db_session.get(FileRecord, "document").current_version_id == version.id

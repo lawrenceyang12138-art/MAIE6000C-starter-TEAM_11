@@ -23,7 +23,10 @@ from services.search.embeddings import (
     EmbeddingUnavailable,
     validate_vectors,
 )
-from services.search.text import DIMENSIONS, MAX_BATCH_SIZE, MAX_TEXT_CHARS, MODEL_ID
+from services.search.text import (
+    MAX_BATCH_SIZE, MAX_TEXT_CHARS, MODEL_ID, MODEL_REVISION, TOKEN_DIMENSIONS,
+)
+from services.search.token_store import ChunkTokenIndex, text_fingerprint, token_index_available
 
 
 @dataclass(frozen=True)
@@ -35,7 +38,7 @@ class IndexResult:
 
 
 def embed_version(db: Session, version_id: str, backend: EmbeddingBackend) -> IndexResult:
-    """Build keyword sidecars first, then publish vectors only after all batches pass."""
+    """Publish native token matrices atomically after every document batch passes."""
     version = db.get(FileVersion, version_id)
     if version is None:
         raise ValueError("file version not found")
@@ -55,12 +58,18 @@ def embed_version(db: Session, version_id: str, backend: EmbeddingBackend) -> In
         if index is None:
             index = ChunkSearchIndex(chunk_id=chunk.id, search_text=chunk.text)
             db.add(index)
+        # The retired dense model must never survive as an implicit fallback.
+        index.embedding = None
+        index.embedding_model = None
+        index.embedding_dimensions = None
         indexes.append(index)
     db.flush()
 
-    if backend.model_id != MODEL_ID or backend.dimensions != DIMENSIONS:
+    if backend.model_id != MODEL_ID or backend.dimensions != TOKEN_DIMENSIONS:
         return IndexResult(version_id, len(chunks), 0, "embedding_model_mismatch")
-    vectors: list[list[float]] = []
+    if not token_index_available(db):
+        return IndexResult(version_id, len(chunks), 0, "token_index_schema_missing")
+    vectors: list[list[list[float]]] = []
     try:
         for offset in range(0, len(chunks), MAX_BATCH_SIZE):
             texts = [
@@ -71,10 +80,17 @@ def embed_version(db: Session, version_id: str, backend: EmbeddingBackend) -> In
     except EmbeddingUnavailable as exc:
         return IndexResult(version_id, len(chunks), 0, str(exc))
 
-    for index, vector in zip(indexes, vectors, strict=True):
-        index.embedding = vector
-        index.embedding_model = MODEL_ID
-        index.embedding_dimensions = DIMENSIONS
+    for chunk, vector in zip(chunks, vectors, strict=True):
+        token_index = db.get(ChunkTokenIndex, chunk.id)
+        if token_index is None:
+            token_index = ChunkTokenIndex(chunk_id=chunk.id)
+            db.add(token_index)
+        token_index.model_id = MODEL_ID
+        token_index.model_revision = MODEL_REVISION
+        token_index.token_dimensions = TOKEN_DIMENSIONS
+        token_index.token_count = len(vector)
+        token_index.token_vectors = vector
+        token_index.text_sha256 = text_fingerprint(chunk.text)
     db.flush()
     return IndexResult(version_id, len(chunks), len(vectors))
 

@@ -15,12 +15,14 @@ from alembic.config import Config
 
 from services.common.config import Settings
 from services.common.db import make_engine, make_session_factory
-from services.search.embeddings import HTTPEmbeddingBackend, LocalE5EmbeddingBackend
+from services.search.embeddings import HTTPEmbeddingBackend, LocalPplxEmbeddingBackend
 from services.search.indexing import embed_version, index_document
+from services.search.token_store import prepare_search_schema
 from services.search.text import (
     MODEL_FILES,
     MODEL_ID,
     MODEL_NAME,
+    MODEL_DIRECTORY,
     MODEL_REVISION,
     PINNED_MODEL_SHA256,
 )
@@ -49,7 +51,13 @@ def prepare_model(destination: Path) -> None:
     """Only this explicit preparation command can download model files."""
     from huggingface_hub import snapshot_download
 
+    destination.mkdir(parents=True, exist_ok=True)
     filenames = list(MODEL_FILES)
+    for filename in filenames:
+        target = (destination / filename).resolve()
+        if not target.is_relative_to(destination.resolve()):
+            raise ValueError("model preparation path is outside the destination")
+        target.parent.mkdir(parents=True, exist_ok=True)
     snapshot_download(
         MODEL_NAME,
         revision=MODEL_REVISION,
@@ -68,10 +76,14 @@ def prepare_model(destination: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "action", choices=["download-model", "migrate", "seed", "index", "evaluate"]
+        "action", choices=[
+            "download-model", "migrate", "prepare-token-index", "seed", "index", "evaluate"
+        ]
     )
     parser.add_argument("--database-url", default="sqlite:///work/search-demo.db")
-    parser.add_argument("--model-path", type=Path, default=REPO / "models/multilingual-e5-small")
+    parser.add_argument(
+        "--model-path", type=Path, default=REPO / MODEL_DIRECTORY
+    )
     parser.add_argument("--fixture", type=Path, default=REPO / "fixtures/search/mock-chunks.json")
     parser.add_argument("--gold", type=Path, default=REPO / "fixtures/search/gold-queries.json")
     parser.add_argument("--backend", choices=["local", "http", "off"], default="local")
@@ -94,6 +106,19 @@ def main() -> None:
         config = Config(str(REPO / "alembic.ini"))
         config.attributes["database_url"] = args.database_url
         command.upgrade(config, "head")
+        engine = make_engine(args.database_url)
+        try:
+            prepare_search_schema(engine)
+        finally:
+            engine.dispose()
+        return
+    if args.action == "prepare-token-index":
+        engine = make_engine(args.database_url)
+        try:
+            prepare_search_schema(engine)
+        finally:
+            engine.dispose()
+        print("Prepared C-owned token index schema; canonical tables unchanged")
         return
     gold = manifest = manifest_path = None
     input_record = {}
@@ -163,7 +188,7 @@ def main() -> None:
                 raise SystemExit(1)
     backend = None
     if args.backend == "local":
-        backend = LocalE5EmbeddingBackend(str(args.model_path), args.cpu_threads)
+        backend = LocalPplxEmbeddingBackend(str(args.model_path), args.cpu_threads)
     elif args.backend == "http":
         backend = HTTPEmbeddingBackend(args.ai_url, timeout=args.timeout)
     engine = make_engine(args.database_url)

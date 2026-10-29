@@ -8,7 +8,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pythonjsonlogger import jsonlogger
 
-from services.search.text import DIMENSIONS, MODEL_ID
+from services.search.text import MODEL_DIRECTORY, MODEL_ID, TOKEN_DIMENSIONS
 
 
 class Settings(BaseSettings):
@@ -25,8 +25,8 @@ class Settings(BaseSettings):
     source_mounts: dict[str, str] = {"corpus": "/source/corpus"}
     embedding_enabled: bool = True
     embedding_model: Literal[MODEL_ID] = MODEL_ID
-    embedding_dimensions: Literal[DIMENSIONS] = DIMENSIONS
-    embedding_model_path: str = "models/multilingual-e5-small"
+    embedding_dimensions: Literal[TOKEN_DIMENSIONS] = TOKEN_DIMENSIONS
+    embedding_model_path: str = MODEL_DIRECTORY
     embedding_cpu_threads: int = Field(default=4, ge=1, le=32)
     search_request_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
     search_keyword_weight: float = Field(default=0.65, gt=0, le=1)

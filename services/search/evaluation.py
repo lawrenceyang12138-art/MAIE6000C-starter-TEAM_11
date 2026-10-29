@@ -14,7 +14,7 @@ from services.parsing.evidence import SourceUnavailable, read_evidence
 from services.search.embeddings import EmbeddingBackend
 from services.search.evaluation_sources import expected_locations, resolve_expected
 from services.search.retrieval import search_chunks
-from services.search.text import DIMENSIONS, MODEL_ID
+from services.search.text import MODEL_ID, TOKEN_DIMENSIONS
 
 
 def _ranked_evidence(db: Session, response) -> list[dict]:
@@ -182,7 +182,9 @@ def evaluate_queries(
         ),
         "expected_policy": "any_acceptable_location_file_version_page; all alternatives diagnosed",
         "model": MODEL_ID,
-        "dimensions": DIMENSIONS,
+        "dimensions": TOKEN_DIMENSIONS,
+        "representation": "token_multivector",
+        "scoring": "maxsim_mean",
         "corpus": {
             "manifest_version": manifest.get("manifest_version") if manifest else None,
             "manifest_root_alias": manifest.get("root_id") if manifest else None,

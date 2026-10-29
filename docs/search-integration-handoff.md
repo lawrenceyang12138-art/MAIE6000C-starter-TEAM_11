@@ -1,11 +1,18 @@
 # C search integration handoff
 
-For the 2026-10-29 C follow-up, use the
+For the 2026-10-30 PPLX replacement, use the
 [team PDF evaluation and recovery guide](search-team-pdf-evaluation.md). It records
 the D/B corpus mismatch, immutable-answer mapping to scanned UUIDs, actual PDF
 evidence, the C candidate 4/5 semantic gate, and A-owned embedding-job recovery
 limitations. Historical results and integration observations below retain their
 original dates.
+
+The active model is `perplexity-ai/pplx-embed-v2-late-0.6b` at revision
+`7bba8e7cf2075dec747fa8557f41eb90e70361ed`. Each input produces multiple
+128-dimensional token vectors; search uses query-length-normalized MaxSim.
+There is no dense pooling and no E5 fallback. The 2026-10-29 E5 PDF results and
+older manual-chunk results remain historical evidence, with their original bytes
+and hashes. New model evidence belongs in `evidence/C/20261030-pplx/`.
 
 Updated: 2026-10-18. Source branch: `feat/c-search-model-evaluation`.
 
@@ -29,6 +36,15 @@ ID. The actual search migration is `20261015_0002`, following `445f908b73b4`.
 It creates search-derived storage and its indexes; it does not create another
 file/version/chunk catalog. See the adaptation record for the revision label
 proposed in the shared contract and the executable chain in this branch.
+
+The PPLX model uses C's separate `ChunkTokenIndex` sidecar. It stores token
+matrices, model ID/revision, token dimensions/count and source-text fingerprint.
+The original shared `vector(384)` column is preserved and unused by the active
+model. `search_tools migrate` runs shared migrations before calling
+`prepare_search_schema`; `search_tools prepare-token-index` adds only C's derived
+table to an existing canonical database. A owns rollout and any shared migration
+integration. Existing E5 dense vectors require re-indexing with PPLX and cannot
+be used as compatible semantic evidence.
 
 `embed_version(db, version_id, backend)` creates keyword sidecars before calling
 the embedding backend. It returns `version_id`, `chunk_count`, `embedded_count`,
@@ -100,7 +116,7 @@ Display a friendly fallback message when `degraded` is true, using
 | `page` | Nullable one-based source page |
 | `text` | Source excerpt, at most 2000 characters |
 | `score/keyword_score/semantic_score` | Scores between 0 and 1; not probabilities |
-| `reason` | Token, filename, and/or semantic-cosine explanation |
+| `reason` | Token, filename, and/or token-MaxSim explanation |
 
 Open source evidence through `GET /evidence/{chunk_id}`. Pass the returned chunk
 ID through the authorized API and handle missing, superseded, and revoked
@@ -140,10 +156,11 @@ Codex assisted with reading requirements, designing and implementing the
 Python/SQLAlchemy/FastAPI code, writing tests and documentation, and running
 SQLite, PostgreSQL/pgvector, local-model, and HTTP checks. This records tool use;
 it does not sign a personal declaration or submit a course statement for a member.
-C remains responsible for understanding tokenization, E5 prefixes and pooling,
-vector compatibility, ranking, page-aware evaluation, and fallback behavior.
+C remains responsible for understanding tokenization, PPLX native query/document
+prefixes, token masking and MaxSim, vector compatibility, ranking, page-aware
+evaluation, and fallback behavior.
 
-The product's local E5 feature is separate from development assistance. The
+The product's local embedding feature is separate from development assistance. The
 evaluation corpus is synthetic and contains no private customer files. D must
 assemble and verify the final team AI Use Statement against actual member usage
 and the course format.

@@ -16,15 +16,16 @@ from services.common.models import (
 )
 from services.search.evaluation import evaluate_queries
 from services.search.evaluation_sources import resolve_expected
-from services.search.text import DIMENSIONS, MODEL_ID
+from services.search.text import MODEL_ID, MODEL_REVISION, TOKEN_DIMENSIONS
+from services.search.token_store import ChunkTokenIndex, text_fingerprint
 
 
 class FixedBackend:
     model_id = MODEL_ID
-    dimensions = DIMENSIONS
+    dimensions = TOKEN_DIMENSIONS
 
     def embed(self, texts, kind="passage"):
-        return [[1.0] + [0.0] * (DIMENSIONS - 1) for _ in texts]
+        return [[[1.0] + [0.0] * (TOKEN_DIMENSIONS - 1)] for _ in texts]
 
 
 @pytest.fixture()
@@ -58,8 +59,11 @@ def corpus(db_session):
             db.flush()
             db.add(ChunkSearchIndex(
                 chunk_id=chunk.id, search_text=text,
-                embedding=FixedBackend().embed([text])[0],
-                embedding_model=MODEL_ID, embedding_dimensions=DIMENSIONS,
+            ))
+            db.add(ChunkTokenIndex(
+                chunk_id=chunk.id, model_id=MODEL_ID, model_revision=MODEL_REVISION,
+                token_dimensions=TOKEN_DIMENSIONS, token_count=1,
+                token_vectors=FixedBackend().embed([text])[0], text_sha256=text_fingerprint(text),
             ))
             chunks.append(chunk)
         alias = f"file-{len(files) + 1:03}"
@@ -218,8 +222,8 @@ def test_missing_sidecar_on_another_page_is_not_hidden(corpus):
 
 
 def test_incompatible_vectors_preserve_keyword_readiness(corpus):
-    index = corpus["db"].get(ChunkSearchIndex, corpus["chunks"][0].id)
-    index.embedding_model = "obsolete-model"
+    index = corpus["db"].get(ChunkTokenIndex, corpus["chunks"][0].id)
+    index.model_id = "obsolete-model"
     result = resolve(corpus)
     assert result["ready"] and result["keyword_ready"] and not result["semantic_ready"]
     assert result["semantic_diagnostics"][0]["code"] == "index_not_ready"
@@ -339,8 +343,12 @@ def test_wrong_result_page_does_not_count_even_when_the_file_is_correct(corpus):
     corpus["db"].add(chunk)
     corpus["db"].flush()
     corpus["db"].add(ChunkSearchIndex(
-        chunk_id=chunk.id, search_text="other", embedding=FixedBackend().embed(["other"])[0],
-        embedding_model=MODEL_ID, embedding_dimensions=DIMENSIONS,
+        chunk_id=chunk.id, search_text="other",
+    ))
+    corpus["db"].add(ChunkTokenIndex(
+        chunk_id=chunk.id, model_id=MODEL_ID, model_revision=MODEL_REVISION,
+        token_dimensions=TOKEN_DIMENSIONS, token_count=1,
+        token_vectors=FixedBackend().embed(["other"])[0], text_sha256=text_fingerprint("other"),
     ))
     answers = gold(corpus, include_keyword=False)
     answers["queries"][0]["expected"][0].update(page=2, excerpt="other")
