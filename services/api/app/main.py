@@ -98,8 +98,11 @@ def to_job_read(job: Job) -> JobRead:
         status=public_job_status(job.status),
         attempts=job.attempts,
         # The stored `error` is a diagnostic string; only a stable code leaves
-        # the service (privacy rule: no stack traces to the browser).
-        error_code="job_failed" if job.error else None,
+        # the service (privacy rule: no stack traces to the browser). A job
+        # failed by a handler carries the reason the handler recorded, so a
+        # client can tell "the file was not there, retry it" from an internal
+        # failure; anything else falls back to the generic code.
+        error_code=job.error_code or ("job_failed" if job.error else None),
         created_at=job.created_at,
         claimed_at=job.claimed_at,
         completed_at=job.completed_at,
@@ -510,6 +513,11 @@ def retry_job(job_id: int, db: Session = Depends(get_db)) -> JobRetryAccepted:
     a pending one is already queued. The attempt count is kept as provenance;
     the recorded error is cleared because the next run starts fresh.
 
+    This endpoint is the recovery path for a version whose source was
+    temporarily unavailable. The version stays ``failed`` until the retry runs -
+    a rescan deliberately does not re-dispatch it - so restoring the file and
+    calling this is what closes the loop (contract 12.3).
+
     Retrying is new work, so the owning root must be active (contract 3.1). The
     root row is locked before the live-job check and the state transition, so
     two concurrent retries cannot both requeue, and a retry cannot slip in while
@@ -557,6 +565,7 @@ def retry_job(job_id: int, db: Session = Depends(get_db)) -> JobRetryAccepted:
         .values(
             status=JobStatus.PENDING.value,
             error=None,
+            error_code=None,
             claimed_at=None,
             completed_at=None,
         )

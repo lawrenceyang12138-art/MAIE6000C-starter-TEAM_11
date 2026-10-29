@@ -417,6 +417,21 @@ def test_authorizing_something_that_is_not_a_directory_is_refused(
     assert _counts(db_session) == (roots_before, jobs_before)
 
 
+def test_a_failed_job_reports_the_reason_the_handler_recorded(client, mount, db_session):
+    """``error_code`` carries the handler's reason, not just ``job_failed``."""
+    root_id = _create_root(client)["root_id"]
+    job = db_session.query(Job).filter_by(root_id=root_id).one()
+    job.status = JobStatus.FAILED.value
+    job.error = "version 9 failed: file_missing"
+    job.error_code = "file_missing"
+    db_session.commit()
+
+    body = client.get(f"/jobs/{job.id}").json()
+
+    assert body["status"] == "failed"
+    assert body["error_code"] == "file_missing"
+    assert "version 9" not in str(body)
+
 
 def test_retrying_a_job_of_a_paused_root_is_refused(client, mount, db_session):
     root_id = _create_root(client)["root_id"]

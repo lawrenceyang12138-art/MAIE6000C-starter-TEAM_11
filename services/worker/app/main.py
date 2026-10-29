@@ -12,6 +12,7 @@ from services.common.db import get_session_factory
 from services.common.models import (
     Case,
     CaseStatus,
+    FileVersion,
     Job,
     JobStatus,
     JobType,
@@ -66,7 +67,7 @@ def claim_next_pending_job(db: Session) -> Job | None:
     return job
 
 
-def mark_job_failed(job_id: int, error_message: str) -> None:
+def mark_job_failed(job_id: int, error_message: str, error_code: str = "job_failed") -> None:
     session_factory = get_session_factory()
     with session_factory() as db:
         job = db.get(Job, job_id)
@@ -77,6 +78,7 @@ def mark_job_failed(job_id: int, error_message: str) -> None:
         case = db.get(Case, job.case_id) if job.case_id else None
         job.status = JobStatus.FAILED.value
         job.error = error_message[:1000]
+        job.error_code = error_code
         job.completed_at = utcnow()
 
         if case is not None:
@@ -88,14 +90,15 @@ def mark_job_failed(job_id: int, error_message: str) -> None:
 def _complete_job(db: Session, job: Job) -> None:
     """Close a job whose handler ran to a recorded outcome.
 
-    Document-level problems (unsupported formats, changed or vanished
-    sources) are recorded on the version by the handlers and count as
-    completed outcomes here, not job failures - the shared contract calls
-    them handled outcomes. Only errors that are not properties of the
-    document reach run_worker's exception path and fail the job.
+    Document-level problems (unsupported formats) are recorded on the version
+    by the handlers and count as completed outcomes here, not job failures -
+    the shared contract calls them handled outcomes. Only errors that are not
+    properties of the document reach run_worker's exception path and fail the
+    job.
     """
     job.status = JobStatus.COMPLETED.value
     job.error = None
+    job.error_code = None
     job.completed_at = utcnow()
     db.commit()
 
@@ -200,6 +203,65 @@ def _process_scan_job(job_id: int) -> None:
     logger.info("scan_completed", extra={"job_id": job_id, "summary": summary})
 
 
+def _extract_outcome(db: Session, job: Job, version_id: str, status: str) -> None:
+    """Record what a version outcome means for the job that produced it.
+
+    The mapping is the one the shared contract implies, and it has to be
+    explicit here because getting it wrong breaks recovery both ways:
+
+    - ``basic_ready``: the text is stored, so the job is done and the index
+      job is queued in the same transaction.
+    - ``unsupported``: the document cannot be processed and never will be
+      (encrypted, damaged, no text layer). A handled outcome; the job is done.
+    - ``failed``: the version could not be processed *this time* - the file was
+      gone, changed while being read, or the store errored. The version is
+      recorded as failed, so the job must fail too. If the job said
+      ``completed`` while the version said ``failed``, ``POST /jobs/{id}/retry``
+      would refuse it as "not retryable" and the file could never recover.
+      ``error_code`` carries the version's reason so a client can tell a
+      transient failure from an internal one.
+
+    Anything else is a handler bug: a version left mid-pipeline must not be
+    reported as finished work.
+    """
+    if status == VersionStatus.BASIC_READY.value:
+        job.status = JobStatus.COMPLETED.value
+        job.error = None
+        job.error_code = None
+        job.completed_at = utcnow()
+        _enqueue_embed_job(db, version_id)
+        return
+
+    if status == VersionStatus.ENRICHED.value:
+        # Text and vectors are both in place; there is nothing left to queue.
+        job.status = JobStatus.COMPLETED.value
+        job.error = None
+        job.error_code = None
+        job.completed_at = utcnow()
+        return
+
+    if status == VersionStatus.UNSUPPORTED.value:
+        version = db.get(FileVersion, version_id)
+        job.status = JobStatus.COMPLETED.value
+        job.error = None
+        job.error_code = version.error_code if version is not None else None
+        job.completed_at = utcnow()
+        return
+
+    if status == VersionStatus.FAILED.value:
+        version = db.get(FileVersion, version_id)
+        reason = (version.error_code if version is not None else None) or "processing_failed"
+        job.status = JobStatus.FAILED.value
+        job.error = f"version {version_id} failed: {reason}"[:1000]
+        job.error_code = reason
+        job.completed_at = utcnow()
+        return
+
+    raise RuntimeError(
+        f"extract handler for {version_id} returned an unfinished status {status!r}"
+    )
+
+
 def _process_extract_job(job_id: int) -> None:
     session_factory = get_session_factory()
 
@@ -212,23 +274,39 @@ def _process_extract_job(job_id: int) -> None:
         if version_id is None:
             raise RuntimeError(f"extract_file job {job_id} has no version_id")
 
-        source_path = resolve_source_path(db, version_id)
-        # B's handler records the document outcome on the version and returns
-        # the resulting status; only non-document errors raise.
-        status = handle_extract_file(db, version_id, source_path)
-
-        # Closing the extract job and dispatching the index job share one
-        # transaction, so a crash cannot leave a parsed version unindexed.
-        job.status = JobStatus.COMPLETED.value
-        job.error = None
-        job.completed_at = utcnow()
-        if status == VersionStatus.BASIC_READY.value:
-            _enqueue_embed_job(db, version_id)
-        db.commit()
+        # A version that already holds this content does not need re-extracting.
+        # The case that reaches here is a job that failed before the handler
+        # ran (the root was paused, say) while an earlier run had already
+        # published the text. Re-reading is harmless for the text itself, but
+        # ``persist_chunks`` replaces rows, and replacing chunks for nothing
+        # would detach reviews and search indexes that hang off their stable
+        # ids. The job is closed instead; the retry stays idempotent.
+        version = db.get(FileVersion, version_id)
+        if version is not None and version.status in (
+            VersionStatus.BASIC_READY.value,
+            VersionStatus.ENRICHED.value,
+        ):
+            _extract_outcome(db, job, version_id, version.status)
+            db.commit()
+        else:
+            source_path = resolve_source_path(db, version_id)
+            # B's handler records the document outcome on the version and
+            # returns the resulting status; only non-document errors raise.
+            status = handle_extract_file(db, version_id, source_path)
+            # Closing the extract job and dispatching the index job happen in
+            # the same transaction, so a crash cannot leave a parsed version
+            # unindexed.
+            _extract_outcome(db, job, version_id, status)
+            db.commit()
 
     logger.info(
-        "extract_completed",
-        extra={"job_id": job_id, "version_id": version_id, "version_status": status},
+        "extract_finished",
+        extra={
+            "job_id": job_id,
+            "version_id": version_id,
+            "job_status": job.status,
+            "error_code": job.error_code,
+        },
     )
 
 
