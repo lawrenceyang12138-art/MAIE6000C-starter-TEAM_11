@@ -242,6 +242,10 @@ class FileRecord(Base):
         nullable=False,
         default=FilePresence.PRESENT.value,
     )
+    # Why the last scan could not read the file, when it could not. ``missing``
+    # and ``unavailable`` say *that* the content is not usable; this says what
+    # the scanner actually hit, in the same vocabulary extraction uses.
+    presence_reason: Mapped[str | None] = mapped_column(String(100), nullable=True)
     last_seen_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,

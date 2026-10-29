@@ -28,7 +28,7 @@ from services.common.models import (
     RootStatus,
     VersionStatus,
 )
-from services.parsing.pdf import REASON_FILE_MISSING, SourceMissing
+from services.parsing.pdf import REASON_FILE_MISSING, REASON_UNREADABLE, SourceMissing
 from services.scan import handler as scan_handler
 from services.scan.handler import PathEscapesRoot, handle_scan_root, resolve_source_path
 
@@ -352,9 +352,16 @@ def test_a_root_that_is_a_symlink_outside_the_mount_is_rejected(
         handle_scan_root(db_session, root_id)
 
 
-def test_a_file_that_vanishes_between_walk_and_hash_skips_versioning(
+def test_a_file_that_vanishes_between_walk_and_hash_is_recorded_as_missing(
     mounted, db_session, monkeypatch
 ):
+    """A file seen by the walk but unreadable still gets an explainable row.
+
+    It used to be skipped silently: the path was counted as seen, so the
+    missing-file pass never touched it, and a brand new path left no trace at
+    all. Now it is recorded with ``missing`` and the reason, while the healthy
+    files keep being versioned.
+    """
     root_id = _make_root(db_session)
     real_identity = scan_handler.file_identity
 
@@ -367,16 +374,241 @@ def test_a_file_that_vanishes_between_walk_and_hash_skips_versioning(
 
     summary = handle_scan_root(db_session, root_id)
 
-    # Seen during the walk, but never versioned. There is no existing row to
-    # mark missing either: the missing-file pass only touches files that were
-    # observed on an earlier scan.
     assert summary["files_seen"] == 4
-    assert summary["files_created"] == 3
+    # Three readable files plus the row kept for the one that vanished.
+    assert summary["files_created"] == 4
     assert summary["versions_created"] == 3
     assert summary["jobs_dispatched"] == 3
-    assert summary["files_missing"] == 0
-    assert _count(db_session, FileRecord) == 3
+    assert summary["files_missing"] == 1
+    assert summary["files_unavailable"] == 0
+    assert _count(db_session, FileRecord) == 4
     assert _count(db_session, FileVersion) == 3
+    assert _count(db_session, Job) == 3
+
+    vanished = _record(db_session, "regression/doc02.pdf")
+    assert vanished.presence_status == FilePresence.MISSING.value
+    assert vanished.presence_reason == REASON_FILE_MISSING
+    # Nothing was read, so there is no version and no pointer to one.
+    assert vanished.current_version_id is None
+    assert vanished.last_seen_at is None
+
+
+def test_an_unreadable_file_is_recorded_as_unavailable(mounted, db_session, monkeypatch):
+    """``unavailable`` and ``missing`` are different answers for the user."""
+    root_id = _make_root(db_session)
+    real_identity = scan_handler.file_identity
+
+    def flaky_identity(path):
+        if Path(path).name == "doc01.pdf":
+            raise SourceMissing(REASON_UNREADABLE, "permission denied")
+        return real_identity(path)
+
+    monkeypatch.setattr(scan_handler, "file_identity", flaky_identity)
+
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["files_unavailable"] == 1
+    assert summary["files_missing"] == 0
+    unreadable = _record(db_session, "regression/doc01.pdf")
+    assert unreadable.presence_status == FilePresence.UNAVAILABLE.value
+    assert unreadable.presence_reason == REASON_UNREADABLE
+    # The other three files were processed normally.
+    assert summary["versions_created"] == 3
+
+
+def test_an_os_error_while_reading_does_not_abort_the_scan(mounted, db_session, monkeypatch):
+    """An I/O failure is recorded, not raised: one bad file must not stop the rest."""
+    root_id = _make_root(db_session)
+    real_identity = scan_handler.file_identity
+
+    def flaky_identity(path):
+        if Path(path).name == "doc02.pdf":
+            raise PermissionError(13, "Permission denied", str(path))
+        return real_identity(path)
+
+    monkeypatch.setattr(scan_handler, "file_identity", flaky_identity)
+
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["files_unavailable"] == 1
+    assert summary["versions_created"] == 3
+    unreadable = _record(db_session, "regression/doc02.pdf")
+    assert unreadable.presence_status == FilePresence.UNAVAILABLE.value
+    assert unreadable.presence_reason == REASON_UNREADABLE
+
+
+def test_a_non_regular_entry_is_recorded_and_never_opened(mounted, db_session, monkeypatch):
+    """A FIFO or socket has no bytes to version; opening one would block."""
+    root_id = _make_root(db_session)
+    monkeypatch.setattr(
+        scan_handler, "_is_regular_file", lambda path: path.name != "doc02.pdf"
+    )
+
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["files_unavailable"] == 1
+    assert summary["versions_created"] == 3
+    skipped = _record(db_session, "regression/doc02.pdf")
+    assert skipped.presence_reason == scan_handler.PRESENCE_REASON_NOT_REGULAR
+    assert skipped.current_version_id is None
+
+
+def test_a_previously_indexed_file_stops_being_present_when_it_vanishes(
+    mounted, db_session, monkeypatch
+):
+    """The row must not keep saying ``present`` for a file we could not read.
+
+    This is the difference between "we still have this file" and "we failed to
+    read it this time": the pointer to the last observed version is kept, but
+    presence and its reason describe the failed read.
+    """
+    root_id = _make_root(db_session)
+    handle_scan_root(db_session, root_id)
+    version_id = _record(db_session, "regression/doc02.pdf").current_version_id
+    assert _record(db_session, "regression/doc02.pdf").presence_status == "present"
+
+    real_identity = scan_handler.file_identity
+
+    def flaky_identity(path):
+        if Path(path).name == "doc02.pdf":
+            raise SourceMissing(REASON_FILE_MISSING, "vanished mid-scan")
+        return real_identity(path)
+
+    monkeypatch.setattr(scan_handler, "file_identity", flaky_identity)
+
+    summary = handle_scan_root(db_session, root_id)
+
+    record = _record(db_session, "regression/doc02.pdf")
+    assert record.presence_status == FilePresence.MISSING.value
+    assert record.presence_reason == REASON_FILE_MISSING
+    # History is not thrown away: the pointer stays on the last read content.
+    assert record.current_version_id == version_id
+    assert summary["files_created"] == 0
+    assert summary["versions_created"] == 0
+    assert _count(db_session, FileRecord) == 4
+
+
+def test_a_recovered_file_becomes_present_again_without_a_new_version(
+    mounted, db_session, monkeypatch
+):
+    """Recovery is a presence change; the content was already known."""
+    root_id = _make_root(db_session)
+    handle_scan_root(db_session, root_id)
+    original = _record(db_session, "regression/doc02.pdf").current_version_id
+
+    real_identity = scan_handler.file_identity
+
+    def flaky_identity(path):
+        if Path(path).name == "doc02.pdf":
+            raise SourceMissing(REASON_UNREADABLE, "permission denied")
+        return real_identity(path)
+
+    monkeypatch.setattr(scan_handler, "file_identity", flaky_identity)
+    handle_scan_root(db_session, root_id)
+    assert _record(db_session, "regression/doc02.pdf").presence_reason == REASON_UNREADABLE
+
+    monkeypatch.setattr(scan_handler, "file_identity", real_identity)
+    summary = handle_scan_root(db_session, root_id)
+
+    record = _record(db_session, "regression/doc02.pdf")
+    assert record.presence_status == FilePresence.PRESENT.value
+    assert record.presence_reason is None
+    assert record.current_version_id == original
+    assert summary["files_unavailable"] == 0
+    # The same bytes were already versioned; recovery adds no row and no job.
+    assert summary["versions_created"] == 0
+    assert _count(db_session, FileVersion) == 4
+    assert _count(db_session, Job) == 4
+
+
+def test_an_unreadable_directory_does_not_hide_the_rest_of_the_tree(
+    mounted, db_session, monkeypatch
+):
+    """A directory that cannot be listed is reported, not silently skipped."""
+    root_id = _make_root(db_session)
+    real_iter = scan_handler._iter_source_files
+
+    def iter_with_unreadable(root_dir, unreadable_dirs=None):
+        if unreadable_dirs is not None:
+            unreadable_dirs.append(str(Path(root_dir) / "locked"))
+        yield from real_iter(root_dir)
+
+    monkeypatch.setattr(scan_handler, "_iter_source_files", iter_with_unreadable)
+
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["directories_unreadable"] == 1
+    assert summary["unreadable_directories"][0].endswith("locked")
+    # Discovery of the readable part is unaffected.
+    assert summary["versions_created"] == 4
+
+
+def test_a_file_unavailable_last_scan_and_gone_now_is_missing(
+    mounted, db_session, monkeypatch
+):
+    """A stale "could not read it" must not survive the file being deleted.
+
+    Otherwise the user is sent looking for a permission problem on a path that
+    no longer exists.
+    """
+    root_id = _make_root(db_session)
+    real_identity = scan_handler.file_identity
+
+    def flaky_identity(path):
+        if Path(path).name == "doc02.pdf":
+            raise SourceMissing(REASON_UNREADABLE, "permission denied")
+        return real_identity(path)
+
+    monkeypatch.setattr(scan_handler, "file_identity", flaky_identity)
+    handle_scan_root(db_session, root_id)
+    assert _record(db_session, "regression/doc02.pdf").presence_status == (
+        FilePresence.UNAVAILABLE.value
+    )
+
+    monkeypatch.setattr(scan_handler, "file_identity", real_identity)
+    (mounted / "regression" / "doc02.pdf").unlink()
+    summary = handle_scan_root(db_session, root_id)
+
+    record = _record(db_session, "regression/doc02.pdf")
+    assert record.presence_status == FilePresence.MISSING.value
+    assert record.presence_reason == REASON_FILE_MISSING
+    assert summary["files_missing"] == 1
+    assert summary["files_unavailable"] == 0
+
+
+def test_a_scan_with_both_healthy_and_broken_files_records_both(
+    mounted, db_session, monkeypatch
+):
+    """Mixed input: nothing blocks anything, and every file has an answer."""
+    root_id = _make_root(db_session)
+    real_identity = scan_handler.file_identity
+
+    def flaky_identity(path):
+        name = Path(path).name
+        if name == "doc01.pdf":
+            raise SourceMissing(REASON_FILE_MISSING, "gone")
+        if name == "doc02.pdf":
+            raise SourceMissing(REASON_UNREADABLE, "denied")
+        return real_identity(path)
+
+    monkeypatch.setattr(scan_handler, "file_identity", flaky_identity)
+
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["files_seen"] == 4
+    assert summary["versions_created"] == 2
+    assert summary["jobs_dispatched"] == 2
+    assert summary["files_missing"] == 1
+    assert summary["files_unavailable"] == 1
+
+    statuses = {
+        record.relative_path: (record.presence_status, record.presence_reason)
+        for record in db_session.execute(select(FileRecord)).scalars()
+    }
+    assert statuses["regression/doc01.pdf"] == (FilePresence.MISSING.value, "file_missing")
+    assert statuses["regression/doc02.pdf"] == (FilePresence.UNAVAILABLE.value, "unreadable")
+    assert statuses["abnormal/corrupt.pdf"] == (FilePresence.PRESENT.value, None)
+    assert statuses["notes.txt"] == (FilePresence.PRESENT.value, None)
 
 
 def _set_root_status(db: Session, root_id: str, status: str) -> None:

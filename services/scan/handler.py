@@ -12,6 +12,10 @@ adapter described in week04 ``docs/architecture.md``:
   (D5). Re-observing known content still moves the pointer back when the file
   was reverted to an earlier revision, so the pointer always names the bytes
   currently on disk;
+- a file the scan cannot read is *recorded*, not skipped: it keeps a row with
+  ``presence_status`` of ``missing`` or ``unavailable`` and the reason the read
+  failed, and that row is never left saying ``present`` afterwards. One bad
+  file never stops the rest of the scan;
 - the source tree is never written to; the mount is read-only (``:ro``).
 
 Separation from B's modules: hashing and extraction are reused from
@@ -23,6 +27,7 @@ deliberately pure (raises ``ValueError``) so the worker can use it too.
 from __future__ import annotations
 
 import os
+import stat
 from pathlib import Path
 from uuid import uuid4
 
@@ -42,7 +47,21 @@ from services.common.models import (
     VersionStatus,
     utcnow,
 )
-from services.parsing.pdf import SourceMissing, file_identity
+from services.parsing.pdf import (
+    REASON_FILE_MISSING,
+    REASON_UNREADABLE,
+    SourceMissing,
+    file_identity,
+)
+
+# Reasons recorded on ``files.presence_reason``. The first two reuse the
+# extraction vocabulary on purpose: "the file is gone" and "the file cannot be
+# read" must mean the same thing whether the scan or the parser noticed it.
+PRESENCE_REASON_FILE_MISSING = REASON_FILE_MISSING
+PRESENCE_REASON_UNREADABLE = REASON_UNREADABLE
+# A socket, FIFO or device inside the corpus has no bytes to version, and
+# opening one can block the whole scan. It is recorded and skipped.
+PRESENCE_REASON_NOT_REGULAR = "not_a_regular_file"
 
 
 class MountNotAllowed(ValueError):
@@ -121,14 +140,25 @@ def resolve_source_path(db: Session, version_id: str, *, for_write: bool = True)
     return _contained(root_dir, record.relative_path)
 
 
-def _iter_source_files(root_dir: Path):
+def _iter_source_files(root_dir: Path, unreadable_dirs: list[str] | None = None):
     """Yield regular files under root_dir, skipping hidden and symlinked entries.
 
     Discovery does not filter by extension (D4): whether a document can be
     parsed is decided by extraction, not by its filename, and unsupported
     entries must stay visible as records.
+
+    A directory that cannot be listed is reported through ``unreadable_dirs``
+    instead of raising: one unreadable subdirectory must not abort the scan of
+    the rest, and the caller can still say that it was not covered.
     """
-    for dirpath, dirnames, filenames in os.walk(root_dir, followlinks=False):
+
+    def _on_error(exc: OSError) -> None:
+        if unreadable_dirs is not None:
+            unreadable_dirs.append(getattr(exc, "filename", None) or "<unknown>")
+
+    for dirpath, dirnames, filenames in os.walk(
+        root_dir, followlinks=False, onerror=_on_error
+    ):
         dirnames[:] = [
             name
             for name in dirnames
@@ -143,12 +173,108 @@ def _iter_source_files(root_dir: Path):
             yield path
 
 
+def _is_regular_file(path: Path) -> bool:
+    """Whether the entry has bytes we can version.
+
+    Sockets, FIFOs and devices have no content to hash, and opening one can
+    block the whole scan, so they are not read. A path that cannot be stated at
+    all (it vanished between the walk and this call) reports ``True`` on
+    purpose: the read that follows fails with an accurate reason instead of the
+    scan inventing one here.
+    """
+    try:
+        return stat.S_ISREG(path.stat().st_mode)
+    except OSError:
+        return True
+
+
+def _find_record(db: Session, root_id: str, relative_path: str) -> FileRecord | None:
+    return db.execute(
+        select(FileRecord).where(
+            FileRecord.root_id == root_id,
+            FileRecord.relative_path == relative_path,
+        )
+    ).scalars().first()
+
+
+def _record_unreadable(
+    db: Session,
+    *,
+    root_id: str,
+    relative_path: str,
+    name: str,
+    reason: str,
+) -> tuple[FileRecord, bool]:
+    """Record a file the scan could not read; return ``(record, created)``.
+
+    Two failures are kept apart because they mean different things to the user:
+    ``missing`` is "it is not there any more" and ``unavailable`` is "it is
+    there but we could not read it". Both keep the reason code, and neither
+    leaves an existing row saying ``present`` - a file we failed to read is not
+    evidence that its content is still indexed.
+
+    ``last_seen_at`` deliberately keeps its old value: it records the last scan
+    that actually read the bytes, which is more useful than the last time the
+    name was noticed.
+    """
+    presence = (
+        FilePresence.MISSING
+        if reason == PRESENCE_REASON_FILE_MISSING
+        else FilePresence.UNAVAILABLE
+    )
+    record = _find_record(db, root_id, relative_path)
+    created = record is None
+    if record is None:
+        record = FileRecord(
+            id=str(uuid4()),
+            root_id=root_id,
+            relative_path=relative_path,
+            name=name,
+            presence_status=presence.value,
+            presence_reason=reason,
+            last_seen_at=None,
+        )
+        db.add(record)
+        db.flush()
+    else:
+        record.presence_status = presence.value
+        record.presence_reason = reason
+    return record, created
+
+
+def _note_unreadable(
+    db: Session,
+    summary: dict,
+    recorded: set[str],
+    *,
+    root_id: str,
+    relative_path: str,
+    name: str,
+    reason: str,
+) -> None:
+    """Record one unreadable file, count it, and remember it for this scan."""
+    record, created = _record_unreadable(
+        db, root_id=root_id, relative_path=relative_path, name=name, reason=reason
+    )
+    recorded.add(relative_path)
+    if created:
+        summary["files_created"] += 1
+    if record.presence_status == FilePresence.MISSING.value:
+        summary["files_missing"] += 1
+    else:
+        summary["files_unavailable"] += 1
+
+
 def handle_scan_root(db: Session, root_id: str, job_id: int | None = None) -> dict:
     """Scan one authorized root: observe, version, point, dispatch.
 
     The whole run is one transaction: observation, the current-version pointer
     and extraction dispatch land together or not at all (the publication
     transaction the spec requires). Returns a summary dict for logging.
+
+    Files that cannot be read do not abort the run. They are recorded with a
+    ``presence_status`` and reason, so the file list explains itself instead of
+    the file quietly disappearing from it.
     """
     root = db.get(AuthorizedRoot, root_id)
     if root is None:
@@ -187,27 +313,63 @@ def handle_scan_root(db: Session, root_id: str, job_id: int | None = None) -> di
         "jobs_dispatched": 0,
         "pointers_restored": 0,
         "files_missing": 0,
+        "files_unavailable": 0,
+        "directories_unreadable": 0,
+        "unreadable_directories": [],
     }
     seen_paths: set[str] = set()
+    recorded: set[str] = set()
+    unreadable_dirs: list[str] = []
 
-    for path in _iter_source_files(root_dir):
+    for path in _iter_source_files(root_dir, unreadable_dirs):
         relative_path = path.relative_to(root_dir).as_posix()
-        seen_paths.add(relative_path)
         summary["files_seen"] += 1
+
+        if not _is_regular_file(path):
+            _note_unreadable(
+                db,
+                summary,
+                recorded,
+                root_id=root_id,
+                relative_path=relative_path,
+                name=path.name,
+                reason=PRESENCE_REASON_NOT_REGULAR,
+            )
+            continue
 
         try:
             sha256, byte_size = file_identity(path)
-        except SourceMissing:
-            # Vanished between the walk and the read; the missing-file pass
-            # below records it against any existing row.
+        except SourceMissing as exc:
+            # Gone between the walk and the read, or unreadable. Either way the
+            # file is recorded with its reason instead of being skipped: a new
+            # path deserves a row that says why it has no content, and an
+            # existing row must stop claiming its content is present.
+            _note_unreadable(
+                db,
+                summary,
+                recorded,
+                root_id=root_id,
+                relative_path=relative_path,
+                name=path.name,
+                reason=exc.reason_code,
+            )
+            continue
+        except OSError:
+            # An I/O error is not a property of this document either. It is the
+            # same class as "unreadable" and must not stop the other files.
+            _note_unreadable(
+                db,
+                summary,
+                recorded,
+                root_id=root_id,
+                relative_path=relative_path,
+                name=path.name,
+                reason=PRESENCE_REASON_UNREADABLE,
+            )
             continue
 
-        record = db.execute(
-            select(FileRecord).where(
-                FileRecord.root_id == root_id,
-                FileRecord.relative_path == relative_path,
-            )
-        ).scalars().first()
+        seen_paths.add(relative_path)
+        record = _find_record(db, root_id, relative_path)
         if record is None:
             record = FileRecord(
                 id=str(uuid4()),
@@ -222,6 +384,7 @@ def handle_scan_root(db: Session, root_id: str, job_id: int | None = None) -> di
             summary["files_created"] += 1
         else:
             record.presence_status = FilePresence.PRESENT.value
+            record.presence_reason = None
             record.last_seen_at = utcnow()
 
         known_version = db.execute(
@@ -290,17 +453,34 @@ def handle_scan_root(db: Session, root_id: str, job_id: int | None = None) -> di
         summary["versions_created"] += 1
         summary["jobs_dispatched"] += 1
 
-    present = db.execute(
-        select(FileRecord).where(
-            FileRecord.root_id == root_id,
-            FileRecord.presence_status == FilePresence.PRESENT.value,
-        )
-    ).scalars()
-    for record in present:
-        if record.relative_path not in seen_paths:
-            record.presence_status = FilePresence.MISSING.value
-            # The pointer deliberately stays on the last observed version.
-            summary["files_missing"] += 1
+    # Everything this scan did not account for is gone. The check is on the
+    # in-memory state, not on a fresh query: the session does not autoflush, so
+    # a row this scan already marked ``unavailable`` would still look
+    # ``present`` in the database and be overwritten with the wrong reason.
+    #
+    # ``unavailable`` from an earlier scan is promoted here too: if the path is
+    # not there at all any more, "we could not read it" is no longer the truth,
+    # and a stale reason would send the user looking for a permission problem
+    # on a file that no longer exists.
+    records = db.execute(select(FileRecord).where(FileRecord.root_id == root_id)).scalars()
+    for record in records:
+        if record.relative_path in seen_paths or record.relative_path in recorded:
+            continue
+        if record.presence_status == FilePresence.MISSING.value:
+            continue
+        record.presence_status = FilePresence.MISSING.value
+        record.presence_reason = PRESENCE_REASON_FILE_MISSING
+        # The pointer deliberately stays on the last observed version: the
+        # content we indexed is still the last content this path had, and
+        # evidence reads answer ``file_missing`` because of the presence
+        # status rather than because the history was thrown away.
+        summary["files_missing"] += 1
+
+    # Not a per-file outcome (a directory is not a file record), but it must
+    # still be visible: files under an unlistable directory were not covered by
+    # this scan, and silence there would read as "all files are gone".
+    summary["directories_unreadable"] = len(unreadable_dirs)
+    summary["unreadable_directories"] = sorted(unreadable_dirs)
 
     root.last_successful_scan_at = utcnow()
     db.commit()
