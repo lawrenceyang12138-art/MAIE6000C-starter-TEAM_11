@@ -886,3 +886,94 @@ end-to-end results.
 
 Future extensions must preserve chunk IDs, current-version semantics,
 authorization, and error meanings established here.
+
+---
+
+## 12. Revision 2026-10-29: unreadable files, retryable failures, authorization time
+
+Additive changes owned by A. Nothing here renames or removes an existing field,
+state, or endpoint; existing clients keep working.
+
+### 12.1 `files.presence_reason` (new, nullable)
+
+| Column | Type | Meaning |
+| --- | --- | --- |
+| `files.presence_reason` | `VARCHAR(100)` NULL | Why the last scan could not read the file |
+
+Values, all lowercase snake_case:
+
+- `file_missing`: the path was discovered and then could not be opened.
+- `unreadable`: the path exists but its bytes could not be read (permission or
+  I/O error).
+- `not_a_regular_file`: a socket, FIFO or device; there are no bytes to version.
+
+`presence_status` still carries the coarse answer (`missing` / `unavailable`),
+and `presence_reason` explains it. `NULL` means the last scan read the content.
+
+`GET /files` now returns `presence_reason` alongside `presence_status`. A file
+the scan has never read has `version_id: null`, `status: "discovered"`, and a
+reason - it is a record, not an omission. `last_seen_at` keeps the last scan
+that actually read the bytes, so it is not refreshed by a failed read.
+
+Scanning rules that follow from this:
+
+- A file that cannot be read is recorded, never skipped silently.
+- An existing row must not keep `presence_status = present` after a failed read.
+- One unreadable file, or one unlistable directory, does not stop the scan.
+  Unlistable directories are reported in the scan summary
+  (`directories_unreadable`, `unreadable_directories`) because they have no
+  file record to hang a reason on.
+
+### 12.2 `jobs.error_code` (new, nullable)
+
+`jobs.error_code` is the stable reason the last attempt failed. `GET /jobs/{id}`
+returns it instead of the generic `job_failed` when it is set; `job_failed`
+remains the fallback for failures that have no recorded reason. `jobs.error`
+stays a diagnostic string and is still never exposed.
+
+### 12.3 Handler outcome to job status (A2)
+
+`handle_extract_file()` returns the version's terminal status. The worker maps
+it as follows, and this mapping is normative:
+
+| Version outcome | Job status | Notes |
+| --- | --- | --- |
+| `basic_ready` | `completed` | The `embed_file` job is queued in the same transaction |
+| `enriched` | `completed` | Same |
+| `unsupported` | `completed` | Handled document outcome; job `error_code` copies the version reason |
+| `failed` | `failed` | Job `error_code` copies the version reason; the job is retryable |
+| anything else | job fails with an internal error | A version left mid-pipeline must not be reported as finished |
+
+Consequences:
+
+- A `failed` version is always paired with a `failed` job, so
+  `POST /jobs/{job_id}/retry` accepts it. `attempts` is never reset.
+- `POST /jobs/{job_id}/retry` clears `error`, `error_code`, `claimed_at` and
+  `completed_at`, and keeps `attempts` as provenance.
+- A retry of an extract job whose version already holds `basic_ready` or
+  `enriched` closes the job without re-parsing: re-parsing would replace chunk
+  rows and detach the reviews and search indexes that reference their ids.
+- A **scan is not an implicit retry**. Scanning re-dispatches only `discovered`
+  versions that have no live job. Recovering a `failed` version is an explicit
+  `POST /jobs/{job_id}/retry`, so a permanently broken file cannot generate one
+  new job per scan.
+- Because recovery never changes the content hash, the rescanned file reuses its
+  version row: no new file, version, chunk, or job.
+
+### 12.4 Authorization-time containment (A3)
+
+`POST /roots` performs the canonical containment check **before** writing a
+root or a job:
+
+1. `mount_id` must be in the allowlist -> otherwise `404 unknown_mount`.
+2. `relative_path` must be relative and free of `..` ->
+   otherwise `403 path_out_of_scope`.
+3. The path is resolved (symlinks and Windows junctions collapsed) and must
+   stay inside the mount -> otherwise `403 path_out_of_scope`.
+4. The resolved path must be a directory -> otherwise `404 source_unavailable`.
+
+A refused request leaves no `authorized_roots` row and no job. The worker repeats
+the same check before extraction, so a path cannot become valid by being recorded
+first. Directory junctions are treated as links by the scan walk as well, because
+`is_symlink()` reports a junction as an ordinary directory.
+

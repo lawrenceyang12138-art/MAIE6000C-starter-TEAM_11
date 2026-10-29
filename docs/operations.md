@@ -77,9 +77,32 @@ completed job whose version is marked `unsupported` with a reason code
 (`corrupt`, `encrypted`, `no_text_layer`, `unsupported_format`), visible in
 `GET /files`. Other files keep processing.
 
-Only infrastructure errors fail a job. Inspect with `GET /jobs/{job_id}`
-(`error_code`) and requeue with `POST /jobs/{job_id}/retry`; only `failed` jobs
-are accepted, and a live job on the same target is refused with `409`.
+A file whose bytes could not be read is a different answer, and it is visible
+too: `GET /files` reports `presence_status` (`missing` / `unavailable`) plus
+`presence_reason` (`file_missing`, `unreadable`, `not_a_regular_file`). A file
+that was readable last scan and is not readable now stops being `present`; its
+`version_id` still points at the last content that was read. One bad file never
+blocks the others, and a directory that cannot be listed is reported in the
+worker log's scan summary rather than silently skipped.
+
+A version that could not be processed **this time** (`failed`: the file was
+gone, changed while being read, or the store errored) fails its job as well. That
+is what makes recovery possible:
+
+```bash
+# 1. the source is back with the same bytes; a rescan just marks it present
+curl -s -X POST localhost:8000/roots/{root_id}/scans
+# 2. retry the failed extraction explicitly
+curl -s -X POST localhost:8000/jobs/{job_id}/retry
+```
+
+Only `failed` jobs are retryable, `attempts` is kept across retries, and a live
+job on the same target is refused with `409 active_job_exists`. A scan is not an
+implicit retry: a permanently broken file does not generate one new job per scan.
+
+Inspect with `GET /jobs/{job_id}`: `status` plus `error_code` (the handler's
+reason, e.g. `file_missing`, or `job_failed` when there is no recorded reason).
+Diagnostic text stays in the database and is never returned.
 
 ## 6. Persistence check
 
@@ -98,9 +121,11 @@ lost. `down -v` deleting the database is expected, not a bug.
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
 | `404 unknown_mount` on `POST /roots` | mount id not in `SOURCE_MOUNTS` | add it to `.env` and restart api |
-| `403 path_out_of_scope` | absolute path or `..` in `relative_path` | send a relative path inside the mount |
+| `403 path_out_of_scope` | absolute path, `..`, or a symlink/junction resolving outside the mount | send a relative path inside the mount |
+| `404 source_unavailable` on `POST /roots` | the path is not a directory inside the mount | check `GET /mounts/{id}/directories` |
 | `409 active_job_exists` | a scan for that folder is still running | wait, or watch the existing `job_id` |
 | file stuck at `discovered` | worker not running or cannot read the mount | `docker compose logs worker` |
+| file `present` but no text | content is unreadable or unsupported | check `presence_reason` and `error_code` in `GET /files` |
 | semantic results missing | no embedding model on disk | keyword search remains; see `degraded` in `POST /search` |
 | api unhealthy after start | migration failed | `docker compose logs api` for the alembic error |
 
