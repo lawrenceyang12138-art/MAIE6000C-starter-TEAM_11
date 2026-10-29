@@ -275,3 +275,41 @@ privilege), with PostgreSQL tests enabled; Ruff passed. The dated evidence READM
 records exact commands, evaluated Git SHAs, complete Top-3 results and remaining
 A/B/D dependencies. The older backup runtime and failed inherited-environment
 warmup are retained separately and are not the final clean-environment results.
+
+## Actual PPLX validation on 2026-10-30
+
+The replacement was evaluated at Git
+`40879c44f2777db7dafd559cc97f5edc8b3f6714` using the same frozen gold, manifest
+and real scan/parse/index pipeline. PostgreSQL and SQLite both scored keyword
+Top-1 **5/5**, semantic Top-3 **3/5**, and hybrid Top-3 **3/5**, with no degraded
+searches, duplicate files, source-resolution errors or unreadable evidence.
+The C semantic candidate gate **4/5 remains unmet**; it is not a team freeze.
+B's review remains `pending`.
+
+Both failed semantic queries selected the correct file at rank 1 but the wrong
+page. S02 expected document 10 page 3 and selected page 1, whose normalized
+MaxSim exceeded the expected page by `0.0003624558`. S04 expected document 12
+page 2 and selected page 1 by `0.0002039671`. The expected pages exist and their
+current-version token indexes and original evidence are valid. Each file returns
+one evidence chunk, so those higher-scoring pages displace the expected pages.
+All semantic queries have zero keyword contribution on this corpus; the frozen
+hybrid weights therefore rescale semantic scores without changing their order.
+Compared with the historical E5 run, S03 improves and S04 regresses; the overall
+semantic numerator remains 3. Full raw ranks and per-page scores are preserved.
+
+All 14 model artifacts passed pinned official hash verification. Native CPU
+inference agreed with official MaxSim after query-length normalization, with
+maximum absolute difference `1.0728836064e-7`. The isolated Python 3.11.5 runtime
+uses Torch 2.8.0 CPU, Transformers 5.22.0 and Sentence Transformers 6.2.0. There
+are 20 compatible chunk matrices containing 416 token vectors of 128 dimensions.
+The retired E5 weights/download parts (963,440,334 bytes) and 60 derived vectors
+were deleted from C-owned storage; historical evidence and frozen answers remain.
+
+Live HTTP verification passed: existing CLI indexing recovered 0 to 20 token
+matrices, actual AI disconnection and 10-second timeouts returned explicit
+keyword degradation, and restoration preserved all canonical IDs and source
+bytes. Final tests: **374 passed, 2 skipped** for Windows symlink privileges;
+all five PostgreSQL tests ran, Ruff and `pip check` passed. Offline model
+preparation also passed against the verified files. Exact commands, configuration,
+query rows, failure analysis and A/B/D handoff are in the
+[PPLX evidence README](../submissions/week07/evidence/C/20261030-pplx/README.md).
