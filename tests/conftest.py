@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import os
+import subprocess
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -13,6 +17,37 @@ from services.common.models import (
     RootStatus,
     VersionStatus,
 )
+
+
+@pytest.fixture()
+def make_directory_link():
+    """Create a directory link that leaves a tree, or skip if the OS refuses.
+
+    A symlink is tried first. On Windows without developer mode that is denied
+    without SeCreateSymbolicLinkPrivilege, so it falls back to a directory
+    junction: no privilege needed, and the harder case anyway - ``is_symlink()``
+    reports a junction as an ordinary directory, so only canonical resolution
+    (and the reparse-point check in the scan) can catch it. Skipping is
+    reported as a skip rather than passing quietly, because a containment test
+    that creates nothing proves nothing.
+    """
+
+    def _make(link: Path, target: Path) -> None:
+        try:
+            link.symlink_to(target, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            if os.name != "nt":
+                pytest.skip("this platform does not allow the test to create a link")
+            result = subprocess.run(
+                ["cmd", "/c", "mklink", "/J", str(link), str(target)],
+                capture_output=True,
+            )
+            if result.returncode != 0 or not Path(link).exists():
+                pytest.skip("this platform allows neither a symlink nor a junction")
+        if not Path(link).exists():
+            pytest.skip("the platform reported success but created no link")
+
+    return _make
 
 
 @pytest.fixture()

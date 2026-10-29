@@ -341,6 +341,83 @@ def test_the_authorized_root_is_reachable_on_disk_for_the_worker(mount):
     assert Path(mount).is_dir()
 
 
+def _counts(db: Session) -> tuple[int, int]:
+    return db.query(AuthorizedRoot).count(), db.query(Job).count()
+
+
+def test_authorizing_a_symlink_that_escapes_the_mount_is_refused(
+    client, mount, tmp_path, db_session, make_directory_link
+):
+    """Contract 4.3: containment is settled before a root or job is written.
+
+    The escape used to be caught by the worker, which meant an authorization
+    and a scan job existed for a path the API had already been told was out of
+    scope.
+    """
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "secret.pdf").write_bytes(b"%PDF-1.4 outside")
+    make_directory_link(mount / "escape", outside)
+    roots_before, jobs_before = _counts(db_session)
+
+    response = client.post(
+        "/roots", json={"mount_id": "corpus", "relative_path": "escape"}
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"]["code"] == "path_out_of_scope"
+    # Nothing was authorized and nothing was queued.
+    assert _counts(db_session) == (roots_before, jobs_before)
+
+
+def test_authorizing_an_escape_through_a_symlinked_parent_is_refused(
+    client, mount, tmp_path, db_session, make_directory_link
+):
+    outside = tmp_path / "outside"
+    (outside / "nested").mkdir(parents=True)
+    make_directory_link(mount / "escape", outside)
+    roots_before, jobs_before = _counts(db_session)
+
+    response = client.post(
+        "/roots", json={"mount_id": "corpus", "relative_path": "escape/nested"}
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"]["code"] == "path_out_of_scope"
+    assert _counts(db_session) == (roots_before, jobs_before)
+
+
+def test_authorizing_a_symlink_that_stays_inside_the_mount_is_allowed(
+    client, mount, db_session, make_directory_link
+):
+    """Containment, not symlinks as such, is the rule that is enforced."""
+    make_directory_link(mount / "alias", mount / "regression")
+
+    response = client.post(
+        "/roots", json={"mount_id": "corpus", "relative_path": "alias"}
+    )
+
+    assert response.status_code == 202
+    assert response.json()["status"] == "pending"
+
+
+@pytest.mark.parametrize("relative_path", ["notes.txt", "no-such-folder"])
+def test_authorizing_something_that_is_not_a_directory_is_refused(
+    client, mount, db_session, relative_path: str
+):
+    """Authorizing a file or a missing path would only queue doomed work."""
+    roots_before, jobs_before = _counts(db_session)
+
+    response = client.post(
+        "/roots", json={"mount_id": "corpus", "relative_path": relative_path}
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"]["code"] == "source_unavailable"
+    assert _counts(db_session) == (roots_before, jobs_before)
+
+
+
 def test_retrying_a_job_of_a_paused_root_is_refused(client, mount, db_session):
     root_id = _create_root(client)["root_id"]
     job = db_session.query(Job).filter_by(root_id=root_id).one()

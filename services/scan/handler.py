@@ -87,11 +87,13 @@ def _normalise_relative_path(relative_path: str) -> str:
     return "/".join(parts) or "."
 
 
-def _contained(base: Path, relative_path: str) -> Path:
-    """Resolve relative_path under base and require containment.
+def contained_path(base: Path, relative_path: str) -> Path:
+    """Resolve relative_path under base and require canonical containment.
 
     ``resolve()`` collapses symlinks, so a link pointing outside the base is
     rejected here: a read-only mount alone is not sufficient authorization.
+    The API calls this too, so authorization and scanning cannot drift apart
+    on what "inside the mount" means (contract 4.3).
     """
     rel = _normalise_relative_path(relative_path)
     candidate = base.resolve() if rel == "." else (base / rel).resolve()
@@ -136,12 +138,31 @@ def resolve_source_path(db: Session, version_id: str, *, for_write: bool = True)
         raise PathEscapesRoot(
             f"root {root.id} is {root.status}, not readable for this operation"
         )
-    root_dir = _contained(resolve_mount_path(root.mount_id), root.relative_path)
-    return _contained(root_dir, record.relative_path)
+    root_dir = contained_path(resolve_mount_path(root.mount_id), root.relative_path)
+    return contained_path(root_dir, record.relative_path)
+
+
+def _is_link_like(path: Path) -> bool:
+    """True for a symlink *or* a Windows junction/reparse point.
+
+    ``Path.is_symlink()`` is not enough on Windows: a directory junction is a
+    reparse point that ``is_symlink()`` reports as an ordinary directory, and it
+    can point anywhere. Filtering only real symlinks would let the walk enter a
+    junction that leaves the authorized root and index files the user never
+    authorized. On POSIX the attribute is absent and this reduces to the
+    symlink check.
+    """
+    try:
+        if path.is_symlink():
+            return True
+        attributes = getattr(path.lstat(), "st_file_attributes", 0)
+    except OSError:
+        return False
+    return bool(attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0))
 
 
 def _iter_source_files(root_dir: Path, unreadable_dirs: list[str] | None = None):
-    """Yield regular files under root_dir, skipping hidden and symlinked entries.
+    """Yield regular files under root_dir, skipping hidden and linked entries.
 
     Discovery does not filter by extension (D4): whether a document can be
     parsed is decided by extraction, not by its filename, and unsupported
@@ -162,13 +183,13 @@ def _iter_source_files(root_dir: Path, unreadable_dirs: list[str] | None = None)
         dirnames[:] = [
             name
             for name in dirnames
-            if not name.startswith(".") and not (Path(dirpath) / name).is_symlink()
+            if not name.startswith(".") and not _is_link_like(Path(dirpath) / name)
         ]
         for filename in filenames:
             if filename.startswith("."):
                 continue
             path = Path(dirpath) / filename
-            if path.is_symlink():
+            if _is_link_like(path):
                 continue
             yield path
 
@@ -300,7 +321,7 @@ def handle_scan_root(db: Session, root_id: str, job_id: int | None = None) -> di
                 "root_id": root_id,
             }
 
-    root_dir = _contained(resolve_mount_path(root.mount_id), root.relative_path)
+    root_dir = contained_path(resolve_mount_path(root.mount_id), root.relative_path)
     if not root_dir.is_dir():
         raise ValueError(f"mount directory not found: {root_dir}")
 

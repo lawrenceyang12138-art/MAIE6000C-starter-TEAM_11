@@ -48,6 +48,7 @@ from services.common.schemas import (
 )
 from services.api.app.errors import reason
 from services.api.app.parsing_routes import router as parsing_router
+from services.scan.handler import PathEscapesRoot, contained_path
 from services.search.embeddings import EmbeddingBackend, HTTPEmbeddingBackend
 from services.search.retrieval import search_chunks
 
@@ -616,16 +617,55 @@ def _mount_path(mount_id: str) -> Path:
 def _contained_mount_dir(mount_id: str, relative_path: str) -> Path:
     """Resolve a relative directory inside its mount and enforce containment.
 
-    ``resolve()`` collapses symlinks, so a link pointing outside the mount is
-    rejected rather than listed: a read-only mount alone is not authorization.
+    The rule itself lives in the scan module, so listing and authorizing cannot
+    disagree about what "inside the mount" means: ``resolve()`` collapses
+    symlinks, so a link pointing outside the mount is rejected rather than
+    listed. A read-only mount alone is not authorization (contract 4.3).
     """
-    base = _mount_path(mount_id).resolve()
-    rel = normalise_relative_path(relative_path)
-    candidate = base if rel == "." else (base / rel).resolve()
-    if candidate != base and base not in candidate.parents:
+    base = _mount_path(mount_id)
+    try:
+        return contained_path(base, normalise_relative_path(relative_path))
+    except PathEscapesRoot as exc:
         raise HTTPException(
             status_code=403,
             detail=reason("path_out_of_scope", "Path escapes the allowed mount"),
+        ) from exc
+
+
+def _authorized_directory(mount_id: str, relative_path: str) -> Path:
+    """Validate a directory the caller wants to authorize, before any row exists.
+
+    Authorization is where an out-of-scope request has to die. Checking here
+    means a symlink escape is refused with ``403 path_out_of_scope`` and leaves
+    no root, no scan job and nothing for the worker to fail later. The same
+    containment rule is applied again by the worker, so a path cannot become
+    valid by being recorded first.
+
+    A path that does not resolve to a directory is refused with
+    ``404 source_unavailable``: authorizing something that cannot be scanned
+    would only queue work that is certain to fail.
+    """
+    try:
+        candidate = contained_path(_mount_path(mount_id), relative_path)
+    except PathEscapesRoot as exc:
+        raise HTTPException(
+            status_code=403,
+            detail=reason(
+                "path_out_of_scope",
+                "Path escapes the allowed mount or resolves outside it",
+            ),
+        ) from exc
+    try:
+        is_directory = candidate.is_dir()
+    except OSError:
+        is_directory = False
+    if not is_directory:
+        raise HTTPException(
+            status_code=404,
+            detail=reason(
+                "source_unavailable",
+                "The selected directory is not available inside the mount",
+            ),
         )
     return candidate
 
@@ -700,6 +740,9 @@ def create_root(payload: RootCreate, db: Session = Depends(get_db)) -> RootJobAc
             detail=reason("unknown_mount", f"Unknown mount_id: {mount_id!r}"),
         )
     relative_path = normalise_relative_path(payload.relative_path)
+    # Contract 4.3: canonical containment (symlinks included) is decided before
+    # the root or its job is written, so a refused request leaves nothing behind.
+    _authorized_directory(mount_id, relative_path)
 
     root, job = create_root_with_scan_job(db, mount_id, relative_path)
 

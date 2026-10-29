@@ -297,29 +297,13 @@ def test_a_second_scan_of_a_live_root_is_skipped(mounted, db_session):
     assert _count(db_session, Job) == 2
 
 
-def _make_symlink(link: Path, target: Path) -> None:
-    """Create a directory symlink, or skip where the platform refuses.
-
-    Some Windows setups neither raise nor create anything: ``symlink_to``
-    returns quietly and the path stays absent. Without the second check the
-    escape tests would pass while exercising nothing, which is worse than a
-    skip - the evidence must show that the case really ran.
-    """
-    try:
-        link.symlink_to(target, target_is_directory=True)
-    except (OSError, NotImplementedError):
-        pytest.skip("this platform does not allow the test to create a symlink")
-    if not link.is_symlink():
-        pytest.skip("this platform reported success but created no symlink")
-
-
 def test_a_symlinked_directory_inside_the_root_is_not_followed(
-    mounted, tmp_path, db_session
+    mounted, tmp_path, db_session, make_directory_link
 ):
     outside = tmp_path / "outside"
     outside.mkdir()
     (outside / "secret.pdf").write_bytes(b"%PDF-1.4 outside the mount")
-    _make_symlink(mounted / "linked", outside)
+    make_directory_link(mounted / "linked", outside)
 
     root_id = _make_root(db_session)
     summary = handle_scan_root(db_session, root_id)
@@ -339,12 +323,12 @@ def test_a_symlinked_directory_inside_the_root_is_not_followed(
 
 
 def test_a_root_that_is_a_symlink_outside_the_mount_is_rejected(
-    mounted, tmp_path, db_session
+    mounted, tmp_path, db_session, make_directory_link
 ):
     outside = tmp_path / "outside"
     outside.mkdir()
     (outside / "secret.pdf").write_bytes(b"%PDF-1.4 outside the mount")
-    _make_symlink(mounted / "escape", outside)
+    make_directory_link(mounted / "escape", outside)
 
     root_id = _make_root(db_session, relative_path="escape")
 
