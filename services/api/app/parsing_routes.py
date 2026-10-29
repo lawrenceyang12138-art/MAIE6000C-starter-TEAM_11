@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from services.api.app.errors import reason
 from services.common.db import get_db
 from services.common.models import AuthorizedRoot, FileRecord, FileVersion, RootStatus
 from services.parsing.evidence import (
@@ -78,7 +79,7 @@ class ReviewResponse(BaseModel):
 
 
 def _reason(code: str, message: str) -> dict[str, str]:
-    return {"code": code, "message": message}
+    return reason(code, message)
 
 
 @router.get("/files", response_model=list[FileListItem])

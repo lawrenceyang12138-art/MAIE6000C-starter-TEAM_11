@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from services.common.models import CaseStatus, JobStatus, RootStatus
+from services.common.models import CaseStatus, RootStatus
 from services.search.text import MAX_QUERY_TOKENS, tokenize
 
 
@@ -35,21 +35,27 @@ class CaseRead(BaseModel):
 
 
 class JobRead(BaseModel):
-    id: int
+    """Public job view (contract 6.3).
+
+    ``claimed`` is a database state, not a public one: the API maps it to
+    ``running`` so the browser has a single vocabulary (8-A.7). ``error`` stays
+    in the database as a diagnostic string; only a stable code is exposed, so
+    exception text never reaches the client.
+    """
+
+    job_id: int
     case_id: str | None = None
     root_id: str | None = None
     version_id: str | None = None
     # Jobs are general now: the starter's triage_case, plus scan_root and
     # extract_file. Kept as a plain string rather than a single enum.
     job_type: str
-    status: JobStatus
+    status: str
     attempts: int
-    error: str | None = None
+    error_code: str | None = None
     created_at: datetime
     claimed_at: datetime | None = None
     completed_at: datetime | None = None
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 class RootCreate(BaseModel):
@@ -63,21 +69,56 @@ class RootCreate(BaseModel):
     relative_path: str = Field(min_length=1, max_length=500)
 
 
+class RootFileCounts(BaseModel):
+    """Mutually exclusive stages of the *current* versions in one root.
+
+    A file with no current version is counted as ``discovered``; historical
+    versions are never counted again (contract 6.2).
+    """
+
+    total: int = 0
+    discovered: int = 0
+    extracting: int = 0
+    basic_ready: int = 0
+    enriched: int = 0
+    failed: int = 0
+    unsupported: int = 0
+
+
 class RootRead(BaseModel):
-    id: str
+    root_id: str
     mount_id: str
     relative_path: str
     status: RootStatus
-    file_count: int = 0
-    indexed_count: int = 0
+    availability: str
+    file_counts: RootFileCounts
     last_successful_scan_at: datetime | None = None
-    created_at: datetime
-    updated_at: datetime
 
 
-class RootCreateResponse(BaseModel):
-    root: RootRead
-    job: JobRead
+class RootJobAccepted(BaseModel):
+    """202 body for authorizing a root or queueing another scan."""
+
+    root_id: str
+    job_id: int
+    status: str
+
+
+class JobRetryAccepted(BaseModel):
+    job_id: int
+    root_id: str | None = None
+    status: str
+
+
+class MountRead(BaseModel):
+    mount_id: str
+    label: str
+    read_only: bool
+    availability: str
+
+
+class DirectoryRead(BaseModel):
+    relative_path: str
+    label: str
 
 
 class CaseCreateResponse(BaseModel):

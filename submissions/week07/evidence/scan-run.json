@@ -1,0 +1,72 @@
+{
+  "base_url": "http://localhost:8000",
+  "started_at": "2026-10-21T12:17:26+00:00",
+  "finished_at": "2026-10-21T12:17:30+00:00",
+  "health": {
+    "service": "api",
+    "status": "ok"
+  },
+  "request": {
+    "mount_id": "corpus",
+    "relative_path": "."
+  },
+  "first_scan": {
+    "root_id": "ecb84a43-31e2-40a0-8b3c-38687d56541b",
+    "job_id": 32,
+    "job_status": "completed",
+    "settled": true,
+    "file_counts": {
+      "total": 16,
+      "discovered": 0,
+      "extracting": 0,
+      "basic_ready": 12,
+      "enriched": 0,
+      "failed": 0,
+      "unsupported": 4
+    },
+    "files_reported": 16,
+    "by_version_status": {
+      "basic_ready": 12,
+      "unsupported": 4
+    },
+    "by_presence": {
+      "present": 16
+    },
+    "by_error_code": {
+      "corrupt": 1,
+      "encrypted": 1,
+      "no_text_layer": 1,
+      "unsupported_format": 1
+    },
+    "unsupported_or_failed": [
+      "abnormal/corrupt.pdf (corrupt)",
+      "abnormal/encrypted.pdf (encrypted)",
+      "abnormal/no_text_layer.pdf (no_text_layer)",
+      "regression/unsupported.txt (unsupported_format)"
+    ]
+  },
+  "repeat_scan": {
+    "job_id": 33,
+    "job_status": "completed",
+    "settled": true,
+    "file_counts": {
+      "total": 16,
+      "discovered": 0,
+      "extracting": 0,
+      "basic_ready": 12,
+      "enriched": 0,
+      "failed": 0,
+      "unsupported": 4
+    },
+    "files_reported": 16,
+    "new_files": 0,
+    "counts_unchanged": true
+  },
+  "originals": {
+    "root": "tests\\fixtures",
+    "checked": 18,
+    "changed": 0,
+    "missing": 0,
+    "changed_paths": []
+  }
+}
