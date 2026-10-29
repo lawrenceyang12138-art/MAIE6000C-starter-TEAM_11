@@ -72,3 +72,34 @@ def test_matching_freeze_cli_preserves_team_shape_and_scope_denominators(db_sess
     assert all(item["response"] is None for item in report["queries"])
     assert all(item["execution_status"] == "not_run_invalid_scope" for item in report["queries"])
     assert not report["passed"]
+
+
+@pytest.mark.parametrize("protected", ["gold", "manifest", "freeze"])
+def test_evaluation_cli_refuses_overwriting_frozen_inputs(tmp_path, protected):
+    paths = {name: tmp_path / (name + ".json")
+             for name in ("gold", "manifest", "freeze")}
+    for name, original in (("gold", GOLD), ("manifest", MANIFEST), ("freeze", FREEZE)):
+        paths[name].write_bytes(original.read_bytes())
+    preserved = {name: path.read_bytes() for name, path in paths.items()}
+    completed = subprocess.run([
+        sys.executable, "-m", "scripts.search_tools", "evaluate",
+        "--database-url", "nonexistent+driver://localhost/db",
+        "--gold", str(paths["gold"]), "--manifest", str(paths["manifest"]),
+        "--freeze", str(paths["freeze"]), "--output", str(paths[protected]),
+    ], cwd=REPO, capture_output=True, text=True, encoding="utf-8", check=False, timeout=30)
+    assert completed.returncode == 2
+    assert "output_path_conflict" in completed.stderr
+    assert {name: path.read_bytes() for name, path in paths.items()} == preserved
+
+
+def test_runtime_cli_refuses_overwriting_its_evaluation(tmp_path):
+    prior = tmp_path / "evaluation.json"
+    prior.write_text("{}", encoding="utf-8")
+    completed = subprocess.run([
+        sys.executable, "-m", "scripts.verify_team_search_runtime",
+        "--database-url", "nonexistent+driver://localhost/db",
+        "--evaluation", str(prior), "--output", str(prior),
+    ], cwd=REPO, capture_output=True, text=True, encoding="utf-8", check=False, timeout=30)
+    assert completed.returncode == 2
+    assert "output_path_conflict" in completed.stderr
+    assert prior.read_text("utf-8") == "{}"

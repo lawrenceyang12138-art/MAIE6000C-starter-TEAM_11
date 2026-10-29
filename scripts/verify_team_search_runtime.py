@@ -33,6 +33,7 @@ from scripts.evaluate_team_pdf import (
     git_state,
     public_command,
     validate_corpus,
+    validate_report_destination,
 )
 from services.common.db import make_engine, make_session_factory
 from services.common.models import ChunkSearchIndex, FileRecord, FileVersion, SourceChunk
@@ -163,9 +164,25 @@ def main() -> None:
     parser.add_argument("--timeout", type=float, default=10.0)
     parser.add_argument("--output", type=Path, default=REPO / "work/team-runtime.json")
     args = parser.parse_args()
+    try:
+        validate_report_destination(
+            args.output,
+            protected_files=[args.evaluation, REPO / "submissions/week07/gold-queries.json",
+                             REPO / "submissions/week07/gold-queries.freeze.json",
+                             REPO / "fixtures/manifest.json"],
+            source_directories=[REPO / "fixtures"],
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
     prior = json.loads(args.evaluation.read_text(encoding="utf-8"))
     root_id, mount_id = prior["pipeline"]["root_id"], prior["pipeline"]["mount_id"]
     corpus = Path(prior["corpus_directory"])
+    try:
+        validate_report_destination(
+            args.output, protected_files=[], source_directories=[corpus],
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
     gold_path = REPO / "submissions/week07/gold-queries.json"
     freeze_path = REPO / "submissions/week07/gold-queries.freeze.json"
     gold = json.loads(gold_path.read_text("utf-8"))

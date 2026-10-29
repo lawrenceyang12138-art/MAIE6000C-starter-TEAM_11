@@ -98,10 +98,22 @@ def main() -> None:
     gold = manifest = manifest_path = None
     input_record = {}
     if args.action == "evaluate":
+        from scripts.evaluate_team_pdf import validate_report_destination
+
         gold = json.loads(args.gold.read_text(encoding="utf-8"))
         manifest_path = args.manifest
         if manifest_path is None and gold.get("corpus_manifest"):
             manifest_path = REPO / gold["corpus_manifest"]
+        try:
+            validate_report_destination(
+                args.output,
+                protected_files=[args.gold, args.fixture]
+                + ([manifest_path] if manifest_path else [])
+                + ([args.freeze] if args.freeze else []),
+                source_directories=[REPO / "fixtures", REPO / "work/team-pdf-corpus"],
+            )
+        except ValueError as exc:
+            parser.error(str(exc))
         manifest = (
             json.loads(manifest_path.read_text(encoding="utf-8"))
             if manifest_path else None

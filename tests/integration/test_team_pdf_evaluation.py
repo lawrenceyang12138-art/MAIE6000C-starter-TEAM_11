@@ -18,6 +18,7 @@ from scripts.evaluate_team_pdf import (
     public_command,
     stage_corpus,
     validate_corpus,
+    validate_report_destination,
 )
 from services.common.config import Settings
 from services.common.models import ChunkSearchIndex, FileRecord, SourceChunk
@@ -219,3 +220,56 @@ def test_actual_cli_refuses_partial_sqlite_without_repairing_it(tmp_path):
     assert report["diagnostics"][0]["code"] == "sqlite_schema_partial"
     assert report["diagnostics"][0]["action"] == "refused_without_modifying_existing_schema"
     assert database.read_bytes() == original_bytes
+
+
+def test_report_destination_guard_protects_each_frozen_input_and_resolved_alias(tmp_path):
+    inputs = [tmp_path / name for name in ("gold.json", "manifest.json", "freeze.json")]
+    for source in inputs:
+        source.write_bytes(b"immutable frozen input")
+        alias = source.parent / "." / source.name
+        with pytest.raises(ValueError, match="output_path_conflict"):
+            validate_report_destination(alias, protected_files=inputs, source_directories=[])
+        assert source.read_bytes() == b"immutable frozen input"
+    validate_report_destination(
+        tmp_path / "reports/result.json", protected_files=inputs,
+        source_directories=[tmp_path / "sources"],
+    )
+
+
+@pytest.mark.parametrize("collision", ["gold", "fixture_pdf", "stage_pdf", "corpus_directory"])
+def test_actual_cli_refuses_output_collisions_before_touching_inputs(tmp_path, collision):
+    gold = tmp_path / "gold.json"
+    fixture_root = tmp_path / "fixtures"
+    stage_dir = tmp_path / "staged"
+    corpus_dir = tmp_path / "existing-corpus"
+    original = b"Original input bytes must not be overwritten by a report."
+    gold.write_bytes(original)
+    fixture_root.mkdir()
+    stage_dir.mkdir()
+    corpus_dir.mkdir()
+    if collision == "gold":
+        output = gold.parent / "." / gold.name
+    elif collision == "fixture_pdf":
+        output = fixture_root / "original.pdf"
+        output.write_bytes(original)
+    elif collision == "stage_pdf":
+        output = stage_dir / "original.pdf"
+        output.write_bytes(original)
+    else:
+        output = corpus_dir
+    database = tmp_path / "must-not-be-created.db"
+    completed = subprocess.run([
+        sys.executable, "-m", "scripts.evaluate_team_pdf",
+        "--database-url", f"sqlite:///{database}", "--backend", "off",
+        "--gold", str(gold), "--fixture-root", str(fixture_root),
+        "--stage-dir", str(stage_dir), "--corpus-dir", str(corpus_dir),
+        "--output", str(output),
+    ], cwd=REPO, capture_output=True, text=True, encoding="utf-8", check=False, timeout=60)
+    assert completed.returncode == 2
+    assert "output_path_" in completed.stderr
+    assert not database.exists()
+    assert gold.read_bytes() == original
+    if output.is_file():
+        assert output.read_bytes() == original
+    else:
+        assert list(output.iterdir()) == []

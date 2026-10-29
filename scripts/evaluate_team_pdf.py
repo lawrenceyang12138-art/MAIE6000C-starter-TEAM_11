@@ -387,6 +387,24 @@ def public_command(command_line: list[str]) -> list[str]:
     return result
 
 
+def validate_report_destination(
+    output: Path,
+    *,
+    protected_files: list[Path],
+    source_directories: list[Path],
+) -> None:
+    """Refuse report paths that could overwrite answers or read-only source data.
+
+    Resolve aliases and existing symlinks before comparing paths. Callers should
+    surface this error without writing a failure report to the refused path.
+    """
+    destination = output.resolve()
+    if any(destination == source.resolve() for source in protected_files):
+        raise ValueError("output_path_conflict: report would overwrite a protected input")
+    if any(destination.is_relative_to(source.resolve()) for source in source_directories):
+        raise ValueError("output_path_inside_source: reports must be outside source directories")
+
+
 def prepare_schema(engine, database_url: str) -> dict:
     """Use metadata for SQLite smoke tests, and real migrations for PostgreSQL.
 
@@ -458,6 +476,17 @@ def main() -> None:
     parser.add_argument("--candidate-limit", type=int, default=200)
     parser.add_argument("--output", type=Path, default=REPO / "work/team-pdf-evaluation.json")
     args = parser.parse_args()
+    try:
+        validate_report_destination(
+            args.output,
+            protected_files=[args.gold, args.manifest, args.freeze],
+            source_directories=[
+                args.fixture_root, args.stage_dir,
+                *([args.corpus_dir] if args.corpus_dir is not None else []),
+            ],
+        )
+    except ValueError as exc:
+        parser.error(str(exc))
     report = {
         "evaluated_at": datetime.now(timezone.utc).isoformat(),
         "command": public_command([
