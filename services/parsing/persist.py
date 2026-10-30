@@ -66,12 +66,20 @@ def _validate_ordinals(chunks: Sequence[Chunk]) -> None:
         raise InvalidChunkSet("chunk ordinals must run 1..N with no gaps")
 
 
-def persist_chunks(db: Session, version_id: str, chunks: Sequence[Chunk]) -> int:
+def persist_chunks(
+    db: Session,
+    version_id: str,
+    chunks: Sequence[Chunk],
+    *,
+    commit: bool = True,
+) -> int:
     """Replace the stored chunks of ``version_id`` with ``chunks``.
 
     Returns the number of chunks written. The whole replace is one
     transaction: on any failure the previous chunks are left untouched and the
-    exception is re-raised for the caller to record against the job.
+    exception is re-raised for the caller to record against the job. Passing
+    ``commit=False`` flushes the replacement but leaves the final commit to an
+    orchestrating caller that also needs to publish the version status.
 
     A chunk whose ordinal, page and text are unchanged **keeps its row**, and
     therefore its id. That is not an optimisation: relationship evidence points
@@ -133,7 +141,10 @@ def persist_chunks(db: Session, version_id: str, chunks: Sequence[Chunk]) -> int
                 )
             )
 
-        db.commit()
+        if commit:
+            db.commit()
+        else:
+            db.flush()
     except Exception:
         # Undo the delete along with the partial insert.
         db.rollback()
@@ -192,7 +203,11 @@ def _validate_relation_candidates(
 
 
 def persist_relations(
-    db: Session, version_id: str, candidates: Sequence[CandidateRelation]
+    db: Session,
+    version_id: str,
+    candidates: Sequence[CandidateRelation],
+    *,
+    commit: bool = True,
 ) -> int:
     """Store entity candidates and the evidence that supports each one.
 
@@ -205,7 +220,9 @@ def persist_relations(
     offsets into chunk text and a parser change moves them.
 
     The chunks must already be stored: evidence is attached to a stored chunk,
-    and the chunk is resolved by its ordinal within this version.
+    and the chunk is resolved by its ordinal within this version. Passing
+    ``commit=False`` flushes the candidate batch so it can share the parsing
+    handler's final transaction.
     """
     written = 0
     try:
@@ -297,7 +314,10 @@ def persist_relations(
             )
             written += 1
 
-        db.commit()
+        if commit:
+            db.commit()
+        else:
+            db.flush()
     except Exception:
         # Validation failures and database errors must leave the whole batch
         # unwritten, not a valid prefix waiting for a caller's later commit.

@@ -8,6 +8,8 @@ from sqlalchemy import engine_from_config, pool
 from services.common import models  # noqa: F401
 from services.common.config import get_settings
 from services.common.db import Base
+from services.search.page_metadata import VersionPageMetadata  # noqa: F401
+from services.search.token_store import ChunkTokenIndex  # noqa: F401
 
 config = context.config
 

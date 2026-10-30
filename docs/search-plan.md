@@ -94,10 +94,10 @@ the query-token count. This keeps the semantic channel comparable across query
 lengths for hybrid weighting. This implementation reads token matrices to score
 them; it does not claim pgvector ANN acceleration or large-corpus performance.
 
-`search_tools migrate` first runs the existing Alembic chain, then prepares the
-C-owned token table. For an already migrated canonical database, run
+`search_tools migrate` first runs the Alembic chain now ending in
+`20261030_0005`, which creates both C-owned sidecars, then calls the idempotent
+preparation helper. For an older canonical database, run
 `search_tools prepare-token-index`; that command creates derived storage only.
-A owns any later consolidation into shared migrations or service startup.
 
 Search accepts `active` or `paused` roots, present files, and the file's current
 version in `basic_ready` or `enriched`. Root and file filters further restrict the
@@ -222,6 +222,6 @@ optional PPLX location layer, explicit schema/page-count preparation, scoped
 backfill, unchanged model parameters and separate pure-model/assisted evaluation.
 The historical pure PPLX semantic result stays 3/5; new results belong in
 `submissions/week07/evidence/C/20261030-page-navigation/`. B review and team
-threshold/corpus approval remain pending. C's new
-`version_page_search_metadata` sidecar is prepared explicitly alongside token
-storage; A owns consolidation into shared migrations and deployment.
+threshold/corpus approval remain pending. C's
+`version_page_search_metadata` and token-vector sidecars are now created by
+shared migration `20261030_0005`.

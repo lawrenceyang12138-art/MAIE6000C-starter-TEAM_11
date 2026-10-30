@@ -64,7 +64,7 @@ def test_twelve_normal_documents_extract_with_correct_pages(
 ):
     for path in NORMAL:
         sha256, _ = file_identity(path)
-        version_id = make_file_version(sha256=sha256)
+        version_id = make_file_version(sha256=sha256, source_path=path)
 
         status = handle_extract_file(db_session, version_id, path)
         assert status == VersionStatus.BASIC_READY.value, f"{path.name} did not extract"
@@ -122,7 +122,7 @@ def test_a_mix_of_files_is_processed_without_stopping(
 
     for path in NORMAL:
         sha256, _ = file_identity(path)
-        version_id = make_file_version(sha256=sha256)
+        version_id = make_file_version(sha256=sha256, source_path=path)
         outcomes[path.name] = handle_extract_file(db_session, version_id, path)
 
     for path, _ in ABNORMAL:

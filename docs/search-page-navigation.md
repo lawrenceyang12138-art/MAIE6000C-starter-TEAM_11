@@ -97,26 +97,25 @@ never gold or the largest chunk page. Encryption, corruption, changed bytes,
 unavailable mounts and unsupported files have separate safe error codes.
 
 Run from this worktree with the prepared Python environment. On a fresh
-PostgreSQL/pgvector database, the existing migration command runs the shared
-Alembic chain and then explicitly prepares C's sidecars:
+PostgreSQL/pgvector database, the Alembic command creates the shared schema and
+both C sidecars through `20261030_0005`:
 
 ```powershell
 .\.venv-pplx\Scripts\python.exe -m scripts.search_tools migrate --database-url YOUR_DATABASE_URL
 ```
 
-On an already migrated canonical database, use the existing additive preparation
-command. Its historical name is retained; it now creates both C token storage
-and the page metadata table with `checkfirst=True`:
+For an older canonical database whose head predates `20261030_0005`, the
+idempotent preparation command remains a compatibility path. Its historical
+name is retained; it creates both C token storage and page metadata with
+`checkfirst=True`:
 
 ```powershell
 .\.venv-pplx\Scripts\python.exe -m scripts.search_tools prepare-token-index --database-url YOUR_DATABASE_URL
 ```
 
-These commands do not populate page counts or vectors. Shared migrations are
-unchanged; A owns migration consolidation and service/deployment preparation.
-Search does not perform implicit DDL. The SQLite PDF verifier uses a fresh ORM
-test schema and explicitly does not establish PostgreSQL migration portability.
-An incompatible existing schema requires A's migration decision.
+These commands do not populate page counts or vectors. Search does not perform
+implicit DDL. A PostgreSQL integration test upgrades a disposable database from
+empty to the single Alembic head and verifies both sidecars.
 
 ## Backfill page counts without re-embedding
 

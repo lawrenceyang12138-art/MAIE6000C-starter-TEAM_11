@@ -1,0 +1,912 @@
+{
+  "schema_version": "b-corpus-review-v1",
+  "reviewed_on": "2026-10-30",
+  "reviewed_by": "B",
+  "database": "temporary clean SQLite",
+  "workflow": "temporary source copies -> handle_scan_root -> handle_extract_file -> FastAPI TestClient response",
+  "originals_modified": false,
+  "evaluation_outputs_used_to_change_answers": false,
+  "corpus": {
+    "label": "mounted backend integration corpus",
+    "source": "tests/fixtures/regression plus parsing abnormal PDFs",
+    "files_seen": 16,
+    "status_counts": {
+      "basic_ready": 12,
+      "unsupported": 4
+    },
+    "manual_result": "passed",
+    "records": [
+      {
+        "file_id": "31fef2ce-c1b1-46c8-9f07-2df34aae8294",
+        "version_id": "ce17d1d7-0ab7-4b5b-99c2-19daa37d93b4",
+        "relative_path": "abnormal/corrupt.pdf",
+        "content_sha256": "d73aa579758adbcc253e3cb1a1898a43ed6f536fce2acec74cea80ce7384d7af",
+        "byte_size": 2057,
+        "status": "unsupported",
+        "error_code": "corrupt",
+        "parser_revision": "parsing-v1",
+        "pages": [],
+        "chunks": []
+      },
+      {
+        "file_id": "c2bdf4c0-8ddd-4727-93ef-53f7da4232f3",
+        "version_id": "bcccce2b-1a48-4fca-bb0d-934c6b6474a8",
+        "relative_path": "abnormal/encrypted.pdf",
+        "content_sha256": "8545d244521f62f0705adf4d77088863e543647eef3f57877e539dc38194dda3",
+        "byte_size": 1702,
+        "status": "unsupported",
+        "error_code": "encrypted",
+        "parser_revision": "parsing-v1",
+        "pages": [],
+        "chunks": []
+      },
+      {
+        "file_id": "2270d1b9-adce-43e3-b9a6-84ea9d0e7bfd",
+        "version_id": "e183c4e0-f878-43d7-963f-eb8f78d005d3",
+        "relative_path": "abnormal/no_text_layer.pdf",
+        "content_sha256": "b9c11583843cb52b4e502579748cc35ef91d2cda7a7e41a8a480019118f89e95",
+        "byte_size": 1344,
+        "status": "unsupported",
+        "error_code": "no_text_layer",
+        "parser_revision": "parsing-v1",
+        "pages": [],
+        "chunks": []
+      },
+      {
+        "file_id": "b08d140b-d462-443d-ac42-842936f96fae",
+        "version_id": "51d98692-1fe2-4abe-879c-4721696e4509",
+        "relative_path": "regression/group-a/doc01.pdf",
+        "content_sha256": "cf136f2dca47a4f8d3dc00bf4061f4ef746287ee7a92e8eea4bc391ba8e48483",
+        "byte_size": 2062,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1,
+          2
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Document 01 - invoices and refunds\nPage 1 of 2\nMarker01P1 reference for invoices and refunds on page 1.\nThis synthetic page exists to rehearse the regression run."
+          },
+          {
+            "ordinal": 2,
+            "page_number": 2,
+            "text": "Document 01 - invoices and refunds\nPage 2 of 2\nMarker01P2 reference for invoices and refunds on page 2.\nThis synthetic page exists to rehearse the regression run."
+          }
+        ]
+      },
+      {
+        "file_id": "481cf2e8-e259-4532-b8c5-b4d288acc5c5",
+        "version_id": "4304d8ef-e340-4847-aa51-e5abe571b2da",
+        "relative_path": "regression/group-a/doc02.pdf",
+        "content_sha256": "09e6b2ce75c2bab407ae4011efa3ca85b40e2aa889cfc52020a81502daed5402",
+        "byte_size": 2633,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1,
+          2,
+          3
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Page 1 of 3\nMarker02P1 reference for access and login on page 1."
+          },
+          {
+            "ordinal": 2,
+            "page_number": 2,
+            "text": "Page 2 of 3\nMarker02P2 reference for access and login on page 2."
+          },
+          {
+            "ordinal": 3,
+            "page_number": 3,
+            "text": "Page 3 of 3\nMarker02P3 reference for access and login on page 3."
+          }
+        ]
+      },
+      {
+        "file_id": "35f5f494-297d-47ae-bff6-2b52b767c310",
+        "version_id": "130d746a-adea-45f3-801f-e051b2212e44",
+        "relative_path": "regression/group-a/doc03.pdf",
+        "content_sha256": "6623eabbe6e407170744cebfe0268384a8a728382456099ebd547cdd4733b341",
+        "byte_size": 2064,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1,
+          2
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Document 03 - maintenance windows\nPage 1 of 2\nMarker03P1 reference for maintenance windows on page 1.\nThis synthetic page exists to rehearse the regression run."
+          },
+          {
+            "ordinal": 2,
+            "page_number": 2,
+            "text": "Document 03 - maintenance windows\nPage 2 of 2\nMarker03P2 reference for maintenance windows on page 2.\nThis synthetic page exists to rehearse the regression run."
+          }
+        ]
+      },
+      {
+        "file_id": "04ee45b8-2116-4bd3-8e2e-886426c51622",
+        "version_id": "a75c4c70-3465-4335-8616-9ecf53ec2966",
+        "relative_path": "regression/group-a/doc04.pdf",
+        "content_sha256": "278228037413c6a5c45f75688e3364f5721eec57d6bb66c296eb14b408b267ab",
+        "byte_size": 2631,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1,
+          2,
+          3
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Page 1 of 3\nMarker04P1 reference for network outages on page 1."
+          },
+          {
+            "ordinal": 2,
+            "page_number": 2,
+            "text": "Page 2 of 3\nMarker04P2 reference for network outages on page 2."
+          },
+          {
+            "ordinal": 3,
+            "page_number": 3,
+            "text": "Page 3 of 3\nMarker04P3 reference for network outages on page 3."
+          }
+        ]
+      },
+      {
+        "file_id": "bbd0462e-46a4-46f7-a014-a42d288e0a3d",
+        "version_id": "929fa611-f902-4e7b-a055-423ae2ff79cd",
+        "relative_path": "regression/group-a/doc05.pdf",
+        "content_sha256": "bf086a179bc4672a89961d21833905087e1cade634df934dd5c9cc703c9390d5",
+        "byte_size": 2062,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1,
+          2
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Document 05 - billing disputes\nPage 1 of 2\nMarker05P1 reference for billing disputes on page 1.\nThis synthetic page exists to rehearse the regression run."
+          },
+          {
+            "ordinal": 2,
+            "page_number": 2,
+            "text": "Document 05 - billing disputes\nPage 2 of 2\nMarker05P2 reference for billing disputes on page 2.\nThis synthetic page exists to rehearse the regression run."
+          }
+        ]
+      },
+      {
+        "file_id": "4a26668b-8858-41d5-9e6d-3d5a96b8f002",
+        "version_id": "b3646eb3-63bf-4c16-a7e2-0f1890bef335",
+        "relative_path": "regression/group-a/doc06.pdf",
+        "content_sha256": "7d61e9b1ad09598fa2ca65e71e27a3ddcb57222ebec6b979b823ad63342e398e",
+        "byte_size": 2637,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1,
+          2,
+          3
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Page 1 of 3\nMarker06P1 reference for shipping delays on page 1."
+          },
+          {
+            "ordinal": 2,
+            "page_number": 2,
+            "text": "Page 2 of 3\nMarker06P2 reference for shipping delays on page 2."
+          },
+          {
+            "ordinal": 3,
+            "page_number": 3,
+            "text": "Page 3 of 3\nMarker06P3 reference for shipping delays on page 3."
+          }
+        ]
+      },
+      {
+        "file_id": "160bdf59-11f8-4f79-8835-4946e60e7c3a",
+        "version_id": "d4ff4cb0-213b-4373-a36d-aff308218563",
+        "relative_path": "regression/group-b/doc07.pdf",
+        "content_sha256": "b484abc876f77e8fa364747868543d8fb7441befb1a59df2a6df7c71e922bae1",
+        "byte_size": 2056,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1,
+          2
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Document 07 - account permissions\nPage 1 of 2\nMarker07P1 reference for account permissions on page 1.\nThis synthetic page exists to rehearse the regression run."
+          },
+          {
+            "ordinal": 2,
+            "page_number": 2,
+            "text": "Document 07 - account permissions\nPage 2 of 2\nMarker07P2 reference for account permissions on page 2.\nThis synthetic page exists to rehearse the regression run."
+          }
+        ]
+      },
+      {
+        "file_id": "51599b72-8911-452f-9210-4239d00999dc",
+        "version_id": "02a0183f-7be6-48d0-97b2-bbaab9689980",
+        "relative_path": "regression/group-b/doc08.pdf",
+        "content_sha256": "05e88e1656c3e1a71528ec9c1af802df028f3b1ac57f4d5600c0e93877ae1392",
+        "byte_size": 2630,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1,
+          2,
+          3
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Page 1 of 3\nMarker08P1 reference for data retention on page 1."
+          },
+          {
+            "ordinal": 2,
+            "page_number": 2,
+            "text": "Page 2 of 3\nMarker08P2 reference for data retention on page 2."
+          },
+          {
+            "ordinal": 3,
+            "page_number": 3,
+            "text": "Page 3 of 3\nMarker08P3 reference for data retention on page 3."
+          }
+        ]
+      },
+      {
+        "file_id": "55fd3f03-55f3-4e7d-ba08-48473920c216",
+        "version_id": "02a701ff-fced-4377-920a-dda2f93fdf8e",
+        "relative_path": "regression/group-b/doc09.pdf",
+        "content_sha256": "79d9c7b6d07b6b186e10c5d893d42c4aa557abf692cf1a0fce4c0a5694ea948d",
+        "byte_size": 2056,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1,
+          2
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Document 09 - incident reports\nPage 1 of 2\nMarker09P1 reference for incident reports on page 1.\nThis synthetic page exists to rehearse the regression run."
+          },
+          {
+            "ordinal": 2,
+            "page_number": 2,
+            "text": "Document 09 - incident reports\nPage 2 of 2\nMarker09P2 reference for incident reports on page 2.\nThis synthetic page exists to rehearse the regression run."
+          }
+        ]
+      },
+      {
+        "file_id": "40583ac0-ec35-48a7-bf30-8a458e65b734",
+        "version_id": "be6dad6e-0518-4f86-a238-797d1efd01be",
+        "relative_path": "regression/group-b/doc10.pdf",
+        "content_sha256": "46c11d8a3268a8e8a7f2ff0398eb13f66e5d752ccfd6c596cbe80ce4ababbae2",
+        "byte_size": 2635,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1,
+          2,
+          3
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Page 1 of 3\nMarker10P1 reference for vendor contracts on page 1."
+          },
+          {
+            "ordinal": 2,
+            "page_number": 2,
+            "text": "Page 2 of 3\nMarker10P2 reference for vendor contracts on page 2."
+          },
+          {
+            "ordinal": 3,
+            "page_number": 3,
+            "text": "Page 3 of 3\nMarker10P3 reference for vendor contracts on page 3."
+          }
+        ]
+      },
+      {
+        "file_id": "2d6df166-8ea1-41d7-8806-036d8fdd6f16",
+        "version_id": "05b48c36-51a7-4be6-94a2-c2dd4709354f",
+        "relative_path": "regression/group-b/doc11.pdf",
+        "content_sha256": "d5623754f1bc8925dc9b8d789a446f15d721708cd519d91f90cdb1eb5bd5aec1",
+        "byte_size": 2060,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1,
+          2
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Document 11 - support escalations\nPage 1 of 2\nMarker11P1 reference for support escalations on page 1.\nThis synthetic page exists to rehearse the regression run."
+          },
+          {
+            "ordinal": 2,
+            "page_number": 2,
+            "text": "Document 11 - support escalations\nPage 2 of 2\nMarker11P2 reference for support escalations on page 2.\nThis synthetic page exists to rehearse the regression run."
+          }
+        ]
+      },
+      {
+        "file_id": "b88391a3-c546-4078-bdb7-35510a425638",
+        "version_id": "e06ff0f5-e1cc-45a4-8bd2-4ec54f01f2b0",
+        "relative_path": "regression/group-b/doc12.pdf",
+        "content_sha256": "fd5ad752e487291b385a7d5589d0f75f8272b07f04ea64f66e1862ab11edc27f",
+        "byte_size": 2625,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1,
+          2,
+          3
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Page 1 of 3\nMarker12P1 reference for release notes on page 1."
+          },
+          {
+            "ordinal": 2,
+            "page_number": 2,
+            "text": "Page 2 of 3\nMarker12P2 reference for release notes on page 2."
+          },
+          {
+            "ordinal": 3,
+            "page_number": 3,
+            "text": "Page 3 of 3\nMarker12P3 reference for release notes on page 3."
+          }
+        ]
+      },
+      {
+        "file_id": "48d6f21c-9954-4cf5-bd5b-f6b57d6f2c07",
+        "version_id": "bb4a6567-55a3-458e-8c9b-a59cfdc228cc",
+        "relative_path": "regression/unsupported.txt",
+        "content_sha256": "800b9c910e8bee15126fd03d97dd896de9cdae3165e62c1358ab8aef72a5bc37",
+        "byte_size": 89,
+        "status": "unsupported",
+        "error_code": "unsupported_format",
+        "parser_revision": "parsing-v1",
+        "pages": [],
+        "chunks": []
+      }
+    ]
+  },
+  "d_proposal_corpus": {
+    "label": "D-generated fixtures proposal",
+    "source": "fixtures/normal, fixtures/abnormal, fixtures/unsupported",
+    "files_seen": 16,
+    "status_counts": {
+      "basic_ready": 12,
+      "unsupported": 4
+    },
+    "reason_counts": {
+      "corrupt": 1,
+      "unsupported_format": 3
+    },
+    "manual_result": "reviewed; proposal metadata mismatch",
+    "manifest_version": "d-fixtures-v1",
+    "manifest_mismatches": [
+      {
+        "relative_path": "abnormal/empty.pdf",
+        "issues": [
+          {
+            "field": "status",
+            "proposal_value": "failed",
+            "actual_value": "unsupported"
+          },
+          {
+            "field": "error_code",
+            "proposal_value": "EMPTY_FILE",
+            "actual_value": "unsupported_format"
+          }
+        ]
+      },
+      {
+        "relative_path": "abnormal/truncated.pdf",
+        "issues": [
+          {
+            "field": "status",
+            "proposal_value": "failed",
+            "actual_value": "unsupported"
+          },
+          {
+            "field": "error_code",
+            "proposal_value": "TRUNCATED_PDF",
+            "actual_value": "corrupt"
+          }
+        ]
+      },
+      {
+        "relative_path": "abnormal/corrupt.pdf",
+        "issues": [
+          {
+            "field": "status",
+            "proposal_value": "failed",
+            "actual_value": "unsupported"
+          },
+          {
+            "field": "error_code",
+            "proposal_value": "CORRUPT_PDF",
+            "actual_value": "unsupported_format"
+          }
+        ]
+      },
+      {
+        "relative_path": "unsupported/team11-unsupported-notes.docx",
+        "issues": [
+          {
+            "field": "error_code",
+            "proposal_value": "UNSUPPORTED_FORMAT",
+            "actual_value": "unsupported_format"
+          }
+        ]
+      }
+    ],
+    "records": [
+      {
+        "file_id": "cc4bd7ed-daa5-48a4-9cef-351bc6850ce7",
+        "version_id": "de3d0fa8-57c3-4007-9287-e3a93438d79b",
+        "relative_path": "abnormal/corrupt.pdf",
+        "content_sha256": "772ad3ea1f583ad7d8b54af6ef33f6280f2a23752cbd329f43c6e84fd1296e17",
+        "byte_size": 19,
+        "status": "unsupported",
+        "error_code": "unsupported_format",
+        "parser_revision": "parsing-v1",
+        "pages": [],
+        "chunks": []
+      },
+      {
+        "file_id": "b5a2b40f-0144-4aa5-ab5b-26a16b869e25",
+        "version_id": "fb5194c7-d830-47c8-a5b3-c74501f87bf0",
+        "relative_path": "abnormal/empty.pdf",
+        "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "byte_size": 0,
+        "status": "unsupported",
+        "error_code": "unsupported_format",
+        "parser_revision": "parsing-v1",
+        "pages": [],
+        "chunks": []
+      },
+      {
+        "file_id": "161a9e7d-ffa4-4bd1-bfa0-81311a13682e",
+        "version_id": "2e673059-79cf-46e8-ad12-fa772324d63f",
+        "relative_path": "abnormal/truncated.pdf",
+        "content_sha256": "6f32667a14f03c7f6eafc0e3328df8969bbdb913534e22675f85d858c3407c87",
+        "byte_size": 38,
+        "status": "unsupported",
+        "error_code": "corrupt",
+        "parser_revision": "parsing-v1",
+        "pages": [],
+        "chunks": []
+      },
+      {
+        "file_id": "c2cee6c7-63fe-4209-adea-f4b3dbe795d9",
+        "version_id": "82372eb7-1dee-43a7-b9de-a5bb5c4e3fa6",
+        "relative_path": "normal/team-alpha/team11-demo-01.pdf",
+        "content_sha256": "090c3446987187caa11cdb8608a35a56dfcd449066e2123f0672752ebb3bd3d6",
+        "byte_size": 664,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Team 11 synthetic document 01 | synthetic page 1 of 1\nTeam 11 demo fixture"
+          }
+        ]
+      },
+      {
+        "file_id": "7a48470c-f3e2-4493-9159-f098b46092b5",
+        "version_id": "bc101f34-0f9b-48ee-ac3b-39bd0a2fe987",
+        "relative_path": "normal/team-alpha/team11-demo-02.pdf",
+        "content_sha256": "96a48022ff2bafc85543718c3f55f577fed40a173f4d63e8d066d8a5fea8b29f",
+        "byte_size": 664,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Team 11 synthetic document 02 | synthetic page 1 of 1\nTeam 11 demo fixture"
+          }
+        ]
+      },
+      {
+        "file_id": "f6bb4977-8e56-4451-9d00-8db0d7374f3d",
+        "version_id": "7785e1d7-ba57-401a-b3b4-389d6dc28787",
+        "relative_path": "normal/team-alpha/team11-demo-03.pdf",
+        "content_sha256": "b63b33819f4ce501d0f279c6df5f66141f3659f76eaaa96369b23ddab234bdf0",
+        "byte_size": 664,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Team 11 synthetic document 03 | synthetic page 1 of 1\nTeam 11 demo fixture"
+          }
+        ]
+      },
+      {
+        "file_id": "303bb4ed-e02e-418d-aeb1-ffac83a13d43",
+        "version_id": "ea02f4b2-2d9f-4223-934a-8c1e4e1262c9",
+        "relative_path": "normal/team-alpha/team11-demo-04.pdf",
+        "content_sha256": "5c448081313b1d701aa37f41b650b531f6aaea18f4de558656a51616f17926b9",
+        "byte_size": 664,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Team 11 synthetic document 04 | synthetic page 1 of 1\nTeam 11 demo fixture"
+          }
+        ]
+      },
+      {
+        "file_id": "e472ff13-5fbc-4e7a-ad1c-d199a6021e00",
+        "version_id": "320bc8c6-595e-4138-8182-a037da26ae5d",
+        "relative_path": "normal/team-alpha/team11-demo-05.pdf",
+        "content_sha256": "8b7ec4dd5aedab420d8a35c03f8f445971721574ac9e7291014ff1799e6f9db7",
+        "byte_size": 664,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Team 11 synthetic document 05 | synthetic page 1 of 1\nTeam 11 demo fixture"
+          }
+        ]
+      },
+      {
+        "file_id": "8b658d45-8ba3-4e88-bc6c-9880ad35a7cb",
+        "version_id": "ab66b420-b37f-46c4-818b-955012287050",
+        "relative_path": "normal/team-alpha/team11-demo-06.pdf",
+        "content_sha256": "7baa07db66c24c805cdc212fa68a1674a46209ad24766f19be6473d3545a4858",
+        "byte_size": 664,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Team 11 synthetic document 06 | synthetic page 1 of 1\nTeam 11 demo fixture"
+          }
+        ]
+      },
+      {
+        "file_id": "d5040160-bd05-4087-ae90-7932453510e7",
+        "version_id": "40efabb4-1f02-46b6-ae28-51e7951cd74b",
+        "relative_path": "normal/team-beta/team11-demo-07.pdf",
+        "content_sha256": "fbfecd36cc0a14ebb497f936bc1f1fd226f908339d99f77f0957c9f2c5c44b63",
+        "byte_size": 664,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Team 11 synthetic document 07 | synthetic page 1 of 1\nTeam 11 demo fixture"
+          }
+        ]
+      },
+      {
+        "file_id": "16466323-da73-4abf-8a76-a471ed75d1f6",
+        "version_id": "9a0298c1-8f70-40f4-b896-85e3c2cc645c",
+        "relative_path": "normal/team-beta/team11-demo-08.pdf",
+        "content_sha256": "a1ceacfb5b35a4017283afd611a37b1580bbacc921bb9e0e0b13a556b6936c48",
+        "byte_size": 664,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Team 11 synthetic document 08 | synthetic page 1 of 1\nTeam 11 demo fixture"
+          }
+        ]
+      },
+      {
+        "file_id": "4565806e-d866-4aa2-b54d-976e142720b4",
+        "version_id": "57b24742-1d2c-474a-8ffc-a9ff6bbf6cda",
+        "relative_path": "normal/team-beta/team11-demo-09.pdf",
+        "content_sha256": "21882931591383a51bcefd18c4843dca1e9a6163e086c4f959527393194fe90a",
+        "byte_size": 1351,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1,
+          2,
+          3
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Team 11 synthetic document 09 | synthetic page 1 of 3"
+          },
+          {
+            "ordinal": 2,
+            "page_number": 2,
+            "text": "Team 11 synthetic document 09 | synthetic page 2 of 3"
+          },
+          {
+            "ordinal": 3,
+            "page_number": 3,
+            "text": "Team 11 synthetic document 09 | synthetic page 3 of 3"
+          }
+        ]
+      },
+      {
+        "file_id": "aaece1ae-22fc-4375-8ff8-d2ca16b21b8d",
+        "version_id": "ff93db36-e13f-45ab-ba39-5dbfc24d490d",
+        "relative_path": "normal/team-beta/team11-demo-10.pdf",
+        "content_sha256": "44ca584ae43590e6c1a4ded0b3f8099a4d9261ccb0d9d92beede8a6dc39a872c",
+        "byte_size": 1351,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1,
+          2,
+          3
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Team 11 synthetic document 10 | synthetic page 1 of 3"
+          },
+          {
+            "ordinal": 2,
+            "page_number": 2,
+            "text": "Team 11 synthetic document 10 | synthetic page 2 of 3"
+          },
+          {
+            "ordinal": 3,
+            "page_number": 3,
+            "text": "Team 11 synthetic document 10 | synthetic page 3 of 3"
+          }
+        ]
+      },
+      {
+        "file_id": "cd9568e7-5908-4b3d-9f59-4b844428a7fd",
+        "version_id": "76e7bbb1-4e36-4a55-a787-b22848071167",
+        "relative_path": "normal/team-beta/team11-demo-11.pdf",
+        "content_sha256": "cb95cbad289cee731140414ed8d0e5ee1b9f68b89e5044179c110152686f337f",
+        "byte_size": 1351,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1,
+          2,
+          3
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Team 11 synthetic document 11 | synthetic page 1 of 3"
+          },
+          {
+            "ordinal": 2,
+            "page_number": 2,
+            "text": "Team 11 synthetic document 11 | synthetic page 2 of 3"
+          },
+          {
+            "ordinal": 3,
+            "page_number": 3,
+            "text": "Team 11 synthetic document 11 | synthetic page 3 of 3"
+          }
+        ]
+      },
+      {
+        "file_id": "6c0f7dc8-b251-408a-80b7-d944c444459d",
+        "version_id": "370b9da4-fe19-4893-a236-953304b38974",
+        "relative_path": "normal/team-beta/team11-demo-12.pdf",
+        "content_sha256": "692fb24ab37adbea8bae2b5849353458e03490af33bad00aac05834af46edb84",
+        "byte_size": 1351,
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "pages": [
+          1,
+          2,
+          3
+        ],
+        "chunks": [
+          {
+            "ordinal": 1,
+            "page_number": 1,
+            "text": "Team 11 synthetic document 12 | synthetic page 1 of 3"
+          },
+          {
+            "ordinal": 2,
+            "page_number": 2,
+            "text": "Team 11 synthetic document 12 | synthetic page 2 of 3"
+          },
+          {
+            "ordinal": 3,
+            "page_number": 3,
+            "text": "Team 11 synthetic document 12 | synthetic page 3 of 3"
+          }
+        ]
+      },
+      {
+        "file_id": "2921df61-7ba3-41d0-ae82-dd64a0bc1641",
+        "version_id": "ca42490f-42b0-4b35-86bf-d1b5332a3013",
+        "relative_path": "unsupported/team11-unsupported-notes.docx",
+        "content_sha256": "7a21a8af532494ba07fb04dfc18b710e0a7af1e6917aa726cd204ae9705531fd",
+        "byte_size": 49,
+        "status": "unsupported",
+        "error_code": "unsupported_format",
+        "parser_revision": "parsing-v1",
+        "pages": [],
+        "chunks": []
+      }
+    ]
+  },
+  "d_gold_review": {
+    "validator": "scripts/validate_d_gold.py",
+    "status": "passed_source_location_checks",
+    "queries": 10,
+    "pdf_locations_verified": 10,
+    "corpus_files_hash_verified": 16,
+    "retrieval_evaluation": "not_run",
+    "freeze_human_review": "pending",
+    "note": "Source locations and hashes pass. The D-managed freeze metadata still says pending and must be revised together with the parser status/code mismatches above."
+  },
+  "relation_sample": {
+    "source_pdf": "tests/fixtures/relations/entities.pdf",
+    "version_id": "227280c6-bdf1-4ee4-b031-6b01ff39ca35",
+    "relation_response": [
+      {
+        "relationship_id": "752c5981-5721-4002-89ea-1336ccbdf637",
+        "entity_type": "person",
+        "label": "Chen",
+        "relation_type": "mentions",
+        "kind": "source_supported",
+        "origin": "rule",
+        "producer_revision": "relations-rules-v1",
+        "chunk_id": "519df771-ba43-4cd6-b333-68ab8e4c1c89",
+        "page_number": 1,
+        "quote": "Notes page 1 The File Management Assistant indexes documents. Dr. Chen reviewed the first prototype. Schema Design appears throughout this document. T",
+        "evidence_missing": false,
+        "decision": null,
+        "corrected_entity_id": null,
+        "decision_revision": 0
+      },
+      {
+        "relationship_id": "3191d037-058d-47c8-b0e0-c2aa8c80d860",
+        "entity_type": "project",
+        "label": "File Management Assistant",
+        "relation_type": "mentions",
+        "kind": "source_supported",
+        "origin": "rule",
+        "producer_revision": "relations-rules-v1",
+        "chunk_id": "519df771-ba43-4cd6-b333-68ab8e4c1c89",
+        "page_number": 1,
+        "quote": "Notes page 1 The File Management Assistant indexes documents. Dr. Chen reviewed the first prototype. Schema Design appears",
+        "evidence_missing": false,
+        "decision": null,
+        "corrected_entity_id": null,
+        "decision_revision": 0
+      },
+      {
+        "relationship_id": "7f3a645b-a625-4143-afca-b7b31d26dd7b",
+        "entity_type": "topic",
+        "label": "Schema Design",
+        "relation_type": "mentions",
+        "kind": "source_supported",
+        "origin": "rule",
+        "producer_revision": "relations-rules-v1",
+        "chunk_id": "519df771-ba43-4cd6-b333-68ab8e4c1c89",
+        "page_number": 1,
+        "quote": "Management Assistant indexes documents. Dr. Chen reviewed the first prototype. Schema Design appears throughout this document. The File Management Assistant reads PDF files",
+        "evidence_missing": false,
+        "decision": null,
+        "corrected_entity_id": null,
+        "decision_revision": 0
+      }
+    ],
+    "evidence_by_chunk_id": {
+      "519df771-ba43-4cd6-b333-68ab8e4c1c89": {
+        "chunk_id": "519df771-ba43-4cd6-b333-68ab8e4c1c89",
+        "file_id": "d9154d7b-902b-4b0a-97fa-c2c66940553a",
+        "version_id": "227280c6-bdf1-4ee4-b031-6b01ff39ca35",
+        "relative_path": "entities.pdf",
+        "page_number": 1,
+        "ordinal": 1,
+        "text": "Notes page 1\nThe File Management Assistant indexes documents.\nDr. Chen reviewed the first prototype.\nSchema Design appears throughout this document.\nThe File Management Assistant reads PDF files.",
+        "content_sha256": "33daacaa43636d1491391f4dcc7f90ebf91a85ba1975b5d3910870fac12dc683"
+      }
+    },
+    "usage": {
+      "list": "GET /versions/227280c6-bdf1-4ee4-b031-6b01ff39ca35/relations",
+      "evidence": "GET /evidence/{relation.chunk_id}",
+      "review": "POST /relations/{relationship_id}/reviews"
+    }
+  },
+  "handoff_to_D": {
+    "freeze_owner": "D",
+    "instruction": "Use the relation response and chunk IDs as a separate relation sample when creating the next unified frozen corpus. Do not rewrite expected search answers from evaluation results."
+  }
+}

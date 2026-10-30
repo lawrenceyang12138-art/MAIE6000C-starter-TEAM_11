@@ -12,7 +12,14 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from services.common.models import FileVersion, SourceChunk, VersionStatus
+from services.common.models import (
+    Entity,
+    FileVersion,
+    Relationship,
+    Review,
+    SourceChunk,
+    VersionStatus,
+)
 from services.parsing.handler import (
     PARSER_REVISION,
     REASON_PROCESSING_FAILED,
@@ -28,6 +35,7 @@ from services.parsing.pdf import (
 )
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "parsing"
+RELATION_FIXTURE = FIXTURES.parent / "relations" / "entities.pdf"
 
 
 def _chunks(db: Session, version_id: str) -> list[SourceChunk]:
@@ -44,7 +52,7 @@ def test_successful_extraction_marks_the_version_and_stores_chunks(
     db_session: Session, make_file_version
 ):
     real_hash, _ = file_identity(FIXTURES / "normal.pdf")
-    version_id = make_file_version(sha256=real_hash)
+    version_id = make_file_version(sha256=real_hash, source_path=FIXTURES / "normal.pdf")
 
     status = handle_extract_file(db_session, version_id, FIXTURES / "normal.pdf")
 
@@ -58,6 +66,88 @@ def test_successful_extraction_marks_the_version_and_stores_chunks(
     chunks = _chunks(db_session, version_id)
     assert len(chunks) == 3
     assert sorted(chunk.page_number for chunk in chunks) == [1, 2, 3]
+
+
+def test_successful_extraction_generates_evidence_backed_relation_candidates(
+    db_session: Session, make_file_version
+):
+    version_id = make_file_version(source_path=RELATION_FIXTURE)
+
+    status = handle_extract_file(db_session, version_id, RELATION_FIXTURE)
+
+    assert status == VersionStatus.BASIC_READY.value
+    entities = db_session.execute(select(Entity)).scalars().all()
+    assert {"person", "project", "topic"} <= {entity.entity_type for entity in entities}
+    relationships = db_session.execute(
+        select(Relationship).where(Relationship.source_version_id == version_id)
+    ).scalars().all()
+    assert relationships
+    assert {relationship.producer_revision for relationship in relationships} == {
+        "relations-rules-v1"
+    }
+
+
+def test_reprocessing_keeps_chunk_relation_ids_and_review_history(
+    db_session: Session, make_file_version
+):
+    version_id = make_file_version(source_path=RELATION_FIXTURE)
+    handle_extract_file(db_session, version_id, RELATION_FIXTURE)
+
+    first_chunk_ids = {chunk.id for chunk in _chunks(db_session, version_id)}
+    first_relationship_ids = {
+        row.id
+        for row in db_session.execute(
+            select(Relationship).where(Relationship.source_version_id == version_id)
+        ).scalars()
+    }
+    relationship = db_session.execute(
+        select(Relationship).where(Relationship.source_version_id == version_id)
+    ).scalars().first()
+    db_session.add(
+        Review(
+            relationship_id=relationship.id,
+            decision_revision=1,
+            decision="confirmed",
+            actor="reviewer-a",
+        )
+    )
+    db_session.commit()
+
+    handle_extract_file(db_session, version_id, RELATION_FIXTURE)
+
+    second_chunk_ids = {chunk.id for chunk in _chunks(db_session, version_id)}
+    second_relationship_ids = {
+        row.id
+        for row in db_session.execute(
+            select(Relationship).where(Relationship.source_version_id == version_id)
+        ).scalars()
+    }
+    assert second_chunk_ids == first_chunk_ids
+    assert second_relationship_ids == first_relationship_ids
+    reviews = db_session.execute(select(Review)).scalars().all()
+    assert len(reviews) == 1
+    assert reviews[0].decision == "confirmed"
+
+
+def test_relation_persistence_failure_does_not_publish_a_partial_parse(
+    db_session: Session, make_file_version, monkeypatch
+):
+    import services.parsing.handler as handler_module
+
+    version_id = make_file_version(source_path=RELATION_FIXTURE)
+
+    def explode(*args, **kwargs):
+        raise RuntimeError("relations could not be stored")
+
+    monkeypatch.setattr(handler_module, "persist_relations", explode, raising=False)
+
+    with pytest.raises(RuntimeError):
+        handle_extract_file(db_session, version_id, RELATION_FIXTURE)
+
+    version = db_session.get(FileVersion, version_id)
+    assert version.status == VersionStatus.FAILED.value
+    assert version.error_code == REASON_PROCESSING_FAILED
+    assert _chunks(db_session, version_id) == []
 
 
 @pytest.mark.parametrize(
@@ -145,7 +235,7 @@ def test_a_file_written_during_the_read_is_recorded_not_published(
     target = tmp_path / "doc.pdf"
     shutil.copy(FIXTURES / "normal.pdf", target)
     real_hash, _ = file_identity(target)
-    version_id = make_file_version(sha256=real_hash)
+    version_id = make_file_version(sha256=real_hash, source_path=FIXTURES / "normal.pdf")
 
     real_read_pages = pdf_module._read_pages
 
@@ -172,7 +262,7 @@ def test_a_failure_while_storing_does_not_leave_the_version_extracting(
     import services.parsing.handler as handler_module
 
     real_hash, _ = file_identity(FIXTURES / "normal.pdf")
-    version_id = make_file_version(sha256=real_hash)
+    version_id = make_file_version(sha256=real_hash, source_path=FIXTURES / "normal.pdf")
 
     def explode(*args, **kwargs):
         raise RuntimeError("the database said no")
@@ -223,18 +313,18 @@ def test_a_failure_on_the_final_status_commit_does_not_leave_extracting(
 ):
     """The last commit can fail just like the earlier ones.
 
-    Chunks are committed before the version is marked ready. If that final
+    Chunks, relations and the ready state share the final transaction. If that
     commit fails, the row must still receive a failed outcome rather than
     staying indistinguishable from work that is still running.
     """
     real_hash, _ = file_identity(FIXTURES / "normal.pdf")
-    version_id = make_file_version(sha256=real_hash)
+    version_id = make_file_version(sha256=real_hash, source_path=FIXTURES / "normal.pdf")
     real_commit = db_session.commit
     calls = {"count": 0}
 
     def commit_with_one_failure():
         calls["count"] += 1
-        if calls["count"] == 3:
+        if calls["count"] == 2:
             raise RuntimeError("the final status commit failed")
         real_commit()
 
@@ -256,7 +346,9 @@ def test_one_bad_file_does_not_stop_the_next_one(
     real_hash, _ = file_identity(FIXTURES / "normal.pdf")
 
     bad_version = make_file_version(sha256="e" * 64)
-    good_version = make_file_version(sha256=real_hash)
+    good_version = make_file_version(
+        sha256=real_hash, source_path=FIXTURES / "normal.pdf"
+    )
 
     # A broken document first, then a good one, as a worker loop would see them.
     assert (
@@ -275,7 +367,7 @@ def test_reprocessing_the_same_version_replaces_the_chunks(
     db_session: Session, make_file_version
 ):
     real_hash, _ = file_identity(FIXTURES / "normal.pdf")
-    version_id = make_file_version(sha256=real_hash)
+    version_id = make_file_version(sha256=real_hash, source_path=FIXTURES / "normal.pdf")
 
     handle_extract_file(db_session, version_id, FIXTURES / "normal.pdf")
     first = {(chunk.ordinal, chunk.text) for chunk in _chunks(db_session, version_id)}

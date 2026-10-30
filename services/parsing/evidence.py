@@ -12,8 +12,9 @@ Checked in this order, cheapest first:
 
 1. the chunk exists
 2. its file still points at this version as the current one
-3. the file is still present on disk
-4. the authorised root has not been revoked
+3. the authorised root has not been revoked
+4. the authorized path still resolves inside its configured mount
+5. the bytes on disk still have the version's SHA-256 and byte size
 
 "The file has newer content" and "no version of this file has been marked
 current yet" are different situations with different fixes, so they carry
@@ -24,6 +25,7 @@ working extraction pipeline looking for a newer version that does not exist.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -36,12 +38,15 @@ from services.common.models import (
     RootStatus,
     SourceChunk,
 )
+from services.parsing.pdf import SourceMissing, file_identity
 
 REASON_CHUNK_NOT_FOUND = "chunk_not_found"
 REASON_NO_CURRENT_VERSION = "no_current_version"
 REASON_VERSION_SUPERSEDED = "version_superseded"
 REASON_FILE_MISSING = "file_missing"
 REASON_ROOT_REVOKED = "root_revoked"
+REASON_PATH_OUT_OF_SCOPE = "path_out_of_scope"
+REASON_SOURCE_CHANGED = "source_changed"
 
 
 class SourceUnavailable(Exception):
@@ -78,7 +83,7 @@ def read_evidence(db: Session, chunk_id: str) -> Evidence:
     if chunk is None:
         raise SourceUnavailable(REASON_CHUNK_NOT_FOUND, "No such passage")
 
-    version, file_record = _readable_source(db, chunk.version_id)
+    version, file_record, _ = readable_version_source(db, chunk.version_id)
 
     return Evidence(
         chunk_id=chunk.id,
@@ -92,8 +97,10 @@ def read_evidence(db: Session, chunk_id: str) -> Evidence:
     )
 
 
-def _readable_source(db: Session, version_id: str) -> tuple[FileVersion, FileRecord]:
-    """Check version/file/presence/root once for one or many passages."""
+def readable_version_source(
+    db: Session, version_id: str
+) -> tuple[FileVersion, FileRecord, Path]:
+    """Verify the current authorized source behind one version."""
     version = db.get(FileVersion, version_id)
     if version is None:
         raise SourceUnavailable(
@@ -132,7 +139,39 @@ def _readable_source(db: Session, version_id: str) -> tuple[FileVersion, FileRec
         raise SourceUnavailable(
             REASON_ROOT_REVOKED, f"The folder authorisation is not readable ({status})"
         )
-    return version, file_record
+
+    # Reuse A's mount allowlist and canonical containment checks. A local
+    # import avoids a package-initialization cycle through ``services.scan``.
+    from services.scan.handler import MountNotAllowed, PathEscapesRoot, resolve_source_path
+
+    try:
+        source_path = resolve_source_path(db, version.id, for_write=False)
+    except (MountNotAllowed, PathEscapesRoot) as exc:
+        raise SourceUnavailable(
+            REASON_PATH_OUT_OF_SCOPE,
+            "The authorized source path can no longer be resolved safely",
+        ) from exc
+    except LookupError as exc:
+        raise SourceUnavailable(
+            REASON_FILE_MISSING,
+            "The source record behind this passage is unavailable",
+        ) from exc
+
+    try:
+        actual_sha256, actual_size = file_identity(source_path)
+    except SourceMissing as exc:
+        raise SourceUnavailable(
+            REASON_FILE_MISSING,
+            "The source file is missing or unreadable",
+        ) from exc
+
+    if actual_sha256 != version.content_sha256 or actual_size != version.byte_size:
+        raise SourceUnavailable(
+            REASON_SOURCE_CHANGED,
+            "The source file has changed since this version was indexed; rescan it",
+        )
+
+    return version, file_record, source_path
 
 
 def read_version_evidence(db: Session, version_id: str) -> list[Evidence]:
@@ -142,7 +181,7 @@ def read_version_evidence(db: Session, version_id: str) -> list[Evidence]:
     file-level compatibility view. It preserves the same reason codes while
     avoiding one root/file/version check per chunk.
     """
-    version, file_record = _readable_source(db, version_id)
+    version, file_record, _ = readable_version_source(db, version_id)
     chunks = db.execute(
         select(SourceChunk)
         .where(SourceChunk.version_id == version.id)

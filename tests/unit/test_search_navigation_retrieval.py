@@ -12,11 +12,12 @@ from services.common.models import AuthorizedRoot, FileRecord, SourceChunk
 from services.common.schemas import SearchRequest
 from services.parsing.evidence import read_evidence
 from services.search.embeddings import EmbeddingUnavailable
-from services.search.indexing import index_document
+from services.search.indexing import index_document as _index_document
 from services.search.page_metadata import PAGE_METADATA_POLICY, VersionPageMetadata
 from services.search.retrieval import search_chunks
 from services.search.text import MODEL_ID, TOKEN_DIMENSIONS
 from services.search.token_store import ChunkTokenIndex
+from tests.support.search import materialize_search_source
 
 
 class ScoredBackend:
@@ -35,6 +36,12 @@ class ScoredBackend:
             [[score, math.sqrt(1 - score**2)] + [0.0] * (TOKEN_DIMENSIONS - 2)]
             for score in scores
         ]
+
+
+def index_document(db, *args, **kwargs):
+    version = _index_document(db, *args, **kwargs)
+    materialize_search_source(db, version)
+    return version
 
 
 def document(db, backend, *, file_id="navigation", pages=(1, 2, 3), count=3,
