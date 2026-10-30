@@ -97,9 +97,11 @@ it.
 ### 2.3 Evidence and presence
 
 - `files.presence_status` / `presence_reason` are written by the scan. Evidence
-  for a file that stopped being readable should refuse with `file_missing` for
-  both `missing` and `unavailable`, and must not start serving a stale chunk as
-  current.
+  for a file that stopped being readable must refuse with `file_missing` rather
+  than serve a stale chunk as current. The contract's refusal table (6.5) has no
+  separate code for `unavailable`, so a client that needs the distinction reads
+  `presence_status` / `presence_reason` from `GET /files`; adding an evidence
+  code would be a contract change.
 - `unavailable` does not mean the file was deleted. It means the last scan could
   not read it: an I/O or permission error, a link the scan will not follow, or a
   directory the scan could not list. Only `missing` is a claim of absence.
@@ -113,11 +115,15 @@ it.
 
 - `embed_file` is queued by A's worker only after `handle_extract_file` returns
   `basic_ready` or `enriched`, in the same transaction that closes the extract
-  job.
+  job. A retry of a version that already holds its text queues nothing, so the
+  worker cannot produce a second index job for the same chunk set.
 - `embed_version(db, version_id, backend)` stays the entry point; A does not
   touch `chunk_search_index` directly.
 - A retry of an extract job whose version already holds `basic_ready` does not
   re-parse, so chunk ids - and therefore `chunk_search_index` rows - stay valid.
+- Read-only corpus mounts mean the deletion fault cannot be injected inside the
+  container; the recovery loop is verified from host processes against the same
+  database (see section 6).
 
 ### 3.2 Running the evaluation
 
