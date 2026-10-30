@@ -16,6 +16,9 @@ adapter described in week04 ``docs/architecture.md``:
   ``presence_status`` of ``missing`` or ``unavailable`` and the reason the read
   failed, and that row is never left saying ``present`` afterwards. One bad
   file never stops the rest of the scan;
+- "not read" is not the same as "gone": a record under a directory the walk
+  could not list, or refused to enter, is marked ``unavailable`` and is not
+  counted as missing, because the scan has no evidence that it disappeared;
 - the source tree is never written to; the mount is read-only (``:ro``).
 
 Separation from B's modules: hashing and extraction are reused from
@@ -28,6 +31,7 @@ from __future__ import annotations
 
 import os
 import stat
+from dataclasses import dataclass, field
 from pathlib import Path
 from uuid import uuid4
 
@@ -60,7 +64,8 @@ from services.parsing.pdf import (
 PRESENCE_REASON_FILE_MISSING = REASON_FILE_MISSING
 PRESENCE_REASON_UNREADABLE = REASON_UNREADABLE
 # A socket, FIFO or device inside the corpus has no bytes to version, and
-# opening one can block the whole scan. It is recorded and skipped.
+# opening one can block the whole scan. A linked entry is in the same position:
+# the scan refuses to follow it, so it is recorded and skipped.
 PRESENCE_REASON_NOT_REGULAR = "not_a_regular_file"
 
 
@@ -161,35 +166,103 @@ def _is_link_like(path: Path) -> bool:
     return bool(attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0))
 
 
-def _iter_source_files(root_dir: Path, unreadable_dirs: list[str] | None = None):
+def _relative_dir(root_dir: Path, filename: str | None) -> str:
+    """Root-relative form of a directory reported by ``os.walk``.
+
+    The summary is read by people and written to logs, so it must not carry the
+    container's absolute mount path. A name that cannot be made relative falls
+    back to the empty prefix, which conservatively means "anywhere under the
+    root".
+    """
+    if not filename:
+        return ""
+    try:
+        return Path(filename).relative_to(root_dir).as_posix()
+    except ValueError:
+        return ""
+
+
+@dataclass
+class _WalkReport:
+    """What the walk could not look at, in root-relative form.
+
+    Two different things land here, and neither of them means "the file is
+    gone" - which is exactly why they are kept apart from ``seen_paths``:
+
+    - ``unreadable_dirs``: a directory that exists but could not be listed. The
+      files under it are unknown; calling them missing would be a claim the
+      scan cannot support.
+    - ``skipped_dirs``: a linked directory the walk refuses to enter, so its
+      contents were never inside the authorization the scan was given.
+    - ``linked_files``: file entries that are links. They are observed, and
+      recorded with a reason, instead of vanishing from the file list.
+    """
+
+    unreadable_dirs: list[str] = field(default_factory=list)
+    skipped_dirs: list[str] = field(default_factory=list)
+    linked_files: list[Path] = field(default_factory=list)
+
+    @property
+    def uncovered(self) -> list[str]:
+        """Directories whose contents this scan cannot speak for."""
+        return self.unreadable_dirs + self.skipped_dirs
+
+
+def _under_any(relative_path: str, prefixes: list[str]) -> bool:
+    """Whether a record sits under a directory the walk did not cover."""
+    return any(
+        prefix == ""
+        or relative_path == prefix
+        or relative_path.startswith(prefix + "/")
+        for prefix in prefixes
+    )
+
+
+def _iter_source_files(root_dir: Path, report: _WalkReport | None = None):
     """Yield regular files under root_dir, skipping hidden and linked entries.
 
     Discovery does not filter by extension (D4): whether a document can be
     parsed is decided by extraction, not by its filename, and unsupported
     entries must stay visible as records.
 
-    A directory that cannot be listed is reported through ``unreadable_dirs``
-    instead of raising: one unreadable subdirectory must not abort the scan of
-    the rest, and the caller can still say that it was not covered.
+    Anything the walk cannot look at is collected in ``report`` instead of
+    raising: one unreadable subdirectory must not abort the scan of the rest,
+    and the caller has to be able to say that it was not covered.
     """
 
     def _on_error(exc: OSError) -> None:
-        if unreadable_dirs is not None:
-            unreadable_dirs.append(getattr(exc, "filename", None) or "<unknown>")
+        if report is not None:
+            report.unreadable_dirs.append(
+                _relative_dir(root_dir, getattr(exc, "filename", None))
+            )
 
     for dirpath, dirnames, filenames in os.walk(
         root_dir, followlinks=False, onerror=_on_error
     ):
+        linked = {
+            name
+            for name in dirnames
+            if not name.startswith(".") and _is_link_like(Path(dirpath) / name)
+        }
+        if report is not None:
+            for name in linked:
+                # An unconvertible name falls back to the empty prefix, which
+                # conservatively marks everything under the root as not covered.
+                report.skipped_dirs.append(
+                    _relative_dir(root_dir, str(Path(dirpath) / name))
+                )
         dirnames[:] = [
             name
             for name in dirnames
-            if not name.startswith(".") and not _is_link_like(Path(dirpath) / name)
+            if not name.startswith(".") and name not in linked
         ]
         for filename in filenames:
             if filename.startswith("."):
                 continue
             path = Path(dirpath) / filename
             if _is_link_like(path):
+                if report is not None:
+                    report.linked_files.append(path)
                 continue
             yield path
 
@@ -296,6 +369,12 @@ def handle_scan_root(db: Session, root_id: str, job_id: int | None = None) -> di
     Files that cannot be read do not abort the run. They are recorded with a
     ``presence_status`` and reason, so the file list explains itself instead of
     the file quietly disappearing from it.
+
+    A file the scan did not read is only reported ``missing`` when the walk
+    actually covered its directory. Records under a directory that could not be
+    listed, or that the walk refused to enter because it is a link, are marked
+    ``unavailable``: the scan has no evidence that they are gone, and saying so
+    would send the user looking for a deleted file that is still on disk.
     """
     root = db.get(AuthorizedRoot, root_id)
     if root is None:
@@ -337,12 +416,14 @@ def handle_scan_root(db: Session, root_id: str, job_id: int | None = None) -> di
         "files_unavailable": 0,
         "directories_unreadable": 0,
         "unreadable_directories": [],
+        "directories_skipped": 0,
+        "skipped_directories": [],
     }
     seen_paths: set[str] = set()
     recorded: set[str] = set()
-    unreadable_dirs: list[str] = []
+    report = _WalkReport()
 
-    for path in _iter_source_files(root_dir, unreadable_dirs):
+    for path in _iter_source_files(root_dir, report):
         relative_path = path.relative_to(root_dir).as_posix()
         summary["files_seen"] += 1
 
@@ -474,18 +555,45 @@ def handle_scan_root(db: Session, root_id: str, job_id: int | None = None) -> di
         summary["versions_created"] += 1
         summary["jobs_dispatched"] += 1
 
-    # Everything this scan did not account for is gone. The check is on the
-    # in-memory state, not on a fresh query: the session does not autoflush, so
-    # a row this scan already marked ``unavailable`` would still look
-    # ``present`` in the database and be overwritten with the wrong reason.
+    # Linked file entries were seen but not read. They get a record with a
+    # reason, so they do not fall through to "missing" in the pass below: the
+    # path is still there, it is just not something the scan will read.
+    for path in report.linked_files:
+        summary["files_seen"] += 1
+        _note_unreadable(
+            db,
+            summary,
+            recorded,
+            root_id=root_id,
+            relative_path=path.relative_to(root_dir).as_posix(),
+            name=path.name,
+            reason=PRESENCE_REASON_NOT_REGULAR,
+        )
+
+    # Everything this scan did not account for is *not* automatically gone.
+    # Two cases must stay apart:
     #
-    # ``unavailable`` from an earlier scan is promoted here too: if the path is
-    # not there at all any more, "we could not read it" is no longer the truth,
-    # and a stale reason would send the user looking for a permission problem
-    # on a file that no longer exists.
+    # - a record under a directory the walk could not list, or refused to
+    #   enter, is unknown: it is marked unavailable/unreadable, never missing,
+    #   and never counted as a missing file;
+    # - anything else that was present and was not read is gone.
+    #
+    # The check is on the in-memory state, not on a fresh query: the session
+    # does not autoflush, so a row this scan already marked ``unavailable``
+    # would still look ``present`` in the database and be given a wrong reason.
+    uncovered = report.uncovered
     records = db.execute(select(FileRecord).where(FileRecord.root_id == root_id)).scalars()
     for record in records:
         if record.relative_path in seen_paths or record.relative_path in recorded:
+            continue
+        if _under_any(record.relative_path, uncovered):
+            if (
+                record.presence_status != FilePresence.UNAVAILABLE.value
+                or record.presence_reason != PRESENCE_REASON_UNREADABLE
+            ):
+                record.presence_status = FilePresence.UNAVAILABLE.value
+                record.presence_reason = PRESENCE_REASON_UNREADABLE
+                summary["files_unavailable"] += 1
             continue
         if record.presence_status == FilePresence.MISSING.value:
             continue
@@ -497,12 +605,14 @@ def handle_scan_root(db: Session, root_id: str, job_id: int | None = None) -> di
         # status rather than because the history was thrown away.
         summary["files_missing"] += 1
 
-    # Not a per-file outcome (a directory is not a file record), but it must
-    # still be visible: files under an unlistable directory were not covered by
-    # this scan, and silence there would read as "all files are gone".
-    summary["directories_unreadable"] = len(unreadable_dirs)
-    summary["unreadable_directories"] = sorted(unreadable_dirs)
+    summary["directories_unreadable"] = len(report.unreadable_dirs)
+    summary["unreadable_directories"] = sorted(report.unreadable_dirs)
+    summary["directories_skipped"] = len(report.skipped_dirs)
+    summary["skipped_directories"] = sorted(report.skipped_dirs)
 
-    root.last_successful_scan_at = utcnow()
+    # "Successful" means the whole tree was covered. A directory that could not
+    # be listed leaves a gap, and claiming success would hide it.
+    if not report.unreadable_dirs:
+        root.last_successful_scan_at = utcnow()
     db.commit()
     return summary

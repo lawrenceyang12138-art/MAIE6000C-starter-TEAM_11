@@ -11,7 +11,11 @@ allowlist, so the filesystem is real.
 
 from __future__ import annotations
 
+import os
+import shutil
+import stat
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from sqlalchemy import delete, func, select
@@ -505,26 +509,127 @@ def test_a_recovered_file_becomes_present_again_without_a_new_version(
     assert _count(db_session, Job) == 4
 
 
-def test_an_unreadable_directory_does_not_hide_the_rest_of_the_tree(
+def test_an_unlistable_directory_marks_its_files_unavailable_not_missing(
     mounted, db_session, monkeypatch
 ):
-    """A directory that cannot be listed is reported, not silently skipped."""
+    """A directory we could not list is unknown ground, not proof of deletion.
+
+    Before this, every file under it was reported `missing` / `file_missing`:
+    the walk never saw them, so the trailing pass assumed they were gone, even
+    though the same summary said one directory was unreadable.
+    """
     root_id = _make_root(db_session)
-    real_iter = scan_handler._iter_source_files
+    first = handle_scan_root(db_session, root_id)
+    assert first["files_missing"] == 0
+    scanned_at = db_session.get(AuthorizedRoot, root_id).last_successful_scan_at
+    assert scanned_at is not None
 
-    def iter_with_unreadable(root_dir, unreadable_dirs=None):
-        if unreadable_dirs is not None:
-            unreadable_dirs.append(str(Path(root_dir) / "locked"))
-        yield from real_iter(root_dir)
+    real_scandir = os.scandir
 
-    monkeypatch.setattr(scan_handler, "_iter_source_files", iter_with_unreadable)
+    def failing_scandir(path="."):
+        if Path(path).name == "regression":
+            raise PermissionError(13, "Permission denied", str(path))
+        return real_scandir(path)
 
+    monkeypatch.setattr(scan_handler.os, "scandir", failing_scandir)
     summary = handle_scan_root(db_session, root_id)
 
     assert summary["directories_unreadable"] == 1
-    assert summary["unreadable_directories"][0].endswith("locked")
-    # Discovery of the readable part is unaffected.
+    assert summary["unreadable_directories"] == ["regression"]
+    # The two files in that directory are unknown, not gone.
+    assert summary["files_missing"] == 0
+    assert summary["files_unavailable"] == 2
+    for relative_path in ("regression/doc01.pdf", "regression/doc02.pdf"):
+        record = _record(db_session, relative_path)
+        assert record.presence_status == FilePresence.UNAVAILABLE.value
+        assert record.presence_reason == REASON_UNREADABLE
+    # Everything the walk did reach is untouched.
+    assert _record(db_session, "notes.txt").presence_status == FilePresence.PRESENT.value
+    # The scan did not cover the tree, so it is not recorded as successful.
+    db_session.refresh(db_session.get(AuthorizedRoot, root_id))
+    assert db_session.get(AuthorizedRoot, root_id).last_successful_scan_at == scanned_at
+
+
+def test_a_directory_replaced_by_a_link_keeps_its_files_unavailable(
+    mounted, tmp_path, db_session, make_directory_link
+):
+    """A directory the walk refuses to enter is not evidence of deletion either."""
+    root_id = _make_root(db_session)
+    handle_scan_root(db_session, root_id)
+
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    (elsewhere / "corrupt.pdf").write_bytes(b"%PDF-1.4 a different file")
+    shutil.rmtree(mounted / "abnormal")
+    make_directory_link(mounted / "abnormal", elsewhere)
+
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["directories_skipped"] == 1
+    assert summary["skipped_directories"] == ["abnormal"]
+    assert summary["files_missing"] == 0
+    record = _record(db_session, "abnormal/corrupt.pdf")
+    assert record.presence_status == FilePresence.UNAVAILABLE.value
+    assert record.presence_reason == REASON_UNREADABLE
+
+
+@pytest.mark.skipif(os.name == "nt", reason="file symlinks need a privilege on Windows")
+def test_a_file_replaced_by_a_link_is_recorded_not_reported_missing(mounted, db_session):
+    """A path that is now a link exists; saying "missing" would be a lie."""
+    root_id = _make_root(db_session)
+    handle_scan_root(db_session, root_id)
+
+    target = mounted / "notes.txt"
+    link = mounted / "regression" / "doc02.pdf"
+    link.unlink()
+    link.symlink_to(target)
+
+    summary = handle_scan_root(db_session, root_id)
+
+    record = _record(db_session, "regression/doc02.pdf")
+    assert record.presence_status == FilePresence.UNAVAILABLE.value
+    assert record.presence_reason == scan_handler.PRESENCE_REASON_NOT_REGULAR
+    assert summary["files_missing"] == 0
+
+
+@pytest.mark.skipif(os.name == "nt", reason="FIFOs do not exist on Windows")
+def test_a_fifo_is_recorded_without_being_opened(mounted, db_session):
+    """A real non-regular entry: no bytes to version, and reading it would block."""
+    os.mkfifo(mounted / "abnormal" / "pipe")
+    root_id = _make_root(db_session)
+
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["files_unavailable"] == 1
     assert summary["versions_created"] == 4
+    record = _record(db_session, "abnormal/pipe")
+    assert record.presence_reason == scan_handler.PRESENCE_REASON_NOT_REGULAR
+    assert record.current_version_id is None
+
+
+def test_link_like_detects_a_reparse_point_without_is_symlink():
+    """The Windows junction branch, which no CI platform can create natively.
+
+    ``Path.is_symlink()`` is False for a junction, so this branch is the only
+    thing standing between a junction and the walk entering it. Linux CI would
+    otherwise never execute it.
+    """
+    reparse = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+
+    class _Entry:
+        def __init__(self, *, symlink: bool, attributes: int) -> None:
+            self._symlink = symlink
+            self._attributes = attributes
+
+        def is_symlink(self) -> bool:
+            return self._symlink
+
+        def lstat(self):
+            return SimpleNamespace(st_file_attributes=self._attributes)
+
+    assert scan_handler._is_link_like(_Entry(symlink=False, attributes=reparse)) is True
+    assert scan_handler._is_link_like(_Entry(symlink=False, attributes=0x10)) is False
+    assert scan_handler._is_link_like(_Entry(symlink=True, attributes=0)) is True
 
 
 def test_a_file_unavailable_last_scan_and_gone_now_is_missing(
