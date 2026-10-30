@@ -22,6 +22,7 @@ from services.common.models import (
     AuthorizedRoot,
     Case,
     CaseStatus,
+    FileVersion,
     Job,
     JobStatus,
     JobType,
@@ -29,6 +30,7 @@ from services.common.models import (
     RootStatus,
     VersionStatus,
 )
+from services.parsing.pdf import REASON_ENCRYPTED, REASON_FILE_MISSING
 from services.search.embeddings import HTTPEmbeddingBackend
 from services.search.indexing import IndexResult
 from services.worker.app import main as worker_main
@@ -210,24 +212,136 @@ def test_index_dispatch_is_idempotent_per_version(worker_db, make_file_version, 
     assert len(_index_jobs(worker_db, version_id)) == 1
 
 
-@pytest.mark.parametrize(
-    "outcome",
-    [VersionStatus.UNSUPPORTED.value, VersionStatus.FAILED.value],
-)
-def test_a_document_level_outcome_completes_the_job_without_indexing(
-    worker_db, make_file_version, monkeypatch, outcome: str
+def test_an_unsupported_document_completes_the_job_without_indexing(
+    worker_db, make_file_version, monkeypatch
 ):
+    """``unsupported`` is a handled outcome: the document will never parse.
+
+    The job is completed and carries ``error_code = NULL``: a completed job did
+    not fail, and the document's reason stays on the version where ``GET /files``
+    shows it.
+    """
     version_id = make_file_version(sha256="e" * 64)
+    job_id = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
+
+    def fake_extract(db, vid, source_path):
+        version = db.get(FileVersion, vid)
+        version.status = VersionStatus.UNSUPPORTED.value
+        version.error_code = REASON_ENCRYPTED
+        db.commit()
+        return VersionStatus.UNSUPPORTED.value
+
+    monkeypatch.setattr(
+        worker_main, "resolve_source_path", lambda db, vid: Path("/corpus/x.pdf")
+    )
+    monkeypatch.setattr(worker_main, "handle_extract_file", fake_extract)
+
+    worker_main.process_job(job_id)
+
+    job = _job(worker_db, job_id)
+    assert job.status == JobStatus.COMPLETED.value
+    assert job.error_code is None
+    assert _index_jobs(worker_db, version_id) == []
+    # The reason is still recorded, on the version.
+    assert worker_db.get(FileVersion, version_id).error_code == REASON_ENCRYPTED
+
+
+def test_a_failed_version_fails_the_job_so_it_can_be_retried(
+    worker_db, make_file_version, monkeypatch
+):
+    """A ``failed`` version must not leave the job saying ``completed``.
+
+    That mismatch is what broke recovery: the version said "the file was not
+    there", the job said "done", and ``POST /jobs/{id}/retry`` refused a
+    completed job, so restoring the file changed nothing.
+    """
+    version_id = make_file_version(sha256="f" * 64)
+    job_id = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
+
+    def fake_extract(db, vid, source_path):
+        version = db.get(FileVersion, vid)
+        version.status = VersionStatus.FAILED.value
+        version.error_code = REASON_FILE_MISSING
+        db.commit()
+        return VersionStatus.FAILED.value
+
+    monkeypatch.setattr(
+        worker_main, "resolve_source_path", lambda db, vid: Path("/corpus/x.pdf")
+    )
+    monkeypatch.setattr(worker_main, "handle_extract_file", fake_extract)
+
+    worker_main.process_job(job_id)
+
+    job = _job(worker_db, job_id)
+    assert job.status == JobStatus.FAILED.value
+    # The reason travels with the job, so a client can tell a transient
+    # "file_missing" from an internal failure.
+    assert job.error_code == REASON_FILE_MISSING
+    assert job.completed_at is not None
+    assert _index_jobs(worker_db, version_id) == []
+
+
+def test_an_unfinished_status_from_the_handler_is_a_bug(worker_db, make_file_version, monkeypatch):
+    """A version left mid-pipeline must not be reported as finished work."""
+    version_id = make_file_version(sha256="1" * 64)
     job_id = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
 
     monkeypatch.setattr(
         worker_main, "resolve_source_path", lambda db, vid: Path("/corpus/x.pdf")
     )
-    monkeypatch.setattr(worker_main, "handle_extract_file", lambda db, vid, source_path: outcome)
+    monkeypatch.setattr(
+        worker_main,
+        "handle_extract_file",
+        lambda db, vid, source_path: VersionStatus.EXTRACTING.value,
+    )
+
+    with pytest.raises(RuntimeError):
+        worker_main.process_job(job_id)
+
+
+def test_a_retry_of_an_already_parsed_version_reparses_nothing_and_queues_no_job(
+    worker_db, make_file_version, monkeypatch
+):
+    """Retry is idempotent: published text is not replaced for nothing.
+
+    Re-parsing would replace chunk rows, and chunk ids are what reviews and
+    search indexes hang off. A version that already holds its text only needs
+    its job closed - and no second index job, because the embeddings were
+    built, or are the ``embed_file`` job's business.
+    """
+    version_id = make_file_version(sha256="2" * 64, status=VersionStatus.BASIC_READY.value)
+    job_id = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
+
+    calls: list[str] = []
+    monkeypatch.setattr(
+        worker_main, "resolve_source_path", lambda db, vid: Path("/corpus/x.pdf")
+    )
+    monkeypatch.setattr(
+        worker_main,
+        "handle_extract_file",
+        lambda db, vid, source_path: calls.append("extract"),
+    )
 
     worker_main.process_job(job_id)
 
-    # A recorded outcome is a completed job; only unrecorded errors fail it.
+    assert calls == []
+    assert _job(worker_db, job_id).status == JobStatus.COMPLETED.value
+    assert _index_jobs(worker_db, version_id) == []
+
+
+def test_a_retry_of_an_enriched_version_queues_no_index_job(
+    worker_db, make_file_version, monkeypatch
+):
+    """``enriched`` already includes the vectors; there is nothing to re-queue."""
+    version_id = make_file_version(sha256="4" * 64, status=VersionStatus.ENRICHED.value)
+    job_id = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
+
+    monkeypatch.setattr(
+        worker_main, "handle_extract_file", lambda db, vid, source_path: "unreachable"
+    )
+
+    worker_main.process_job(job_id)
+
     assert _job(worker_db, job_id).status == JobStatus.COMPLETED.value
     assert _index_jobs(worker_db, version_id) == []
 
@@ -235,7 +349,7 @@ def test_a_document_level_outcome_completes_the_job_without_indexing(
 def test_a_processing_error_propagates_for_the_loop_to_fail_the_job(
     worker_db, make_file_version, monkeypatch
 ):
-    version_id = make_file_version(sha256="f" * 64)
+    version_id = make_file_version(sha256="3" * 64)
     job_id = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
 
     monkeypatch.setattr(

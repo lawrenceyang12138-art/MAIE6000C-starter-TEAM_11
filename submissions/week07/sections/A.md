@@ -40,9 +40,15 @@ contained. Serving stale text as current contradicts the whole point of keeping
 versions. The fix moves the pointer back to the observed version and still
 creates nothing, so idempotency is preserved.
 
-A file that a successful scan no longer sees is marked `missing`; its last
-observed version and pointer are retained. A temporary permission failure
-therefore stays visible and recoverable instead of deleting history.
+A file the scan can no longer read is kept, not dropped, and the state says
+which of the two things happened. `missing` means the walk covered its directory
+and the path was not there. `unavailable` means the scan could not read it: an
+I/O or permission error, a link the walk refuses to follow (`not_a_regular_file`),
+or a directory that could not be listed or entered (`unreadable`) - in that case
+the scan has no evidence that the file is gone, so it says so. Both keep the last
+observed version and pointer, and neither is counted as a deletion, so a
+temporary permission failure stays visible and explainable instead of deleting
+history or sending the user looking for a file that is still on disk.
 
 ## Durable jobs
 
@@ -59,9 +65,10 @@ runs the handler and persists a terminal state. Scan jobs create per-version
 extraction jobs; a successful extraction queues exactly one index job in the
 same transaction, and only after the text is stored. The public API maps the
 internal `claimed` state to `running`, so the browser never has to know a
-database-only word, and it publishes a stable `error_code` instead of the
-diagnostic string, so exception text and container paths cannot leak into the
-client.
+database-only word, and it publishes a stable `error_code` when a job fails
+instead of the diagnostic string, so exception text and container paths cannot
+leak into the client. A document's own reason stays on the version, where
+`GET /files` shows it; a completed job carries no code.
 
 `POST /jobs/{job_id}/retry` accepts only a failed job, refuses when another job
 is already working on the same target, returns the job to `pending`, clears the

@@ -119,6 +119,11 @@ class Job(Base):
     )
     attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Stable, machine-readable reason the last attempt failed. ``error`` stays a
+    # diagnostic string that never leaves the service; this column is what the
+    # public ``error_code`` is read from, so a client can tell a transient
+    # "file_missing" (retry once the file is back) from an internal failure.
+    error_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=utcnow,
@@ -242,6 +247,10 @@ class FileRecord(Base):
         nullable=False,
         default=FilePresence.PRESENT.value,
     )
+    # Why the last scan could not read the file, when it could not. ``missing``
+    # and ``unavailable`` say *that* the content is not usable; this says what
+    # the scanner actually hit, in the same vocabulary extraction uses.
+    presence_reason: Mapped[str | None] = mapped_column(String(100), nullable=True)
     last_seen_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,

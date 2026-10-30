@@ -48,6 +48,10 @@ class FileListItem(BaseModel):
     display_name: str
     relative_path: str
     presence_status: str
+    # Why the last scan could not read the file (``file_missing``,
+    # ``unreadable``, ``not_a_regular_file``). ``None`` while the content was
+    # readable; the key is always present so a client never has to guess.
+    presence_reason: str | None = None
     status: str
     error_code: str | None
     updated_at: datetime
@@ -118,6 +122,7 @@ def list_files(
                 display_name=file_record.name,
                 relative_path=file_record.relative_path,
                 presence_status=file_record.presence_status,
+                presence_reason=file_record.presence_reason,
                 status=version.status if version is not None else "discovered",
                 error_code=version.error_code if version is not None else None,
                 updated_at=file_record.updated_at,

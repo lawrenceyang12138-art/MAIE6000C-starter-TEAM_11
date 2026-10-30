@@ -48,6 +48,7 @@ from services.common.schemas import (
 )
 from services.api.app.errors import reason
 from services.api.app.parsing_routes import router as parsing_router
+from services.scan.handler import PathEscapesRoot, contained_path
 from services.search.embeddings import EmbeddingBackend, HTTPEmbeddingBackend
 from services.search.retrieval import search_chunks
 
@@ -97,8 +98,11 @@ def to_job_read(job: Job) -> JobRead:
         status=public_job_status(job.status),
         attempts=job.attempts,
         # The stored `error` is a diagnostic string; only a stable code leaves
-        # the service (privacy rule: no stack traces to the browser).
-        error_code="job_failed" if job.error else None,
+        # the service (privacy rule: no stack traces to the browser). A job
+        # failed by a handler carries the reason the handler recorded, so a
+        # client can tell "the file was not there, retry it" from an internal
+        # failure; anything else falls back to the generic code.
+        error_code=job.error_code or ("job_failed" if job.error else None),
         created_at=job.created_at,
         claimed_at=job.claimed_at,
         completed_at=job.completed_at,
@@ -509,6 +513,11 @@ def retry_job(job_id: int, db: Session = Depends(get_db)) -> JobRetryAccepted:
     a pending one is already queued. The attempt count is kept as provenance;
     the recorded error is cleared because the next run starts fresh.
 
+    This endpoint is the recovery path for a version whose source was
+    temporarily unavailable. The version stays ``failed`` until the retry runs -
+    a rescan deliberately does not re-dispatch it - so restoring the file and
+    calling this is what closes the loop (contract 12.3).
+
     Retrying is new work, so the owning root must be active (contract 3.1). The
     root row is locked before the live-job check and the state transition, so
     two concurrent retries cannot both requeue, and a retry cannot slip in while
@@ -556,6 +565,7 @@ def retry_job(job_id: int, db: Session = Depends(get_db)) -> JobRetryAccepted:
         .values(
             status=JobStatus.PENDING.value,
             error=None,
+            error_code=None,
             claimed_at=None,
             completed_at=None,
         )
@@ -616,18 +626,41 @@ def _mount_path(mount_id: str) -> Path:
 def _contained_mount_dir(mount_id: str, relative_path: str) -> Path:
     """Resolve a relative directory inside its mount and enforce containment.
 
-    ``resolve()`` collapses symlinks, so a link pointing outside the mount is
-    rejected rather than listed: a read-only mount alone is not authorization.
+    The rule itself lives in the scan module, so listing and authorizing cannot
+    disagree about what "inside the mount" means: ``resolve()`` collapses
+    symlinks, so a link pointing outside the mount is rejected rather than
+    listed. A read-only mount alone is not authorization (contract 4.3).
     """
-    base = _mount_path(mount_id).resolve()
-    rel = normalise_relative_path(relative_path)
-    candidate = base if rel == "." else (base / rel).resolve()
-    if candidate != base and base not in candidate.parents:
+    base = _mount_path(mount_id)
+    try:
+        return contained_path(base, normalise_relative_path(relative_path))
+    except PathEscapesRoot as exc:
         raise HTTPException(
             status_code=403,
             detail=reason("path_out_of_scope", "Path escapes the allowed mount"),
+        ) from exc
+
+
+def _require_directory(directory: Path) -> Path:
+    """Refuse a path that exists but is not a directory inside the mount.
+
+    ``404 source_unavailable`` reuses the code the directory listing already
+    returns for the same condition. Authorizing a file, or a path that is not
+    there, would only queue work that is certain to fail.
+    """
+    try:
+        is_directory = directory.is_dir()
+    except OSError:
+        is_directory = False
+    if not is_directory:
+        raise HTTPException(
+            status_code=404,
+            detail=reason(
+                "source_unavailable",
+                "The selected directory is not available inside the mount",
+            ),
         )
-    return candidate
+    return directory
 
 
 @app.get("/mounts", response_model=list[MountRead])
@@ -700,6 +733,10 @@ def create_root(payload: RootCreate, db: Session = Depends(get_db)) -> RootJobAc
             detail=reason("unknown_mount", f"Unknown mount_id: {mount_id!r}"),
         )
     relative_path = normalise_relative_path(payload.relative_path)
+    # Contract 4.3: canonical containment (symlinks included) is decided before
+    # the root or its job is written, so a refused request leaves nothing behind.
+    # The same rule the worker applies, from the same implementation.
+    _require_directory(_contained_mount_dir(mount_id, relative_path))
 
     root, job = create_root_with_scan_job(db, mount_id, relative_path)
 

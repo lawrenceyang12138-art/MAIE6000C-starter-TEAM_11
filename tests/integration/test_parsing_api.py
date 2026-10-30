@@ -58,6 +58,7 @@ def test_file_list_and_evidence_use_the_same_current_chunk(
             "display_name": "invoice.pdf",
             "relative_path": "reports-aaaaaaaa/invoice.pdf",
             "presence_status": "present",
+            "presence_reason": None,
             "status": "discovered",
             "error_code": None,
             "updated_at": files.json()[0]["updated_at"],

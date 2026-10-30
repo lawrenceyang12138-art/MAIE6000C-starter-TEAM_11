@@ -153,7 +153,7 @@ evidence README says the images are local-only.
 
 | Id | Risk | Severity | Owner | Current state |
 | --- | --- | --- | --- | --- |
-| R1 | Seven file-management, evidence, relation and retry routes are not assembled | P0 | A / B | D consumer ready; real integration blocked |
+| R1 | Seven file-management, evidence, relation and retry routes are not assembled | P0 | A / B | **Closed 2026-10-23** - merged in PR #6; all seven served |
 | R2 | Fixture error codes do not match the parser's taxonomy | P1 | B + D | Reproduced and documented; fix needs a re-freeze |
 | R3 | M1's three real browser scenarios have never been run on a clean database | P0 | A+B+C+D | Recorded as not run, deliberately not simulated |
 | R4 | Relation candidates carry no addressable chunk id | P1 | A / B | D disables review when the quote cannot be located |
@@ -183,9 +183,10 @@ regenerated as `corrupt` / `encrypted` / `no_text_layer` and lowercase codes thr
 
 ## 6. Overall status, risks, and readiness assessment
 
-The honest summary is that Team 11 has a working set of vertical slices and no working end-to-end
-chain. That sentence is uncomfortable, and it is also the only useful one for deciding what to do
-next.
+The honest summary on 21 October was a working set of vertical slices and no working end-to-end
+chain. Since 23 October that has changed: the seven missing routes were assembled and merged
+(PR #6), and one chain now runs from choosing a folder to reading the source passage behind a hit.
+The assessment below keeps the original reading, then records what closed and what did not.
 
 Each slice is real. Retrieval exists and is tested at the service level. Parsing produces
 per-page text with a byte identity and distinguishes encrypted, corrupt, unreadable and
@@ -196,14 +197,12 @@ written down and enforced at runtime: the frontend rejects a response that claim
 200, rejects a nested job envelope, rejects evidence whose page or version does not match, and
 refuses to render a cached passage once its source is known to be invalid.
 
-None of that is the same as the product working. The assembled API still serves the starter's
-case routes plus search and roots; everything the frontend needs to browse a mount, list files,
-read a chunk, read relations or append a review is a function or a document, not an endpoint. A
-user who runs `docker compose up` today gets a frontend that immediately reports a missing route
-unless they built it in mock mode. That is why the shipped default is now the labeled simulation
-rather than an API build that fails on first paint: a demo that opens to an error page teaches a
-reviewer nothing, while a demo that opens to watermarked synthetic data with a permanent banner
-teaches them exactly what is and is not proven.
+With the routes assembled, that gap is closed. The service now serves the mount, root, file, job,
+evidence, relation, review and search endpoints the frontend calls, and an API-mode build runs
+against it: 16 fixtures became 12 readable documents and 4 recorded refusals, a rescan added
+nothing, and the original files' hashes were unchanged before and after. The default build still
+ships the labelled simulation, because a demo that opens to an error page teaches a reviewer
+nothing - but API mode is now a path that works, not an aspiration.
 
 The verification story is stronger than the integration story, and both matter. On the consumer
 side the numbers are unglamorous but load-bearing: 55 contract tests, 24 component tests, a
@@ -211,18 +210,18 @@ side the numbers are unglamorous but load-bearing: 55 contract tests, 24 compone
 scenarios across two reports. Three of those layers are now enforced by CI on every push, which
 means the frontend can no longer rot silently between demos. On the service side, the Python
 pipeline has unit and integration tests that run against a real Postgres with pgvector, and the
-gold check runs in the same job. What is missing is not tests but wiring: an endpoint that exists
-without a test is a rumour, and a test that intercepts `/api` is a promise about the consumer,
-not about the service.
+gold check runs in the same job. What remains missing is not wiring but operational maturity: one
+worker, no claim lease, no backoff and no filesystem watcher. An endpoint that exists without a
+test is still a rumour, which is why the new routes shipped with their own integration tests and
+the queue invariants with PostgreSQL concurrency cases.
 
-Three named risks decide the freeze. First, the assembly gap (R1): seven routes, each owned by A
-or B, none of them served today. The frontend work to consume them is done and reviewed; the
-backend work is not. Second, acceptance (R3): the three M1 scenarios require a clean database, a
-real scan, real parsing, real search and a real source read in one unbroken run, with recorded task
-ids, counts, network requests and signatures. Nobody has run them, and the team deliberately
-declined to approximate them with intercepted requests. Third, taxonomy (R2): the abnormal
-fixtures describe a vocabulary the parser does not implement, so the demo's central "12 / 3 / 1"
-claim is not reproducible against the real pipeline even after assembly lands.
+Two named risks decide the freeze, and one has since closed. The assembly gap (R1) is closed: the
+seven routes are served and the frontend consumes them in API mode. What remains is acceptance
+(R3) and taxonomy (R2). Acceptance needs the three M1 scenarios run in one unbroken sequence on a
+clean database with recorded task ids, counts and signatures; the service half of that sequence is
+now measured, the browser half with signatures is not, and the team still declines to substitute
+intercepted requests for it. Taxonomy (R2) stands: the abnormal fixtures describe a vocabulary the
+parser does not implement, so the "12 / 3 / 1" story would really be 12 / 0 / 4.
 
 There is an encouraging pattern in how these were handled. When the reviewer pointed at
 `.gitignore`, the fix was a two-line rule change plus an exit-code matrix proving which paths are
@@ -232,34 +231,59 @@ table was wrong. When the reviewer pointed at the README, the text was corrected
 argued with. That is the behaviour a team wants at a freeze: cheap fixes land immediately, and
 expensive fixes get a written rationale and a date instead of a rushed patch.
 
-For the freeze itself, the recommendation is to record M1 as **not passed** and to keep the D
-consumer code as the integration target. The alternative — declaring M1 passed on the strength of
-intercepted browser fixtures — would be a false claim that survives in the repository forever. The
-code does not need to be rewritten to earn a pass later: when the seven routes are assembled, the
-same six-step demo script can be replayed without interception, and the same evidence files can be
-regenerated against the real service with a recorded commit sha.
+For the freeze itself, the honest record is that the service path is measured and the browser
+acceptance is not. Declaring M1 fully passed on the strength of intercepted browser fixtures would
+be a false claim that survives in the repository forever; declaring the service half unproven would
+now be unfair to it. The demo script can be replayed without interception, and the evidence files in
+this folder were regenerated against the real service with recorded commit ids.
 
-One more point belongs here because it is easy to lose in a status table: the gap is not evenly
-distributed. Retrieval, parsing and the consumer layer are close to complete, while assembly is
-the bottleneck and it sits with one role. The team should say that out loud at the freeze, assign
-the seven routes by name, and date them, instead of implying that four roles are equally behind.
-That is also the fairest reading of the evidence: D's pages have been ready since 19 October and
-have been waiting on endpoints, not on design discussion.
+One point belongs here because it is easy to lose in a status table: for most of the week the gap
+was not evenly distributed. Retrieval, parsing and the consumer layer were close to complete while
+assembly sat with one role. That reading was right, and it also predicted how the week ended - the
+assembly landed as one focused pull request rather than as four roles finishing together.
 
-What "done" would require, concretely, is small and unglamorous: assemble `/mounts` and
-`/mounts/{id}/directories`; serve `GET /files?root_id=`; serve `GET /evidence/{chunk_id}`;
-serve `GET /versions/{id}/relations`; accept `POST /relations/{id}/reviews` with the revision
-contract; decide and implement retry as `POST /jobs/{id}/retry`; regenerate the abnormal fixtures
-against the real taxonomy and re-freeze; then run the three scenarios on a clean database and
-record what happened, including whatever fails. Each item is days of work, not weeks, and each has
-an owner already named in `scope-decision.md`.
+What "done" required was small and unglamorous, and most of it is now done: `/mounts` and
+`/mounts/{id}/directories` are served; `GET /files?root_id=`, `GET /evidence/{chunk_id}`,
+`GET /versions/{id}/relations` and `POST /relations/{id}/reviews` are served; retry is
+`POST /jobs/{id}/retry` guarded by a conditional state update; and `POST /roots` returns the flat
+envelope the consumer contract asks for. What is left from that list is the fixture re-freeze and
+the signed three-scenario run.
 
-The final judgement is therefore split and should stay split. Delivered and verified: the consumer
-layer, the contracts, the fixtures, the evidence discipline, the CI. Not delivered: the assembled
-service that would let a user complete a scan-to-search-to-review run. Reported honestly: both of
-those statements, in the same document, with the evidence that supports each.
+The final judgement is therefore split, and the split is narrower than it was in October. Delivered
+and verified: the consumer layer, the contracts, the fixtures, the assembled service, the scan and
+parse and index path, and the evidence discipline. Not delivered: a filesystem watcher, multi-worker
+safety, OCR, move detection, purge, and a signed browser acceptance run. Reported honestly: both of
+those lists, in the same document, with the evidence that supports each.
 
-## 7. Role D contribution
+## 7. Role contributions
+
+### A - mounts, scanning, versions, jobs and the API surface
+
+A's work across the week, in the order it mattered:
+
+1. **The scan transaction.** Discovery walks an authorized folder without following symlinks,
+   hashes each file, reuses the version when the bytes are unchanged, and moves
+   `current_version_id` in the same transaction that queues `extract_file`. A rescan of unchanged
+   content creates nothing.
+2. **Pointer semantics.** The pointer means "latest content observed". A revert therefore has to
+   move it back: leaving it on the revised version served superseded text as current while the
+   file on disk was the old one. That was the review's blocking defect, and the fix is a two-line
+   branch with a test that asserts no version is created.
+3. **The mount and route surface.** Allowlisted read-only mounts, canonical containment,
+   `404 unknown_mount`, `403 path_out_of_scope`, and the seven routes the browser needed:
+   `/mounts`, `/mounts/{id}/directories`, `GET /roots`, `POST /roots/{id}/scans`,
+   `POST /jobs/{id}/retry`, plus the flattened `POST /roots` and the counts-carrying
+   `GET /roots/{id}`.
+4. **Queue correctness.** Claim-and-enqueue runs under a root row lock; retry is a conditional
+   `UPDATE ... WHERE status = 'failed'` so a stale read cannot reset claimed or completed work;
+   paused, revoking and revoked roots are refused at every entry point. Six PostgreSQL concurrency
+   cases cover these, each mutation-checked by removing the guard.
+5. **Evidence discipline.** `scripts/w7_evidence_probe.py` drives the public API only, so the
+   numbers in `evidence/` are what a client could observe: 16 files to 12 ready and 4 refusals,
+   zero duplicates across eleven scans, and unchanged hashes across a restart and a container
+   recreation.
+
+### D - frontend, consumer contract and milestone materials
 
 D's work across the week, in the order it mattered:
 
@@ -298,6 +322,14 @@ python scripts/validate_d_gold.py
 # browser contract reports (writes screenshots under submissions/week07/evidence/)
 node scripts/capture_d_1019.mjs
 node scripts/capture_d_relations_mock.mjs
+
+# A: scan, security, M1 and restart evidence
+python scripts/w7_evidence_probe.py --out submissions/week07/evidence/scan-run.json
+docker compose exec -T db psql -U postgres -d maie6000c -c "select count(*) from file_versions;"
+
+# A: the six PostgreSQL queue cases (concurrent rescan, duplicate authorization, stale retry)
+SEARCH_TEST_DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:15432/maie6000c \
+  pytest tests/integration/test_api_queue_postgres.py -q
 ```
 
 Evidence index: `submissions/week07/ui-progress.md`,

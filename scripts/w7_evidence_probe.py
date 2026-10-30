@@ -137,6 +137,16 @@ def probe(base_url: str, mount_id: str, relative_path: str, timeout: float) -> d
                 "files_reported": len(first_files),
                 "by_version_status": _tally(first_files, "status"),
                 "by_presence": _tally(first_files, "presence_status"),
+                "by_presence_reason": _tally(
+                    [item for item in first_files if item.get("presence_reason")],
+                    "presence_reason",
+                ),
+                "not_readable": sorted(
+                    f"{item['relative_path']} ({item.get('presence_status')}: "
+                    f"{item.get('presence_reason') or 'no reason'})"
+                    for item in first_files
+                    if item.get("presence_status") != "present"
+                ),
                 "by_error_code": _tally(
                     [item for item in first_files if item.get("error_code")], "error_code"
                 ),
@@ -176,10 +186,13 @@ def _markdown(result: dict, originals: dict) -> str:
         f"- stages: {json.dumps(counts, ensure_ascii=False)}",
         f"- by version status: {json.dumps(first['by_version_status'], ensure_ascii=False)}",
         f"- by presence: {json.dumps(first['by_presence'], ensure_ascii=False)}",
+        f"- by presence reason: {json.dumps(first['by_presence_reason'], ensure_ascii=False)}",
         f"- settled before timeout: {first['settled']}",
     ]
     if first["unsupported_or_failed"]:
         lines.append("- failed/unsupported: " + ", ".join(first["unsupported_or_failed"]))
+    if first["not_readable"]:
+        lines.append("- not readable: " + ", ".join(first["not_readable"]))
     lines += [
         "",
         "### Repeated scan",
