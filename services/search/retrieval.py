@@ -24,6 +24,7 @@ from services.search.embeddings import (
     validate_vectors,
 )
 from services.search.text import MODEL_ID, TOKEN_DIMENSIONS, normalize_text, tokenize
+from services.search.navigation_runtime import PageNavigation
 from services.search.token_store import (
     ChunkTokenIndex,
     index_matches_text,
@@ -128,7 +129,7 @@ def _lexical_details(terms, normalized_query, chunk, search_index, source_file):
 
 def _semantic_candidates(
     db: Session, request: SearchRequest, query_tokens: list[list[float]], limit: int,
-    settings: Settings,
+    settings: Settings, navigation: PageNavigation,
 ):
     """Exact token MaxSim over eligible chunks, bounding only after file grouping.
 
@@ -154,17 +155,22 @@ def _semantic_candidates(
     weight_sum = settings.search_keyword_weight + settings.search_semantic_weight
     for result in db.execute(statement):
         row, token_index = tuple(result[:5]), result[5]
-        chunk, keyword_index, _, source_file, _ = row
+        chunk, keyword_index, version, source_file, _ = row
         compatible = index_matches_text(token_index, chunk.text)
         if not compatible or keyword_index is None:
             incomplete = True
+        # Readiness covers the full authorized current-version scope, including
+        # pages that navigation excludes. An empty target is not an AI failure.
+        if compatible and keyword_index is not None:
+            compatible_count += 1
+        if not navigation.allows(db, chunk, version, source_file):
+            continue
         if keyword_index is None:
             continue
         if not compatible and request.mode != SearchMode.HYBRID:
             continue
         semantic_score = 0.0
         if compatible:
-            compatible_count += 1
             semantic_score = late_interaction_score(query_tokens, token_index.token_vectors)
             scores[chunk.id] = semantic_score
         lexical, _, _ = _lexical_details(
@@ -181,7 +187,9 @@ def _semantic_candidates(
         if current is None or key < current[0]:
             best_by_file[source_file.id] = (key, row)
     ordered = sorted(best_by_file.values(), key=lambda item: item[0])
-    return [item[1] for item in ordered[:limit]], scores, incomplete, compatible_count
+    rows = [item[1] for item in ordered[:limit]]
+    navigation.finish(rows)
+    return rows, scores, incomplete, compatible_count
 
 
 def search_chunks(
@@ -189,7 +197,12 @@ def search_chunks(
     request: SearchRequest,
     settings: Settings,
     backend: EmbeddingBackend | None,
+    *,
+    navigation_diagnostics: dict | None = None,
 ) -> SearchResponse:
+    navigation = PageNavigation(
+        request.query, settings.search_page_navigation_enabled, request.mode,
+    )
     base = _base_statement(request)
     limit = settings.search_max_candidates
     keyword_rows = _keyword_candidates(db, base, request.query, limit)
@@ -208,7 +221,7 @@ def search_chunks(
                     raise EmbeddingUnavailable("embedding_model_mismatch")
                 query_tokens = validate_vectors(backend.embed([request.query], "query"), 1)[0]
                 semantic_rows, semantic_scores, incomplete, compatible_count = _semantic_candidates(
-                    db, request, query_tokens, limit, settings,
+                    db, request, query_tokens, limit, settings, navigation,
                 )
                 if compatible_count == 0:
                     degradation = "embeddings_not_ready"
@@ -218,12 +231,18 @@ def search_chunks(
                 degradation = str(exc)
         if degradation and degradation != "partial_embeddings":
             effective_mode = SearchMode.KEYWORD
+            navigation.fallback("ai_fallback:" + degradation)
 
     rows_by_id = {row[0].id: row for row in keyword_rows}
     if effective_mode == SearchMode.SEMANTIC:
         rows_by_id = {row[0].id: row for row in semantic_rows}
     elif effective_mode == SearchMode.HYBRID:
-        rows_by_id.update({row[0].id: row for row in semantic_rows})
+        if navigation.active:
+            # Hybrid candidates already include eligible keyword-only chunks.
+            # Re-unioning unrestricted keyword winners would resurrect wrong pages.
+            rows_by_id = {row[0].id: row for row in semantic_rows}
+        else:
+            rows_by_id.update({row[0].id: row for row in semantic_rows})
     terms = set(tokenize(request.query))
     normalized_query = normalize_text(request.query)
     hits: list[SearchResultRead] = []
@@ -253,6 +272,9 @@ def search_chunks(
             reasons.append("file name match")
         if semantic > 0 and effective_mode != SearchMode.KEYWORD:
             reasons.append(f"token MaxSim mean: {semantic:.4f}")
+        navigation_reason = navigation.reason(version.id)
+        if navigation_reason:
+            reasons.append(navigation_reason)
         hits.append(
             SearchResultRead(
                 root_id=root.id,
@@ -291,6 +313,9 @@ def search_chunks(
         "keyword_score": round(hit.keyword_score, 6),
         "semantic_score": round(hit.semantic_score, 6),
     }) for hit in selected[: request.top_k]]
+    if navigation_diagnostics is not None:
+        navigation_diagnostics.clear()
+        navigation_diagnostics.update(navigation.report)
     return SearchResponse(
         query=request.query,
         mode=request.mode,

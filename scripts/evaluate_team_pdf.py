@@ -56,6 +56,8 @@ from services.search.embeddings import (
 )
 from services.search.evaluation import evaluate_queries
 from services.search.indexing import embed_version
+from services.search.page_metadata import VersionPageMetadata, load_page_metadata
+from services.search.navigation_runtime import NAVIGATION_PROFILE, PLAIN_PROFILE
 from services.search.text import (
     MAX_BATCH_SIZE,
     MAX_DOCUMENT_MODEL_TOKENS,
@@ -357,6 +359,18 @@ def evaluate_corpus(
             "token_vector_count": sum(index.token_count for index in compatible_token_rows),
             "token_dimensions": TOKEN_DIMENSIONS,
             "parser_revision": PARSER_REVISION,
+            "page_metadata": [
+                {
+                    "version_id": item["version_id"],
+                    "page_count": item["index"].get("page_count"),
+                    "error": item["index"].get("page_metadata_error"),
+                }
+                for item in processing if item.get("index")
+            ],
+            "ready_page_metadata_versions": sum(
+                load_page_metadata(db, db.get(FileVersion, item["version_id"]))[1] == "ready"
+                for item in processing if item.get("index")
+            ),
         }
     after = validate_corpus(corpus_dir, manifest)
     evaluation["pipeline"] = pipeline
@@ -454,7 +468,9 @@ def prepare_schema(engine, database_url: str) -> dict:
         }
     inspector = inspect(engine)
     existing = set(inspector.get_table_names())
-    expected = set(Base.metadata.tables) - {ChunkTokenIndex.__tablename__}
+    expected = set(Base.metadata.tables) - {
+        ChunkTokenIndex.__tablename__, VersionPageMetadata.__tablename__,
+    }
     if not existing:
         Base.metadata.create_all(engine)
         action = "created_empty_database"
@@ -499,6 +515,7 @@ def main() -> None:
     parser.add_argument("--freeze", type=Path,
                         default=REPO / "submissions/week07/gold-queries.freeze.json")
     parser.add_argument("--backend", choices=["local", "http", "off"], default="local")
+    parser.add_argument("--page-navigation", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--model-path", type=Path, default=REPO / MODEL_DIRECTORY)
     parser.add_argument("--ai-url", default="http://127.0.0.1:8100")
     parser.add_argument("--timeout", type=float, default=10.0)
@@ -562,6 +579,7 @@ def main() -> None:
             search_keyword_weight=args.keyword_weight,
             search_semantic_weight=args.semantic_weight,
             search_max_candidates=args.candidate_limit,
+            search_page_navigation_enabled=args.page_navigation,
         )
         backend = None
         if args.backend == "local":
@@ -606,6 +624,10 @@ def main() -> None:
             "parser_chunk_overlap": CHUNK_OVERLAP_CHARS,
             "parser_minimum_chunk_characters": MIN_CHUNK_CHARS,
             "network_at_inference": "local_only_no_cloud_fallback",
+            "page_navigation_enabled": args.page_navigation,
+            "retrieval_profile": NAVIGATION_PROFILE if args.page_navigation else PLAIN_PROFILE,
+            "page_count_source": "verified_pdf_version_metadata",
+            "even_middle_policy": "both_central_physical_pages_ranked_by_existing_score",
         }
         (REPO / "work").mkdir(exist_ok=True)
         engine = make_engine(args.database_url)

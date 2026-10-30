@@ -164,3 +164,15 @@ The product's local embedding feature is separate from development assistance. T
 evaluation corpus is synthetic and contains no private customer files. D must
 assemble and verify the final team AI Use Statement against actual member usage
 and the course format.
+
+## 2026-10-30 page-navigation handoff
+
+See the [page-navigation operation guide](search-page-navigation.md) for physical
+page semantics, metadata identity/failure behavior, mandatory-root backfill and
+the existing vector-recovery command. Public fields and PPLX inputs/weights stay
+unchanged. Compare `pplx_only` with `pplx_page_navigation_v1` separately in
+`submissions/week07/evidence/C/20261030-page-navigation/`; historical pure-model
+3/5 and B's pending review remain visible. A must integrate C's new
+`version_page_search_metadata` table into shared migrations and service
+preparation. The existing `prepare-token-index` command explicitly creates this
+table and token storage meanwhile; search performs no implicit schema writes.

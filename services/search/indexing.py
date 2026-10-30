@@ -23,6 +23,7 @@ from services.search.embeddings import (
     EmbeddingUnavailable,
     validate_vectors,
 )
+from services.search.page_metadata import prepare_version_page_metadata
 from services.search.text import (
     MAX_BATCH_SIZE, MAX_TEXT_CHARS, MODEL_ID, MODEL_REVISION, TOKEN_DIMENSIONS,
 )
@@ -35,6 +36,8 @@ class IndexResult:
     chunk_count: int
     embedded_count: int
     embedding_error: str | None = None
+    page_count: int | None = None
+    page_metadata_error: str | None = None
 
 
 def embed_version(db: Session, version_id: str, backend: EmbeddingBackend) -> IndexResult:
@@ -42,6 +45,14 @@ def embed_version(db: Session, version_id: str, backend: EmbeddingBackend) -> In
     version = db.get(FileVersion, version_id)
     if version is None:
         raise ValueError("file version not found")
+    metadata = prepare_version_page_metadata(db, version_id)
+
+    def result(chunk_count: int, embedded_count: int, error: str | None = None) -> IndexResult:
+        return IndexResult(
+            version_id, chunk_count, embedded_count, error,
+            metadata.page_count, metadata.error,
+        )
+
     chunks = list(
         db.scalars(
             select(SourceChunk)
@@ -50,7 +61,7 @@ def embed_version(db: Session, version_id: str, backend: EmbeddingBackend) -> In
         )
     )
     if not chunks:
-        return IndexResult(version_id, 0, 0, "no_chunks")
+        return result(0, 0, "no_chunks")
 
     indexes: list[ChunkSearchIndex] = []
     for chunk in chunks:
@@ -66,9 +77,9 @@ def embed_version(db: Session, version_id: str, backend: EmbeddingBackend) -> In
     db.flush()
 
     if backend.model_id != MODEL_ID or backend.dimensions != TOKEN_DIMENSIONS:
-        return IndexResult(version_id, len(chunks), 0, "embedding_model_mismatch")
+        return result(len(chunks), 0, "embedding_model_mismatch")
     if not token_index_available(db):
-        return IndexResult(version_id, len(chunks), 0, "token_index_schema_missing")
+        return result(len(chunks), 0, "token_index_schema_missing")
     vectors: list[list[list[float]]] = []
     try:
         for offset in range(0, len(chunks), MAX_BATCH_SIZE):
@@ -78,7 +89,7 @@ def embed_version(db: Session, version_id: str, backend: EmbeddingBackend) -> In
             ]
             vectors.extend(validate_vectors(backend.embed(texts, "passage"), len(texts)))
     except EmbeddingUnavailable as exc:
-        return IndexResult(version_id, len(chunks), 0, str(exc))
+        return result(len(chunks), 0, str(exc))
 
     for chunk, vector in zip(chunks, vectors, strict=True):
         token_index = db.get(ChunkTokenIndex, chunk.id)
@@ -92,7 +103,7 @@ def embed_version(db: Session, version_id: str, backend: EmbeddingBackend) -> In
         token_index.token_vectors = vector
         token_index.text_sha256 = text_fingerprint(chunk.text)
     db.flush()
-    return IndexResult(version_id, len(chunks), len(vectors))
+    return result(len(chunks), len(vectors))
 
 
 def index_document(

@@ -89,5 +89,8 @@ def token_index_available(db: Session) -> bool:
 
 
 def prepare_search_schema(engine) -> None:
-    """Explicitly prepare only C's additive sidecar, preserving all shared tables."""
+    """Explicitly prepare C's additive sidecars, preserving all shared tables."""
+    from services.search.page_metadata import VersionPageMetadata
+
     ChunkTokenIndex.__table__.create(bind=engine, checkfirst=True)
+    VersionPageMetadata.__table__.create(bind=engine, checkfirst=True)

@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     search_keyword_weight: float = Field(default=0.65, gt=0, le=1)
     search_semantic_weight: float = Field(default=0.35, gt=0, le=1)
     search_max_candidates: int = Field(default=200, ge=50, le=2000)
+    search_page_navigation_enabled: bool = True
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

@@ -12,11 +12,14 @@ from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
+from sqlalchemy import select
 
 from services.common.config import Settings
 from services.common.db import make_engine, make_session_factory
+from services.common.models import AuthorizedRoot, FileRecord, FileVersion
 from services.search.embeddings import HTTPEmbeddingBackend, LocalPplxEmbeddingBackend
 from services.search.indexing import embed_version, index_document
+from services.search.page_metadata import prepare_version_page_metadata
 from services.search.token_store import prepare_search_schema
 from services.search.text import (
     MODEL_FILES,
@@ -28,6 +31,44 @@ from services.search.text import (
 )
 
 REPO = Path(__file__).resolve().parents[1]
+
+
+def backfill_page_metadata(database_url: str, root_id: str, version_id: str | None) -> dict:
+    """Only explicit, scoped operator commands may publish derived PDF metadata."""
+    engine = make_engine(database_url)
+    try:
+        with make_session_factory(engine)() as db:
+            root = db.get(AuthorizedRoot, root_id)
+            if root is None or root.status not in {"active", "paused"}:
+                raise ValueError("page_metadata_root_not_readable")
+            statement = (
+                select(FileVersion)
+                .join(FileRecord, FileRecord.id == FileVersion.file_id)
+                .where(
+                    FileRecord.root_id == root_id,
+                    FileRecord.current_version_id == FileVersion.id,
+                    FileRecord.presence_status == "present",
+                    FileVersion.status.in_(["basic_ready", "enriched"]),
+                ).order_by(FileRecord.relative_path, FileVersion.id)
+            )
+            if version_id:
+                statement = statement.where(FileVersion.id == version_id)
+            versions = list(db.scalars(statement))
+            if version_id and not versions:
+                raise ValueError("page_metadata_version_outside_scope")
+            records = []
+            for version in versions:
+                result = prepare_version_page_metadata(db, version.id)
+                records.append(asdict(result))
+            db.commit()
+            errors = sum(item["error"] is not None for item in records)
+            return {
+                "root_id": root_id, "selected_current_versions": len(versions),
+                "ready_versions": len(versions) - errors, "error_versions": errors,
+                "versions": records, "passed": errors == 0,
+            }
+    finally:
+        engine.dispose()
 
 
 def verified_model_manifest(destination: Path) -> dict:
@@ -77,7 +118,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "action", choices=[
-            "download-model", "migrate", "prepare-token-index", "seed", "index", "evaluate"
+            "download-model", "migrate", "prepare-token-index", "seed", "index", "evaluate",
+            "page-metadata",
         ]
     )
     parser.add_argument("--database-url", default="sqlite:///work/search-demo.db")
@@ -93,11 +135,14 @@ def main() -> None:
     parser.add_argument("--version-id", help="Required by the index worker handler command")
     parser.add_argument("--manifest", type=Path, help="Frozen team corpus manifest for evaluation")
     parser.add_argument("--root-id", help="Real scanned root UUID for team gold evaluation")
+    parser.add_argument("--page-navigation", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument(
         "--freeze", type=Path, help="Optional immutable gold/manifest freeze record"
     )
     parser.add_argument("--output", type=Path, default=REPO / "work/search-evaluation.json")
     args = parser.parse_args()
+    if args.action == "page-metadata" and not args.root_id:
+        parser.error("page-metadata requires --root-id; global backfills are refused")
     if args.action == "download-model":
         prepare_model(args.model_path)
         return
@@ -119,6 +164,36 @@ def main() -> None:
         finally:
             engine.dispose()
         print("Prepared C-owned token index schema; canonical tables unchanged")
+        return
+    if args.action == "page-metadata":
+        from scripts.evaluate_team_pdf import (
+            git_state, public_command, validate_report_destination,
+        )
+
+        if "--output" not in sys.argv and not any(
+            argument.startswith("--output=") for argument in sys.argv
+        ):
+            args.output = REPO / "work/page-metadata.json"
+        try:
+            validate_report_destination(
+                args.output,
+                protected_files=[args.gold, args.fixture]
+                + ([args.manifest] if args.manifest else [])
+                + ([args.freeze] if args.freeze else []),
+                source_directories=[REPO / "fixtures", REPO / "work/team-pdf-corpus"]
+                + [Path(value) for value in Settings(_env_file=None).source_mounts.values()],
+            )
+            report = backfill_page_metadata(args.database_url, args.root_id, args.version_id)
+        except ValueError as exc:
+            parser.error(str(exc))
+        report.update(command=public_command([
+            sys.executable, "-m", "scripts.search_tools", *sys.argv[1:]
+        ]), git=git_state())
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps(report, indent=2))
+        if not report["passed"]:
+            raise SystemExit(1)
         return
     gold = manifest = manifest_path = None
     input_record = {}
@@ -227,6 +302,7 @@ def main() -> None:
                     embedding_enabled=backend is not None,
                     embedding_cpu_threads=args.cpu_threads,
                     search_request_timeout_seconds=args.timeout,
+                    search_page_navigation_enabled=args.page_navigation,
                     _env_file=None,
                 )
                 report = evaluate_queries(

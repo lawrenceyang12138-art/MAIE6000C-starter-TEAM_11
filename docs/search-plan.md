@@ -214,3 +214,14 @@ available loopback ports and stops them when finished. Historical full-suite
 reports describe the source and test count at their recorded date. Count current
 passes and skips from the new run, including a live HTTP smoke test and real
 PostgreSQL tests, before making a new integrated acceptance claim.
+
+## 2026-10-30 physical-page navigation
+
+The [page-navigation operation guide](search-page-navigation.md) describes the
+optional PPLX location layer, explicit schema/page-count preparation, scoped
+backfill, unchanged model parameters and separate pure-model/assisted evaluation.
+The historical pure PPLX semantic result stays 3/5; new results belong in
+`submissions/week07/evidence/C/20261030-page-navigation/`. B review and team
+threshold/corpus approval remain pending. C's new
+`version_page_search_metadata` sidecar is prepared explicitly alongside token
+storage; A owns consolidation into shared migrations and deployment.

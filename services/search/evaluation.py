@@ -14,6 +14,7 @@ from services.parsing.evidence import SourceUnavailable, read_evidence
 from services.search.embeddings import EmbeddingBackend
 from services.search.evaluation_sources import expected_locations, resolve_expected
 from services.search.retrieval import search_chunks
+from services.search.navigation_runtime import NAVIGATION_PROFILE, PLAIN_PROFILE
 from services.search.text import MODEL_ID, TOKEN_DIMENSIONS
 
 
@@ -92,12 +93,14 @@ def evaluate_queries(
             counts[mode] += 1
             start = perf_counter()
             response = None
+            navigation_diagnostics = {}
             if not invalid_scope:
                 response = search_chunks(
                     db,
                     SearchRequest(query=query["query"], mode=mode, top_k=3, root_id=root_id),
                     settings,
                     backend,
+                    navigation_diagnostics=navigation_diagnostics,
                 )
             ranked = _ranked_evidence(db, response) if response is not None else []
             evidence_failures += sum(not item["evidence_matches_result"] for item in ranked)
@@ -150,6 +153,15 @@ def evaluate_queries(
                 "diagnostics": diagnostics,
                 "location_hit": location_hit,
                 "hit": hit,
+                "navigation": navigation_diagnostics,
+                "pure_model_hit": (
+                    hit if mode != "keyword" and not settings.search_page_navigation_enabled
+                    else None
+                ),
+                "quality_attribution": (
+                    "keyword" if mode == "keyword" else "navigation_assisted_system"
+                    if settings.search_page_navigation_enabled else "pure_model_retrieval"
+                ),
                 "matched_rank": min(ranks) if ranks else None,
                 "duplicate_files": duplicate_count,
                 "seconds": round(perf_counter() - start, 4),
@@ -185,6 +197,13 @@ def evaluate_queries(
         "dimensions": TOKEN_DIMENSIONS,
         "representation": "token_multivector",
         "scoring": "maxsim_mean",
+        "retrieval_profile": (
+            NAVIGATION_PROFILE if settings.search_page_navigation_enabled else PLAIN_PROFILE
+        ),
+        "quality_attribution": (
+            "system_retrieval_with_structured_page_navigation; not_pure_model_semantic_quality"
+            if settings.search_page_navigation_enabled else "pure_model_retrieval_baseline"
+        ),
         "corpus": {
             "manifest_version": manifest.get("manifest_version") if manifest else None,
             "manifest_root_alias": manifest.get("root_id") if manifest else None,
@@ -223,6 +242,7 @@ def evaluate_queries(
             "keyword_evaluation_top_k": 1,
             "semantic_hybrid_evaluation_top_k": 3,
             "ai_request_timeout_seconds": settings.search_request_timeout_seconds,
+            "page_navigation_enabled": settings.search_page_navigation_enabled,
         },
         "evaluation_valid": evaluation_valid,
         "candidate_gate_passed": candidate_gate,

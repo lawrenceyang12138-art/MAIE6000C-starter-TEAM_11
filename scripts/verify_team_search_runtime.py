@@ -38,6 +38,8 @@ from scripts.evaluate_team_pdf import (
 from services.common.db import make_engine, make_session_factory
 from services.common.models import FileRecord, FileVersion, SourceChunk
 from services.search.text import MODEL_DIRECTORY, MODEL_ID, TOKEN_DIMENSIONS
+from services.search.page_metadata import load_page_metadata
+from services.search.page_navigation import parse_page_intent
 from services.search.token_store import ChunkTokenIndex, index_matches_text
 
 REPO = Path(__file__).resolve().parents[1]
@@ -93,6 +95,11 @@ def source_snapshot(database_url: str, root_id: str) -> dict:
                 if (index := db.get(ChunkTokenIndex, chunk.id)) is not None
                 and index_matches_text(index, chunk.text)
             ]
+            version_metadata = {}
+            for _, _, version in records:
+                if version.id not in version_metadata:
+                    count, status = load_page_metadata(db, version)
+                    version_metadata[version.id] = {"page_count": count, "status": status}
             return {
                 "chunks": [{
                     "chunk_id": chunk.id, "version_id": version.id,
@@ -104,18 +111,23 @@ def source_snapshot(database_url: str, root_id: str) -> dict:
                 "token_vectors": sum(index.token_count for index in compatible),
                 "representation": "token_multivector",
                 "token_dimensions": TOKEN_DIMENSIONS,
+                "page_metadata": version_metadata,
+                "ready_page_metadata_versions": sum(
+                    value["status"] == "ready" for value in version_metadata.values()
+                ),
             }
     finally:
         engine.dispose()
 
 
-def run_index(database_url: str, version_id: str, ai_url: str, timeout: float) -> dict:
+def run_index(database_url: str, version_id: str, ai_url: str, timeout: float,
+              *, environment: dict | None = None) -> dict:
     command = [
         sys.executable, "-m", "scripts.search_tools", "index",
         "--database-url", database_url, "--version-id", version_id,
         "--backend", "http", "--ai-url", ai_url, "--timeout", str(timeout),
     ]
-    completed = subprocess.run(command, cwd=REPO, capture_output=True, text=True,
+    completed = subprocess.run(command, cwd=REPO, env=environment, capture_output=True, text=True,
                                encoding="utf-8", timeout=180, check=False)
     return {"command": public_command(command), "returncode": completed.returncode,
             "result": json.loads(completed.stdout), "stderr": completed.stderr}
@@ -166,6 +178,7 @@ def main() -> None:
     parser.add_argument("--model-path", type=Path,
                         default=REPO / MODEL_DIRECTORY)
     parser.add_argument("--timeout", type=float, default=10.0)
+    parser.add_argument("--page-navigation", action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument("--output", type=Path, default=REPO / "work/team-runtime.json")
     args = parser.parse_args()
     try:
@@ -219,6 +232,9 @@ def main() -> None:
         "dimensions": TOKEN_DIMENSIONS,
         "representation": "token_multivector",
         "scoring": "maxsim_mean",
+        "page_navigation_enabled": args.page_navigation,
+        "retrieval_profile": "pplx_page_navigation_v1" if args.page_navigation else "pplx_only",
+        "initial_ready_page_metadata_versions": snapshot["ready_page_metadata_versions"],
         "warmup_timeout_seconds": max(120, args.timeout + 5),
         "index_subprocess_timeout_seconds": 180,
         "source_identity_sha256": hashlib.sha256(
@@ -247,6 +263,18 @@ def main() -> None:
             query_id=query["query_id"], expected=query["expected"], resolved_expected=resolved,
             matched_rank=min(ranks) if ranks else None, location_hit=located,
             hit=located and not response["degraded"],
+            quality_attribution=(
+                "navigation_assisted_system" if args.page_navigation
+                else "pure_model_retrieval_baseline"
+            ),
+            navigation={
+                "enabled": args.page_navigation,
+                "intent": (
+                    vars(parse_page_intent(query["query"]).intent)
+                    if parse_page_intent(query["query"]).intent is not None else None
+                ),
+                "result_reasons": [hit["reason"] for hit in response["results"]],
+            },
         )
         return row
     log_dir = REPO / "work/team-runtime-logs"
@@ -259,6 +287,7 @@ def main() -> None:
         **os.environ, "DATABASE_URL": args.database_url, "AI_SERVICE_URL": ai_url,
         "EMBEDDING_ENABLED": "true", "EMBEDDING_MODEL_PATH": str(args.model_path.resolve()),
         "SEARCH_REQUEST_TIMEOUT_SECONDS": str(args.timeout),
+        "SEARCH_PAGE_NAVIGATION_ENABLED": str(args.page_navigation).lower(),
         "SOURCE_MOUNTS": json.dumps({mount_id: str(corpus)}),
         "HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1", "USE_TF": "0",
     }
@@ -280,7 +309,7 @@ def main() -> None:
                                                       trust_env=False))
             report["stage"] = "index_while_ai_disconnected"
             report["failed_index_before_ai"] = run_index(
-                args.database_url, versions[0], ai_url, args.timeout
+                args.database_url, versions[0], ai_url, args.timeout, environment=environment,
             )
             failed = report["failed_index_before_ai"]
             assert failed["returncode"] == 1
@@ -305,14 +334,20 @@ def main() -> None:
             report["initial_recovery_commands"] = []
             report["stage"] = "backfill_current_pdf_versions"
             for version in versions:
-                indexed = run_index(args.database_url, version, ai_url, args.timeout)
+                indexed = run_index(
+                    args.database_url, version, ai_url, args.timeout, environment=environment,
+                )
                 report["initial_recovery_commands"].append(indexed)
                 assert indexed["returncode"] == 0 and indexed["result"]["embedding_error"] is None
+                assert indexed["result"]["page_metadata_error"] is None
             recovered = source_snapshot(args.database_url, root_id)
             assert recovered["chunks"] == snapshot["chunks"]
             assert recovered["vectors"] == len(snapshot["chunks"])
             report["recovered_vector_chunks"] = recovered["vectors"]
             report["recovered_token_vectors"] = recovered["token_vectors"]
+            report["recovered_ready_page_metadata_versions"] = (
+                recovered["ready_page_metadata_versions"]
+            )
             report["online_queries"] = []
             report["stage"] = "live_api_search_and_evidence"
             for query in gold["queries"]:
@@ -340,6 +375,24 @@ def main() -> None:
                     assert data["degradation_reason"] == "ai_unavailable"
                 annotate(row, gold["queries"][0])
                 report["disconnected"].append(row)
+
+            # An explicit navigation phrase must not hide full AI fallback. The
+            # added lexical anchor keeps original evidence available offline.
+            navigation_probe = gold["queries"][0]["query"] + " last page"
+            report["disconnected_navigation"] = []
+            for mode in ["semantic", "hybrid"]:
+                row = checked_search(client, api_url, corpus, {
+                    "query": navigation_probe, "mode": mode, "root_id": root_id, "top_k": 3,
+                })
+                data = row["response"]
+                assert data["mode"] == mode and data["effective_mode"] == "keyword"
+                assert data["degraded"] and data["degradation_reason"] == "ai_unavailable"
+                assert data["results"]
+                assert all(hit["semantic_score"] == 0 for hit in data["results"])
+                assert all("page navigation:" not in hit["reason"] for hit in data["results"])
+                row["navigation_assistance_applied"] = False
+                row["semantic_hit"] = False
+                report["disconnected_navigation"].append(row)
 
             class SlowHandler(BaseHTTPRequestHandler):
                 def do_POST(self):
@@ -369,6 +422,20 @@ def main() -> None:
                     assert data["results"]
                     annotate(row, gold["queries"][0])
                     report["timed_out"].append(row)
+                report["timed_out_navigation"] = []
+                for mode in ["semantic", "hybrid"]:
+                    row = checked_search(client, api_url, corpus, {
+                        "query": navigation_probe, "mode": mode, "root_id": root_id, "top_k": 3,
+                    })
+                    data = row["response"]
+                    assert data["mode"] == mode and data["effective_mode"] == "keyword"
+                    assert data["degraded"] and data["degradation_reason"] == "ai_timeout"
+                    assert data["results"]
+                    assert all(hit["semantic_score"] == 0 for hit in data["results"])
+                    assert all("page navigation:" not in hit["reason"] for hit in data["results"])
+                    row["navigation_assistance_applied"] = False
+                    row["semantic_hit"] = False
+                    report["timed_out_navigation"].append(row)
             finally:
                 slow.shutdown()
                 slow.server_close()
@@ -381,7 +448,7 @@ def main() -> None:
             )
             warm.raise_for_status()
             report["restored_index_command"] = run_index(
-                args.database_url, versions[0], ai_url, args.timeout
+                args.database_url, versions[0], ai_url, args.timeout, environment=environment,
             )
             assert report["restored_index_command"]["returncode"] == 0
             report["restored_search"] = checked_search(client, api_url, corpus, {
@@ -389,6 +456,17 @@ def main() -> None:
             })
             annotate(report["restored_search"], gold["queries"][0])
             assert not report["restored_search"]["response"]["degraded"]
+            navigation_query = next(
+                item for item in gold["queries"] if item["query_id"] == "S02"
+            )
+            report["restored_navigation_search"] = checked_search(client, api_url, corpus, {
+                "query": navigation_query["query"], "mode": "hybrid",
+                "root_id": root_id, "top_k": 3,
+            })
+            annotate(report["restored_navigation_search"], navigation_query)
+            assert not report["restored_navigation_search"]["response"]["degraded"]
+            if args.page_navigation:
+                assert report["restored_navigation_search"]["hit"]
             final = source_snapshot(args.database_url, root_id)
             report["source_identities_unchanged"] = final["chunks"] == snapshot["chunks"]
             corpus_after = validate_corpus(corpus, manifest)
@@ -396,6 +474,8 @@ def main() -> None:
             report["all_corpus_bytes_unchanged"] = corpus_before == corpus_after
             report["final_vector_chunks"] = final["vectors"]
             report["final_token_vectors"] = final["token_vectors"]
+            report["final_ready_page_metadata_versions"] = final["ready_page_metadata_versions"]
+            report["page_metadata"] = final["page_metadata"]
             assert report["source_identities_unchanged"] and report["all_corpus_bytes_unchanged"]
             report["stage"] = "complete"
             report["passed"] = True
