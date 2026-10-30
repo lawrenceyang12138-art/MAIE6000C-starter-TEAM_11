@@ -587,13 +587,9 @@ def handle_scan_root(db: Session, root_id: str, job_id: int | None = None) -> di
         if record.relative_path in seen_paths or record.relative_path in recorded:
             continue
         if _under_any(record.relative_path, uncovered):
-            if (
-                record.presence_status != FilePresence.UNAVAILABLE.value
-                or record.presence_reason != PRESENCE_REASON_UNREADABLE
-            ):
-                record.presence_status = FilePresence.UNAVAILABLE.value
-                record.presence_reason = PRESENCE_REASON_UNREADABLE
-                summary["files_unavailable"] += 1
+            record.presence_status = FilePresence.UNAVAILABLE.value
+            record.presence_reason = PRESENCE_REASON_UNREADABLE
+            summary["files_unavailable"] += 1
             continue
         if record.presence_status == FilePresence.MISSING.value:
             continue
