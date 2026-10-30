@@ -1,0 +1,453 @@
+{
+  "schema_version": "c-page-navigation-regression-v1",
+  "frozen_on": "2026-10-30",
+  "scope": "Deterministic page-navigation regression, frozen before implementation; not a blind semantic-quality benchmark.",
+  "policy": "Runtime navigation never reads this fixture. Answers and grammar expectations must not be changed after implementation results.",
+  "physical_page_semantics": "1-based PDF physical order; even middle accepts both central pages; ordinal document identity remains ordinary retrieval.",
+  "documents": [
+    {
+      "id": "atlas",
+      "relative_path": "navigation/atlas-notes.pdf",
+      "page_count": 1
+    },
+    {
+      "id": "birch",
+      "relative_path": "navigation/birch-ledger.pdf",
+      "page_count": 2
+    },
+    {
+      "id": "cedar",
+      "relative_path": "navigation/cedar-log.pdf",
+      "page_count": 3
+    },
+    {
+      "id": "delta",
+      "relative_path": "navigation/delta-summary.pdf",
+      "page_count": 4
+    },
+    {
+      "id": "elm",
+      "relative_path": "navigation/elm-handbook.pdf",
+      "page_count": 7
+    },
+    {
+      "id": "fjord",
+      "relative_path": "navigation/fjord-review.pdf",
+      "page_count": 10
+    },
+    {
+      "id": "gap",
+      "relative_path": "navigation/gap-pages.pdf",
+      "page_count": 4,
+      "blank_pages": [
+        2,
+        4
+      ]
+    },
+    {
+      "id": "multichunk",
+      "relative_path": "navigation/long-leaf.pdf",
+      "page_count": 3,
+      "long_pages": [
+        2
+      ]
+    },
+    {
+      "id": "missing_metadata",
+      "relative_path": "navigation/larch-notes.pdf",
+      "page_count": 3,
+      "metadata": "missing"
+    },
+    {
+      "id": "stale_metadata",
+      "relative_path": "navigation/moss-notes.pdf",
+      "page_count": 3,
+      "metadata": "stale"
+    },
+    {
+      "id": "unknown_page",
+      "relative_path": "navigation/unknown-location.pdf",
+      "page_count": 3,
+      "chunk_pages": "unknown"
+    }
+  ],
+  "cases": [
+    {
+      "id": "P01",
+      "group": "positive",
+      "document": "atlas",
+      "query": "打开第一页",
+      "intent": "first",
+      "target_pages": [
+        1
+      ]
+    },
+    {
+      "id": "P02",
+      "group": "positive",
+      "document": "atlas",
+      "query": "Show the opening leaf.",
+      "intent": "first",
+      "target_pages": [
+        1
+      ]
+    },
+    {
+      "id": "P03",
+      "group": "positive",
+      "document": "birch",
+      "query": "Open the final page.",
+      "intent": "last",
+      "target_pages": [
+        2
+      ]
+    },
+    {
+      "id": "P04",
+      "group": "positive",
+      "document": "birch",
+      "query": "查看最后一页",
+      "intent": "last",
+      "target_pages": [
+        2
+      ]
+    },
+    {
+      "id": "P05",
+      "group": "positive",
+      "document": "cedar",
+      "query": "打开正中间的那一页",
+      "intent": "middle",
+      "target_pages": [
+        2
+      ]
+    },
+    {
+      "id": "P06",
+      "group": "positive",
+      "document": "cedar",
+      "query": "Show the middle leaf.",
+      "intent": "middle",
+      "target_pages": [
+        2
+      ]
+    },
+    {
+      "id": "P07",
+      "group": "positive",
+      "document": "delta",
+      "query": "Open the middle page.",
+      "intent": "middle",
+      "target_pages": [
+        2,
+        3
+      ]
+    },
+    {
+      "id": "P08",
+      "group": "positive",
+      "document": "delta",
+      "query": "查看中间一页",
+      "intent": "middle",
+      "target_pages": [
+        2,
+        3
+      ]
+    },
+    {
+      "id": "P09",
+      "group": "positive",
+      "document": "elm",
+      "query": "打开第七页",
+      "intent": "absolute",
+      "page": 7,
+      "target_pages": [
+        7
+      ]
+    },
+    {
+      "id": "P10",
+      "group": "positive",
+      "document": "elm",
+      "query": "Open page 7.",
+      "intent": "absolute",
+      "page": 7,
+      "target_pages": [
+        7
+      ]
+    },
+    {
+      "id": "P11",
+      "group": "positive",
+      "document": "fjord",
+      "query": "查看第十页",
+      "intent": "absolute",
+      "page": 10,
+      "target_pages": [
+        10
+      ]
+    },
+    {
+      "id": "P12",
+      "group": "positive",
+      "document": "fjord",
+      "query": "Show the 10th page.",
+      "intent": "absolute",
+      "page": 10,
+      "target_pages": [
+        10
+      ]
+    },
+    {
+      "id": "P13",
+      "group": "positive",
+      "document": "delta",
+      "query": "打开第十份资料的第二页",
+      "intent": "absolute",
+      "page": 2,
+      "target_pages": [
+        2
+      ]
+    },
+    {
+      "id": "P14",
+      "group": "positive",
+      "document": "delta",
+      "query": "Show page 2 of the tenth report.",
+      "intent": "absolute",
+      "page": 2,
+      "target_pages": [
+        2
+      ]
+    },
+    {
+      "id": "P15",
+      "group": "positive",
+      "document": "atlas",
+      "query": "Find the single-page document.",
+      "intent": "single",
+      "target_pages": [
+        1
+      ]
+    },
+    {
+      "id": "P16",
+      "group": "positive",
+      "document": "atlas",
+      "query": "找出只有一页的资料",
+      "intent": "single",
+      "target_pages": [
+        1
+      ]
+    },
+    {
+      "id": "P17",
+      "group": "positive",
+      "document": "elm",
+      "query": "查看中间页",
+      "intent": "middle",
+      "target_pages": [
+        4
+      ]
+    },
+    {
+      "id": "P18",
+      "group": "positive",
+      "document": "fjord",
+      "query": "Open the central page.",
+      "intent": "middle",
+      "target_pages": [
+        5,
+        6
+      ]
+    },
+    {
+      "id": "P19",
+      "group": "positive",
+      "document": "delta",
+      "query": "打开第２页",
+      "intent": "absolute",
+      "page": 2,
+      "target_pages": [
+        2
+      ]
+    },
+    {
+      "id": "P20",
+      "group": "positive",
+      "document": "delta",
+      "query": "查看第两页",
+      "intent": "absolute",
+      "page": 2,
+      "target_pages": [
+        2
+      ]
+    },
+    {
+      "id": "P21",
+      "group": "positive",
+      "document": "fjord",
+      "query": "Show page 03.",
+      "intent": "absolute",
+      "page": 3,
+      "target_pages": [
+        3
+      ]
+    },
+    {
+      "id": "P22",
+      "group": "positive",
+      "document": "multichunk",
+      "query": "Open page 2.",
+      "intent": "absolute",
+      "page": 2,
+      "target_pages": [
+        2
+      ]
+    },
+    {
+      "id": "P23",
+      "group": "positive",
+      "document": "multichunk",
+      "query": "Show the last leaf.",
+      "intent": "last",
+      "target_pages": [
+        3
+      ]
+    },
+    {
+      "id": "P24",
+      "group": "positive",
+      "document": "cedar",
+      "query": "查看首页",
+      "intent": "first",
+      "target_pages": [
+        1
+      ]
+    },
+    {
+      "id": "N01",
+      "group": "negative",
+      "document": "cedar",
+      "query": "不要打开最后一页",
+      "intent": null,
+      "skipped": "negated",
+      "behavior": "ordinary"
+    },
+    {
+      "id": "N02",
+      "group": "negative",
+      "document": "cedar",
+      "query": "Show the first and last page.",
+      "intent": null,
+      "skipped": "conflicting",
+      "behavior": "ordinary"
+    },
+    {
+      "id": "N03",
+      "group": "negative",
+      "document": "delta",
+      "query": "Show pages 2-3.",
+      "intent": null,
+      "skipped": "range",
+      "behavior": "ordinary"
+    },
+    {
+      "id": "N04",
+      "group": "negative",
+      "document": "cedar",
+      "query": "查找中间件最后更新记录与第三章",
+      "intent": null,
+      "skipped": "no_intent",
+      "behavior": "ordinary"
+    },
+    {
+      "id": "N05",
+      "group": "negative",
+      "document": "cedar",
+      "query": "Locate the third document.",
+      "intent": null,
+      "skipped": "no_intent",
+      "behavior": "ordinary"
+    },
+    {
+      "id": "N06",
+      "group": "negative",
+      "document": "cedar",
+      "query": "打开第九页",
+      "intent": "absolute",
+      "page": 9,
+      "target_pages": [
+        9
+      ],
+      "behavior": "empty"
+    },
+    {
+      "id": "N07",
+      "group": "negative",
+      "document": "gap",
+      "query": "打开最后一页",
+      "intent": "last",
+      "target_pages": [
+        4
+      ],
+      "behavior": "empty"
+    },
+    {
+      "id": "N08",
+      "group": "negative",
+      "document": "gap",
+      "query": "Open page 2.",
+      "intent": "absolute",
+      "page": 2,
+      "target_pages": [
+        2
+      ],
+      "behavior": "empty"
+    },
+    {
+      "id": "N09",
+      "group": "negative",
+      "document": "missing_metadata",
+      "query": "Show the last page.",
+      "intent": "last",
+      "behavior": "ordinary",
+      "metadata_status": "missing"
+    },
+    {
+      "id": "N10",
+      "group": "negative",
+      "document": "stale_metadata",
+      "query": "打开最后一页",
+      "intent": "last",
+      "behavior": "ordinary",
+      "metadata_status": "stale"
+    },
+    {
+      "id": "N11",
+      "group": "negative",
+      "document": "unknown_page",
+      "query": "Show page 2.",
+      "intent": "absolute",
+      "page": 2,
+      "target_pages": [
+        2
+      ],
+      "behavior": "empty"
+    },
+    {
+      "id": "N12",
+      "group": "negative",
+      "document": "birch",
+      "query": "Find a one-page document.",
+      "intent": "single",
+      "target_pages": [],
+      "behavior": "empty"
+    }
+  ],
+  "expected_counts": {
+    "positive": 24,
+    "negative": 12,
+    "total": 36
+  }
+}
