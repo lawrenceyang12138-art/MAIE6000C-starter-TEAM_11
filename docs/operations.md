@@ -81,9 +81,11 @@ A file whose bytes could not be read is a different answer, and it is visible
 too: `GET /files` reports `presence_status` (`missing` / `unavailable`) plus
 `presence_reason` (`file_missing`, `unreadable`, `not_a_regular_file`). A file
 that was readable last scan and is not readable now stops being `present`; its
-`version_id` still points at the last content that was read. One bad file never
-blocks the others, and a directory that cannot be listed is reported in the
-worker log's scan summary rather than silently skipped.
+`version_id` still points at the last content that was read. Only `missing` means
+the file is gone - a directory the scan could not list, or refused to enter,
+leaves its files `unavailable` / `unreadable` instead, and the worker log says so
+(`directories_unreadable`, `directories_skipped`). One bad file never blocks the
+others.
 
 A version that could not be processed **this time** (`failed`: the file was
 gone, changed while being read, or the store errored) fails its job as well. That

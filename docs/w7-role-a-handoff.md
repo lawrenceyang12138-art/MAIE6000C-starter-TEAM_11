@@ -36,9 +36,9 @@ worker claims embed_file
   -> job completed; an embedding error degrades search, it does not fail the job
 ```
 
-Verified end to end in this round (SQLite, real handlers, real filesystem, real
-PDF): `tests/integration/test_scan_recovery.py`. Not verified: the same path on
-PostgreSQL with the real AI container (see section 6).
+Verified end to end in this round: `tests/integration/test_scan_recovery.py` (SQLite,
+no stack needed), and the same path again on PostgreSQL with the real HTTP API and
+the real worker loop - scope and evidence in section 6.
 
 ## 2. For B (parsing, evidence, relations)
 
@@ -48,21 +48,24 @@ A's worker no longer treats every returned status as "handled". The mapping is:
 
 | Return value | Job |
 | --- | --- |
-| `basic_ready` / `enriched` | completed, `embed_file` queued |
-| `unsupported` | completed, no index job |
+| `basic_ready` | completed, `embed_file` queued, `error_code` NULL |
+| `enriched` | completed, nothing queued, `error_code` NULL |
+| `unsupported` | completed, no index job, `error_code` NULL |
 | `failed` | **failed**, retryable, `error_code` copied from `file_versions.error_code` |
-| anything else | job fails as an internal error |
+| anything else | job fails as an internal error (`job_failed`) |
 
 Requirements that follow:
 
 1. Return `failed` only for conditions that a retry could fix (source missing,
    source changed, store error). Something permanent belongs to `unsupported`.
 2. Always set `file_versions.error_code` before returning `failed` or
-   `unsupported`; it is copied to `jobs.error_code` and becomes the only reason
-   the client sees.
+   `unsupported`. For `failed` it is copied to `jobs.error_code`; for
+   `unsupported` the job is completed and keeps `error_code = NULL`, so the
+   reason must be on the version - that is what `GET /files` shows.
 3. Raising is still correct for non-document failures (database outage). The
    worker records `job_failed` and the version must already be terminal, which
-   `handle_extract_file` does today.
+   `handle_extract_file` does today. `processing_failed` is a *version* code; it
+   does not normally reach `jobs.error_code`.
 
 ### 2.2 Relation generation: seam proposed, not wired
 
@@ -97,6 +100,9 @@ it.
   for a file that stopped being readable should refuse with `file_missing` for
   both `missing` and `unavailable`, and must not start serving a stale chunk as
   current.
+- `unavailable` does not mean the file was deleted. It means the last scan could
+  not read it: an I/O or permission error, a link the scan will not follow, or a
+  directory the scan could not list. Only `missing` is a claim of absence.
 - `GET /files` now includes `presence_reason` (A added the field to B's router,
   additive and nullable). A file that was never read appears with
   `version_id: null`, `status: "discovered"` and a reason; it is not omitted.
@@ -138,11 +144,15 @@ completes and keyword indexes are written; `POST /search` degrades with
 
 1. `GET /files` adds `presence_reason` (`null` when readable). Show
    `presence_status` + `presence_reason` instead of inferring anything from a
-   missing row: a file that could not be read now always has a row.
-2. `GET /jobs/{job_id}` `error_code` is now the handler's reason
-   (`file_missing`, `unreadable`, `source_changed`, `processing_failed`,
-   `corrupt`, `encrypted`, `no_text_layer`, `unsupported_format`) or
-   `job_failed`. `failed` + `file_missing` is the retryable case.
+   missing row: a file that could not be read now always has a row. Treat
+   `missing` as "deleted" and `unavailable` as "temporarily not readable" - the
+   scan only marks `missing` when it actually walked the directory.
+2. `GET /jobs/{job_id}` `error_code` is the reason the attempt failed
+   (`file_missing`, `source_changed`, `job_failed`, ...) and is `null` for a
+   completed job, including a completed job whose document was `unsupported`.
+   The document's reason (`corrupt`, `encrypted`, `no_text_layer`,
+   `unsupported_format`) is on the file row, not on the job. `failed` +
+   `file_missing` is the retryable case.
 3. Recovery flow to wire: file reported `failed` -> offer retry ->
    `POST /jobs/{job_id}/retry` (202, `pending`) -> poll the job. A rescan alone
    will not re-extract a failed version by design.
@@ -168,10 +178,35 @@ existing database without a backfill:
 
 ## 6. Open dependencies and known limits
 
-1. **PostgreSQL chain not run here.** The host has no reachable Docker daemon
-   and no local PostgreSQL, so `alembic upgrade head` on an empty PostgreSQL
-   database and the postgres-marked tests were not executed. Both migrations were
-   verified by offline SQL rendering only.
+1. **PostgreSQL and the container stack: run, with two stated gaps.** Verified on
+   2026-10-29 on this machine, against `pgvector/pgvector:pg16` (host port 15432)
+   and the rebuilt `api` / `worker` / `frontend` images:
+
+   - migrations in place on a populated database: `20261015_0002 ->
+     20261029_0003 -> 20261029_0004`, 29 files / 68 jobs preserved, both columns
+     nullable;
+   - migrations on an empty database: `upgrade head` -> `downgrade
+     20260713_0001` -> `upgrade head`, single head before and after;
+   - the 8 postgres-marked tests pass against that database;
+   - the full suite is green with a stack and a database URL (255 passed,
+     0 skipped);
+   - through the container API and worker loop: scan of the 16-file corpus
+     (12 `basic_ready` + 4 `unsupported`), a rescan that adds no files, versions,
+     chunks or index rows, `POST /search` and `GET /evidence/{chunk_id}`, and
+     `docker compose restart db api worker` still serving the same data;
+   - the recovery loop (source removed -> version/job `failed` with
+     `file_missing` -> restore -> rescan -> explicit retry -> `basic_ready`,
+     `attempts = 2`) ran with the API and worker as host processes against the
+     same PostgreSQL, because the compose corpus is mounted read-only and the
+     fault cannot be injected there without weakening that guarantee.
+
+   Gaps. (a) `models/` is empty on this host, so the AI container has no embedding
+   model and semantic/hybrid retrieval was only exercised in its degraded form
+   (`degraded=true`, `effective_mode=keyword`); put the model under
+   `models/multilingual-e5-small` (see `scripts/search_tools.py download-model`)
+   before claiming semantic retrieval end to end. (b) Chunks indexed before the
+   model is deployed keep `embedding = NULL`: `embed_file` jobs already completed,
+   so filling them needs an explicit `embed_version` re-run per version.
 2. **Relation generation is not wired** (section 2.2). Depends on B's
    `generate_relations` entry point.
 3. **`enriched` is never set.** No handler moves a version past `basic_ready`;
