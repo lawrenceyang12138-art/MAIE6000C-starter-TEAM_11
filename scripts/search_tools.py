@@ -5,17 +5,19 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import subprocess
 import sys
+from contextlib import contextmanager, nullcontext
 from dataclasses import asdict
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import select
 from sqlalchemy.engine import make_url
 
-from services.common.config import Settings
+from services.common.config import Settings, get_settings
 from services.common.db import make_engine, make_session_factory
 from services.common.models import AuthorizedRoot, FileRecord, FileVersion
 from services.search.embeddings import HTTPEmbeddingBackend, LocalPplxEmbeddingBackend
@@ -32,6 +34,62 @@ from services.search.text import (
 )
 
 REPO = Path(__file__).resolve().parents[1]
+FIXTURE_MOUNT_ID = "search-fixtures"
+
+
+@contextmanager
+def fixture_source_mounts(fixture_root: Path):
+    """Use the production mount resolver for isolated synthetic source bytes."""
+    fixture_root = fixture_root.resolve()
+    fixture_root.mkdir(parents=True, exist_ok=True)
+    protected = [REPO / "fixtures", REPO / "submissions", REPO / "tests"]
+    if any(
+        fixture_root == path.resolve() or fixture_root.is_relative_to(path.resolve())
+        for path in protected
+    ):
+        raise ValueError("fixture_root_overlaps_protected_sources")
+    previous = os.environ.get("SOURCE_MOUNTS")
+    os.environ["SOURCE_MOUNTS"] = json.dumps({FIXTURE_MOUNT_ID: str(fixture_root)})
+    get_settings.cache_clear()
+    try:
+        yield fixture_root
+    finally:
+        if previous is None:
+            os.environ.pop("SOURCE_MOUNTS", None)
+        else:
+            os.environ["SOURCE_MOUNTS"] = previous
+        get_settings.cache_clear()
+
+
+def _fixture_relative_path(value: str) -> str:
+    path = PurePosixPath(value)
+    if (
+        not value
+        or "\\" in value
+        or ":" in value
+        or path.is_absolute()
+        or ".." in path.parts
+        or str(path) != value
+    ):
+        raise ValueError("fixture document path must be a clean relative POSIX path")
+    return value
+
+
+def _materialize_fixture_document(fixture_root: Path, document: dict) -> tuple[dict, int]:
+    relative_path = _fixture_relative_path(document["path"])
+    chunks = document.get("chunks")
+    if not isinstance(chunks, list) or not chunks:
+        raise ValueError("fixture document must contain chunks")
+    if not all(isinstance(chunk, dict) for chunk in chunks):
+        raise ValueError("fixture document chunks must be objects")
+    source_text = "\n\n".join(str(chunk.get("text", "")) for chunk in chunks)
+    source_bytes = source_text.encode("utf-8")
+    source_path = fixture_root / relative_path
+    source_path.parent.mkdir(parents=True, exist_ok=True)
+    source_path.write_bytes(source_bytes)
+    prepared = dict(document)
+    prepared["sha256"] = hashlib.sha256(source_bytes).hexdigest()
+    return prepared, len(source_bytes)
 
 
 def backfill_page_metadata(database_url: str, root_id: str, version_id: str | None) -> dict:
@@ -128,6 +186,12 @@ def main() -> None:
         "--model-path", type=Path, default=REPO / MODEL_DIRECTORY
     )
     parser.add_argument("--fixture", type=Path, default=REPO / "fixtures/search/mock-chunks.json")
+    parser.add_argument(
+        "--fixture-root",
+        type=Path,
+        default=REPO / "work/search-fixtures",
+        help="Isolated source tree for the synthetic chunk-fixture mount",
+    )
     parser.add_argument("--gold", type=Path, default=REPO / "fixtures/search/gold-queries.json")
     parser.add_argument("--backend", choices=["local", "http", "off"], default="local")
     parser.add_argument("--ai-url", default="http://127.0.0.1:8100")
@@ -274,14 +338,25 @@ def main() -> None:
         backend = LocalPplxEmbeddingBackend(str(args.model_path), args.cpu_threads)
     elif args.backend == "http":
         backend = HTTPEmbeddingBackend(args.ai_url, timeout=args.timeout)
+    use_fixture_mount = args.action == "seed" or (
+        args.action == "evaluate" and manifest is None and args.root_id is None
+    )
+    mount_context = (
+        fixture_source_mounts(args.fixture_root)
+        if use_fixture_mount
+        else nullcontext()
+    )
     engine = make_engine(args.database_url)
     try:
-        with make_session_factory(engine)() as db:
+        with mount_context, make_session_factory(engine)() as db:
             if args.action == "seed":
                 fixture = json.loads(args.fixture.read_text(encoding="utf-8"))
                 embedding_errors = []
                 for document in fixture["documents"]:
-                    version = index_document(db, **document)
+                    prepared, source_size = _materialize_fixture_document(
+                        args.fixture_root, document
+                    )
+                    version = index_document(db, byte_size=source_size, **prepared)
                     if backend is not None:
                         result = embed_version(db, version.id, backend)
                         print(json.dumps(asdict(result)))

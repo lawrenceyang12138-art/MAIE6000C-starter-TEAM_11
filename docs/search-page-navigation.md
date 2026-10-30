@@ -115,7 +115,10 @@ name is retained; it creates both C token storage and page metadata with
 
 These commands do not populate page counts or vectors. Search does not perform
 implicit DDL. A PostgreSQL integration test upgrades a disposable database from
-empty to the single Alembic head and verifies both sidecars.
+empty to the single Alembic head and verifies both sidecars. Migration
+`20261030_0005` also adopts compatible sidecars that were previously created by
+`prepare_search_schema`, preserves their rows, and rejects an incompatible
+table rather than silently rewriting it.
 
 ## Backfill page counts without re-embedding
 

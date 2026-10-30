@@ -192,13 +192,23 @@ def _validate_relation_candidates(
                 f"offsets {candidate.start_offset}:{candidate.end_offset} are "
                 f"outside the stored chunk"
             )
-        if chunk.text[candidate.start_offset : candidate.end_offset] != candidate.label:
+        source_mention = " ".join(
+            chunk.text[candidate.start_offset : candidate.end_offset].split()
+        ).casefold()
+        if source_mention != candidate.normalized_label:
             raise InvalidRelationEvidence(
-                "candidate offsets do not point at the label in the stored chunk"
+                "candidate offsets do not point at the normalized label in the "
+                "stored chunk"
             )
-        if not candidate.quote.strip() or candidate.label not in candidate.quote:
+        normalized_quote = " ".join(candidate.quote.split()).casefold()
+        normalized_chunk = " ".join(chunk.text.split()).casefold()
+        if (
+            not normalized_quote
+            or candidate.normalized_label not in normalized_quote
+            or normalized_quote not in normalized_chunk
+        ):
             raise InvalidRelationEvidence(
-                "the quote does not contain the label it is supposed to support"
+                "the quote must be a source substring containing the normalized label"
             )
 
 

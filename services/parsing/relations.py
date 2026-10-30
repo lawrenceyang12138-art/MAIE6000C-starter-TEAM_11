@@ -119,6 +119,17 @@ def _strip_leading_filler(run: str) -> str:
     return " ".join(words)
 
 
+def _retained_span(match_start: int, raw: str, run: str) -> tuple[int, int]:
+    """Locate retained words in the raw match without changing the source span."""
+    word_spans = [(match.start(), match.end()) for match in re.finditer(r"\S+", raw)]
+    retained_words = len(run.split())
+    if retained_words < 1 or retained_words > len(word_spans):
+        return match_start, match_start + len(raw)
+    start_offset = word_spans[-retained_words][0]
+    end_offset = word_spans[-1][1]
+    return match_start + start_offset, match_start + end_offset
+
+
 def _classify(run: str, preceding: str, seen_in_chunks: int) -> str | None:
     words = run.split()
     if not words:
@@ -175,7 +186,7 @@ def find_mentions(
                 continue
             # The mention starts where the name starts, not where the article
             # in front of it does.
-            start = match.start() + (len(raw) - len(run))
+            start, end = _retained_span(match.start(), raw, run)
             preceding = chunk.text[max(0, start - 12) : start]
 
             # A single capitalised word at the start of a line is almost always
@@ -202,8 +213,8 @@ def find_mentions(
                     chunk_ordinal=chunk.ordinal,
                     page_number=chunk.page_number,
                     start_offset=start,
-                    end_offset=start + len(run),
-                    quote=_quote(chunk.text, start, start + len(run)),
+                    end_offset=end,
+                    quote=_quote(chunk.text, start, end),
                 )
             )
     return mentions

@@ -53,6 +53,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--database-url", default="sqlite:///work/search-demo.db")
     parser.add_argument("--model-path", default=MODEL_DIRECTORY)
+    parser.add_argument(
+        "--fixture-root",
+        type=Path,
+        default=REPO / "work/search-fixtures",
+    )
     parser.add_argument("--output", type=Path, default=Path("work/http-check.json"))
     parser.add_argument(
         "--pytest-output",
@@ -69,6 +74,9 @@ def main() -> None:
         "AI_SERVICE_URL": ai_url,
         "EMBEDDING_ENABLED": "true",
         "EMBEDDING_MODEL_PATH": args.model_path,
+        "SOURCE_MOUNTS": json.dumps(
+            {"search-fixtures": str(args.fixture_root.resolve())}
+        ),
         "USE_TF": "0",
         "HF_HUB_OFFLINE": "1",
         "TRANSFORMERS_OFFLINE": "1",
@@ -121,6 +129,13 @@ def main() -> None:
             data = response.json()
             assert data["effective_mode"] == "hybrid" and not data["degraded"]
             assert len({hit["file_id"] for hit in data["results"]}) == len(data["results"])
+            for hit in data["results"]:
+                evidence = client.get(api_url + f"/evidence/{hit['chunk_id']}")
+                evidence.raise_for_status()
+                evidence_data = evidence.json()
+                assert evidence_data["version_id"] == hit["version_id"]
+                assert evidence_data["page_number"] == hit["page"]
+                assert evidence_data["text"] == hit["text"]
             before.append({"id": query["id"], "response": data})
         # Confirm the original starter worker path still works before shutting AI down.
         worker_log = stack.enter_context((REPO / "work/search-http/worker.log").open("w"))
@@ -183,6 +198,9 @@ def main() -> None:
             hit = data["results"][0]
             assert hit["file_id"] == query["expected_file_id"]
             assert hit["page"] == query["expected_page"]
+            evidence = client.get(api_url + f"/evidence/{hit['chunk_id']}")
+            evidence.raise_for_status()
+            assert evidence.json()["version_id"] == hit["version_id"]
             after.append({"id": query["id"], "response": data})
         report = {
             "data_kind": "synthetic",

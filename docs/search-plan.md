@@ -183,9 +183,9 @@ Use a compatible environment if Anaconda base has another Python version.
 python -m pip install -e ".[dev,embeddings]"
 python -m scripts.search_tools download-model
 python -m scripts.search_tools migrate
-python -m scripts.search_tools seed
-python -m scripts.search_tools evaluate
-python -m scripts.verify_search_local
+python -m scripts.search_tools seed --fixture-root work/search-fixtures
+python -m scripts.search_tools evaluate --fixture-root work/search-fixtures
+python -m scripts.verify_search_local --fixture-root work/search-fixtures
 python -m scripts.verify_search_http
 python -m pytest -q tests/unit tests/integration -m "not postgres"
 python -m ruff check .
@@ -194,6 +194,13 @@ python -m ruff check .
 `download-model` requires network access during preparation. Existing verified
 model files can be reused for subsequent offline runs. Prepare `.env` without
 overwriting an existing file, then start Compose:
+
+`seed` writes deterministic source bytes for the hand-authored chunks under the
+isolated `--fixture-root`, sets their version SHA-256 and byte size from those
+bytes, and configures the `search-fixtures` mount through the production path
+resolver. `evaluate` and `verify_search_http` must use the same fixture root.
+These bytes are synthetic source-identity fixtures, not parsed PDF acceptance
+evidence, and do not bypass production evidence checks.
 
 ```cmd
 python -c "from pathlib import Path; p=Path('.env'); p.write_bytes(Path('.env.example').read_bytes()) if not p.exists() else None"

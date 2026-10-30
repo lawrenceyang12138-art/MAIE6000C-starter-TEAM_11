@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from services.common.models import (
     Entity,
+    FileRecord,
     FileVersion,
     Relationship,
     Review,
@@ -26,6 +27,8 @@ from services.parsing.handler import (
     REASON_SOURCE_CHANGED,
     handle_extract_file,
 )
+from services.parsing.evidence import read_evidence
+from services.parsing.graph import read_relationships, record_review
 from services.parsing.pdf import (
     REASON_CORRUPT,
     REASON_ENCRYPTED,
@@ -127,6 +130,52 @@ def test_reprocessing_keeps_chunk_relation_ids_and_review_history(
     reviews = db_session.execute(select(Review)).scalars().all()
     assert len(reviews) == 1
     assert reviews[0].decision == "confirmed"
+
+
+def test_split_line_names_parse_review_and_reprocess_with_stable_identity(
+    db_session: Session, make_file_version, tmp_path
+):
+    import pymupdf
+
+    source = tmp_path / "split-lines.pdf"
+    document = pymupdf.open()
+    page = document.new_page()
+    page.insert_text((72, 100), "The Alpha")
+    page.insert_text((72, 120), "Project documents this result.")
+    page.insert_text((72, 150), "Dr. Jane")
+    page.insert_text((72, 170), "Doe approved the design.")
+    document.save(source)
+    document.close()
+
+    version_id = make_file_version(source_path=source)
+    version = db_session.get(FileVersion, version_id)
+    db_session.get(FileRecord, version.file_id).current_version_id = version.id
+    db_session.commit()
+    assert handle_extract_file(db_session, version_id, source) == VersionStatus.BASIC_READY.value
+
+    relations = read_relationships(db_session, version_id)
+    project = next(item for item in relations if item.label == "Alpha Project")
+    person = next(item for item in relations if item.label == "Jane Doe")
+    assert project.chunk_id and person.chunk_id
+    assert "Alpha\nProject" in read_evidence(db_session, project.chunk_id).text
+    assert "Jane\nDoe" in read_evidence(db_session, person.chunk_id).text
+
+    record_review(
+        db_session,
+        project.relationship_id,
+        "confirmed",
+        expected_revision=project.decision_revision,
+        actor="reviewer-a",
+    )
+    first_chunks = {chunk.id for chunk in _chunks(db_session, version_id)}
+    first_relationships = {item.relationship_id for item in relations}
+
+    assert handle_extract_file(db_session, version_id, source) == VersionStatus.BASIC_READY.value
+    assert {chunk.id for chunk in _chunks(db_session, version_id)} == first_chunks
+    refreshed = {item.relationship_id: item for item in read_relationships(db_session, version_id)}
+    assert set(refreshed) == first_relationships
+    assert refreshed[project.relationship_id].decision == "confirmed"
+    assert refreshed[project.relationship_id].decision_revision == 1
 
 
 def test_relation_persistence_failure_does_not_publish_a_partial_parse(
