@@ -7,6 +7,15 @@ schema is still in use. See the [implementation guide](search-plan.md),
 [integration handoff](search-integration-handoff.md), and
 [shared integration contract](team11-w7-shared-contract.md).
 
+The 2026-10-30 PPLX replacement adds C-owned `ChunkTokenIndex` storage for
+variable-length 128-dimensional token matrices and their model/source identity.
+It preserves the original shared dense `vector(384)` column and all A-owned
+models/migrations. Active retrieval uses exact token MaxSim, with the sum divided
+by query-token count; it never uses E5 dense vectors. The preparation command
+creates this derived table after the canonical Alembic chain, or explicitly with
+`search_tools prepare-token-index` on an already migrated database. Shared
+migration/startup rollout remains A's integration task.
+
 ## Historical comparison
 
 The original review compared standalone C with these remote snapshots:
@@ -34,7 +43,7 @@ broken the evidence relationship.
 | Chunk order | Zero-based `chunk_index` | One-based `ordinal` |
 | Source page | `page_start/page_end` | Nullable `page_number`; API field `page` |
 | Keyword data | Columns on C's `SourceChunk` | `ChunkSearchIndex.search_text/search_terms` |
-| Vector data | Columns on C's `SourceChunk` | `ChunkSearchIndex.embedding`, model, and dimensions |
+| Vector data | Columns on C's `SourceChunk` | C-owned `ChunkTokenIndex`; old dense sidecar preserved |
 | Evidence identity | Separate search records | Existing `source_chunks.id` throughout |
 
 Retrieval now joins `SourceChunk`, `ChunkSearchIndex`, `FileVersion`, `FileRecord`,

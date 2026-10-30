@@ -1,0 +1,104 @@
+{
+  "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+  "revision": "7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+  "git": {
+    "sha": "40879c44f2777db7dafd559cc97f5edc8b3f6714",
+    "branch": "codex/c-team-pdf-evaluation",
+    "working_tree_status": "?? submissions/week07/evidence/C/20261030-pplx/",
+    "tracked_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_sha256": {
+      "services/search/__init__.py": "bda5e68032cd868115b66539032f460543adb90b1f8c73e97abb98eebba7166e",
+      "services/search/embeddings.py": "ccdc4fad57a94931e80aaaf70793be3cd123459a068871ea09eaca282e959723",
+      "services/search/evaluation.py": "dcdee63205dcb6fc419b85fa8c62aca1f907d75dc6369c57d598e7263b35943c",
+      "services/search/evaluation_sources.py": "9f374153de4c3dce81d40839ed743f7e3a5db2dc524ea3d40c015c83ba35017d",
+      "services/search/indexing.py": "cd86d3110df914fdad63e54315ed61dde2c05985871cb989017f6d90a06c13ba",
+      "services/search/retrieval.py": "20e9078aecb88c51dd1403a597e9dbc71d3430621c5c92939e8fb41ce0dbd255",
+      "services/search/schemas.py": "0d6deaee34c9d21783cca8213284e4dba3a489ecd65d64e10f71a3a2317138c5",
+      "services/search/text.py": "8a7ccb3876fdbc87301a86af4fb0abe8d883e3dd36295007f4a69ccc8e7878ce",
+      "services/search/token_store.py": "2108d43babac2935b7d5bcea8406b6daa9669c7745030c4a29f524cf9a1dd966",
+      "scripts/evaluate_team_pdf.py": "482a606837cad564baffc934515778af6e86fabced30e1008daa46309dda6ed2",
+      "scripts/search_tools.py": "1c6b815963a933700dc3914043e5f314ce6838aee747912263aa86664e1c7131",
+      "scripts/verify_team_search_runtime.py": "4ef5df434495ab9cc917b797516fd1d920b8b228dab6ce89f1b576b8f8454e59",
+      "services/ai/app/main.py": "2355e2c049130de87b328c922d87aabef5647a8bd79e66494cd50ef6d76a795c",
+      "services/common/config.py": "a36f6aa4d6dc592b5dea1d5cad24a92a4d03b2021ab1cc6f312861957c393f9a",
+      "pyproject.toml": "4e7f01c9de0e55e93cf7853037f5278b566430e999f2ed0f160dfd0376e35e55",
+      "compose.yaml": "f76d589d5b29248b5c63bbe181443f748672b1a44892b76973196f79e71645ef",
+      ".env.example": "6353787e236ccdf06209fa2c28c9179c94413553bf7cfeb3978924111db250ba"
+    }
+  },
+  "runtime": {
+    "sqlalchemy": "2.0.43",
+    "pypdf": "6.20.1",
+    "psycopg": "3.2.9",
+    "pgvector": "0.4.1",
+    "fastapi": "0.116.1",
+    "httpx": "0.28.1",
+    "torch": "2.8.0",
+    "transformers": "5.22.0",
+    "sentence-transformers": "6.2.0",
+    "torchvision": "0.23.0",
+    "Pillow": "12.1.0",
+    "huggingface-hub": "2.4.0"
+  },
+  "command": [
+    "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\.venv-pplx\\Scripts\\python.exe",
+    "work/verify_pplx_native.py"
+  ],
+  "offline": true,
+  "device": "cpu",
+  "passed": true,
+  "stage": "complete",
+  "load_seconds": 17.20299999997951,
+  "torch_build": "2.8.0+cpu",
+  "cuda_available": false,
+  "query_token_counts": [
+    10,
+    7
+  ],
+  "document_token_counts": [
+    18,
+    18
+  ],
+  "dimensions": 128,
+  "native_prompts": {
+    "query": "[Q] ",
+    "document": "[D] "
+  },
+  "token_norm_range": [
+    0.9999999300830563,
+    1.00000007975653
+  ],
+  "official_raw_maxsim": [
+    [
+      8.21877670288086,
+      8.12159252166748
+    ],
+    [
+      5.435425281524658,
+      5.437862873077393
+    ]
+  ],
+  "official_mean_maxsim": [
+    [
+      0.8218776702880859,
+      0.812159252166748
+    ],
+    [
+      0.7764893259320941,
+      0.7768375532967704
+    ]
+  ],
+  "implementation_mean_maxsim": [
+    [
+      0.821877658367157,
+      0.8121593594551086
+    ],
+    [
+      0.7764893174171448,
+      0.7768375277519226
+    ]
+  ],
+  "maximum_score_difference": 1.0728836064011205e-07,
+  "native_ranking_agreement": true,
+  "elapsed_seconds": 17.875
+}

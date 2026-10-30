@@ -5,3 +5,5 @@
 /fixtures/manifest.json text eol=lf
 /submissions/week07/gold-queries.json text eol=lf
 /submissions/week07/gold-queries.freeze.json text eol=lf
+/fixtures/search/page-navigation-v1.json text eol=lf
+/fixtures/search/page-navigation-v1.freeze.json text eol=lf

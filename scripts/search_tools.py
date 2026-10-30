@@ -1,30 +1,105 @@
-"""CMD-friendly local utilities for member C; no Git operations."""
+"""CMD-friendly local utilities for member C; no mutating Git operations."""
 
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+import subprocess
+import sys
 from dataclasses import asdict
 from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
+from sqlalchemy import select
+from sqlalchemy.engine import make_url
 
 from services.common.config import Settings
 from services.common.db import make_engine, make_session_factory
-from services.search.embeddings import HTTPEmbeddingBackend, LocalE5EmbeddingBackend
+from services.common.models import AuthorizedRoot, FileRecord, FileVersion
+from services.search.embeddings import HTTPEmbeddingBackend, LocalPplxEmbeddingBackend
 from services.search.indexing import embed_version, index_document
-from services.search.text import MODEL_FILES, MODEL_ID, MODEL_NAME, MODEL_REVISION
+from services.search.page_metadata import prepare_version_page_metadata
+from services.search.token_store import prepare_search_schema
+from services.search.text import (
+    MODEL_FILES,
+    MODEL_ID,
+    MODEL_NAME,
+    MODEL_DIRECTORY,
+    MODEL_REVISION,
+    PINNED_MODEL_SHA256,
+)
 
 REPO = Path(__file__).resolve().parents[1]
+
+
+def backfill_page_metadata(database_url: str, root_id: str, version_id: str | None) -> dict:
+    """Only explicit, scoped operator commands may publish derived PDF metadata."""
+    engine = make_engine(database_url)
+    try:
+        with make_session_factory(engine)() as db:
+            root = db.get(AuthorizedRoot, root_id)
+            if root is None or root.status not in {"active", "paused"}:
+                raise ValueError("page_metadata_root_not_readable")
+            statement = (
+                select(FileVersion)
+                .join(FileRecord, FileRecord.id == FileVersion.file_id)
+                .where(
+                    FileRecord.root_id == root_id,
+                    FileRecord.current_version_id == FileVersion.id,
+                    FileRecord.presence_status == "present",
+                    FileVersion.status.in_(["basic_ready", "enriched"]),
+                ).order_by(FileRecord.relative_path, FileVersion.id)
+            )
+            if version_id:
+                statement = statement.where(FileVersion.id == version_id)
+            versions = list(db.scalars(statement))
+            if version_id and not versions:
+                raise ValueError("page_metadata_version_outside_scope")
+            records = []
+            for version in versions:
+                result = prepare_version_page_metadata(db, version.id)
+                records.append(asdict(result))
+            db.commit()
+            errors = sum(item["error"] is not None for item in records)
+            return {
+                "root_id": root_id, "selected_current_versions": len(versions),
+                "ready_versions": len(versions) - errors, "error_versions": errors,
+                "versions": records, "passed": errors == 0,
+            }
+    finally:
+        engine.dispose()
+
+
+def verified_model_manifest(destination: Path) -> dict:
+    """Verify content against the pinned revision before trusting a local manifest."""
+    if set(PINNED_MODEL_SHA256) != set(MODEL_FILES):
+        raise ValueError("pinned model checksum configuration is incomplete")
+    checksums = {}
+    for filename in MODEL_FILES:
+        target = (destination / filename).resolve()
+        if not target.is_relative_to(destination.resolve()):
+            raise ValueError("model preparation path is outside the destination")
+        with target.open("rb") as stream:
+            actual = hashlib.file_digest(stream, "sha256").hexdigest()
+        if actual != PINNED_MODEL_SHA256[filename]:
+            raise ValueError(f"pinned model checksum mismatch: {filename}")
+        checksums[filename] = actual
+    return {"model": MODEL_ID, "revision": MODEL_REVISION, "sha256": checksums}
 
 
 def prepare_model(destination: Path) -> None:
     """Only this explicit preparation command can download model files."""
     from huggingface_hub import snapshot_download
 
+    destination.mkdir(parents=True, exist_ok=True)
     filenames = list(MODEL_FILES)
+    for filename in filenames:
+        target = (destination / filename).resolve()
+        if not target.is_relative_to(destination.resolve()):
+            raise ValueError("model preparation path is outside the destination")
+        target.parent.mkdir(parents=True, exist_ok=True)
     snapshot_download(
         MODEL_NAME,
         revision=MODEL_REVISION,
@@ -32,11 +107,7 @@ def prepare_model(destination: Path) -> None:
         allow_patterns=filenames,
         max_workers=3,
     )
-    checksums = {}
-    for filename in filenames:
-        with (destination / filename).open("rb") as stream:
-            checksums[filename] = hashlib.file_digest(stream, "sha256").hexdigest()
-    manifest = {"model": MODEL_ID, "revision": MODEL_REVISION, "sha256": checksums}
+    manifest = verified_model_manifest(destination)
     (destination / "model-manifest.json").write_text(
         json.dumps(manifest, indent=2) + "\n",
         encoding="utf-8",
@@ -47,17 +118,32 @@ def prepare_model(destination: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "action", choices=["download-model", "migrate", "seed", "index", "evaluate"]
+        "action", choices=[
+            "download-model", "migrate", "prepare-token-index", "seed", "index", "evaluate",
+            "page-metadata",
+        ]
     )
     parser.add_argument("--database-url", default="sqlite:///work/search-demo.db")
-    parser.add_argument("--model-path", type=Path, default=REPO / "models/multilingual-e5-small")
+    parser.add_argument(
+        "--model-path", type=Path, default=REPO / MODEL_DIRECTORY
+    )
     parser.add_argument("--fixture", type=Path, default=REPO / "fixtures/search/mock-chunks.json")
     parser.add_argument("--gold", type=Path, default=REPO / "fixtures/search/gold-queries.json")
     parser.add_argument("--backend", choices=["local", "http", "off"], default="local")
     parser.add_argument("--ai-url", default="http://127.0.0.1:8100")
+    parser.add_argument("--timeout", type=float, default=10.0)
+    parser.add_argument("--cpu-threads", type=int, default=4)
     parser.add_argument("--version-id", help="Required by the index worker handler command")
+    parser.add_argument("--manifest", type=Path, help="Frozen team corpus manifest for evaluation")
+    parser.add_argument("--root-id", help="Real scanned root UUID for team gold evaluation")
+    parser.add_argument("--page-navigation", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument(
+        "--freeze", type=Path, help="Optional immutable gold/manifest freeze record"
+    )
     parser.add_argument("--output", type=Path, default=REPO / "work/search-evaluation.json")
     args = parser.parse_args()
+    if args.action == "page-metadata" and not args.root_id:
+        parser.error("page-metadata requires --root-id; global backfills are refused")
     if args.action == "download-model":
         prepare_model(args.model_path)
         return
@@ -66,12 +152,128 @@ def main() -> None:
         config = Config(str(REPO / "alembic.ini"))
         config.attributes["database_url"] = args.database_url
         command.upgrade(config, "head")
+        engine = make_engine(args.database_url)
+        try:
+            prepare_search_schema(engine)
+        finally:
+            engine.dispose()
         return
+    if args.action == "prepare-token-index":
+        engine = make_engine(args.database_url)
+        try:
+            prepare_search_schema(engine)
+        finally:
+            engine.dispose()
+        print("Prepared C-owned token index schema; canonical tables unchanged")
+        return
+    if args.action == "page-metadata":
+        from scripts.evaluate_team_pdf import (
+            git_state, public_command, validate_report_destination,
+        )
+
+        if "--output" not in sys.argv and not any(
+            argument.startswith("--output=") for argument in sys.argv
+        ):
+            args.output = REPO / "work/page-metadata.json"
+        try:
+            validate_report_destination(
+                args.output,
+                protected_files=[args.gold, args.fixture,
+                    REPO / "submissions/week07/gold-queries.json",
+                    REPO / "submissions/week07/gold-queries.freeze.json"]
+                + ([args.manifest] if args.manifest else [])
+                + ([args.freeze] if args.freeze else []),
+                source_directories=[REPO / "fixtures", REPO / "work/team-pdf-corpus"]
+                + [Path(value) for value in Settings(_env_file=None).source_mounts.values()],
+            )
+            database = make_url(args.database_url)
+            if (database.get_backend_name() == "sqlite"
+                    and database.database not in (None, ":memory:")):
+                if args.output.resolve() == Path(database.database).resolve():
+                    raise ValueError("output_path_conflict: report would overwrite its database")
+            report = backfill_page_metadata(args.database_url, args.root_id, args.version_id)
+        except ValueError as exc:
+            parser.error(str(exc))
+        report.update(command=public_command([
+            sys.executable, "-m", "scripts.search_tools", *sys.argv[1:]
+        ]), git=git_state())
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps(report, indent=2))
+        if not report["passed"]:
+            raise SystemExit(1)
+        return
+    gold = manifest = manifest_path = None
+    input_record = {}
+    if args.action == "evaluate":
+        from scripts.evaluate_team_pdf import validate_report_destination
+
+        gold = json.loads(args.gold.read_text(encoding="utf-8"))
+        manifest_path = args.manifest
+        if manifest_path is None and gold.get("corpus_manifest"):
+            manifest_path = REPO / gold["corpus_manifest"]
+        try:
+            validate_report_destination(
+                args.output,
+                protected_files=[args.gold, args.fixture]
+                + ([manifest_path] if manifest_path else [])
+                + ([args.freeze] if args.freeze else []),
+                source_directories=[REPO / "fixtures", REPO / "work/team-pdf-corpus"],
+            )
+        except ValueError as exc:
+            parser.error(str(exc))
+        manifest = (
+            json.loads(manifest_path.read_text(encoding="utf-8"))
+            if manifest_path else None
+        )
+        input_record["gold_sha256"] = hashlib.sha256(args.gold.read_bytes()).hexdigest()
+        if manifest_path:
+            input_record["manifest_sha256"] = hashlib.sha256(
+                manifest_path.read_bytes()
+            ).hexdigest()
+        if args.freeze:
+            freeze = json.loads(args.freeze.read_text(encoding="utf-8"))
+            input_record["freeze"] = freeze
+            input_record["freeze_sha256"] = hashlib.sha256(args.freeze.read_bytes()).hexdigest()
+            diagnostics = []
+            for field, code in (
+                ("gold_sha256", "frozen_gold_hash_mismatch"),
+                ("manifest_sha256", "frozen_manifest_hash_mismatch"),
+            ):
+                if freeze.get(field) != input_record.get(field):
+                    diagnostics.append({
+                        "code": code,
+                        "expected_sha256": freeze.get(field),
+                        "actual_sha256": input_record.get(field),
+                    })
+            input_record["freeze_verified"] = not diagnostics
+            if diagnostics:
+                from scripts.evaluate_team_pdf import public_command
+
+                report = {
+                    **input_record,
+                    "status": "preflight_failed",
+                    "passed": False,
+                    "candidate_gate_passed": False,
+                    "evaluation_valid": False,
+                    "queries": [],
+                    "diagnostics": diagnostics,
+                    "command": public_command([
+                        sys.executable, "-m", "scripts.search_tools", *sys.argv[1:]
+                    ]),
+                }
+                args.output.parent.mkdir(parents=True, exist_ok=True)
+                args.output.write_text(
+                    json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+                )
+                print(json.dumps(diagnostics, ensure_ascii=False, indent=2))
+                print(f"Wrote evaluation: {args.output}")
+                raise SystemExit(1)
     backend = None
     if args.backend == "local":
-        backend = LocalE5EmbeddingBackend(str(args.model_path))
+        backend = LocalPplxEmbeddingBackend(str(args.model_path), args.cpu_threads)
     elif args.backend == "http":
-        backend = HTTPEmbeddingBackend(args.ai_url)
+        backend = HTTPEmbeddingBackend(args.ai_url, timeout=args.timeout)
     engine = make_engine(args.database_url)
     try:
         with make_session_factory(engine)() as db:
@@ -104,11 +306,31 @@ def main() -> None:
             else:
                 from services.search.evaluation import evaluate_queries
 
-                gold = json.loads(args.gold.read_text(encoding="utf-8"))
-                settings = Settings(embedding_enabled=backend is not None, _env_file=None)
-                report = evaluate_queries(db, gold, settings, backend)
-                report["fixture_sha256"] = hashlib.sha256(args.fixture.read_bytes()).hexdigest()
-                report["gold_sha256"] = hashlib.sha256(args.gold.read_bytes()).hexdigest()
+                settings = Settings(
+                    embedding_enabled=backend is not None,
+                    embedding_cpu_threads=args.cpu_threads,
+                    search_request_timeout_seconds=args.timeout,
+                    search_page_navigation_enabled=args.page_navigation,
+                    _env_file=None,
+                )
+                report = evaluate_queries(
+                    db, gold, settings, backend, manifest=manifest, root_id=args.root_id
+                )
+                report.update(input_record)
+                if manifest is None:
+                    report["fixture_sha256"] = hashlib.sha256(
+                        args.fixture.read_bytes()
+                    ).hexdigest()
+                commit = subprocess.run(
+                    ["git", "rev-parse", "HEAD"], cwd=REPO,
+                    capture_output=True, text=True, check=False,
+                )
+                report["git_sha"] = commit.stdout.strip() if commit.returncode == 0 else None
+                from scripts.evaluate_team_pdf import public_command
+
+                report["command"] = public_command([
+                    sys.executable, "-m", "scripts.search_tools", *sys.argv[1:]
+                ])
                 args.output.parent.mkdir(parents=True, exist_ok=True)
                 args.output.write_text(
                     json.dumps(report, ensure_ascii=False, indent=2) + "\n",

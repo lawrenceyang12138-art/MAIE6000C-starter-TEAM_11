@@ -12,7 +12,11 @@ the main path.
 2. Put the corpus where `compose.yaml` mounts it. The default mount points at
    `tests/fixtures` and is **demo data only** - a real corpus is mounted from
    wherever the operator keeps it, read-only.
-3. Optional: place the embedding model under `models/multilingual-e5-small`.
+3. Prepare the pinned local model under `models/pplx-embed-v2-late-0.6b` using
+   `python -m scripts.search_tools download-model`, then initialize the C token
+   index using `python -m scripts.search_tools prepare-token-index --database-url YOUR_URL`.
+   This model uses 128-dimensional token vectors and MaxSim. Its weights and
+   token index are described in `docs/search-team-pdf-evaluation.md`.
    Without it, keyword search still works and semantic results degrade visibly.
 
 ## 2. Start, stop, reset

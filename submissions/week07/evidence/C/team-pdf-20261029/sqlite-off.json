@@ -1,0 +1,3402 @@
+{
+  "evaluated_at": "2026-10-29T15:10:58.415427+00:00",
+  "command": [
+    "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\.venv\\Scripts\\python.exe",
+    "-m",
+    "scripts.evaluate_team_pdf",
+    "--database-url",
+    "sqlite:///work/team-pdf-off.db",
+    "--backend",
+    "off",
+    "--output",
+    "submissions/week07/evidence/C/team-pdf-20261029/sqlite-off.json"
+  ],
+  "git": {
+    "sha": "7522287126061da8977c253256e8f807143ab8b5",
+    "branch": "codex/c-team-pdf-evaluation",
+    "working_tree_status": "M scripts/search_tools.py\n M services/search/embeddings.py\n M services/search/evaluation.py\n M services/search/retrieval.py\n M services/search/text.py\n M tests/integration/test_search_postgres.py\n M tests/unit/test_search_embeddings.py\n?? scripts/evaluate_team_pdf.py\n?? scripts/verify_team_search_runtime.py\n?? services/search/evaluation_sources.py\n?? submissions/week07/evidence/C/team-pdf-20261029/\n?? tests/integration/test_team_pdf_evaluation.py\n?? tests/unit/test_search_degradation.py\n?? tests/unit/test_search_evaluation.py\n?? tests/unit/test_search_model_preparation.py",
+    "tracked_diff_sha256": "f227bdfaa64c66f7840e3600c32bd8c5fec7f9b9ad60fef1ed10d79445ae8bfa",
+    "source_sha256": {
+      "services/search/__init__.py": "bda5e68032cd868115b66539032f460543adb90b1f8c73e97abb98eebba7166e",
+      "services/search/embeddings.py": "26ce7b756f91befa9947dcfcb20fe62a56d1b3284642703e81de34b80abde4c0",
+      "services/search/evaluation.py": "78064c2949ab8fc9d4da3e00ed4e6b516a83d11969b50e001f8eb639fea35093",
+      "services/search/evaluation_sources.py": "f7c502e0029a2010dd45b8a96443c83baf9ecc0f321e43084bd28837205eff33",
+      "services/search/indexing.py": "6730a36f856c885f792f70a07ea94e8a2cc461a91641be09636ad1e196da5540",
+      "services/search/retrieval.py": "d9f7204d31a18c0527e5537b228d4e9ed0dac013c4e55aef28729cde867d1e6b",
+      "services/search/text.py": "0e07d2a3502a49eb7e3e9eba40120c3c6016baa60c585b3d6acd2871fe210b03",
+      "scripts/evaluate_team_pdf.py": "e1bcec5c3f0c49fbcd71012ee9a738b0a9846c8cd8625c6e0db62bc43c5b593f",
+      "scripts/search_tools.py": "d1f3145c1c86a699301e50f6597b4c6f8c3e7b5f9a245db006998810ad19c159",
+      "scripts/verify_team_search_runtime.py": "360b6554435b73e2948a5c7af46bc762b598b2e1634dbf0e0b7b08cdea7f13b4"
+    }
+  },
+  "runtime": {
+    "python": "3.11.5",
+    "packages": {
+      "sqlalchemy": "2.0.43",
+      "pypdf": "6.20.1",
+      "pgvector": "0.4.1",
+      "torch": "2.0.0+cpu",
+      "transformers": "4.32.1",
+      "httpx": "0.28.1"
+    }
+  },
+  "database": {
+    "url": "sqlite:///work/team-pdf-off.db",
+    "dialect": "sqlite",
+    "schema_source": "sqlalchemy_metadata_sqlite_test_only",
+    "schema_action": "created_empty_database",
+    "migration_validation": "not_run_sqlite_migration_chain_requires_postgresql",
+    "pg_only_migration_validation": false,
+    "limitation": "SQLite smoke tests do not verify PostgreSQL migrations or pgvector SQL",
+    "version": "3.41.2"
+  },
+  "passed": false,
+  "answer_version": {
+    "schema_version": "team11-gold-v1",
+    "freeze": {
+      "freeze_version": "team11-gold-freeze-v1",
+      "frozen_on": "2026-10-16",
+      "gold_path": "submissions/week07/gold-queries.json",
+      "gold_sha256": "d1d7b7daf285ed8ad596546dc1cacb28bca7b23cd26edc748e7636e1a23db053",
+      "manifest_sha256": "3ad53b3f8ccdc7ac6b84457fcedf9a735fe0ddf7ceb8004eb97b46ab17e3280f",
+      "human_B_review": "pending",
+      "policy": "Validator is read-only. A deliberate corpus/answer revision needs a new freeze version and documented B approval; never rewrite expected answers to improve measured scores."
+    },
+    "gold_sha256": "d1d7b7daf285ed8ad596546dc1cacb28bca7b23cd26edc748e7636e1a23db053",
+    "manifest_sha256": "3ad53b3f8ccdc7ac6b84457fcedf9a735fe0ddf7ceb8004eb97b46ab17e3280f",
+    "freeze_sha256": "2a1ca7744c3176cb9e4df69adaf2f13d087f3fe88d73cb71604a82a3fe88114d",
+    "human_B_review": "pending"
+  },
+  "configuration": {
+    "backend": "off",
+    "model": "intfloat/multilingual-e5-small@614241f622f53c4eeff9890bdc4f31cfecc418b3",
+    "revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+    "dimensions": 384,
+    "model_path": null,
+    "model_manifest_sha256": null,
+    "query_prefix": "query: ",
+    "passage_prefix": "passage: ",
+    "maximum_text_characters": 2000,
+    "maximum_model_tokens": 512,
+    "maximum_query_characters": 500,
+    "maximum_query_search_tokens": 64,
+    "batch_size": 16,
+    "cpu_threads": 4,
+    "keyword_weight": 0.65,
+    "semantic_weight": 0.35,
+    "candidate_limit_per_channel": 200,
+    "evaluation_top_k": 3,
+    "keyword_acceptance_top_k": 1,
+    "api_default_top_k": 10,
+    "api_maximum_top_k": 50,
+    "pooling": "attention_mask_mean_then_l2_normalize",
+    "ai_request_timeout_seconds": 10.0,
+    "local_in_process_timeout": null,
+    "parser_chunk_characters": 700,
+    "parser_chunk_overlap": 120,
+    "parser_minimum_chunk_characters": 80,
+    "network_at_inference": "local_only_no_cloud_fallback",
+    "model_status": "disabled"
+  },
+  "report_schema": "c-scoped-evaluation-v2",
+  "data_kind": "team_pdf_source_location_smoke",
+  "gold_schema_version": "team11-gold-v1",
+  "answers_frozen_at": "2026-10-16",
+  "gold_scope": "Source-location smoke tests for the existing synthetic corpus; not a semantic-quality benchmark.",
+  "human_review": {
+    "owner": "B",
+    "status": "pending",
+    "reviewed_by": null,
+    "reviewed_at": null
+  },
+  "team_acceptance": "pending_B_review",
+  "expected_policy": "any_acceptable_location_file_version_page; all alternatives diagnosed",
+  "model": "intfloat/multilingual-e5-small@614241f622f53c4eeff9890bdc4f31cfecc418b3",
+  "dimensions": 384,
+  "corpus": {
+    "manifest_version": "d-fixtures-v1",
+    "manifest_root_alias": "root-demo-01",
+    "runtime_root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+    "identity_policy": "authorized_root_uuid + exact_relative_path + current_content_sha256"
+  },
+  "summary": {
+    "keyword_top1": "5/5",
+    "semantic_top3": "0/5",
+    "hybrid_top3": "0/5",
+    "semantic_target": "4/5",
+    "query_count": 10,
+    "search_count": 15,
+    "executed_search_count": 15,
+    "denominators": {
+      "keyword": 5,
+      "semantic": 5,
+      "hybrid": 5
+    },
+    "hits": {
+      "keyword": 5,
+      "semantic": 0,
+      "hybrid": 0
+    },
+    "degraded_queries": 10,
+    "duplicate_files": 0,
+    "evidence_failures": 0,
+    "source_diagnostics": 0,
+    "on_disk_evidence_failures": 0
+  },
+  "thresholds": {
+    "keyword_top1_rate": 1.0,
+    "semantic_top3_rate": 0.8,
+    "semantic_target_for_five": "4/5",
+    "freeze_status": "C_candidate_not_team_freeze",
+    "hybrid": "reported_separately_no_team_threshold_frozen"
+  },
+  "parameters": {
+    "keyword_weight": 0.65,
+    "semantic_weight": 0.35,
+    "candidate_limit_per_channel": 200,
+    "recorded_top_k": 3,
+    "keyword_evaluation_top_k": 1,
+    "semantic_hybrid_evaluation_top_k": 3,
+    "ai_request_timeout_seconds": 10.0
+  },
+  "evaluation_valid": true,
+  "candidate_gate_passed": false,
+  "source_resolutions": [
+    {
+      "query_id": "K01",
+      "expected": [
+        {
+          "file_id": "file-001",
+          "version_id": "version-001-v1",
+          "relative_path": "normal/team-alpha/team11-demo-01.pdf",
+          "page": 1,
+          "excerpt": "Team 11 synthetic document 01 | synthetic page 1 of 1"
+        }
+      ],
+      "resolved": [
+        {
+          "expected": {
+            "file_id": "file-001",
+            "version_id": "version-001-v1",
+            "relative_path": "normal/team-alpha/team11-demo-01.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 01 | synthetic page 1 of 1"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "7d67d3f0-74bf-4e46-817a-4ef8b5d9e0a3",
+          "version_id": "72bb70d4-2fdf-4758-8a6c-9b25a8fbebc1",
+          "relative_path": "normal/team-alpha/team11-demo-01.pdf",
+          "content_sha256": "090c3446987187caa11cdb8608a35a56dfcd449066e2123f0672752ebb3bd3d6",
+          "page": 1,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 1
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 1,
+          "indexed_chunk_count": 1,
+          "compatible_vector_count": 0
+        }
+      ]
+    },
+    {
+      "query_id": "K02",
+      "expected": [
+        {
+          "file_id": "file-002",
+          "version_id": "version-002-v1",
+          "relative_path": "normal/team-alpha/team11-demo-02.pdf",
+          "page": 1,
+          "excerpt": "Team 11 synthetic document 02 | synthetic page 1 of 1"
+        }
+      ],
+      "resolved": [
+        {
+          "expected": {
+            "file_id": "file-002",
+            "version_id": "version-002-v1",
+            "relative_path": "normal/team-alpha/team11-demo-02.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 02 | synthetic page 1 of 1"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "dee9eb27-e52d-4d3c-9017-ec7d7153e3ef",
+          "version_id": "42a9a87f-64ae-4bfb-89fa-20f6c0a0ad40",
+          "relative_path": "normal/team-alpha/team11-demo-02.pdf",
+          "content_sha256": "96a48022ff2bafc85543718c3f55f577fed40a173f4d63e8d066d8a5fea8b29f",
+          "page": 1,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 1
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 1,
+          "indexed_chunk_count": 1,
+          "compatible_vector_count": 0
+        }
+      ]
+    },
+    {
+      "query_id": "K03",
+      "expected": [
+        {
+          "file_id": "file-003",
+          "version_id": "version-003-v1",
+          "relative_path": "normal/team-alpha/team11-demo-03.pdf",
+          "page": 1,
+          "excerpt": "Team 11 synthetic document 03 | synthetic page 1 of 1"
+        }
+      ],
+      "resolved": [
+        {
+          "expected": {
+            "file_id": "file-003",
+            "version_id": "version-003-v1",
+            "relative_path": "normal/team-alpha/team11-demo-03.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 03 | synthetic page 1 of 1"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "d828fb3c-a4a8-482b-bcba-97e0b0f77529",
+          "version_id": "9efa3d64-29ca-4fca-9a9a-23192bdc2761",
+          "relative_path": "normal/team-alpha/team11-demo-03.pdf",
+          "content_sha256": "b63b33819f4ce501d0f279c6df5f66141f3659f76eaaa96369b23ddab234bdf0",
+          "page": 1,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 1
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 1,
+          "indexed_chunk_count": 1,
+          "compatible_vector_count": 0
+        }
+      ]
+    },
+    {
+      "query_id": "K04",
+      "expected": [
+        {
+          "file_id": "file-007",
+          "version_id": "version-007-v1",
+          "relative_path": "normal/team-beta/team11-demo-07.pdf",
+          "page": 1,
+          "excerpt": "Team 11 synthetic document 07 | synthetic page 1 of 1"
+        }
+      ],
+      "resolved": [
+        {
+          "expected": {
+            "file_id": "file-007",
+            "version_id": "version-007-v1",
+            "relative_path": "normal/team-beta/team11-demo-07.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 07 | synthetic page 1 of 1"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "c36bce10-05df-400c-a1c0-93d4f689c359",
+          "version_id": "4c059b77-6eff-4112-91e3-a6d753bdf47d",
+          "relative_path": "normal/team-beta/team11-demo-07.pdf",
+          "content_sha256": "fbfecd36cc0a14ebb497f936bc1f1fd226f908339d99f77f0957c9f2c5c44b63",
+          "page": 1,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 1
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 1,
+          "indexed_chunk_count": 1,
+          "compatible_vector_count": 0
+        }
+      ]
+    },
+    {
+      "query_id": "K05",
+      "expected": [
+        {
+          "file_id": "file-008",
+          "version_id": "version-008-v1",
+          "relative_path": "normal/team-beta/team11-demo-08.pdf",
+          "page": 1,
+          "excerpt": "Team 11 synthetic document 08 | synthetic page 1 of 1"
+        }
+      ],
+      "resolved": [
+        {
+          "expected": {
+            "file_id": "file-008",
+            "version_id": "version-008-v1",
+            "relative_path": "normal/team-beta/team11-demo-08.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 08 | synthetic page 1 of 1"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "eedce3a0-f8aa-4a35-a99c-0a665f89a165",
+          "version_id": "0c4257fd-1f73-4652-a21a-8c251e2f0e43",
+          "relative_path": "normal/team-beta/team11-demo-08.pdf",
+          "content_sha256": "a1ceacfb5b35a4017283afd611a37b1580bbacc921bb9e0e0b13a556b6936c48",
+          "page": 1,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 1
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 1,
+          "indexed_chunk_count": 1,
+          "compatible_vector_count": 0
+        }
+      ]
+    },
+    {
+      "query_id": "S01",
+      "expected": [
+        {
+          "file_id": "file-009",
+          "version_id": "version-009-v1",
+          "relative_path": "normal/team-beta/team11-demo-09.pdf",
+          "page": 2,
+          "excerpt": "Team 11 synthetic document 09 | synthetic page 2 of 3"
+        }
+      ],
+      "resolved": [
+        {
+          "expected": {
+            "file_id": "file-009",
+            "version_id": "version-009-v1",
+            "relative_path": "normal/team-beta/team11-demo-09.pdf",
+            "page": 2,
+            "excerpt": "Team 11 synthetic document 09 | synthetic page 2 of 3"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "c56c5645-dac6-4f53-adb1-4b62eb6ae599",
+          "version_id": "355c4cf6-4070-4803-b907-b8cc28aead61",
+          "relative_path": "normal/team-beta/team11-demo-09.pdf",
+          "content_sha256": "21882931591383a51bcefd18c4843dca1e9a6163e086c4f959527393194fe90a",
+          "page": 2,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 3
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 3,
+          "indexed_chunk_count": 3,
+          "compatible_vector_count": 0
+        }
+      ]
+    },
+    {
+      "query_id": "S02",
+      "expected": [
+        {
+          "file_id": "file-010",
+          "version_id": "version-010-v1",
+          "relative_path": "normal/team-beta/team11-demo-10.pdf",
+          "page": 3,
+          "excerpt": "Team 11 synthetic document 10 | synthetic page 3 of 3"
+        }
+      ],
+      "resolved": [
+        {
+          "expected": {
+            "file_id": "file-010",
+            "version_id": "version-010-v1",
+            "relative_path": "normal/team-beta/team11-demo-10.pdf",
+            "page": 3,
+            "excerpt": "Team 11 synthetic document 10 | synthetic page 3 of 3"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "ae324bf8-8f84-4e93-b135-671d2a7aba81",
+          "version_id": "d4525633-f0c0-49fa-89d5-49109a87322d",
+          "relative_path": "normal/team-beta/team11-demo-10.pdf",
+          "content_sha256": "44ca584ae43590e6c1a4ded0b3f8099a4d9261ccb0d9d92beede8a6dc39a872c",
+          "page": 3,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 3
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 3,
+          "indexed_chunk_count": 3,
+          "compatible_vector_count": 0
+        }
+      ]
+    },
+    {
+      "query_id": "S03",
+      "expected": [
+        {
+          "file_id": "file-011",
+          "version_id": "version-011-v1",
+          "relative_path": "normal/team-beta/team11-demo-11.pdf",
+          "page": 1,
+          "excerpt": "Team 11 synthetic document 11 | synthetic page 1 of 3"
+        }
+      ],
+      "resolved": [
+        {
+          "expected": {
+            "file_id": "file-011",
+            "version_id": "version-011-v1",
+            "relative_path": "normal/team-beta/team11-demo-11.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 11 | synthetic page 1 of 3"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+          "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+          "relative_path": "normal/team-beta/team11-demo-11.pdf",
+          "content_sha256": "cb95cbad289cee731140414ed8d0e5ee1b9f68b89e5044179c110152686f337f",
+          "page": 1,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 3
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 3,
+          "indexed_chunk_count": 3,
+          "compatible_vector_count": 0
+        }
+      ]
+    },
+    {
+      "query_id": "S04",
+      "expected": [
+        {
+          "file_id": "file-012",
+          "version_id": "version-012-v1",
+          "relative_path": "normal/team-beta/team11-demo-12.pdf",
+          "page": 2,
+          "excerpt": "Team 11 synthetic document 12 | synthetic page 2 of 3"
+        }
+      ],
+      "resolved": [
+        {
+          "expected": {
+            "file_id": "file-012",
+            "version_id": "version-012-v1",
+            "relative_path": "normal/team-beta/team11-demo-12.pdf",
+            "page": 2,
+            "excerpt": "Team 11 synthetic document 12 | synthetic page 2 of 3"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "c004ce0f-a990-4e9c-abbc-e47f17141901",
+          "version_id": "c4c26db6-4580-4cb9-833f-ea4dc8c5e6c5",
+          "relative_path": "normal/team-beta/team11-demo-12.pdf",
+          "content_sha256": "692fb24ab37adbea8bae2b5849353458e03490af33bad00aac05834af46edb84",
+          "page": 2,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 3
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 3,
+          "indexed_chunk_count": 3,
+          "compatible_vector_count": 0
+        }
+      ]
+    },
+    {
+      "query_id": "S05",
+      "expected": [
+        {
+          "file_id": "file-006",
+          "version_id": "version-006-v1",
+          "relative_path": "normal/team-alpha/team11-demo-06.pdf",
+          "page": 1,
+          "excerpt": "Team 11 synthetic document 06 | synthetic page 1 of 1"
+        }
+      ],
+      "resolved": [
+        {
+          "expected": {
+            "file_id": "file-006",
+            "version_id": "version-006-v1",
+            "relative_path": "normal/team-alpha/team11-demo-06.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 06 | synthetic page 1 of 1"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "53e5c936-584a-436d-a9c2-1cd7f665ca43",
+          "version_id": "5ef380c2-117f-4dbc-9b11-03fa35b19380",
+          "relative_path": "normal/team-alpha/team11-demo-06.pdf",
+          "content_sha256": "7baa07db66c24c805cdc212fa68a1674a46209ad24766f19be6473d3545a4858",
+          "page": 1,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 1
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 1,
+          "indexed_chunk_count": 1,
+          "compatible_vector_count": 0
+        }
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "query_id": "K01",
+      "kind": "keyword",
+      "language": "en",
+      "query": "Team 11 synthetic document 01",
+      "expected": [
+        {
+          "file_id": "file-001",
+          "version_id": "version-001-v1",
+          "relative_path": "normal/team-alpha/team11-demo-01.pdf",
+          "page": 1,
+          "excerpt": "Team 11 synthetic document 01 | synthetic page 1 of 1"
+        }
+      ],
+      "requested_mode": "keyword",
+      "execution_status": "executed",
+      "effective_mode": "keyword",
+      "degraded": false,
+      "degradation_reason": null,
+      "evaluation_top_k": 1,
+      "recorded_top_k": 3,
+      "resolved_expected": [
+        {
+          "expected": {
+            "file_id": "file-001",
+            "version_id": "version-001-v1",
+            "relative_path": "normal/team-alpha/team11-demo-01.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 01 | synthetic page 1 of 1"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "7d67d3f0-74bf-4e46-817a-4ef8b5d9e0a3",
+          "version_id": "72bb70d4-2fdf-4758-8a6c-9b25a8fbebc1",
+          "relative_path": "normal/team-alpha/team11-demo-01.pdf",
+          "content_sha256": "090c3446987187caa11cdb8608a35a56dfcd449066e2123f0672752ebb3bd3d6",
+          "page": 1,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 1
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 1,
+          "indexed_chunk_count": 1,
+          "compatible_vector_count": 0
+        }
+      ],
+      "expected_matches": [
+        {
+          "expected": {
+            "file_id": "file-001",
+            "version_id": "version-001-v1",
+            "relative_path": "normal/team-alpha/team11-demo-01.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 01 | synthetic page 1 of 1"
+          },
+          "file_id": "7d67d3f0-74bf-4e46-817a-4ef8b5d9e0a3",
+          "version_id": "72bb70d4-2fdf-4758-8a6c-9b25a8fbebc1",
+          "page": 1,
+          "rank": 1,
+          "location_hit": true
+        }
+      ],
+      "diagnostics": [],
+      "location_hit": true,
+      "hit": true,
+      "matched_rank": 1,
+      "duplicate_files": 0,
+      "seconds": 0.0126,
+      "response": {
+        "query": "Team 11 synthetic document 01",
+        "mode": "keyword",
+        "effective_mode": "keyword",
+        "results": [
+          {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "file_id": "7d67d3f0-74bf-4e46-817a-4ef8b5d9e0a3",
+            "file_name": "team11-demo-01.pdf",
+            "file_path": "normal/team-alpha/team11-demo-01.pdf",
+            "version_id": "72bb70d4-2fdf-4758-8a6c-9b25a8fbebc1",
+            "version_created_at": "2026-10-29T15:10:57.929574",
+            "chunk_id": "37391c41-bf06-4b88-8b8f-db4331037f67",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Team 11 synthetic document 01 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "reason": "keyword: 01, 11, document, synthetic, team",
+            "score": 1.0,
+            "keyword_score": 1.0,
+            "semantic_score": 0.0
+          },
+          {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "file_id": "0713d6ad-14fa-4ce6-9f52-f715e04f3298",
+            "file_name": "team11-demo-05.pdf",
+            "file_path": "normal/team-alpha/team11-demo-05.pdf",
+            "version_id": "a6a15a98-5747-4839-9df2-9b669a37e9f9",
+            "version_created_at": "2026-10-29T15:10:57.937300",
+            "chunk_id": "1d0ac532-ba85-4092-963f-19681dc8da26",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Team 11 synthetic document 05 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "reason": "keyword: 11, document, synthetic, team",
+            "score": 0.64,
+            "keyword_score": 0.64,
+            "semantic_score": 0.0
+          },
+          {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+            "file_name": "team11-demo-11.pdf",
+            "file_path": "normal/team-beta/team11-demo-11.pdf",
+            "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+            "version_created_at": "2026-10-29T15:10:57.947365",
+            "chunk_id": "583cf078-71ea-46e2-88c0-bfbeee977e90",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Team 11 synthetic document 11 | synthetic page 1 of 3",
+            "reason": "keyword: 11, document, synthetic, team",
+            "score": 0.64,
+            "keyword_score": 0.64,
+            "semantic_score": 0.0
+          }
+        ],
+        "total": 12,
+        "degraded": false,
+        "degradation_reason": null,
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 12,
+        "candidate_limit": 200
+      },
+      "ranked_results": [
+        {
+          "rank": 1,
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "7d67d3f0-74bf-4e46-817a-4ef8b5d9e0a3",
+          "file_name": "team11-demo-01.pdf",
+          "file_path": "normal/team-alpha/team11-demo-01.pdf",
+          "version_id": "72bb70d4-2fdf-4758-8a6c-9b25a8fbebc1",
+          "version_created_at": "2026-10-29T15:10:57.929574",
+          "chunk_id": "37391c41-bf06-4b88-8b8f-db4331037f67",
+          "ordinal": 1,
+          "page": 1,
+          "text": "Team 11 synthetic document 01 | synthetic page 1 of 1\nTeam 11 demo fixture",
+          "reason": "keyword: 01, 11, document, synthetic, team",
+          "score": 1.0,
+          "keyword_score": 1.0,
+          "semantic_score": 0.0,
+          "evidence": {
+            "chunk_id": "37391c41-bf06-4b88-8b8f-db4331037f67",
+            "version_id": "72bb70d4-2fdf-4758-8a6c-9b25a8fbebc1",
+            "file_id": "7d67d3f0-74bf-4e46-817a-4ef8b5d9e0a3",
+            "relative_path": "normal/team-alpha/team11-demo-01.pdf",
+            "page_number": 1,
+            "ordinal": 1,
+            "text": "Team 11 synthetic document 01 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "content_sha256": "090c3446987187caa11cdb8608a35a56dfcd449066e2123f0672752ebb3bd3d6"
+          },
+          "evidence_readable": true,
+          "evidence_matches_result": true
+        },
+        {
+          "rank": 2,
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "0713d6ad-14fa-4ce6-9f52-f715e04f3298",
+          "file_name": "team11-demo-05.pdf",
+          "file_path": "normal/team-alpha/team11-demo-05.pdf",
+          "version_id": "a6a15a98-5747-4839-9df2-9b669a37e9f9",
+          "version_created_at": "2026-10-29T15:10:57.937300",
+          "chunk_id": "1d0ac532-ba85-4092-963f-19681dc8da26",
+          "ordinal": 1,
+          "page": 1,
+          "text": "Team 11 synthetic document 05 | synthetic page 1 of 1\nTeam 11 demo fixture",
+          "reason": "keyword: 11, document, synthetic, team",
+          "score": 0.64,
+          "keyword_score": 0.64,
+          "semantic_score": 0.0,
+          "evidence": {
+            "chunk_id": "1d0ac532-ba85-4092-963f-19681dc8da26",
+            "version_id": "a6a15a98-5747-4839-9df2-9b669a37e9f9",
+            "file_id": "0713d6ad-14fa-4ce6-9f52-f715e04f3298",
+            "relative_path": "normal/team-alpha/team11-demo-05.pdf",
+            "page_number": 1,
+            "ordinal": 1,
+            "text": "Team 11 synthetic document 05 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "content_sha256": "8b7ec4dd5aedab420d8a35c03f8f445971721574ac9e7291014ff1799e6f9db7"
+          },
+          "evidence_readable": true,
+          "evidence_matches_result": true
+        },
+        {
+          "rank": 3,
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+          "file_name": "team11-demo-11.pdf",
+          "file_path": "normal/team-beta/team11-demo-11.pdf",
+          "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+          "version_created_at": "2026-10-29T15:10:57.947365",
+          "chunk_id": "583cf078-71ea-46e2-88c0-bfbeee977e90",
+          "ordinal": 1,
+          "page": 1,
+          "text": "Team 11 synthetic document 11 | synthetic page 1 of 3",
+          "reason": "keyword: 11, document, synthetic, team",
+          "score": 0.64,
+          "keyword_score": 0.64,
+          "semantic_score": 0.0,
+          "evidence": {
+            "chunk_id": "583cf078-71ea-46e2-88c0-bfbeee977e90",
+            "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+            "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+            "relative_path": "normal/team-beta/team11-demo-11.pdf",
+            "page_number": 1,
+            "ordinal": 1,
+            "text": "Team 11 synthetic document 11 | synthetic page 1 of 3",
+            "content_sha256": "cb95cbad289cee731140414ed8d0e5ee1b9f68b89e5044179c110152686f337f"
+          },
+          "evidence_readable": true,
+          "evidence_matches_result": true
+        }
+      ]
+    },
+    {
+      "query_id": "K02",
+      "kind": "keyword",
+      "language": "zh",
+      "query": "查找包含 Team 11 synthetic document 02 的文件",
+      "expected": [
+        {
+          "file_id": "file-002",
+          "version_id": "version-002-v1",
+          "relative_path": "normal/team-alpha/team11-demo-02.pdf",
+          "page": 1,
+          "excerpt": "Team 11 synthetic document 02 | synthetic page 1 of 1"
+        }
+      ],
+      "requested_mode": "keyword",
+      "execution_status": "executed",
+      "effective_mode": "keyword",
+      "degraded": false,
+      "degradation_reason": null,
+      "evaluation_top_k": 1,
+      "recorded_top_k": 3,
+      "resolved_expected": [
+        {
+          "expected": {
+            "file_id": "file-002",
+            "version_id": "version-002-v1",
+            "relative_path": "normal/team-alpha/team11-demo-02.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 02 | synthetic page 1 of 1"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "dee9eb27-e52d-4d3c-9017-ec7d7153e3ef",
+          "version_id": "42a9a87f-64ae-4bfb-89fa-20f6c0a0ad40",
+          "relative_path": "normal/team-alpha/team11-demo-02.pdf",
+          "content_sha256": "96a48022ff2bafc85543718c3f55f577fed40a173f4d63e8d066d8a5fea8b29f",
+          "page": 1,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 1
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 1,
+          "indexed_chunk_count": 1,
+          "compatible_vector_count": 0
+        }
+      ],
+      "expected_matches": [
+        {
+          "expected": {
+            "file_id": "file-002",
+            "version_id": "version-002-v1",
+            "relative_path": "normal/team-alpha/team11-demo-02.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 02 | synthetic page 1 of 1"
+          },
+          "file_id": "dee9eb27-e52d-4d3c-9017-ec7d7153e3ef",
+          "version_id": "42a9a87f-64ae-4bfb-89fa-20f6c0a0ad40",
+          "page": 1,
+          "rank": 1,
+          "location_hit": true
+        }
+      ],
+      "diagnostics": [],
+      "location_hit": true,
+      "hit": true,
+      "matched_rank": 1,
+      "duplicate_files": 0,
+      "seconds": 0.0119,
+      "response": {
+        "query": "查找包含 Team 11 synthetic document 02 的文件",
+        "mode": "keyword",
+        "effective_mode": "keyword",
+        "results": [
+          {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "file_id": "dee9eb27-e52d-4d3c-9017-ec7d7153e3ef",
+            "file_name": "team11-demo-02.pdf",
+            "file_path": "normal/team-alpha/team11-demo-02.pdf",
+            "version_id": "42a9a87f-64ae-4bfb-89fa-20f6c0a0ad40",
+            "version_created_at": "2026-10-29T15:10:57.931581",
+            "chunk_id": "e60fb150-2f71-42c0-aae9-dae0f0ef4474",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Team 11 synthetic document 02 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "reason": "keyword: 02, 11, document, synthetic, team",
+            "score": 0.4,
+            "keyword_score": 0.4,
+            "semantic_score": 0.0
+          },
+          {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "file_id": "0713d6ad-14fa-4ce6-9f52-f715e04f3298",
+            "file_name": "team11-demo-05.pdf",
+            "file_path": "normal/team-alpha/team11-demo-05.pdf",
+            "version_id": "a6a15a98-5747-4839-9df2-9b669a37e9f9",
+            "version_created_at": "2026-10-29T15:10:57.937300",
+            "chunk_id": "1d0ac532-ba85-4092-963f-19681dc8da26",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Team 11 synthetic document 05 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "reason": "keyword: 11, document, synthetic, team",
+            "score": 0.32,
+            "keyword_score": 0.32,
+            "semantic_score": 0.0
+          },
+          {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+            "file_name": "team11-demo-11.pdf",
+            "file_path": "normal/team-beta/team11-demo-11.pdf",
+            "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+            "version_created_at": "2026-10-29T15:10:57.947365",
+            "chunk_id": "583cf078-71ea-46e2-88c0-bfbeee977e90",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Team 11 synthetic document 11 | synthetic page 1 of 3",
+            "reason": "keyword: 11, document, synthetic, team",
+            "score": 0.32,
+            "keyword_score": 0.32,
+            "semantic_score": 0.0
+          }
+        ],
+        "total": 12,
+        "degraded": false,
+        "degradation_reason": null,
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 12,
+        "candidate_limit": 200
+      },
+      "ranked_results": [
+        {
+          "rank": 1,
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "dee9eb27-e52d-4d3c-9017-ec7d7153e3ef",
+          "file_name": "team11-demo-02.pdf",
+          "file_path": "normal/team-alpha/team11-demo-02.pdf",
+          "version_id": "42a9a87f-64ae-4bfb-89fa-20f6c0a0ad40",
+          "version_created_at": "2026-10-29T15:10:57.931581",
+          "chunk_id": "e60fb150-2f71-42c0-aae9-dae0f0ef4474",
+          "ordinal": 1,
+          "page": 1,
+          "text": "Team 11 synthetic document 02 | synthetic page 1 of 1\nTeam 11 demo fixture",
+          "reason": "keyword: 02, 11, document, synthetic, team",
+          "score": 0.4,
+          "keyword_score": 0.4,
+          "semantic_score": 0.0,
+          "evidence": {
+            "chunk_id": "e60fb150-2f71-42c0-aae9-dae0f0ef4474",
+            "version_id": "42a9a87f-64ae-4bfb-89fa-20f6c0a0ad40",
+            "file_id": "dee9eb27-e52d-4d3c-9017-ec7d7153e3ef",
+            "relative_path": "normal/team-alpha/team11-demo-02.pdf",
+            "page_number": 1,
+            "ordinal": 1,
+            "text": "Team 11 synthetic document 02 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "content_sha256": "96a48022ff2bafc85543718c3f55f577fed40a173f4d63e8d066d8a5fea8b29f"
+          },
+          "evidence_readable": true,
+          "evidence_matches_result": true
+        },
+        {
+          "rank": 2,
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "0713d6ad-14fa-4ce6-9f52-f715e04f3298",
+          "file_name": "team11-demo-05.pdf",
+          "file_path": "normal/team-alpha/team11-demo-05.pdf",
+          "version_id": "a6a15a98-5747-4839-9df2-9b669a37e9f9",
+          "version_created_at": "2026-10-29T15:10:57.937300",
+          "chunk_id": "1d0ac532-ba85-4092-963f-19681dc8da26",
+          "ordinal": 1,
+          "page": 1,
+          "text": "Team 11 synthetic document 05 | synthetic page 1 of 1\nTeam 11 demo fixture",
+          "reason": "keyword: 11, document, synthetic, team",
+          "score": 0.32,
+          "keyword_score": 0.32,
+          "semantic_score": 0.0,
+          "evidence": {
+            "chunk_id": "1d0ac532-ba85-4092-963f-19681dc8da26",
+            "version_id": "a6a15a98-5747-4839-9df2-9b669a37e9f9",
+            "file_id": "0713d6ad-14fa-4ce6-9f52-f715e04f3298",
+            "relative_path": "normal/team-alpha/team11-demo-05.pdf",
+            "page_number": 1,
+            "ordinal": 1,
+            "text": "Team 11 synthetic document 05 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "content_sha256": "8b7ec4dd5aedab420d8a35c03f8f445971721574ac9e7291014ff1799e6f9db7"
+          },
+          "evidence_readable": true,
+          "evidence_matches_result": true
+        },
+        {
+          "rank": 3,
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+          "file_name": "team11-demo-11.pdf",
+          "file_path": "normal/team-beta/team11-demo-11.pdf",
+          "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+          "version_created_at": "2026-10-29T15:10:57.947365",
+          "chunk_id": "583cf078-71ea-46e2-88c0-bfbeee977e90",
+          "ordinal": 1,
+          "page": 1,
+          "text": "Team 11 synthetic document 11 | synthetic page 1 of 3",
+          "reason": "keyword: 11, document, synthetic, team",
+          "score": 0.32,
+          "keyword_score": 0.32,
+          "semantic_score": 0.0,
+          "evidence": {
+            "chunk_id": "583cf078-71ea-46e2-88c0-bfbeee977e90",
+            "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+            "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+            "relative_path": "normal/team-beta/team11-demo-11.pdf",
+            "page_number": 1,
+            "ordinal": 1,
+            "text": "Team 11 synthetic document 11 | synthetic page 1 of 3",
+            "content_sha256": "cb95cbad289cee731140414ed8d0e5ee1b9f68b89e5044179c110152686f337f"
+          },
+          "evidence_readable": true,
+          "evidence_matches_result": true
+        }
+      ]
+    },
+    {
+      "query_id": "K03",
+      "kind": "keyword",
+      "language": "en",
+      "query": "Team 11 synthetic document 03",
+      "expected": [
+        {
+          "file_id": "file-003",
+          "version_id": "version-003-v1",
+          "relative_path": "normal/team-alpha/team11-demo-03.pdf",
+          "page": 1,
+          "excerpt": "Team 11 synthetic document 03 | synthetic page 1 of 1"
+        }
+      ],
+      "requested_mode": "keyword",
+      "execution_status": "executed",
+      "effective_mode": "keyword",
+      "degraded": false,
+      "degradation_reason": null,
+      "evaluation_top_k": 1,
+      "recorded_top_k": 3,
+      "resolved_expected": [
+        {
+          "expected": {
+            "file_id": "file-003",
+            "version_id": "version-003-v1",
+            "relative_path": "normal/team-alpha/team11-demo-03.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 03 | synthetic page 1 of 1"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "d828fb3c-a4a8-482b-bcba-97e0b0f77529",
+          "version_id": "9efa3d64-29ca-4fca-9a9a-23192bdc2761",
+          "relative_path": "normal/team-alpha/team11-demo-03.pdf",
+          "content_sha256": "b63b33819f4ce501d0f279c6df5f66141f3659f76eaaa96369b23ddab234bdf0",
+          "page": 1,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 1
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 1,
+          "indexed_chunk_count": 1,
+          "compatible_vector_count": 0
+        }
+      ],
+      "expected_matches": [
+        {
+          "expected": {
+            "file_id": "file-003",
+            "version_id": "version-003-v1",
+            "relative_path": "normal/team-alpha/team11-demo-03.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 03 | synthetic page 1 of 1"
+          },
+          "file_id": "d828fb3c-a4a8-482b-bcba-97e0b0f77529",
+          "version_id": "9efa3d64-29ca-4fca-9a9a-23192bdc2761",
+          "page": 1,
+          "rank": 1,
+          "location_hit": true
+        }
+      ],
+      "diagnostics": [],
+      "location_hit": true,
+      "hit": true,
+      "matched_rank": 1,
+      "duplicate_files": 0,
+      "seconds": 0.005,
+      "response": {
+        "query": "Team 11 synthetic document 03",
+        "mode": "keyword",
+        "effective_mode": "keyword",
+        "results": [
+          {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "file_id": "d828fb3c-a4a8-482b-bcba-97e0b0f77529",
+            "file_name": "team11-demo-03.pdf",
+            "file_path": "normal/team-alpha/team11-demo-03.pdf",
+            "version_id": "9efa3d64-29ca-4fca-9a9a-23192bdc2761",
+            "version_created_at": "2026-10-29T15:10:57.933471",
+            "chunk_id": "9290c1ff-4ef5-4065-b8d4-40ef32ef5bd6",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Team 11 synthetic document 03 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "reason": "keyword: 03, 11, document, synthetic, team",
+            "score": 1.0,
+            "keyword_score": 1.0,
+            "semantic_score": 0.0
+          },
+          {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "file_id": "0713d6ad-14fa-4ce6-9f52-f715e04f3298",
+            "file_name": "team11-demo-05.pdf",
+            "file_path": "normal/team-alpha/team11-demo-05.pdf",
+            "version_id": "a6a15a98-5747-4839-9df2-9b669a37e9f9",
+            "version_created_at": "2026-10-29T15:10:57.937300",
+            "chunk_id": "1d0ac532-ba85-4092-963f-19681dc8da26",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Team 11 synthetic document 05 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "reason": "keyword: 11, document, synthetic, team",
+            "score": 0.64,
+            "keyword_score": 0.64,
+            "semantic_score": 0.0
+          },
+          {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+            "file_name": "team11-demo-11.pdf",
+            "file_path": "normal/team-beta/team11-demo-11.pdf",
+            "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+            "version_created_at": "2026-10-29T15:10:57.947365",
+            "chunk_id": "583cf078-71ea-46e2-88c0-bfbeee977e90",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Team 11 synthetic document 11 | synthetic page 1 of 3",
+            "reason": "keyword: 11, document, synthetic, team",
+            "score": 0.64,
+            "keyword_score": 0.64,
+            "semantic_score": 0.0
+          }
+        ],
+        "total": 12,
+        "degraded": false,
+        "degradation_reason": null,
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 12,
+        "candidate_limit": 200
+      },
+      "ranked_results": [
+        {
+          "rank": 1,
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "d828fb3c-a4a8-482b-bcba-97e0b0f77529",
+          "file_name": "team11-demo-03.pdf",
+          "file_path": "normal/team-alpha/team11-demo-03.pdf",
+          "version_id": "9efa3d64-29ca-4fca-9a9a-23192bdc2761",
+          "version_created_at": "2026-10-29T15:10:57.933471",
+          "chunk_id": "9290c1ff-4ef5-4065-b8d4-40ef32ef5bd6",
+          "ordinal": 1,
+          "page": 1,
+          "text": "Team 11 synthetic document 03 | synthetic page 1 of 1\nTeam 11 demo fixture",
+          "reason": "keyword: 03, 11, document, synthetic, team",
+          "score": 1.0,
+          "keyword_score": 1.0,
+          "semantic_score": 0.0,
+          "evidence": {
+            "chunk_id": "9290c1ff-4ef5-4065-b8d4-40ef32ef5bd6",
+            "version_id": "9efa3d64-29ca-4fca-9a9a-23192bdc2761",
+            "file_id": "d828fb3c-a4a8-482b-bcba-97e0b0f77529",
+            "relative_path": "normal/team-alpha/team11-demo-03.pdf",
+            "page_number": 1,
+            "ordinal": 1,
+            "text": "Team 11 synthetic document 03 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "content_sha256": "b63b33819f4ce501d0f279c6df5f66141f3659f76eaaa96369b23ddab234bdf0"
+          },
+          "evidence_readable": true,
+          "evidence_matches_result": true
+        },
+        {
+          "rank": 2,
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "0713d6ad-14fa-4ce6-9f52-f715e04f3298",
+          "file_name": "team11-demo-05.pdf",
+          "file_path": "normal/team-alpha/team11-demo-05.pdf",
+          "version_id": "a6a15a98-5747-4839-9df2-9b669a37e9f9",
+          "version_created_at": "2026-10-29T15:10:57.937300",
+          "chunk_id": "1d0ac532-ba85-4092-963f-19681dc8da26",
+          "ordinal": 1,
+          "page": 1,
+          "text": "Team 11 synthetic document 05 | synthetic page 1 of 1\nTeam 11 demo fixture",
+          "reason": "keyword: 11, document, synthetic, team",
+          "score": 0.64,
+          "keyword_score": 0.64,
+          "semantic_score": 0.0,
+          "evidence": {
+            "chunk_id": "1d0ac532-ba85-4092-963f-19681dc8da26",
+            "version_id": "a6a15a98-5747-4839-9df2-9b669a37e9f9",
+            "file_id": "0713d6ad-14fa-4ce6-9f52-f715e04f3298",
+            "relative_path": "normal/team-alpha/team11-demo-05.pdf",
+            "page_number": 1,
+            "ordinal": 1,
+            "text": "Team 11 synthetic document 05 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "content_sha256": "8b7ec4dd5aedab420d8a35c03f8f445971721574ac9e7291014ff1799e6f9db7"
+          },
+          "evidence_readable": true,
+          "evidence_matches_result": true
+        },
+        {
+          "rank": 3,
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+          "file_name": "team11-demo-11.pdf",
+          "file_path": "normal/team-beta/team11-demo-11.pdf",
+          "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+          "version_created_at": "2026-10-29T15:10:57.947365",
+          "chunk_id": "583cf078-71ea-46e2-88c0-bfbeee977e90",
+          "ordinal": 1,
+          "page": 1,
+          "text": "Team 11 synthetic document 11 | synthetic page 1 of 3",
+          "reason": "keyword: 11, document, synthetic, team",
+          "score": 0.64,
+          "keyword_score": 0.64,
+          "semantic_score": 0.0,
+          "evidence": {
+            "chunk_id": "583cf078-71ea-46e2-88c0-bfbeee977e90",
+            "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+            "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+            "relative_path": "normal/team-beta/team11-demo-11.pdf",
+            "page_number": 1,
+            "ordinal": 1,
+            "text": "Team 11 synthetic document 11 | synthetic page 1 of 3",
+            "content_sha256": "cb95cbad289cee731140414ed8d0e5ee1b9f68b89e5044179c110152686f337f"
+          },
+          "evidence_readable": true,
+          "evidence_matches_result": true
+        }
+      ]
+    },
+    {
+      "query_id": "K04",
+      "kind": "keyword",
+      "language": "en",
+      "query": "Team 11 synthetic document 07",
+      "expected": [
+        {
+          "file_id": "file-007",
+          "version_id": "version-007-v1",
+          "relative_path": "normal/team-beta/team11-demo-07.pdf",
+          "page": 1,
+          "excerpt": "Team 11 synthetic document 07 | synthetic page 1 of 1"
+        }
+      ],
+      "requested_mode": "keyword",
+      "execution_status": "executed",
+      "effective_mode": "keyword",
+      "degraded": false,
+      "degradation_reason": null,
+      "evaluation_top_k": 1,
+      "recorded_top_k": 3,
+      "resolved_expected": [
+        {
+          "expected": {
+            "file_id": "file-007",
+            "version_id": "version-007-v1",
+            "relative_path": "normal/team-beta/team11-demo-07.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 07 | synthetic page 1 of 1"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "c36bce10-05df-400c-a1c0-93d4f689c359",
+          "version_id": "4c059b77-6eff-4112-91e3-a6d753bdf47d",
+          "relative_path": "normal/team-beta/team11-demo-07.pdf",
+          "content_sha256": "fbfecd36cc0a14ebb497f936bc1f1fd226f908339d99f77f0957c9f2c5c44b63",
+          "page": 1,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 1
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 1,
+          "indexed_chunk_count": 1,
+          "compatible_vector_count": 0
+        }
+      ],
+      "expected_matches": [
+        {
+          "expected": {
+            "file_id": "file-007",
+            "version_id": "version-007-v1",
+            "relative_path": "normal/team-beta/team11-demo-07.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 07 | synthetic page 1 of 1"
+          },
+          "file_id": "c36bce10-05df-400c-a1c0-93d4f689c359",
+          "version_id": "4c059b77-6eff-4112-91e3-a6d753bdf47d",
+          "page": 1,
+          "rank": 1,
+          "location_hit": true
+        }
+      ],
+      "diagnostics": [],
+      "location_hit": true,
+      "hit": true,
+      "matched_rank": 1,
+      "duplicate_files": 0,
+      "seconds": 0.005,
+      "response": {
+        "query": "Team 11 synthetic document 07",
+        "mode": "keyword",
+        "effective_mode": "keyword",
+        "results": [
+          {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "file_id": "c36bce10-05df-400c-a1c0-93d4f689c359",
+            "file_name": "team11-demo-07.pdf",
+            "file_path": "normal/team-beta/team11-demo-07.pdf",
+            "version_id": "4c059b77-6eff-4112-91e3-a6d753bdf47d",
+            "version_created_at": "2026-10-29T15:10:57.940357",
+            "chunk_id": "81394dae-bfe0-4eba-b54e-f728a7bb3603",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Team 11 synthetic document 07 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "reason": "keyword: 07, 11, document, synthetic, team",
+            "score": 1.0,
+            "keyword_score": 1.0,
+            "semantic_score": 0.0
+          },
+          {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "file_id": "0713d6ad-14fa-4ce6-9f52-f715e04f3298",
+            "file_name": "team11-demo-05.pdf",
+            "file_path": "normal/team-alpha/team11-demo-05.pdf",
+            "version_id": "a6a15a98-5747-4839-9df2-9b669a37e9f9",
+            "version_created_at": "2026-10-29T15:10:57.937300",
+            "chunk_id": "1d0ac532-ba85-4092-963f-19681dc8da26",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Team 11 synthetic document 05 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "reason": "keyword: 11, document, synthetic, team",
+            "score": 0.64,
+            "keyword_score": 0.64,
+            "semantic_score": 0.0
+          },
+          {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+            "file_name": "team11-demo-11.pdf",
+            "file_path": "normal/team-beta/team11-demo-11.pdf",
+            "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+            "version_created_at": "2026-10-29T15:10:57.947365",
+            "chunk_id": "583cf078-71ea-46e2-88c0-bfbeee977e90",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Team 11 synthetic document 11 | synthetic page 1 of 3",
+            "reason": "keyword: 11, document, synthetic, team",
+            "score": 0.64,
+            "keyword_score": 0.64,
+            "semantic_score": 0.0
+          }
+        ],
+        "total": 12,
+        "degraded": false,
+        "degradation_reason": null,
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 12,
+        "candidate_limit": 200
+      },
+      "ranked_results": [
+        {
+          "rank": 1,
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "c36bce10-05df-400c-a1c0-93d4f689c359",
+          "file_name": "team11-demo-07.pdf",
+          "file_path": "normal/team-beta/team11-demo-07.pdf",
+          "version_id": "4c059b77-6eff-4112-91e3-a6d753bdf47d",
+          "version_created_at": "2026-10-29T15:10:57.940357",
+          "chunk_id": "81394dae-bfe0-4eba-b54e-f728a7bb3603",
+          "ordinal": 1,
+          "page": 1,
+          "text": "Team 11 synthetic document 07 | synthetic page 1 of 1\nTeam 11 demo fixture",
+          "reason": "keyword: 07, 11, document, synthetic, team",
+          "score": 1.0,
+          "keyword_score": 1.0,
+          "semantic_score": 0.0,
+          "evidence": {
+            "chunk_id": "81394dae-bfe0-4eba-b54e-f728a7bb3603",
+            "version_id": "4c059b77-6eff-4112-91e3-a6d753bdf47d",
+            "file_id": "c36bce10-05df-400c-a1c0-93d4f689c359",
+            "relative_path": "normal/team-beta/team11-demo-07.pdf",
+            "page_number": 1,
+            "ordinal": 1,
+            "text": "Team 11 synthetic document 07 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "content_sha256": "fbfecd36cc0a14ebb497f936bc1f1fd226f908339d99f77f0957c9f2c5c44b63"
+          },
+          "evidence_readable": true,
+          "evidence_matches_result": true
+        },
+        {
+          "rank": 2,
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "0713d6ad-14fa-4ce6-9f52-f715e04f3298",
+          "file_name": "team11-demo-05.pdf",
+          "file_path": "normal/team-alpha/team11-demo-05.pdf",
+          "version_id": "a6a15a98-5747-4839-9df2-9b669a37e9f9",
+          "version_created_at": "2026-10-29T15:10:57.937300",
+          "chunk_id": "1d0ac532-ba85-4092-963f-19681dc8da26",
+          "ordinal": 1,
+          "page": 1,
+          "text": "Team 11 synthetic document 05 | synthetic page 1 of 1\nTeam 11 demo fixture",
+          "reason": "keyword: 11, document, synthetic, team",
+          "score": 0.64,
+          "keyword_score": 0.64,
+          "semantic_score": 0.0,
+          "evidence": {
+            "chunk_id": "1d0ac532-ba85-4092-963f-19681dc8da26",
+            "version_id": "a6a15a98-5747-4839-9df2-9b669a37e9f9",
+            "file_id": "0713d6ad-14fa-4ce6-9f52-f715e04f3298",
+            "relative_path": "normal/team-alpha/team11-demo-05.pdf",
+            "page_number": 1,
+            "ordinal": 1,
+            "text": "Team 11 synthetic document 05 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "content_sha256": "8b7ec4dd5aedab420d8a35c03f8f445971721574ac9e7291014ff1799e6f9db7"
+          },
+          "evidence_readable": true,
+          "evidence_matches_result": true
+        },
+        {
+          "rank": 3,
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+          "file_name": "team11-demo-11.pdf",
+          "file_path": "normal/team-beta/team11-demo-11.pdf",
+          "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+          "version_created_at": "2026-10-29T15:10:57.947365",
+          "chunk_id": "583cf078-71ea-46e2-88c0-bfbeee977e90",
+          "ordinal": 1,
+          "page": 1,
+          "text": "Team 11 synthetic document 11 | synthetic page 1 of 3",
+          "reason": "keyword: 11, document, synthetic, team",
+          "score": 0.64,
+          "keyword_score": 0.64,
+          "semantic_score": 0.0,
+          "evidence": {
+            "chunk_id": "583cf078-71ea-46e2-88c0-bfbeee977e90",
+            "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+            "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+            "relative_path": "normal/team-beta/team11-demo-11.pdf",
+            "page_number": 1,
+            "ordinal": 1,
+            "text": "Team 11 synthetic document 11 | synthetic page 1 of 3",
+            "content_sha256": "cb95cbad289cee731140414ed8d0e5ee1b9f68b89e5044179c110152686f337f"
+          },
+          "evidence_readable": true,
+          "evidence_matches_result": true
+        }
+      ]
+    },
+    {
+      "query_id": "K05",
+      "kind": "keyword",
+      "language": "zh",
+      "query": "查找包含 Team 11 synthetic document 08 的文件",
+      "expected": [
+        {
+          "file_id": "file-008",
+          "version_id": "version-008-v1",
+          "relative_path": "normal/team-beta/team11-demo-08.pdf",
+          "page": 1,
+          "excerpt": "Team 11 synthetic document 08 | synthetic page 1 of 1"
+        }
+      ],
+      "requested_mode": "keyword",
+      "execution_status": "executed",
+      "effective_mode": "keyword",
+      "degraded": false,
+      "degradation_reason": null,
+      "evaluation_top_k": 1,
+      "recorded_top_k": 3,
+      "resolved_expected": [
+        {
+          "expected": {
+            "file_id": "file-008",
+            "version_id": "version-008-v1",
+            "relative_path": "normal/team-beta/team11-demo-08.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 08 | synthetic page 1 of 1"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "eedce3a0-f8aa-4a35-a99c-0a665f89a165",
+          "version_id": "0c4257fd-1f73-4652-a21a-8c251e2f0e43",
+          "relative_path": "normal/team-beta/team11-demo-08.pdf",
+          "content_sha256": "a1ceacfb5b35a4017283afd611a37b1580bbacc921bb9e0e0b13a556b6936c48",
+          "page": 1,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 1
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 1,
+          "indexed_chunk_count": 1,
+          "compatible_vector_count": 0
+        }
+      ],
+      "expected_matches": [
+        {
+          "expected": {
+            "file_id": "file-008",
+            "version_id": "version-008-v1",
+            "relative_path": "normal/team-beta/team11-demo-08.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 08 | synthetic page 1 of 1"
+          },
+          "file_id": "eedce3a0-f8aa-4a35-a99c-0a665f89a165",
+          "version_id": "0c4257fd-1f73-4652-a21a-8c251e2f0e43",
+          "page": 1,
+          "rank": 1,
+          "location_hit": true
+        }
+      ],
+      "diagnostics": [],
+      "location_hit": true,
+      "hit": true,
+      "matched_rank": 1,
+      "duplicate_files": 0,
+      "seconds": 0.0048,
+      "response": {
+        "query": "查找包含 Team 11 synthetic document 08 的文件",
+        "mode": "keyword",
+        "effective_mode": "keyword",
+        "results": [
+          {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "file_id": "eedce3a0-f8aa-4a35-a99c-0a665f89a165",
+            "file_name": "team11-demo-08.pdf",
+            "file_path": "normal/team-beta/team11-demo-08.pdf",
+            "version_id": "0c4257fd-1f73-4652-a21a-8c251e2f0e43",
+            "version_created_at": "2026-10-29T15:10:57.942358",
+            "chunk_id": "a9bdae7f-7b2a-40e8-9d3e-987fb2fae6ff",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Team 11 synthetic document 08 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "reason": "keyword: 08, 11, document, synthetic, team",
+            "score": 0.4,
+            "keyword_score": 0.4,
+            "semantic_score": 0.0
+          },
+          {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "file_id": "0713d6ad-14fa-4ce6-9f52-f715e04f3298",
+            "file_name": "team11-demo-05.pdf",
+            "file_path": "normal/team-alpha/team11-demo-05.pdf",
+            "version_id": "a6a15a98-5747-4839-9df2-9b669a37e9f9",
+            "version_created_at": "2026-10-29T15:10:57.937300",
+            "chunk_id": "1d0ac532-ba85-4092-963f-19681dc8da26",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Team 11 synthetic document 05 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "reason": "keyword: 11, document, synthetic, team",
+            "score": 0.32,
+            "keyword_score": 0.32,
+            "semantic_score": 0.0
+          },
+          {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+            "file_name": "team11-demo-11.pdf",
+            "file_path": "normal/team-beta/team11-demo-11.pdf",
+            "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+            "version_created_at": "2026-10-29T15:10:57.947365",
+            "chunk_id": "583cf078-71ea-46e2-88c0-bfbeee977e90",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Team 11 synthetic document 11 | synthetic page 1 of 3",
+            "reason": "keyword: 11, document, synthetic, team",
+            "score": 0.32,
+            "keyword_score": 0.32,
+            "semantic_score": 0.0
+          }
+        ],
+        "total": 12,
+        "degraded": false,
+        "degradation_reason": null,
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 12,
+        "candidate_limit": 200
+      },
+      "ranked_results": [
+        {
+          "rank": 1,
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "eedce3a0-f8aa-4a35-a99c-0a665f89a165",
+          "file_name": "team11-demo-08.pdf",
+          "file_path": "normal/team-beta/team11-demo-08.pdf",
+          "version_id": "0c4257fd-1f73-4652-a21a-8c251e2f0e43",
+          "version_created_at": "2026-10-29T15:10:57.942358",
+          "chunk_id": "a9bdae7f-7b2a-40e8-9d3e-987fb2fae6ff",
+          "ordinal": 1,
+          "page": 1,
+          "text": "Team 11 synthetic document 08 | synthetic page 1 of 1\nTeam 11 demo fixture",
+          "reason": "keyword: 08, 11, document, synthetic, team",
+          "score": 0.4,
+          "keyword_score": 0.4,
+          "semantic_score": 0.0,
+          "evidence": {
+            "chunk_id": "a9bdae7f-7b2a-40e8-9d3e-987fb2fae6ff",
+            "version_id": "0c4257fd-1f73-4652-a21a-8c251e2f0e43",
+            "file_id": "eedce3a0-f8aa-4a35-a99c-0a665f89a165",
+            "relative_path": "normal/team-beta/team11-demo-08.pdf",
+            "page_number": 1,
+            "ordinal": 1,
+            "text": "Team 11 synthetic document 08 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "content_sha256": "a1ceacfb5b35a4017283afd611a37b1580bbacc921bb9e0e0b13a556b6936c48"
+          },
+          "evidence_readable": true,
+          "evidence_matches_result": true
+        },
+        {
+          "rank": 2,
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "0713d6ad-14fa-4ce6-9f52-f715e04f3298",
+          "file_name": "team11-demo-05.pdf",
+          "file_path": "normal/team-alpha/team11-demo-05.pdf",
+          "version_id": "a6a15a98-5747-4839-9df2-9b669a37e9f9",
+          "version_created_at": "2026-10-29T15:10:57.937300",
+          "chunk_id": "1d0ac532-ba85-4092-963f-19681dc8da26",
+          "ordinal": 1,
+          "page": 1,
+          "text": "Team 11 synthetic document 05 | synthetic page 1 of 1\nTeam 11 demo fixture",
+          "reason": "keyword: 11, document, synthetic, team",
+          "score": 0.32,
+          "keyword_score": 0.32,
+          "semantic_score": 0.0,
+          "evidence": {
+            "chunk_id": "1d0ac532-ba85-4092-963f-19681dc8da26",
+            "version_id": "a6a15a98-5747-4839-9df2-9b669a37e9f9",
+            "file_id": "0713d6ad-14fa-4ce6-9f52-f715e04f3298",
+            "relative_path": "normal/team-alpha/team11-demo-05.pdf",
+            "page_number": 1,
+            "ordinal": 1,
+            "text": "Team 11 synthetic document 05 | synthetic page 1 of 1\nTeam 11 demo fixture",
+            "content_sha256": "8b7ec4dd5aedab420d8a35c03f8f445971721574ac9e7291014ff1799e6f9db7"
+          },
+          "evidence_readable": true,
+          "evidence_matches_result": true
+        },
+        {
+          "rank": 3,
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+          "file_name": "team11-demo-11.pdf",
+          "file_path": "normal/team-beta/team11-demo-11.pdf",
+          "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+          "version_created_at": "2026-10-29T15:10:57.947365",
+          "chunk_id": "583cf078-71ea-46e2-88c0-bfbeee977e90",
+          "ordinal": 1,
+          "page": 1,
+          "text": "Team 11 synthetic document 11 | synthetic page 1 of 3",
+          "reason": "keyword: 11, document, synthetic, team",
+          "score": 0.32,
+          "keyword_score": 0.32,
+          "semantic_score": 0.0,
+          "evidence": {
+            "chunk_id": "583cf078-71ea-46e2-88c0-bfbeee977e90",
+            "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+            "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+            "relative_path": "normal/team-beta/team11-demo-11.pdf",
+            "page_number": 1,
+            "ordinal": 1,
+            "text": "Team 11 synthetic document 11 | synthetic page 1 of 3",
+            "content_sha256": "cb95cbad289cee731140414ed8d0e5ee1b9f68b89e5044179c110152686f337f"
+          },
+          "evidence_readable": true,
+          "evidence_matches_result": true
+        }
+      ]
+    },
+    {
+      "query_id": "S01",
+      "kind": "semantic_description",
+      "language": "en",
+      "avoids_source_keywords": true,
+      "query": "Show the middle leaf in the ninth sample.",
+      "expected": [
+        {
+          "file_id": "file-009",
+          "version_id": "version-009-v1",
+          "relative_path": "normal/team-beta/team11-demo-09.pdf",
+          "page": 2,
+          "excerpt": "Team 11 synthetic document 09 | synthetic page 2 of 3"
+        }
+      ],
+      "requested_mode": "semantic",
+      "execution_status": "executed",
+      "effective_mode": "keyword",
+      "degraded": true,
+      "degradation_reason": "ai_disabled",
+      "evaluation_top_k": 3,
+      "recorded_top_k": 3,
+      "resolved_expected": [
+        {
+          "expected": {
+            "file_id": "file-009",
+            "version_id": "version-009-v1",
+            "relative_path": "normal/team-beta/team11-demo-09.pdf",
+            "page": 2,
+            "excerpt": "Team 11 synthetic document 09 | synthetic page 2 of 3"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "c56c5645-dac6-4f53-adb1-4b62eb6ae599",
+          "version_id": "355c4cf6-4070-4803-b907-b8cc28aead61",
+          "relative_path": "normal/team-beta/team11-demo-09.pdf",
+          "content_sha256": "21882931591383a51bcefd18c4843dca1e9a6163e086c4f959527393194fe90a",
+          "page": 2,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 3
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 3,
+          "indexed_chunk_count": 3,
+          "compatible_vector_count": 0
+        }
+      ],
+      "expected_matches": [
+        {
+          "expected": {
+            "file_id": "file-009",
+            "version_id": "version-009-v1",
+            "relative_path": "normal/team-beta/team11-demo-09.pdf",
+            "page": 2,
+            "excerpt": "Team 11 synthetic document 09 | synthetic page 2 of 3"
+          },
+          "file_id": "c56c5645-dac6-4f53-adb1-4b62eb6ae599",
+          "version_id": "355c4cf6-4070-4803-b907-b8cc28aead61",
+          "page": 2,
+          "rank": null,
+          "location_hit": false
+        }
+      ],
+      "diagnostics": [
+        {
+          "code": "index_not_ready",
+          "reason": "Some source chunks have no compatible vector for the frozen model",
+          "channel": "semantic",
+          "compatible_vector_count": 0,
+          "chunk_count": 3
+        }
+      ],
+      "location_hit": false,
+      "hit": false,
+      "matched_rank": null,
+      "duplicate_files": 0,
+      "seconds": 0.0017,
+      "response": {
+        "query": "Show the middle leaf in the ninth sample.",
+        "mode": "semantic",
+        "effective_mode": "keyword",
+        "results": [],
+        "total": 0,
+        "degraded": true,
+        "degradation_reason": "ai_disabled",
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 0,
+        "candidate_limit": 200
+      },
+      "ranked_results": []
+    },
+    {
+      "query_id": "S01",
+      "kind": "semantic_description",
+      "language": "en",
+      "avoids_source_keywords": true,
+      "query": "Show the middle leaf in the ninth sample.",
+      "expected": [
+        {
+          "file_id": "file-009",
+          "version_id": "version-009-v1",
+          "relative_path": "normal/team-beta/team11-demo-09.pdf",
+          "page": 2,
+          "excerpt": "Team 11 synthetic document 09 | synthetic page 2 of 3"
+        }
+      ],
+      "requested_mode": "hybrid",
+      "execution_status": "executed",
+      "effective_mode": "keyword",
+      "degraded": true,
+      "degradation_reason": "ai_disabled",
+      "evaluation_top_k": 3,
+      "recorded_top_k": 3,
+      "resolved_expected": [
+        {
+          "expected": {
+            "file_id": "file-009",
+            "version_id": "version-009-v1",
+            "relative_path": "normal/team-beta/team11-demo-09.pdf",
+            "page": 2,
+            "excerpt": "Team 11 synthetic document 09 | synthetic page 2 of 3"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "c56c5645-dac6-4f53-adb1-4b62eb6ae599",
+          "version_id": "355c4cf6-4070-4803-b907-b8cc28aead61",
+          "relative_path": "normal/team-beta/team11-demo-09.pdf",
+          "content_sha256": "21882931591383a51bcefd18c4843dca1e9a6163e086c4f959527393194fe90a",
+          "page": 2,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 3
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 3,
+          "indexed_chunk_count": 3,
+          "compatible_vector_count": 0
+        }
+      ],
+      "expected_matches": [
+        {
+          "expected": {
+            "file_id": "file-009",
+            "version_id": "version-009-v1",
+            "relative_path": "normal/team-beta/team11-demo-09.pdf",
+            "page": 2,
+            "excerpt": "Team 11 synthetic document 09 | synthetic page 2 of 3"
+          },
+          "file_id": "c56c5645-dac6-4f53-adb1-4b62eb6ae599",
+          "version_id": "355c4cf6-4070-4803-b907-b8cc28aead61",
+          "page": 2,
+          "rank": null,
+          "location_hit": false
+        }
+      ],
+      "diagnostics": [
+        {
+          "code": "index_not_ready",
+          "reason": "Some source chunks have no compatible vector for the frozen model",
+          "channel": "semantic",
+          "compatible_vector_count": 0,
+          "chunk_count": 3
+        }
+      ],
+      "location_hit": false,
+      "hit": false,
+      "matched_rank": null,
+      "duplicate_files": 0,
+      "seconds": 0.0019,
+      "response": {
+        "query": "Show the middle leaf in the ninth sample.",
+        "mode": "hybrid",
+        "effective_mode": "keyword",
+        "results": [],
+        "total": 0,
+        "degraded": true,
+        "degradation_reason": "ai_disabled",
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 0,
+        "candidate_limit": 200
+      },
+      "ranked_results": []
+    },
+    {
+      "query_id": "S02",
+      "kind": "semantic_description",
+      "language": "zh",
+      "avoids_source_keywords": true,
+      "query": "打开第十份资料的最后一页",
+      "expected": [
+        {
+          "file_id": "file-010",
+          "version_id": "version-010-v1",
+          "relative_path": "normal/team-beta/team11-demo-10.pdf",
+          "page": 3,
+          "excerpt": "Team 11 synthetic document 10 | synthetic page 3 of 3"
+        }
+      ],
+      "requested_mode": "semantic",
+      "execution_status": "executed",
+      "effective_mode": "keyword",
+      "degraded": true,
+      "degradation_reason": "ai_disabled",
+      "evaluation_top_k": 3,
+      "recorded_top_k": 3,
+      "resolved_expected": [
+        {
+          "expected": {
+            "file_id": "file-010",
+            "version_id": "version-010-v1",
+            "relative_path": "normal/team-beta/team11-demo-10.pdf",
+            "page": 3,
+            "excerpt": "Team 11 synthetic document 10 | synthetic page 3 of 3"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "ae324bf8-8f84-4e93-b135-671d2a7aba81",
+          "version_id": "d4525633-f0c0-49fa-89d5-49109a87322d",
+          "relative_path": "normal/team-beta/team11-demo-10.pdf",
+          "content_sha256": "44ca584ae43590e6c1a4ded0b3f8099a4d9261ccb0d9d92beede8a6dc39a872c",
+          "page": 3,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 3
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 3,
+          "indexed_chunk_count": 3,
+          "compatible_vector_count": 0
+        }
+      ],
+      "expected_matches": [
+        {
+          "expected": {
+            "file_id": "file-010",
+            "version_id": "version-010-v1",
+            "relative_path": "normal/team-beta/team11-demo-10.pdf",
+            "page": 3,
+            "excerpt": "Team 11 synthetic document 10 | synthetic page 3 of 3"
+          },
+          "file_id": "ae324bf8-8f84-4e93-b135-671d2a7aba81",
+          "version_id": "d4525633-f0c0-49fa-89d5-49109a87322d",
+          "page": 3,
+          "rank": null,
+          "location_hit": false
+        }
+      ],
+      "diagnostics": [
+        {
+          "code": "index_not_ready",
+          "reason": "Some source chunks have no compatible vector for the frozen model",
+          "channel": "semantic",
+          "compatible_vector_count": 0,
+          "chunk_count": 3
+        }
+      ],
+      "location_hit": false,
+      "hit": false,
+      "matched_rank": null,
+      "duplicate_files": 0,
+      "seconds": 0.0085,
+      "response": {
+        "query": "打开第十份资料的最后一页",
+        "mode": "semantic",
+        "effective_mode": "keyword",
+        "results": [],
+        "total": 0,
+        "degraded": true,
+        "degradation_reason": "ai_disabled",
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 0,
+        "candidate_limit": 200
+      },
+      "ranked_results": []
+    },
+    {
+      "query_id": "S02",
+      "kind": "semantic_description",
+      "language": "zh",
+      "avoids_source_keywords": true,
+      "query": "打开第十份资料的最后一页",
+      "expected": [
+        {
+          "file_id": "file-010",
+          "version_id": "version-010-v1",
+          "relative_path": "normal/team-beta/team11-demo-10.pdf",
+          "page": 3,
+          "excerpt": "Team 11 synthetic document 10 | synthetic page 3 of 3"
+        }
+      ],
+      "requested_mode": "hybrid",
+      "execution_status": "executed",
+      "effective_mode": "keyword",
+      "degraded": true,
+      "degradation_reason": "ai_disabled",
+      "evaluation_top_k": 3,
+      "recorded_top_k": 3,
+      "resolved_expected": [
+        {
+          "expected": {
+            "file_id": "file-010",
+            "version_id": "version-010-v1",
+            "relative_path": "normal/team-beta/team11-demo-10.pdf",
+            "page": 3,
+            "excerpt": "Team 11 synthetic document 10 | synthetic page 3 of 3"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "ae324bf8-8f84-4e93-b135-671d2a7aba81",
+          "version_id": "d4525633-f0c0-49fa-89d5-49109a87322d",
+          "relative_path": "normal/team-beta/team11-demo-10.pdf",
+          "content_sha256": "44ca584ae43590e6c1a4ded0b3f8099a4d9261ccb0d9d92beede8a6dc39a872c",
+          "page": 3,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 3
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 3,
+          "indexed_chunk_count": 3,
+          "compatible_vector_count": 0
+        }
+      ],
+      "expected_matches": [
+        {
+          "expected": {
+            "file_id": "file-010",
+            "version_id": "version-010-v1",
+            "relative_path": "normal/team-beta/team11-demo-10.pdf",
+            "page": 3,
+            "excerpt": "Team 11 synthetic document 10 | synthetic page 3 of 3"
+          },
+          "file_id": "ae324bf8-8f84-4e93-b135-671d2a7aba81",
+          "version_id": "d4525633-f0c0-49fa-89d5-49109a87322d",
+          "page": 3,
+          "rank": null,
+          "location_hit": false
+        }
+      ],
+      "diagnostics": [
+        {
+          "code": "index_not_ready",
+          "reason": "Some source chunks have no compatible vector for the frozen model",
+          "channel": "semantic",
+          "compatible_vector_count": 0,
+          "chunk_count": 3
+        }
+      ],
+      "location_hit": false,
+      "hit": false,
+      "matched_rank": null,
+      "duplicate_files": 0,
+      "seconds": 0.0029,
+      "response": {
+        "query": "打开第十份资料的最后一页",
+        "mode": "hybrid",
+        "effective_mode": "keyword",
+        "results": [],
+        "total": 0,
+        "degraded": true,
+        "degradation_reason": "ai_disabled",
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 0,
+        "candidate_limit": 200
+      },
+      "ranked_results": []
+    },
+    {
+      "query_id": "S03",
+      "kind": "semantic_description",
+      "language": "en",
+      "avoids_source_keywords": true,
+      "query": "Locate the opening leaf in the eleventh sample.",
+      "expected": [
+        {
+          "file_id": "file-011",
+          "version_id": "version-011-v1",
+          "relative_path": "normal/team-beta/team11-demo-11.pdf",
+          "page": 1,
+          "excerpt": "Team 11 synthetic document 11 | synthetic page 1 of 3"
+        }
+      ],
+      "requested_mode": "semantic",
+      "execution_status": "executed",
+      "effective_mode": "keyword",
+      "degraded": true,
+      "degradation_reason": "ai_disabled",
+      "evaluation_top_k": 3,
+      "recorded_top_k": 3,
+      "resolved_expected": [
+        {
+          "expected": {
+            "file_id": "file-011",
+            "version_id": "version-011-v1",
+            "relative_path": "normal/team-beta/team11-demo-11.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 11 | synthetic page 1 of 3"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+          "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+          "relative_path": "normal/team-beta/team11-demo-11.pdf",
+          "content_sha256": "cb95cbad289cee731140414ed8d0e5ee1b9f68b89e5044179c110152686f337f",
+          "page": 1,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 3
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 3,
+          "indexed_chunk_count": 3,
+          "compatible_vector_count": 0
+        }
+      ],
+      "expected_matches": [
+        {
+          "expected": {
+            "file_id": "file-011",
+            "version_id": "version-011-v1",
+            "relative_path": "normal/team-beta/team11-demo-11.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 11 | synthetic page 1 of 3"
+          },
+          "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+          "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+          "page": 1,
+          "rank": null,
+          "location_hit": false
+        }
+      ],
+      "diagnostics": [
+        {
+          "code": "index_not_ready",
+          "reason": "Some source chunks have no compatible vector for the frozen model",
+          "channel": "semantic",
+          "compatible_vector_count": 0,
+          "chunk_count": 3
+        }
+      ],
+      "location_hit": false,
+      "hit": false,
+      "matched_rank": null,
+      "duplicate_files": 0,
+      "seconds": 0.0017,
+      "response": {
+        "query": "Locate the opening leaf in the eleventh sample.",
+        "mode": "semantic",
+        "effective_mode": "keyword",
+        "results": [],
+        "total": 0,
+        "degraded": true,
+        "degradation_reason": "ai_disabled",
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 0,
+        "candidate_limit": 200
+      },
+      "ranked_results": []
+    },
+    {
+      "query_id": "S03",
+      "kind": "semantic_description",
+      "language": "en",
+      "avoids_source_keywords": true,
+      "query": "Locate the opening leaf in the eleventh sample.",
+      "expected": [
+        {
+          "file_id": "file-011",
+          "version_id": "version-011-v1",
+          "relative_path": "normal/team-beta/team11-demo-11.pdf",
+          "page": 1,
+          "excerpt": "Team 11 synthetic document 11 | synthetic page 1 of 3"
+        }
+      ],
+      "requested_mode": "hybrid",
+      "execution_status": "executed",
+      "effective_mode": "keyword",
+      "degraded": true,
+      "degradation_reason": "ai_disabled",
+      "evaluation_top_k": 3,
+      "recorded_top_k": 3,
+      "resolved_expected": [
+        {
+          "expected": {
+            "file_id": "file-011",
+            "version_id": "version-011-v1",
+            "relative_path": "normal/team-beta/team11-demo-11.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 11 | synthetic page 1 of 3"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+          "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+          "relative_path": "normal/team-beta/team11-demo-11.pdf",
+          "content_sha256": "cb95cbad289cee731140414ed8d0e5ee1b9f68b89e5044179c110152686f337f",
+          "page": 1,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 3
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 3,
+          "indexed_chunk_count": 3,
+          "compatible_vector_count": 0
+        }
+      ],
+      "expected_matches": [
+        {
+          "expected": {
+            "file_id": "file-011",
+            "version_id": "version-011-v1",
+            "relative_path": "normal/team-beta/team11-demo-11.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 11 | synthetic page 1 of 3"
+          },
+          "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+          "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+          "page": 1,
+          "rank": null,
+          "location_hit": false
+        }
+      ],
+      "diagnostics": [
+        {
+          "code": "index_not_ready",
+          "reason": "Some source chunks have no compatible vector for the frozen model",
+          "channel": "semantic",
+          "compatible_vector_count": 0,
+          "chunk_count": 3
+        }
+      ],
+      "location_hit": false,
+      "hit": false,
+      "matched_rank": null,
+      "duplicate_files": 0,
+      "seconds": 0.0017,
+      "response": {
+        "query": "Locate the opening leaf in the eleventh sample.",
+        "mode": "hybrid",
+        "effective_mode": "keyword",
+        "results": [],
+        "total": 0,
+        "degraded": true,
+        "degradation_reason": "ai_disabled",
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 0,
+        "candidate_limit": 200
+      },
+      "ranked_results": []
+    },
+    {
+      "query_id": "S04",
+      "kind": "semantic_description",
+      "language": "zh",
+      "avoids_source_keywords": true,
+      "query": "查看第十二份资料正中间的那一页",
+      "expected": [
+        {
+          "file_id": "file-012",
+          "version_id": "version-012-v1",
+          "relative_path": "normal/team-beta/team11-demo-12.pdf",
+          "page": 2,
+          "excerpt": "Team 11 synthetic document 12 | synthetic page 2 of 3"
+        }
+      ],
+      "requested_mode": "semantic",
+      "execution_status": "executed",
+      "effective_mode": "keyword",
+      "degraded": true,
+      "degradation_reason": "ai_disabled",
+      "evaluation_top_k": 3,
+      "recorded_top_k": 3,
+      "resolved_expected": [
+        {
+          "expected": {
+            "file_id": "file-012",
+            "version_id": "version-012-v1",
+            "relative_path": "normal/team-beta/team11-demo-12.pdf",
+            "page": 2,
+            "excerpt": "Team 11 synthetic document 12 | synthetic page 2 of 3"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "c004ce0f-a990-4e9c-abbc-e47f17141901",
+          "version_id": "c4c26db6-4580-4cb9-833f-ea4dc8c5e6c5",
+          "relative_path": "normal/team-beta/team11-demo-12.pdf",
+          "content_sha256": "692fb24ab37adbea8bae2b5849353458e03490af33bad00aac05834af46edb84",
+          "page": 2,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 3
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 3,
+          "indexed_chunk_count": 3,
+          "compatible_vector_count": 0
+        }
+      ],
+      "expected_matches": [
+        {
+          "expected": {
+            "file_id": "file-012",
+            "version_id": "version-012-v1",
+            "relative_path": "normal/team-beta/team11-demo-12.pdf",
+            "page": 2,
+            "excerpt": "Team 11 synthetic document 12 | synthetic page 2 of 3"
+          },
+          "file_id": "c004ce0f-a990-4e9c-abbc-e47f17141901",
+          "version_id": "c4c26db6-4580-4cb9-833f-ea4dc8c5e6c5",
+          "page": 2,
+          "rank": null,
+          "location_hit": false
+        }
+      ],
+      "diagnostics": [
+        {
+          "code": "index_not_ready",
+          "reason": "Some source chunks have no compatible vector for the frozen model",
+          "channel": "semantic",
+          "compatible_vector_count": 0,
+          "chunk_count": 3
+        }
+      ],
+      "location_hit": false,
+      "hit": false,
+      "matched_rank": null,
+      "duplicate_files": 0,
+      "seconds": 0.0098,
+      "response": {
+        "query": "查看第十二份资料正中间的那一页",
+        "mode": "semantic",
+        "effective_mode": "keyword",
+        "results": [],
+        "total": 0,
+        "degraded": true,
+        "degradation_reason": "ai_disabled",
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 0,
+        "candidate_limit": 200
+      },
+      "ranked_results": []
+    },
+    {
+      "query_id": "S04",
+      "kind": "semantic_description",
+      "language": "zh",
+      "avoids_source_keywords": true,
+      "query": "查看第十二份资料正中间的那一页",
+      "expected": [
+        {
+          "file_id": "file-012",
+          "version_id": "version-012-v1",
+          "relative_path": "normal/team-beta/team11-demo-12.pdf",
+          "page": 2,
+          "excerpt": "Team 11 synthetic document 12 | synthetic page 2 of 3"
+        }
+      ],
+      "requested_mode": "hybrid",
+      "execution_status": "executed",
+      "effective_mode": "keyword",
+      "degraded": true,
+      "degradation_reason": "ai_disabled",
+      "evaluation_top_k": 3,
+      "recorded_top_k": 3,
+      "resolved_expected": [
+        {
+          "expected": {
+            "file_id": "file-012",
+            "version_id": "version-012-v1",
+            "relative_path": "normal/team-beta/team11-demo-12.pdf",
+            "page": 2,
+            "excerpt": "Team 11 synthetic document 12 | synthetic page 2 of 3"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "c004ce0f-a990-4e9c-abbc-e47f17141901",
+          "version_id": "c4c26db6-4580-4cb9-833f-ea4dc8c5e6c5",
+          "relative_path": "normal/team-beta/team11-demo-12.pdf",
+          "content_sha256": "692fb24ab37adbea8bae2b5849353458e03490af33bad00aac05834af46edb84",
+          "page": 2,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 3
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 3,
+          "indexed_chunk_count": 3,
+          "compatible_vector_count": 0
+        }
+      ],
+      "expected_matches": [
+        {
+          "expected": {
+            "file_id": "file-012",
+            "version_id": "version-012-v1",
+            "relative_path": "normal/team-beta/team11-demo-12.pdf",
+            "page": 2,
+            "excerpt": "Team 11 synthetic document 12 | synthetic page 2 of 3"
+          },
+          "file_id": "c004ce0f-a990-4e9c-abbc-e47f17141901",
+          "version_id": "c4c26db6-4580-4cb9-833f-ea4dc8c5e6c5",
+          "page": 2,
+          "rank": null,
+          "location_hit": false
+        }
+      ],
+      "diagnostics": [
+        {
+          "code": "index_not_ready",
+          "reason": "Some source chunks have no compatible vector for the frozen model",
+          "channel": "semantic",
+          "compatible_vector_count": 0,
+          "chunk_count": 3
+        }
+      ],
+      "location_hit": false,
+      "hit": false,
+      "matched_rank": null,
+      "duplicate_files": 0,
+      "seconds": 0.0029,
+      "response": {
+        "query": "查看第十二份资料正中间的那一页",
+        "mode": "hybrid",
+        "effective_mode": "keyword",
+        "results": [],
+        "total": 0,
+        "degraded": true,
+        "degradation_reason": "ai_disabled",
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 0,
+        "candidate_limit": 200
+      },
+      "ranked_results": []
+    },
+    {
+      "query_id": "S05",
+      "kind": "semantic_description",
+      "language": "zh",
+      "avoids_source_keywords": true,
+      "query": "找出第六份只有一页的资料",
+      "expected": [
+        {
+          "file_id": "file-006",
+          "version_id": "version-006-v1",
+          "relative_path": "normal/team-alpha/team11-demo-06.pdf",
+          "page": 1,
+          "excerpt": "Team 11 synthetic document 06 | synthetic page 1 of 1"
+        }
+      ],
+      "requested_mode": "semantic",
+      "execution_status": "executed",
+      "effective_mode": "keyword",
+      "degraded": true,
+      "degradation_reason": "ai_disabled",
+      "evaluation_top_k": 3,
+      "recorded_top_k": 3,
+      "resolved_expected": [
+        {
+          "expected": {
+            "file_id": "file-006",
+            "version_id": "version-006-v1",
+            "relative_path": "normal/team-alpha/team11-demo-06.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 06 | synthetic page 1 of 1"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "53e5c936-584a-436d-a9c2-1cd7f665ca43",
+          "version_id": "5ef380c2-117f-4dbc-9b11-03fa35b19380",
+          "relative_path": "normal/team-alpha/team11-demo-06.pdf",
+          "content_sha256": "7baa07db66c24c805cdc212fa68a1674a46209ad24766f19be6473d3545a4858",
+          "page": 1,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 1
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 1,
+          "indexed_chunk_count": 1,
+          "compatible_vector_count": 0
+        }
+      ],
+      "expected_matches": [
+        {
+          "expected": {
+            "file_id": "file-006",
+            "version_id": "version-006-v1",
+            "relative_path": "normal/team-alpha/team11-demo-06.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 06 | synthetic page 1 of 1"
+          },
+          "file_id": "53e5c936-584a-436d-a9c2-1cd7f665ca43",
+          "version_id": "5ef380c2-117f-4dbc-9b11-03fa35b19380",
+          "page": 1,
+          "rank": null,
+          "location_hit": false
+        }
+      ],
+      "diagnostics": [
+        {
+          "code": "index_not_ready",
+          "reason": "Some source chunks have no compatible vector for the frozen model",
+          "channel": "semantic",
+          "compatible_vector_count": 0,
+          "chunk_count": 1
+        }
+      ],
+      "location_hit": false,
+      "hit": false,
+      "matched_rank": null,
+      "duplicate_files": 0,
+      "seconds": 0.0023,
+      "response": {
+        "query": "找出第六份只有一页的资料",
+        "mode": "semantic",
+        "effective_mode": "keyword",
+        "results": [],
+        "total": 0,
+        "degraded": true,
+        "degradation_reason": "ai_disabled",
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 0,
+        "candidate_limit": 200
+      },
+      "ranked_results": []
+    },
+    {
+      "query_id": "S05",
+      "kind": "semantic_description",
+      "language": "zh",
+      "avoids_source_keywords": true,
+      "query": "找出第六份只有一页的资料",
+      "expected": [
+        {
+          "file_id": "file-006",
+          "version_id": "version-006-v1",
+          "relative_path": "normal/team-alpha/team11-demo-06.pdf",
+          "page": 1,
+          "excerpt": "Team 11 synthetic document 06 | synthetic page 1 of 1"
+        }
+      ],
+      "requested_mode": "hybrid",
+      "execution_status": "executed",
+      "effective_mode": "keyword",
+      "degraded": true,
+      "degradation_reason": "ai_disabled",
+      "evaluation_top_k": 3,
+      "recorded_top_k": 3,
+      "resolved_expected": [
+        {
+          "expected": {
+            "file_id": "file-006",
+            "version_id": "version-006-v1",
+            "relative_path": "normal/team-alpha/team11-demo-06.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 06 | synthetic page 1 of 1"
+          },
+          "mapping_method": "root_relative_path_sha256",
+          "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+          "file_id": "53e5c936-584a-436d-a9c2-1cd7f665ca43",
+          "version_id": "5ef380c2-117f-4dbc-9b11-03fa35b19380",
+          "relative_path": "normal/team-alpha/team11-demo-06.pdf",
+          "content_sha256": "7baa07db66c24c805cdc212fa68a1674a46209ad24766f19be6473d3545a4858",
+          "page": 1,
+          "ready": true,
+          "keyword_ready": true,
+          "semantic_ready": false,
+          "diagnostics": [],
+          "semantic_diagnostics": [
+            {
+              "code": "index_not_ready",
+              "reason": "Some source chunks have no compatible vector for the frozen model",
+              "channel": "semantic",
+              "compatible_vector_count": 0,
+              "chunk_count": 1
+            }
+          ],
+          "root_scope": {
+            "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+            "mount_id": "c-eval-3becb1d821f8",
+            "relative_path": "."
+          },
+          "parser_revision": "parsing-v1",
+          "chunk_count": 1,
+          "indexed_chunk_count": 1,
+          "compatible_vector_count": 0
+        }
+      ],
+      "expected_matches": [
+        {
+          "expected": {
+            "file_id": "file-006",
+            "version_id": "version-006-v1",
+            "relative_path": "normal/team-alpha/team11-demo-06.pdf",
+            "page": 1,
+            "excerpt": "Team 11 synthetic document 06 | synthetic page 1 of 1"
+          },
+          "file_id": "53e5c936-584a-436d-a9c2-1cd7f665ca43",
+          "version_id": "5ef380c2-117f-4dbc-9b11-03fa35b19380",
+          "page": 1,
+          "rank": null,
+          "location_hit": false
+        }
+      ],
+      "diagnostics": [
+        {
+          "code": "index_not_ready",
+          "reason": "Some source chunks have no compatible vector for the frozen model",
+          "channel": "semantic",
+          "compatible_vector_count": 0,
+          "chunk_count": 1
+        }
+      ],
+      "location_hit": false,
+      "hit": false,
+      "matched_rank": null,
+      "duplicate_files": 0,
+      "seconds": 0.0021,
+      "response": {
+        "query": "找出第六份只有一页的资料",
+        "mode": "hybrid",
+        "effective_mode": "keyword",
+        "results": [],
+        "total": 0,
+        "degraded": true,
+        "degradation_reason": "ai_disabled",
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 0,
+        "candidate_limit": 200
+      },
+      "ranked_results": []
+    }
+  ],
+  "on_disk_evidence": [
+    {
+      "chunk_id": "37391c41-bf06-4b88-8b8f-db4331037f67",
+      "version_id": "72bb70d4-2fdf-4758-8a6c-9b25a8fbebc1",
+      "file_id": "7d67d3f0-74bf-4e46-817a-4ef8b5d9e0a3",
+      "relative_path": "normal/team-alpha/team11-demo-01.pdf",
+      "page": 1,
+      "readable": true,
+      "content_sha256": "090c3446987187caa11cdb8608a35a56dfcd449066e2123f0672752ebb3bd3d6"
+    },
+    {
+      "chunk_id": "1d0ac532-ba85-4092-963f-19681dc8da26",
+      "version_id": "a6a15a98-5747-4839-9df2-9b669a37e9f9",
+      "file_id": "0713d6ad-14fa-4ce6-9f52-f715e04f3298",
+      "relative_path": "normal/team-alpha/team11-demo-05.pdf",
+      "page": 1,
+      "readable": true,
+      "content_sha256": "8b7ec4dd5aedab420d8a35c03f8f445971721574ac9e7291014ff1799e6f9db7"
+    },
+    {
+      "chunk_id": "583cf078-71ea-46e2-88c0-bfbeee977e90",
+      "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+      "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+      "relative_path": "normal/team-beta/team11-demo-11.pdf",
+      "page": 1,
+      "readable": true,
+      "content_sha256": "cb95cbad289cee731140414ed8d0e5ee1b9f68b89e5044179c110152686f337f"
+    },
+    {
+      "chunk_id": "e60fb150-2f71-42c0-aae9-dae0f0ef4474",
+      "version_id": "42a9a87f-64ae-4bfb-89fa-20f6c0a0ad40",
+      "file_id": "dee9eb27-e52d-4d3c-9017-ec7d7153e3ef",
+      "relative_path": "normal/team-alpha/team11-demo-02.pdf",
+      "page": 1,
+      "readable": true,
+      "content_sha256": "96a48022ff2bafc85543718c3f55f577fed40a173f4d63e8d066d8a5fea8b29f"
+    },
+    {
+      "chunk_id": "9290c1ff-4ef5-4065-b8d4-40ef32ef5bd6",
+      "version_id": "9efa3d64-29ca-4fca-9a9a-23192bdc2761",
+      "file_id": "d828fb3c-a4a8-482b-bcba-97e0b0f77529",
+      "relative_path": "normal/team-alpha/team11-demo-03.pdf",
+      "page": 1,
+      "readable": true,
+      "content_sha256": "b63b33819f4ce501d0f279c6df5f66141f3659f76eaaa96369b23ddab234bdf0"
+    },
+    {
+      "chunk_id": "81394dae-bfe0-4eba-b54e-f728a7bb3603",
+      "version_id": "4c059b77-6eff-4112-91e3-a6d753bdf47d",
+      "file_id": "c36bce10-05df-400c-a1c0-93d4f689c359",
+      "relative_path": "normal/team-beta/team11-demo-07.pdf",
+      "page": 1,
+      "readable": true,
+      "content_sha256": "fbfecd36cc0a14ebb497f936bc1f1fd226f908339d99f77f0957c9f2c5c44b63"
+    },
+    {
+      "chunk_id": "a9bdae7f-7b2a-40e8-9d3e-987fb2fae6ff",
+      "version_id": "0c4257fd-1f73-4652-a21a-8c251e2f0e43",
+      "file_id": "eedce3a0-f8aa-4a35-a99c-0a665f89a165",
+      "relative_path": "normal/team-beta/team11-demo-08.pdf",
+      "page": 1,
+      "readable": true,
+      "content_sha256": "a1ceacfb5b35a4017283afd611a37b1580bbacc921bb9e0e0b13a556b6936c48"
+    }
+  ],
+  "pipeline": {
+    "execution": "synchronous_existing_scan_parse_index_handlers",
+    "worker_dispatcher": "not_exercised_by_this_runner",
+    "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+    "mount_id": "c-eval-3becb1d821f8",
+    "source_mounts": {
+      "c-eval-3becb1d821f8": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\work\\team-pdf-corpus"
+    },
+    "authorized_relative_path": ".",
+    "scan": {
+      "outcome": "scanned",
+      "root_id": "74d93876-de71-4899-9763-16bf0dcc27e2",
+      "files_seen": 16,
+      "files_created": 16,
+      "versions_created": 16,
+      "jobs_dispatched": 16,
+      "pointers_restored": 0,
+      "files_missing": 0
+    },
+    "files": [
+      {
+        "file_id": "b125c310-400a-487a-94de-617ab5116bb9",
+        "version_id": "3eaf85dc-3478-4d48-99a2-ee1a2b0c1069",
+        "relative_path": "abnormal/corrupt.pdf",
+        "content_sha256": "772ad3ea1f583ad7d8b54af6ef33f6280f2a23752cbd329f43c6e84fd1296e17",
+        "status": "unsupported",
+        "error_code": "unsupported_format",
+        "parser_revision": "parsing-v1",
+        "parsed_this_run": true,
+        "index": null
+      },
+      {
+        "file_id": "d31bb4ab-217d-4761-9b64-bc8bb26db91e",
+        "version_id": "1e31ae83-2b12-4a4d-9d88-36d1265993a2",
+        "relative_path": "abnormal/empty.pdf",
+        "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "status": "unsupported",
+        "error_code": "unsupported_format",
+        "parser_revision": "parsing-v1",
+        "parsed_this_run": true,
+        "index": null
+      },
+      {
+        "file_id": "c9f6d4cb-acce-4251-9d91-3ffc41466a60",
+        "version_id": "f99f4dc8-3b93-4b33-be33-b21f3f4bad09",
+        "relative_path": "abnormal/truncated.pdf",
+        "content_sha256": "6f32667a14f03c7f6eafc0e3328df8969bbdb913534e22675f85d858c3407c87",
+        "status": "unsupported",
+        "error_code": "corrupt",
+        "parser_revision": "parsing-v1",
+        "parsed_this_run": true,
+        "index": null
+      },
+      {
+        "file_id": "7d67d3f0-74bf-4e46-817a-4ef8b5d9e0a3",
+        "version_id": "72bb70d4-2fdf-4758-8a6c-9b25a8fbebc1",
+        "relative_path": "normal/team-alpha/team11-demo-01.pdf",
+        "content_sha256": "090c3446987187caa11cdb8608a35a56dfcd449066e2123f0672752ebb3bd3d6",
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "parsed_this_run": true,
+        "index": {
+          "version_id": "72bb70d4-2fdf-4758-8a6c-9b25a8fbebc1",
+          "chunk_count": 1,
+          "embedded_count": 0,
+          "embedding_error": "ai_disabled"
+        }
+      },
+      {
+        "file_id": "dee9eb27-e52d-4d3c-9017-ec7d7153e3ef",
+        "version_id": "42a9a87f-64ae-4bfb-89fa-20f6c0a0ad40",
+        "relative_path": "normal/team-alpha/team11-demo-02.pdf",
+        "content_sha256": "96a48022ff2bafc85543718c3f55f577fed40a173f4d63e8d066d8a5fea8b29f",
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "parsed_this_run": true,
+        "index": {
+          "version_id": "42a9a87f-64ae-4bfb-89fa-20f6c0a0ad40",
+          "chunk_count": 1,
+          "embedded_count": 0,
+          "embedding_error": "ai_disabled"
+        }
+      },
+      {
+        "file_id": "d828fb3c-a4a8-482b-bcba-97e0b0f77529",
+        "version_id": "9efa3d64-29ca-4fca-9a9a-23192bdc2761",
+        "relative_path": "normal/team-alpha/team11-demo-03.pdf",
+        "content_sha256": "b63b33819f4ce501d0f279c6df5f66141f3659f76eaaa96369b23ddab234bdf0",
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "parsed_this_run": true,
+        "index": {
+          "version_id": "9efa3d64-29ca-4fca-9a9a-23192bdc2761",
+          "chunk_count": 1,
+          "embedded_count": 0,
+          "embedding_error": "ai_disabled"
+        }
+      },
+      {
+        "file_id": "49e0f939-4068-47d0-b453-a9046020ff72",
+        "version_id": "c54c68ca-bbaa-4510-84de-b95b853cd554",
+        "relative_path": "normal/team-alpha/team11-demo-04.pdf",
+        "content_sha256": "5c448081313b1d701aa37f41b650b531f6aaea18f4de558656a51616f17926b9",
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "parsed_this_run": true,
+        "index": {
+          "version_id": "c54c68ca-bbaa-4510-84de-b95b853cd554",
+          "chunk_count": 1,
+          "embedded_count": 0,
+          "embedding_error": "ai_disabled"
+        }
+      },
+      {
+        "file_id": "0713d6ad-14fa-4ce6-9f52-f715e04f3298",
+        "version_id": "a6a15a98-5747-4839-9df2-9b669a37e9f9",
+        "relative_path": "normal/team-alpha/team11-demo-05.pdf",
+        "content_sha256": "8b7ec4dd5aedab420d8a35c03f8f445971721574ac9e7291014ff1799e6f9db7",
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "parsed_this_run": true,
+        "index": {
+          "version_id": "a6a15a98-5747-4839-9df2-9b669a37e9f9",
+          "chunk_count": 1,
+          "embedded_count": 0,
+          "embedding_error": "ai_disabled"
+        }
+      },
+      {
+        "file_id": "53e5c936-584a-436d-a9c2-1cd7f665ca43",
+        "version_id": "5ef380c2-117f-4dbc-9b11-03fa35b19380",
+        "relative_path": "normal/team-alpha/team11-demo-06.pdf",
+        "content_sha256": "7baa07db66c24c805cdc212fa68a1674a46209ad24766f19be6473d3545a4858",
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "parsed_this_run": true,
+        "index": {
+          "version_id": "5ef380c2-117f-4dbc-9b11-03fa35b19380",
+          "chunk_count": 1,
+          "embedded_count": 0,
+          "embedding_error": "ai_disabled"
+        }
+      },
+      {
+        "file_id": "c36bce10-05df-400c-a1c0-93d4f689c359",
+        "version_id": "4c059b77-6eff-4112-91e3-a6d753bdf47d",
+        "relative_path": "normal/team-beta/team11-demo-07.pdf",
+        "content_sha256": "fbfecd36cc0a14ebb497f936bc1f1fd226f908339d99f77f0957c9f2c5c44b63",
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "parsed_this_run": true,
+        "index": {
+          "version_id": "4c059b77-6eff-4112-91e3-a6d753bdf47d",
+          "chunk_count": 1,
+          "embedded_count": 0,
+          "embedding_error": "ai_disabled"
+        }
+      },
+      {
+        "file_id": "eedce3a0-f8aa-4a35-a99c-0a665f89a165",
+        "version_id": "0c4257fd-1f73-4652-a21a-8c251e2f0e43",
+        "relative_path": "normal/team-beta/team11-demo-08.pdf",
+        "content_sha256": "a1ceacfb5b35a4017283afd611a37b1580bbacc921bb9e0e0b13a556b6936c48",
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "parsed_this_run": true,
+        "index": {
+          "version_id": "0c4257fd-1f73-4652-a21a-8c251e2f0e43",
+          "chunk_count": 1,
+          "embedded_count": 0,
+          "embedding_error": "ai_disabled"
+        }
+      },
+      {
+        "file_id": "c56c5645-dac6-4f53-adb1-4b62eb6ae599",
+        "version_id": "355c4cf6-4070-4803-b907-b8cc28aead61",
+        "relative_path": "normal/team-beta/team11-demo-09.pdf",
+        "content_sha256": "21882931591383a51bcefd18c4843dca1e9a6163e086c4f959527393194fe90a",
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "parsed_this_run": true,
+        "index": {
+          "version_id": "355c4cf6-4070-4803-b907-b8cc28aead61",
+          "chunk_count": 3,
+          "embedded_count": 0,
+          "embedding_error": "ai_disabled"
+        }
+      },
+      {
+        "file_id": "ae324bf8-8f84-4e93-b135-671d2a7aba81",
+        "version_id": "d4525633-f0c0-49fa-89d5-49109a87322d",
+        "relative_path": "normal/team-beta/team11-demo-10.pdf",
+        "content_sha256": "44ca584ae43590e6c1a4ded0b3f8099a4d9261ccb0d9d92beede8a6dc39a872c",
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "parsed_this_run": true,
+        "index": {
+          "version_id": "d4525633-f0c0-49fa-89d5-49109a87322d",
+          "chunk_count": 3,
+          "embedded_count": 0,
+          "embedding_error": "ai_disabled"
+        }
+      },
+      {
+        "file_id": "3e724342-2545-41e8-aa5c-5fbc4738804c",
+        "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+        "relative_path": "normal/team-beta/team11-demo-11.pdf",
+        "content_sha256": "cb95cbad289cee731140414ed8d0e5ee1b9f68b89e5044179c110152686f337f",
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "parsed_this_run": true,
+        "index": {
+          "version_id": "4fb90764-755d-4176-aa21-3947c0cedfec",
+          "chunk_count": 3,
+          "embedded_count": 0,
+          "embedding_error": "ai_disabled"
+        }
+      },
+      {
+        "file_id": "c004ce0f-a990-4e9c-abbc-e47f17141901",
+        "version_id": "c4c26db6-4580-4cb9-833f-ea4dc8c5e6c5",
+        "relative_path": "normal/team-beta/team11-demo-12.pdf",
+        "content_sha256": "692fb24ab37adbea8bae2b5849353458e03490af33bad00aac05834af46edb84",
+        "status": "basic_ready",
+        "error_code": null,
+        "parser_revision": "parsing-v1",
+        "parsed_this_run": true,
+        "index": {
+          "version_id": "c4c26db6-4580-4cb9-833f-ea4dc8c5e6c5",
+          "chunk_count": 3,
+          "embedded_count": 0,
+          "embedding_error": "ai_disabled"
+        }
+      },
+      {
+        "file_id": "bb9d8f84-f283-46d1-9850-532a623ef1dd",
+        "version_id": "9c46c9c9-c739-406d-980d-7e52ee027e80",
+        "relative_path": "unsupported/team11-unsupported-notes.docx",
+        "content_sha256": "7a21a8af532494ba07fb04dfc18b710e0a7af1e6917aa726cd204ae9705531fd",
+        "status": "unsupported",
+        "error_code": "unsupported_format",
+        "parser_revision": "parsing-v1",
+        "parsed_this_run": true,
+        "index": null
+      }
+    ],
+    "parsed_files_this_run": 16,
+    "status_counts": {
+      "unsupported": 4,
+      "basic_ready": 12
+    },
+    "frozen_classification_differences": [
+      {
+        "relative_path": "abnormal/corrupt.pdf",
+        "expected_status": "failed",
+        "actual_status": "unsupported",
+        "expected_error_code": "CORRUPT_PDF",
+        "actual_error_code": "unsupported_format",
+        "impact": "corpus_classification_handoff; retrieval_denominators_unchanged"
+      },
+      {
+        "relative_path": "abnormal/empty.pdf",
+        "expected_status": "failed",
+        "actual_status": "unsupported",
+        "expected_error_code": "EMPTY_FILE",
+        "actual_error_code": "unsupported_format",
+        "impact": "corpus_classification_handoff; retrieval_denominators_unchanged"
+      },
+      {
+        "relative_path": "abnormal/truncated.pdf",
+        "expected_status": "failed",
+        "actual_status": "unsupported",
+        "expected_error_code": "TRUNCATED_PDF",
+        "actual_error_code": "corrupt",
+        "impact": "corpus_classification_handoff; retrieval_denominators_unchanged"
+      },
+      {
+        "relative_path": "unsupported/team11-unsupported-notes.docx",
+        "expected_status": "unsupported",
+        "actual_status": "unsupported",
+        "expected_error_code": "UNSUPPORTED_FORMAT",
+        "actual_error_code": "unsupported_format",
+        "impact": "corpus_classification_handoff; retrieval_denominators_unchanged"
+      }
+    ],
+    "embedding_errors": {
+      "ai_disabled": 12
+    },
+    "embedded_chunks_this_run": 0,
+    "search_index_chunks": 20,
+    "parser_revision": "parsing-v1"
+  },
+  "corpus_files": [
+    {
+      "relative_path": "normal/team-alpha/team11-demo-01.pdf",
+      "sha256": "090c3446987187caa11cdb8608a35a56dfcd449066e2123f0672752ebb3bd3d6",
+      "byte_size": 664,
+      "matches_frozen_manifest": true
+    },
+    {
+      "relative_path": "normal/team-alpha/team11-demo-02.pdf",
+      "sha256": "96a48022ff2bafc85543718c3f55f577fed40a173f4d63e8d066d8a5fea8b29f",
+      "byte_size": 664,
+      "matches_frozen_manifest": true
+    },
+    {
+      "relative_path": "normal/team-alpha/team11-demo-03.pdf",
+      "sha256": "b63b33819f4ce501d0f279c6df5f66141f3659f76eaaa96369b23ddab234bdf0",
+      "byte_size": 664,
+      "matches_frozen_manifest": true
+    },
+    {
+      "relative_path": "normal/team-alpha/team11-demo-04.pdf",
+      "sha256": "5c448081313b1d701aa37f41b650b531f6aaea18f4de558656a51616f17926b9",
+      "byte_size": 664,
+      "matches_frozen_manifest": true
+    },
+    {
+      "relative_path": "normal/team-alpha/team11-demo-05.pdf",
+      "sha256": "8b7ec4dd5aedab420d8a35c03f8f445971721574ac9e7291014ff1799e6f9db7",
+      "byte_size": 664,
+      "matches_frozen_manifest": true
+    },
+    {
+      "relative_path": "normal/team-alpha/team11-demo-06.pdf",
+      "sha256": "7baa07db66c24c805cdc212fa68a1674a46209ad24766f19be6473d3545a4858",
+      "byte_size": 664,
+      "matches_frozen_manifest": true
+    },
+    {
+      "relative_path": "normal/team-beta/team11-demo-07.pdf",
+      "sha256": "fbfecd36cc0a14ebb497f936bc1f1fd226f908339d99f77f0957c9f2c5c44b63",
+      "byte_size": 664,
+      "matches_frozen_manifest": true
+    },
+    {
+      "relative_path": "normal/team-beta/team11-demo-08.pdf",
+      "sha256": "a1ceacfb5b35a4017283afd611a37b1580bbacc921bb9e0e0b13a556b6936c48",
+      "byte_size": 664,
+      "matches_frozen_manifest": true
+    },
+    {
+      "relative_path": "normal/team-beta/team11-demo-09.pdf",
+      "sha256": "21882931591383a51bcefd18c4843dca1e9a6163e086c4f959527393194fe90a",
+      "byte_size": 1351,
+      "matches_frozen_manifest": true
+    },
+    {
+      "relative_path": "normal/team-beta/team11-demo-10.pdf",
+      "sha256": "44ca584ae43590e6c1a4ded0b3f8099a4d9261ccb0d9d92beede8a6dc39a872c",
+      "byte_size": 1351,
+      "matches_frozen_manifest": true
+    },
+    {
+      "relative_path": "normal/team-beta/team11-demo-11.pdf",
+      "sha256": "cb95cbad289cee731140414ed8d0e5ee1b9f68b89e5044179c110152686f337f",
+      "byte_size": 1351,
+      "matches_frozen_manifest": true
+    },
+    {
+      "relative_path": "normal/team-beta/team11-demo-12.pdf",
+      "sha256": "692fb24ab37adbea8bae2b5849353458e03490af33bad00aac05834af46edb84",
+      "byte_size": 1351,
+      "matches_frozen_manifest": true
+    },
+    {
+      "relative_path": "abnormal/empty.pdf",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byte_size": 0,
+      "matches_frozen_manifest": true
+    },
+    {
+      "relative_path": "abnormal/truncated.pdf",
+      "sha256": "6f32667a14f03c7f6eafc0e3328df8969bbdb913534e22675f85d858c3407c87",
+      "byte_size": 38,
+      "matches_frozen_manifest": true
+    },
+    {
+      "relative_path": "abnormal/corrupt.pdf",
+      "sha256": "772ad3ea1f583ad7d8b54af6ef33f6280f2a23752cbd329f43c6e84fd1296e17",
+      "byte_size": 19,
+      "matches_frozen_manifest": true
+    },
+    {
+      "relative_path": "unsupported/team11-unsupported-notes.docx",
+      "sha256": "7a21a8af532494ba07fb04dfc18b710e0a7af1e6917aa726cd204ae9705531fd",
+      "byte_size": 49,
+      "matches_frozen_manifest": true
+    }
+  ],
+  "source_bytes_unchanged": true,
+  "corpus_directory": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\work\\team-pdf-corpus",
+  "status": "evaluated"
+}

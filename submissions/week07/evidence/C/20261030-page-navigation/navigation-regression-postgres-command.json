@@ -1,0 +1,54 @@
+{
+  "started_at": "2026-10-30T02:26:01.305814+00:00",
+  "finished_at": "2026-10-30T02:26:08.348315+00:00",
+  "git": {
+    "sha": "e364f5b1954847e9f78a1b10e32bf47dcb2ba2be",
+    "branch": "codex/c-team-pdf-evaluation",
+    "working_tree_status": "?? submissions/week07/evidence/C/20261030-page-navigation/navigation-regression-postgres.json\n?? submissions/week07/evidence/C/20261030-page-navigation/navigation-regression-sqlite-command.json\n?? submissions/week07/evidence/C/20261030-page-navigation/navigation-regression-sqlite.json",
+    "tracked_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_sha256": {
+      "services/search/__init__.py": "bda5e68032cd868115b66539032f460543adb90b1f8c73e97abb98eebba7166e",
+      "services/search/embeddings.py": "ccdc4fad57a94931e80aaaf70793be3cd123459a068871ea09eaca282e959723",
+      "services/search/evaluation.py": "1bcd7a24c94acd066f54b2b62d928fa1d01c527e373a1abf5e77563b44b79b1d",
+      "services/search/evaluation_sources.py": "9f374153de4c3dce81d40839ed743f7e3a5db2dc524ea3d40c015c83ba35017d",
+      "services/search/indexing.py": "984d281a9f9a636caf325defbb99f9f9de1f14a07436b6ef945b373ec01fcd9d",
+      "services/search/navigation_runtime.py": "17257ffb8e61d7e8f10f5fb0749c160da06d7e9e09eec4e9165754fe298c9c3a",
+      "services/search/page_metadata.py": "7b9ffbb00caaa9965bedd703c1fef1129e31b26c4516da6cbbbe28899876e2e0",
+      "services/search/page_navigation.py": "272e860fd75500dc4fc07ef602ef650f630f1d4d4192a75b2e69bbb042e2d3ae",
+      "services/search/retrieval.py": "a2388f9f9c3e19f2308bd0be70beeac21eac04b85701e608573330c9441efe79",
+      "services/search/schemas.py": "0d6deaee34c9d21783cca8213284e4dba3a489ecd65d64e10f71a3a2317138c5",
+      "services/search/text.py": "8a7ccb3876fdbc87301a86af4fb0abe8d883e3dd36295007f4a69ccc8e7878ce",
+      "services/search/token_store.py": "6f70ed87f0f710476242fbd149cab1c4fed008a21026d4c5d807cd8e03d753dd",
+      "scripts/evaluate_team_pdf.py": "6889b0d1fbd332a61320913d146474512b867112573a3d342e08371830ac9d67",
+      "scripts/search_tools.py": "1ed8dad03cf16279fd76e00c3014bd1ac32da15c3070bff5e073f43d3ce10c31",
+      "scripts/verify_team_search_runtime.py": "8f6b9f0f178dfcd8340dcf76993254c05f7b16432079ac88de2a75e07f1f6026",
+      "services/ai/app/main.py": "2355e2c049130de87b328c922d87aabef5647a8bd79e66494cd50ef6d76a795c",
+      "services/common/config.py": "d0893829764880cbfe2980fffc263ddf7065c98ab8f2246b71b915ea1042b8b2",
+      "pyproject.toml": "4e7f01c9de0e55e93cf7853037f5278b566430e999f2ed0f160dfd0376e35e55",
+      "compose.yaml": "f76d589d5b29248b5c63bbe181443f748672b1a44892b76973196f79e71645ef",
+      ".env.example": "4106e67969c9f929cc41e8c867484692e6bfe3f8ee86a501757e9b81265ef961"
+    }
+  },
+  "command": [
+    "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\.venv-pplx\\Scripts\\python.exe",
+    "-m",
+    "scripts.verify_page_navigation",
+    "--database-url",
+    "postgresql+psycopg://postgres:***@127.0.0.1:55432/team11_c_navigation_20261030",
+    "--work-dir",
+    "work/page-navigation-final-postgres",
+    "--output",
+    "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\submissions\\week07\\evidence\\C\\20261030-page-navigation\\navigation-regression-postgres.json"
+  ],
+  "environment": {
+    "HF_HUB_OFFLINE": "1",
+    "TRANSFORMERS_OFFLINE": "1",
+    "USE_TF": "0"
+  },
+  "returncode": 0,
+  "expected_returncodes": [
+    0
+  ],
+  "stdout": "warning: The `fitz` API is deprecated and will be removed in future. Use `import pymupdf` instead.\n{\n  \"status\": \"complete\",\n  \"passed\": true,\n  \"summary\": {\n    \"positive\": {\n      \"passed\": 24,\n      \"total\": 24\n    },\n    \"negative\": {\n      \"passed\": 12,\n      \"total\": 12\n    },\n    \"unique_cases\": 36,\n    \"enhanced_executions\": 72,\n    \"baseline_executions\": 72,\n    \"passed_executions\": 72,\n    \"evidence_failures\": 0,\n    \"behavior_failures\": 0,\n    \"diagnostic_failures\": 0\n  },\n  \"failure\": null,\n  \"output\": \"D:\\\\HKUST AIE\\\\MAIE6000C\\\\MAIE6000C-starter-TEAM_11\\\\tmp\\\\c-team-pdf-evaluation\\\\submissions\\\\week07\\\\evidence\\\\C\\\\20261030-page-navigation\\\\navigation-regression-postgres.json\"\n}\n",
+  "stderr": "INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.\nINFO  [alembic.runtime.migration] Context impl PostgresqlImpl.\nINFO  [alembic.runtime.migration] Will assume transactional DDL.\nINFO  [alembic.runtime.migration] Will assume transactional DDL.\nINFO  [alembic.runtime.migration] Running upgrade  -> 20260713_0001, create initial tables\nINFO  [alembic.runtime.migration] Running upgrade  -> 20260713_0001, create initial tables\nINFO  [alembic.runtime.migration] Running upgrade 20260713_0001 -> c2d1ac693a0e, add root file version chunk tables and generalize jobs\nINFO  [alembic.runtime.migration] Running upgrade 20260713_0001 -> c2d1ac693a0e, add root file version chunk tables and generalize jobs\nINFO  [alembic.runtime.migration] Running upgrade c2d1ac693a0e -> 318ab5be35e0, add entities relationships evidence and reviews\nINFO  [alembic.runtime.migration] Running upgrade c2d1ac693a0e -> 318ab5be35e0, add entities relationships evidence and reviews\nINFO  [alembic.runtime.migration] Running upgrade 318ab5be35e0 -> 445f908b73b4, add corrected entity to reviews\nINFO  [alembic.runtime.migration] Running upgrade 318ab5be35e0 -> 445f908b73b4, add corrected entity to reviews\nINFO  [alembic.runtime.migration] Running upgrade 445f908b73b4 -> 20261015_0002, Add the search sidecar for canonical source chunks.\nINFO  [alembic.runtime.migration] Running upgrade 445f908b73b4 -> 20261015_0002, Add the search sidecar for canonical source chunks.\n"
+}

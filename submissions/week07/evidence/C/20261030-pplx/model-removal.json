@@ -1,0 +1,58 @@
+{
+  "retired_model": "intfloat/multilingual-e5-small@614241f622f53c4eeff9890bdc4f31cfecc418b3",
+  "scope": "C isolated worktree and explicitly C-owned evaluation databases",
+  "removed_local_artifacts": [
+    {
+      "path": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\models\\multilingual-e5-small",
+      "files": 7,
+      "bytes": 492795388
+    },
+    {
+      "path": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\work\\model-range-cache",
+      "files": 32,
+      "bytes": 470644946
+    }
+  ],
+  "all_removed_paths_absent": true,
+  "recovery": "weights and download parts require a fresh download",
+  "historical_evidence": "preserved byte-for-byte; no frozen answers changed",
+  "databases": [
+    {
+      "database": "postgresql+psycopg://postgres:***@127.0.0.1:55432/team11_c_pdf",
+      "removed_derived_embeddings": 20,
+      "source_identity_sha256": "c7a7033761f41b5707b5054d2921ed7f61991bf4ee04b265246b88107b6fa6e9",
+      "source_chunks_unchanged": true
+    },
+    {
+      "database": "postgresql+psycopg://postgres:***@127.0.0.1:55432/team11_c_runtime",
+      "removed_derived_embeddings": 20,
+      "source_identity_sha256": "80f4cfe401408e9dc1805e08d9dbc96542c4264b6d3d8148b89450d1a2bbfd83",
+      "source_chunks_unchanged": true
+    },
+    {
+      "database": "sqlite:///D:/HKUST AIE/MAIE6000C/MAIE6000C-starter-TEAM_11/tmp/c-team-pdf-evaluation/work/team-pdf-clean.db",
+      "removed_derived_embeddings": 20,
+      "source_identity_sha256": "7f84e6f92f70481bb4e9b511907413d913245b52e3c9969bc3d542d7d7b58149",
+      "source_chunks_unchanged": true
+    },
+    {
+      "database": "sqlite:///D:/HKUST AIE/MAIE6000C/MAIE6000C-starter-TEAM_11/tmp/c-team-pdf-evaluation/work/team-pdf-evaluation.db",
+      "removed_derived_embeddings": 0,
+      "source_identity_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "source_chunks_unchanged": true
+    },
+    {
+      "database": "sqlite:///D:/HKUST AIE/MAIE6000C/MAIE6000C-starter-TEAM_11/tmp/c-team-pdf-evaluation/work/team-pdf-missing.db",
+      "removed_derived_embeddings": 0,
+      "source_identity_sha256": "c85a1b07eb180b807e85cac8d77c2b2f5b00a4f5896fd4bc1d4d12c8d97df118",
+      "source_chunks_unchanged": true
+    },
+    {
+      "database": "sqlite:///D:/HKUST AIE/MAIE6000C/MAIE6000C-starter-TEAM_11/tmp/c-team-pdf-evaluation/work/team-pdf-off.db",
+      "removed_derived_embeddings": 0,
+      "source_identity_sha256": "7827d777de7d67fddeef7181cc8548294d6c8fe33a5f15ac12df55f63690556e",
+      "source_chunks_unchanged": true
+    }
+  ],
+  "total_removed_derived_embeddings": 60
+}

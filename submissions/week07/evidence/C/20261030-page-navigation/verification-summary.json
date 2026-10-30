@@ -1,0 +1,554 @@
+{
+  "created_at": "2026-10-30T02:44:31.233782+00:00",
+  "branch": "codex/c-team-pdf-evaluation",
+  "product_code_sha": "e364f5b1954847e9f78a1b10e32bf47dcb2ba2be",
+  "final_validation_code_sha": "7ad3ff03c2745ca0c1ffb5e33185b419380b56be",
+  "post_evaluation_change": {
+    "files": [
+      "scripts/search_tools.py",
+      "tests/unit/test_search_page_metadata_cli.py"
+    ],
+    "purpose": "Refuse page-metadata reports over fixed team answers or SQLite database",
+    "retrieval_parser_indexing_model_or_evaluation_code_changed": false,
+    "final_metadata_cli_retest": "metadata-root-final.json: 12/12 ready, no errors",
+    "final_pytest": "pytest-final-command.json and pytest-final-results.xml"
+  },
+  "develop_baseline_sha": "7522287126061da8977c253256e8f807143ab8b5",
+  "latest_available_develop_sha": "047b2ac8b6c584b366c3db8f211125a6b9febe4f",
+  "independent_fixture_commit": "77a9af1",
+  "previous_evidence_commit": "f180beb",
+  "pure_model_top3_and_response_identical_to_previous_run": true,
+  "tests": {
+    "total_collected": 532,
+    "passed": 530,
+    "failed": 0,
+    "skipped": [
+      {
+        "name": "tests.unit.test_scan_handler.test_a_symlinked_directory_inside_the_root_is_not_followed",
+        "reason": "this platform does not allow the test to create a symlink"
+      },
+      {
+        "name": "tests.unit.test_scan_handler.test_a_root_that_is_a_symlink_outside_the_mount_is_rejected",
+        "reason": "this platform does not allow the test to create a symlink"
+      }
+    ],
+    "postgres_tests_passed": 11,
+    "ruff_returncode": 0,
+    "pre_guard_validation": "pytest-command.json: 527 passed, 2 skipped; Ruff passed"
+  },
+  "navigation_regression": {
+    "sqlite": {
+      "positive": {
+        "passed": 24,
+        "total": 24
+      },
+      "negative": {
+        "passed": 12,
+        "total": 12
+      },
+      "unique_cases": 36,
+      "enhanced_executions": 72,
+      "baseline_executions": 72,
+      "passed_executions": 72,
+      "evidence_failures": 0,
+      "behavior_failures": 0,
+      "diagnostic_failures": 0
+    },
+    "postgres": {
+      "positive": {
+        "passed": 24,
+        "total": 24
+      },
+      "negative": {
+        "passed": 12,
+        "total": 12
+      },
+      "unique_cases": 36,
+      "enhanced_executions": 72,
+      "baseline_executions": 72,
+      "passed_executions": 72,
+      "evidence_failures": 0,
+      "behavior_failures": 0,
+      "diagnostic_failures": 0
+    }
+  },
+  "http": {
+    "passed": true,
+    "initial_token_matrices": 0,
+    "recovered_token_matrices": 20,
+    "recovered_token_vectors": 416,
+    "ready_page_metadata_versions": 12,
+    "online_execution_count": 15,
+    "disconnect_probes": 3,
+    "timeout_probes": 2,
+    "disconnect_navigation_probes": 2,
+    "timeout_navigation_probes": 2,
+    "source_identities_unchanged": true,
+    "corpus_bytes_unchanged": true,
+    "restored_navigation_hit": true
+  },
+  "initial_full_suite_environment_failure": {
+    "passed": 521,
+    "skipped": 2,
+    "errors": 6,
+    "cause": "New C PostgreSQL DB lacked public.vector extension for queue-test setup",
+    "remedy_executed": "CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA public",
+    "subsequent_full_suite": "pytest-command.json; all six affected tests passed"
+  },
+  "product_files": [
+    ".env.example",
+    "docs/search-integration-handoff.md",
+    "docs/search-page-navigation.md",
+    "docs/search-plan.md",
+    "scripts/evaluate_team_pdf.py",
+    "scripts/search_tools.py",
+    "scripts/verify_page_navigation.py",
+    "scripts/verify_team_search_runtime.py",
+    "services/common/config.py",
+    "services/search/evaluation.py",
+    "services/search/indexing.py",
+    "services/search/navigation_runtime.py",
+    "services/search/page_metadata.py",
+    "services/search/page_navigation.py",
+    "services/search/retrieval.py",
+    "services/search/token_store.py",
+    "submissions/week07/evidence/C/20261030-page-navigation/.gitattributes",
+    "tests/integration/test_page_navigation_regression.py",
+    "tests/unit/test_search_navigation_retrieval.py",
+    "tests/unit/test_search_page_metadata.py",
+    "tests/unit/test_search_page_metadata_cli.py",
+    "tests/unit/test_search_page_navigation.py"
+  ],
+  "product_git_blob_sha256": {
+    ".env.example": "3f09ecf3df4d86aee201444af68c492a14bbe1a29a06c1eed1179b6898ca2cee",
+    "docs/search-integration-handoff.md": "6832e9296caa03a4b7e7dd2218162b12f09952a815b80debe06d3e71e58cc517",
+    "docs/search-page-navigation.md": "2ebb49e01648bacca2d634a22aa37187103a89085f8304358ef903234d14867a",
+    "docs/search-plan.md": "4710fa8e8260ce793888c1fc571f80d11d6bb34f63265fcd4c949f418331997b",
+    "scripts/evaluate_team_pdf.py": "6889b0d1fbd332a61320913d146474512b867112573a3d342e08371830ac9d67",
+    "scripts/search_tools.py": "ad9bf4cef1f7e1cf09511bc816d7130d3c1756213867ac222087b6129c44530e",
+    "scripts/verify_page_navigation.py": "cfbf4ac3e57a46044fa445291a61469f810366844ced4c9de6e915ba4cdf45cc",
+    "scripts/verify_team_search_runtime.py": "8f6b9f0f178dfcd8340dcf76993254c05f7b16432079ac88de2a75e07f1f6026",
+    "services/common/config.py": "c638364406504a16987845c88c7ad5e3e170e467bfe2d62026849c97806e20e6",
+    "services/search/evaluation.py": "d108fdd6eea94dc5a2ea1ba2c7e16497f992df55e1a0424a463c3afd800dd0f1",
+    "services/search/indexing.py": "829fa82ca08195bc66f0a0d5444dca4974f1379bbee1eac874056028d1af35fc",
+    "services/search/navigation_runtime.py": "17257ffb8e61d7e8f10f5fb0749c160da06d7e9e09eec4e9165754fe298c9c3a",
+    "services/search/page_metadata.py": "7b9ffbb00caaa9965bedd703c1fef1129e31b26c4516da6cbbbe28899876e2e0",
+    "services/search/page_navigation.py": "272e860fd75500dc4fc07ef602ef650f630f1d4d4192a75b2e69bbb042e2d3ae",
+    "services/search/retrieval.py": "cc6b408baf10815f98e348d19dd1bb28d988f1f646cad24ba9c5eb84a1405042",
+    "services/search/token_store.py": "6f70ed87f0f710476242fbd149cab1c4fed008a21026d4c5d807cd8e03d753dd",
+    "submissions/week07/evidence/C/20261030-page-navigation/.gitattributes": "730a35ae3d558080083c3103d9ac8100c3f6561678092abe341701dfa331eb1d",
+    "tests/integration/test_page_navigation_regression.py": "4238c8795288b26c391685cf3d58af16ddc6fce455f8493957fb6c0585499489",
+    "tests/unit/test_search_navigation_retrieval.py": "3929e64c15db60b2e104e5f5d755385802ffca35db17339564207778a37db780",
+    "tests/unit/test_search_page_metadata.py": "d35401950e76e474285cfc4281484f78417bff09221d70ea09ba5ab7ae0c1b07",
+    "tests/unit/test_search_page_metadata_cli.py": "85bd000a7cdf926ef2e205ff0f002ba1a3a0b6a9202e9b93325b3795d67c3b99",
+    "tests/unit/test_search_page_navigation.py": "1a4834bcdf2da7ead1d702d260d674238f8626492d35c3b9586f363e8f02cfd7"
+  },
+  "runtime_worktree_sha256_at_model_evaluation": {
+    "services/search/__init__.py": "bda5e68032cd868115b66539032f460543adb90b1f8c73e97abb98eebba7166e",
+    "services/search/embeddings.py": "ccdc4fad57a94931e80aaaf70793be3cd123459a068871ea09eaca282e959723",
+    "services/search/evaluation.py": "1bcd7a24c94acd066f54b2b62d928fa1d01c527e373a1abf5e77563b44b79b1d",
+    "services/search/evaluation_sources.py": "9f374153de4c3dce81d40839ed743f7e3a5db2dc524ea3d40c015c83ba35017d",
+    "services/search/indexing.py": "984d281a9f9a636caf325defbb99f9f9de1f14a07436b6ef945b373ec01fcd9d",
+    "services/search/navigation_runtime.py": "17257ffb8e61d7e8f10f5fb0749c160da06d7e9e09eec4e9165754fe298c9c3a",
+    "services/search/page_metadata.py": "7b9ffbb00caaa9965bedd703c1fef1129e31b26c4516da6cbbbe28899876e2e0",
+    "services/search/page_navigation.py": "272e860fd75500dc4fc07ef602ef650f630f1d4d4192a75b2e69bbb042e2d3ae",
+    "services/search/retrieval.py": "a2388f9f9c3e19f2308bd0be70beeac21eac04b85701e608573330c9441efe79",
+    "services/search/schemas.py": "0d6deaee34c9d21783cca8213284e4dba3a489ecd65d64e10f71a3a2317138c5",
+    "services/search/text.py": "8a7ccb3876fdbc87301a86af4fb0abe8d883e3dd36295007f4a69ccc8e7878ce",
+    "services/search/token_store.py": "6f70ed87f0f710476242fbd149cab1c4fed008a21026d4c5d807cd8e03d753dd",
+    "scripts/evaluate_team_pdf.py": "6889b0d1fbd332a61320913d146474512b867112573a3d342e08371830ac9d67",
+    "scripts/search_tools.py": "1ed8dad03cf16279fd76e00c3014bd1ac32da15c3070bff5e073f43d3ce10c31",
+    "scripts/verify_team_search_runtime.py": "8f6b9f0f178dfcd8340dcf76993254c05f7b16432079ac88de2a75e07f1f6026",
+    "services/ai/app/main.py": "2355e2c049130de87b328c922d87aabef5647a8bd79e66494cd50ef6d76a795c",
+    "services/common/config.py": "d0893829764880cbfe2980fffc263ddf7065c98ab8f2246b71b915ea1042b8b2",
+    "pyproject.toml": "4e7f01c9de0e55e93cf7853037f5278b566430e999f2ed0f160dfd0376e35e55",
+    "compose.yaml": "f76d589d5b29248b5c63bbe181443f748672b1a44892b76973196f79e71645ef",
+    ".env.example": "4106e67969c9f929cc41e8c867484692e6bfe3f8ee86a501757e9b81265ef961"
+  },
+  "final_worktree_sha256": {
+    ".env.example": "4106e67969c9f929cc41e8c867484692e6bfe3f8ee86a501757e9b81265ef961",
+    "docs/search-integration-handoff.md": "a4fa545cc1b4a13e33c0c039b0b9eb34c8d15f28aa2c3937272f76e570d40612",
+    "docs/search-page-navigation.md": "2ebb49e01648bacca2d634a22aa37187103a89085f8304358ef903234d14867a",
+    "docs/search-plan.md": "31f69ee65c9a51a4aee935a5e65ae1b36f20632f2fd298100c0e5e4cfa054597",
+    "scripts/evaluate_team_pdf.py": "6889b0d1fbd332a61320913d146474512b867112573a3d342e08371830ac9d67",
+    "scripts/search_tools.py": "78fde6ea4c4afdd65575fe927ab340bbdca0894b6ac3ad051a08bf11031298f6",
+    "scripts/verify_page_navigation.py": "cfbf4ac3e57a46044fa445291a61469f810366844ced4c9de6e915ba4cdf45cc",
+    "scripts/verify_team_search_runtime.py": "8f6b9f0f178dfcd8340dcf76993254c05f7b16432079ac88de2a75e07f1f6026",
+    "services/common/config.py": "d0893829764880cbfe2980fffc263ddf7065c98ab8f2246b71b915ea1042b8b2",
+    "services/search/evaluation.py": "1bcd7a24c94acd066f54b2b62d928fa1d01c527e373a1abf5e77563b44b79b1d",
+    "services/search/indexing.py": "984d281a9f9a636caf325defbb99f9f9de1f14a07436b6ef945b373ec01fcd9d",
+    "services/search/navigation_runtime.py": "17257ffb8e61d7e8f10f5fb0749c160da06d7e9e09eec4e9165754fe298c9c3a",
+    "services/search/page_metadata.py": "7b9ffbb00caaa9965bedd703c1fef1129e31b26c4516da6cbbbe28899876e2e0",
+    "services/search/page_navigation.py": "272e860fd75500dc4fc07ef602ef650f630f1d4d4192a75b2e69bbb042e2d3ae",
+    "services/search/retrieval.py": "a2388f9f9c3e19f2308bd0be70beeac21eac04b85701e608573330c9441efe79",
+    "services/search/token_store.py": "6f70ed87f0f710476242fbd149cab1c4fed008a21026d4c5d807cd8e03d753dd",
+    "submissions/week07/evidence/C/20261030-page-navigation/.gitattributes": "730a35ae3d558080083c3103d9ac8100c3f6561678092abe341701dfa331eb1d",
+    "tests/integration/test_page_navigation_regression.py": "4238c8795288b26c391685cf3d58af16ddc6fce455f8493957fb6c0585499489",
+    "tests/unit/test_search_navigation_retrieval.py": "3929e64c15db60b2e104e5f5d755385802ffca35db17339564207778a37db780",
+    "tests/unit/test_search_page_metadata.py": "d35401950e76e474285cfc4281484f78417bff09221d70ea09ba5ab7ae0c1b07",
+    "tests/unit/test_search_page_metadata_cli.py": "caf37229018363081289b940e48cd49a5e3e15123d80fb52dc62ccafc37488ae",
+    "tests/unit/test_search_page_navigation.py": "1a4834bcdf2da7ead1d702d260d674238f8626492d35c3b9586f363e8f02cfd7"
+  },
+  "historical_and_frozen_input_integrity": [
+    {
+      "path": "fixtures/manifest.json",
+      "original_git_sha256": "3ad53b3f8ccdc7ac6b84457fcedf9a735fe0ddf7ceb8004eb97b46ab17e3280f",
+      "current_sha256": "3ad53b3f8ccdc7ac6b84457fcedf9a735fe0ddf7ceb8004eb97b46ab17e3280f",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "fixtures/search/page-navigation-v1.freeze.json",
+      "original_git_sha256": "603e14c89b87c2ba175b9ba00d197ccb597f632fa8ca28af5546f05ff4c3716f",
+      "current_sha256": "603e14c89b87c2ba175b9ba00d197ccb597f632fa8ca28af5546f05ff4c3716f",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "fixtures/search/page-navigation-v1.json",
+      "original_git_sha256": "cc49c7bdcf74337a32350dfbc9548ae63c39c118cdf7968f85869a1610f99bab",
+      "current_sha256": "cc49c7bdcf74337a32350dfbc9548ae63c39c118cdf7968f85869a1610f99bab",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/20261030-pplx/.gitattributes",
+      "original_git_sha256": "68f51aac275bff47b8f28975d3c84946402b5282d008ea7e1ae303d8c0729659",
+      "current_sha256": "68f51aac275bff47b8f28975d3c84946402b5282d008ea7e1ae303d8c0729659",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/20261030-pplx/README.md",
+      "original_git_sha256": "f85334e8e96b79b2b4f9f68b4f4ac06e90918fa435adc7f17d104e6bbdccb112",
+      "current_sha256": "f85334e8e96b79b2b4f9f68b4f4ac06e90918fa435adc7f17d104e6bbdccb112",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/20261030-pplx/configuration.json",
+      "original_git_sha256": "cb4ddc575fd4c209760416201212848e36eef2a733b96cf2acf5e049f9aeabc4",
+      "current_sha256": "cb4ddc575fd4c209760416201212848e36eef2a733b96cf2acf5e049f9aeabc4",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/20261030-pplx/cross-run-diagnostics.json",
+      "original_git_sha256": "b55c343bc9a3764f55991dfb5b7c70ed79be88a3834edeac9841b0ab02490efd",
+      "current_sha256": "b55c343bc9a3764f55991dfb5b7c70ed79be88a3834edeac9841b0ab02490efd",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/20261030-pplx/failure-analysis.json",
+      "original_git_sha256": "ea2e3c1942e626a06636a3d399cfb1e302a3f1948cb91f133a7dd96e73c35668",
+      "current_sha256": "ea2e3c1942e626a06636a3d399cfb1e302a3f1948cb91f133a7dd96e73c35668",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/20261030-pplx/http-runtime.json",
+      "original_git_sha256": "96ba2e67bbdcb21004fefdefb399acf006d8974c31cc4c145f65ed280ad84792",
+      "current_sha256": "96ba2e67bbdcb21004fefdefb399acf006d8974c31cc4c145f65ed280ad84792",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/20261030-pplx/model-download.json",
+      "original_git_sha256": "1f4287a55ba63a426ab71a784275127ec5ece7683ad3242202f7744a6bda2286",
+      "current_sha256": "1f4287a55ba63a426ab71a784275127ec5ece7683ad3242202f7744a6bda2286",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/20261030-pplx/model-preparation.json",
+      "original_git_sha256": "7727ce88d1e2af9fa2929dc34b510f0d3f5db4e50264d69b3e185237f436df42",
+      "current_sha256": "7727ce88d1e2af9fa2929dc34b510f0d3f5db4e50264d69b3e185237f436df42",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/20261030-pplx/model-removal.json",
+      "original_git_sha256": "bb089d338a64e976bd8132a0aaf17aa5cba01c2f85ace8c1c60657965b50ebe0",
+      "current_sha256": "bb089d338a64e976bd8132a0aaf17aa5cba01c2f85ace8c1c60657965b50ebe0",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/20261030-pplx/native-model.json",
+      "original_git_sha256": "ac2b13f2767792345397025719e2e9b6c4f68ed276c5028a6f7efada48f065fa",
+      "current_sha256": "ac2b13f2767792345397025719e2e9b6c4f68ed276c5028a6f7efada48f065fa",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/20261030-pplx/postgres-local.json",
+      "original_git_sha256": "f7c0f13175066ca02acce83233303c1d4fcb0a71b35457e1159d2be93618e77b",
+      "current_sha256": "f7c0f13175066ca02acce83233303c1d4fcb0a71b35457e1159d2be93618e77b",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/20261030-pplx/postgres-runtime-before.json",
+      "original_git_sha256": "2b828e889b361d230c4a3d99e7832e81e03ba8778cbd78582dfea114c5868420",
+      "current_sha256": "2b828e889b361d230c4a3d99e7832e81e03ba8778cbd78582dfea114c5868420",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/20261030-pplx/pytest-results.xml",
+      "original_git_sha256": "8ae3fe45b9ebeb72a0a30993625707774f6aa2aafb8b489dcb3a80b7768aa102",
+      "current_sha256": "8ae3fe45b9ebeb72a0a30993625707774f6aa2aafb8b489dcb3a80b7768aa102",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/20261030-pplx/pytest-run.json",
+      "original_git_sha256": "aca777bc6f091f0b19d58c691bfdc56b151a4d4a83b3aa76ae402a40f9358f3e",
+      "current_sha256": "aca777bc6f091f0b19d58c691bfdc56b151a4d4a83b3aa76ae402a40f9358f3e",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/20261030-pplx/requirements-actual.txt",
+      "original_git_sha256": "88ba5b40b00095c60f328bcd49f168817aa5bc92f1f76b86aa9d47b7e07d17a1",
+      "current_sha256": "88ba5b40b00095c60f328bcd49f168817aa5bc92f1f76b86aa9d47b7e07d17a1",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/20261030-pplx/sqlite-local.json",
+      "original_git_sha256": "949187bc39bfaa4016a72defdbf9dc959d233c735f3a515fb15f803243699e78",
+      "current_sha256": "949187bc39bfaa4016a72defdbf9dc959d233c735f3a515fb15f803243699e78",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/20261030-pplx/summary.json",
+      "original_git_sha256": "5e4cda867800b39812353b002523d2561c99ca88daafe7cfde85833f58343032",
+      "current_sha256": "5e4cda867800b39812353b002523d2561c99ca88daafe7cfde85833f58343032",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/team-pdf-20261029/README.md",
+      "original_git_sha256": "86fa7f17207b183d37d572558bdd1836a2ca210f47bc020beca824935877a06d",
+      "current_sha256": "86fa7f17207b183d37d572558bdd1836a2ca210f47bc020beca824935877a06d",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/team-pdf-20261029/configuration.json",
+      "original_git_sha256": "0290912f7f905d34b99a9915ab9515fc6617d709646005bbebe102222cace733",
+      "current_sha256": "bcfe62e893f981dae9f350e68ced6e7e5d57941f774c0ef49b58497ceea942b4",
+      "bytes_equal": false,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": "Pre-existing legacy E5 evidence has Git LF / Windows checkout CRLF; its Git blob and decoded content remain unchanged"
+    },
+    {
+      "path": "submissions/week07/evidence/C/team-pdf-20261029/gold-source-check.json",
+      "original_git_sha256": "3879b8b9800fa67c5df6b958193cda6ea8d59cd6cc652d9cbe3daa56823ebd9f",
+      "current_sha256": "d3023ecd8af7615a7fce185b367fc2375c59a3d70144d4f000c5668f796cf068",
+      "bytes_equal": false,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": "Pre-existing legacy E5 evidence has Git LF / Windows checkout CRLF; its Git blob and decoded content remain unchanged"
+    },
+    {
+      "path": "submissions/week07/evidence/C/team-pdf-20261029/http-runtime-inherited-env-failed.json",
+      "original_git_sha256": "aec3bd5f9076def51564f9af45902a5fe0f581eccc6635d75c242988aa4f91d9",
+      "current_sha256": "356cd10c9957eca9054a2a3b2703caece5f891171999b22ac17931a697fd31e6",
+      "bytes_equal": false,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": "Pre-existing legacy E5 evidence has Git LF / Windows checkout CRLF; its Git blob and decoded content remain unchanged"
+    },
+    {
+      "path": "submissions/week07/evidence/C/team-pdf-20261029/http-runtime.json",
+      "original_git_sha256": "40fc3f348507dbb5d16f9f4a4d1209e7350c1b7eb24840eb8b6ee9ed1aa830a0",
+      "current_sha256": "51566ba3cd3464dd4fd234290bec3a9dbe46ff9e89f9f327ebb6dd4d680a3868",
+      "bytes_equal": false,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": "Pre-existing legacy E5 evidence has Git LF / Windows checkout CRLF; its Git blob and decoded content remain unchanged"
+    },
+    {
+      "path": "submissions/week07/evidence/C/team-pdf-20261029/model-preparation.json",
+      "original_git_sha256": "23d0d30f719b02173ce6e01c4f5cbbce97146e39f31d2e74b51adabc6550da1d",
+      "current_sha256": "23d0d30f719b02173ce6e01c4f5cbbce97146e39f31d2e74b51adabc6550da1d",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/team-pdf-20261029/postgres-local-backup-runtime.json",
+      "original_git_sha256": "630be07727e27cf08260eb379c316c74a3913ea280a2531dec56f487aa0af9f1",
+      "current_sha256": "a6357a7615dbc6bfef8a4713b76a75c1458248f3043d2b80a31f947d2ad6b259",
+      "bytes_equal": false,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": "Pre-existing legacy E5 evidence has Git LF / Windows checkout CRLF; its Git blob and decoded content remain unchanged"
+    },
+    {
+      "path": "submissions/week07/evidence/C/team-pdf-20261029/postgres-local.json",
+      "original_git_sha256": "9d521330fcecae93a5a4c5c3e1c7ca92fc3330f7ff614e9738ec38c67d6c5cb2",
+      "current_sha256": "7c67f63cf931c2695ab754c704808ca2db9eb197ff7d7db7e224fce539a07714",
+      "bytes_equal": false,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": "Pre-existing legacy E5 evidence has Git LF / Windows checkout CRLF; its Git blob and decoded content remain unchanged"
+    },
+    {
+      "path": "submissions/week07/evidence/C/team-pdf-20261029/postgres-off.json",
+      "original_git_sha256": "9fa7dae776a1beac00b2a375ff5510bd1f2fb5f0239488add10e6e1bfba1dce3",
+      "current_sha256": "e05eb132b90ed460519376af7b1fa034976db54e73756215211e9b2815c54e2d",
+      "bytes_equal": false,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": "Pre-existing legacy E5 evidence has Git LF / Windows checkout CRLF; its Git blob and decoded content remain unchanged"
+    },
+    {
+      "path": "submissions/week07/evidence/C/team-pdf-20261029/postgres-runtime-before.json",
+      "original_git_sha256": "03e4fd3e2ef9156f3ac631d35acd8160476668efd4481825db94d33ce5411d19",
+      "current_sha256": "187dfb1bdd317203c3b72baf8cc95f505761316cba8c2ec32450aecc68112e84",
+      "bytes_equal": false,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": "Pre-existing legacy E5 evidence has Git LF / Windows checkout CRLF; its Git blob and decoded content remain unchanged"
+    },
+    {
+      "path": "submissions/week07/evidence/C/team-pdf-20261029/pytest-results.xml",
+      "original_git_sha256": "11661197732cbe7404588a9b220c60d42b9a979aa1ff50892b3f1408495b1ef2",
+      "current_sha256": "11661197732cbe7404588a9b220c60d42b9a979aa1ff50892b3f1408495b1ef2",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/evidence/C/team-pdf-20261029/requirements-actual.txt",
+      "original_git_sha256": "bf95d67a8f41033fc9e8c7153be0db5fc10a7b25668f3a5340be86d64a1ef52e",
+      "current_sha256": "eb2ebcfac4d6eb8a4261a6b473f28367e3d64f3159f135e5ff0e0dff31e9564c",
+      "bytes_equal": false,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": "Pre-existing legacy E5 evidence has Git LF / Windows checkout CRLF; its Git blob and decoded content remain unchanged"
+    },
+    {
+      "path": "submissions/week07/evidence/C/team-pdf-20261029/sqlite-local.json",
+      "original_git_sha256": "63f66837588505d21a15f5511c285c426d816ae8e3e445537b9266ff9e182238",
+      "current_sha256": "10b447a80699c6966fd91767812874596742ec739e12eb066ddc7850b3ede9aa",
+      "bytes_equal": false,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": "Pre-existing legacy E5 evidence has Git LF / Windows checkout CRLF; its Git blob and decoded content remain unchanged"
+    },
+    {
+      "path": "submissions/week07/evidence/C/team-pdf-20261029/sqlite-migration-initial-failed.json",
+      "original_git_sha256": "1cde6ce7a9f118eb568265e8f681de09c408e83952063e616ab354b738d04268",
+      "current_sha256": "0b5a8f7dc11eb211956a3d1f3f3a6e080a969def6aed817b725dfe3a4c6e5c3c",
+      "bytes_equal": false,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": "Pre-existing legacy E5 evidence has Git LF / Windows checkout CRLF; its Git blob and decoded content remain unchanged"
+    },
+    {
+      "path": "submissions/week07/evidence/C/team-pdf-20261029/sqlite-model-missing.json",
+      "original_git_sha256": "ce011a589fdf2510e36d610ed7d1b964c14c0e53d2de41eade427e6e24eeb45b",
+      "current_sha256": "66e74749c2a1f783d92fd6e302a2323f87a09c38ceea03d9128f9ba29ff9c07a",
+      "bytes_equal": false,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": "Pre-existing legacy E5 evidence has Git LF / Windows checkout CRLF; its Git blob and decoded content remain unchanged"
+    },
+    {
+      "path": "submissions/week07/evidence/C/team-pdf-20261029/sqlite-off.json",
+      "original_git_sha256": "b4b770ba0b7bad44904b5721e762c5c2fa43edef75ec5047f07ffb303efc319b",
+      "current_sha256": "a11ffa320c31ba5dcd2ef383f647a16a26c4af49c637784f4b718685a92fe55f",
+      "bytes_equal": false,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": "Pre-existing legacy E5 evidence has Git LF / Windows checkout CRLF; its Git blob and decoded content remain unchanged"
+    },
+    {
+      "path": "submissions/week07/evidence/C/team-pdf-20261029/summary.json",
+      "original_git_sha256": "813a4c20447f23241e8f3ed59b99a2c2c61db81f359284bdec2491fcedbea28b",
+      "current_sha256": "51c22f24b86d39f5d08074e8335285599ebea9ab962ee8ced6ecd5ed5cb7e817",
+      "bytes_equal": false,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": "Pre-existing legacy E5 evidence has Git LF / Windows checkout CRLF; its Git blob and decoded content remain unchanged"
+    },
+    {
+      "path": "submissions/week07/gold-queries.freeze.json",
+      "original_git_sha256": "2a1ca7744c3176cb9e4df69adaf2f13d087f3fe88d73cb71604a82a3fe88114d",
+      "current_sha256": "2a1ca7744c3176cb9e4df69adaf2f13d087f3fe88d73cb71604a82a3fe88114d",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    },
+    {
+      "path": "submissions/week07/gold-queries.json",
+      "original_git_sha256": "d1d7b7daf285ed8ad596546dc1cacb28bca7b23cd26edc748e7636e1a23db053",
+      "current_sha256": "d1d7b7daf285ed8ad596546dc1cacb28bca7b23cd26edc748e7636e1a23db053",
+      "bytes_equal": true,
+      "content_equal_after_checkout_newline_normalization": true,
+      "git_blob_unchanged": true,
+      "checkout_note": null
+    }
+  ],
+  "limitations": [
+    "B manual gold review pending; C 4/5 remains candidate, not team-frozen gate",
+    "Frozen team gold is source-location smoke data, not topical semantic quality",
+    "Deterministic navigation regression is not PPLX model-quality evidence",
+    "SQLite does not validate PostgreSQL migrations",
+    "C token JSONB exact scoring is not pgvector ANN retrieval",
+    "A migration/deployment/Worker integration and shared B/D corpus remain pending",
+    "Four abnormal/unsupported classification differences retained for B/D review"
+  ]
+}

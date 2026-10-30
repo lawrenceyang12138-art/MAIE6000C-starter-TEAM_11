@@ -10,7 +10,6 @@ from services.api.app.main import app, get_embedding_backend
 from services.common.config import Settings, get_settings
 from services.common.models import (
     AuthorizedRoot,
-    ChunkSearchIndex,
     FileRecord,
     RootStatus,
     SourceChunk,
@@ -18,17 +17,18 @@ from services.common.models import (
 from services.search.embeddings import EmbeddingUnavailable
 from services.search.evaluation import evaluate_queries
 from services.search.indexing import embed_version, index_document
-from services.search.text import DIMENSIONS, MODEL_ID
+from services.search.text import MODEL_ID, TOKEN_DIMENSIONS
+from services.search.token_store import ChunkTokenIndex
 
 
 class ControlledEmbedding:
     """Stub only for failure/version/ranking tests; not semantic quality evidence."""
 
     model_id = MODEL_ID
-    dimensions = DIMENSIONS
+    dimensions = TOKEN_DIMENSIONS
 
     def embed(self, texts, kind="passage"):
-        return [[1.0] + [0.0] * (DIMENSIONS - 1) for _ in texts]
+        return [[[1.0] + [0.0] * (TOKEN_DIMENSIONS - 1)] for _ in texts]
 
 
 class FailedEmbedding(ControlledEmbedding):
@@ -127,7 +127,7 @@ def test_semantic_and_hybrid_use_matching_version_vectors(client, db_session):
 def test_missing_and_mismatched_vectors_fall_back(client, db_session):
     version = add_document(db_session, backend=ControlledEmbedding())
     chunk = db_session.scalar(select(SourceChunk).where(SourceChunk.version_id == version.id))
-    db_session.get(ChunkSearchIndex, chunk.id).embedding_model = "old-model"
+    db_session.get(ChunkTokenIndex, chunk.id).model_id = "old-model"
     db_session.flush()
     app.dependency_overrides[get_embedding_backend] = ControlledEmbedding
     data = client.post("/search", json={"query": "backup"}).json()
@@ -230,8 +230,8 @@ def test_failed_second_embedding_batch_keeps_text_and_existing_vectors(
             .order_by(SourceChunk.ordinal)
         )
     )
-    indexes = [db_session.get(ChunkSearchIndex, chunk.id) for chunk in chunks]
-    previous_vectors = [index.embedding for index in indexes]
+    indexes = [db_session.get(ChunkTokenIndex, chunk.id) for chunk in chunks]
+    previous_vectors = [index.token_vectors if index else None for index in indexes]
 
     class FailSecondBatch(ControlledEmbedding):
         calls = 0
@@ -245,7 +245,7 @@ def test_failed_second_embedding_batch_keeps_text_and_existing_vectors(
     result = embed_version(db_session, version.id, FailSecondBatch())
     assert result.embedding_error == "ai_timeout" and result.embedded_count == 0
     assert len(chunks) == 17
-    assert [index.embedding for index in indexes] == previous_vectors
+    assert [index.token_vectors if index else None for index in indexes] == previous_vectors
     assert all(chunk.text for chunk in chunks)
 
 
