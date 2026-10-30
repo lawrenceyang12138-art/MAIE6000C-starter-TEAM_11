@@ -241,10 +241,13 @@ def _extract_outcome(db: Session, job: Job, version_id: str, status: str) -> Non
         return
 
     if status == VersionStatus.UNSUPPORTED.value:
-        version = db.get(FileVersion, version_id)
+        # A handled document outcome: the job succeeds. ``error_code`` stays NULL
+        # because it means "the last attempt failed", and a completed job did not
+        # fail; the document's reason is on the version and shows up in
+        # ``GET /files``.
         job.status = JobStatus.COMPLETED.value
         job.error = None
-        job.error_code = version.error_code if version is not None else None
+        job.error_code = None
         job.completed_at = utcnow()
         return
 
@@ -280,13 +283,19 @@ def _process_extract_job(job_id: int) -> None:
         # published the text. Re-reading is harmless for the text itself, but
         # ``persist_chunks`` replaces rows, and replacing chunks for nothing
         # would detach reviews and search indexes that hang off their stable
-        # ids. The job is closed instead; the retry stays idempotent.
+        # ids. The job is closed instead, and no index job is queued: the
+        # embeddings were either already built or are the business of the
+        # ``embed_file`` job that owns them, so enqueueing here would only buy
+        # another embedding call.
         version = db.get(FileVersion, version_id)
         if version is not None and version.status in (
             VersionStatus.BASIC_READY.value,
             VersionStatus.ENRICHED.value,
         ):
-            _extract_outcome(db, job, version_id, version.status)
+            job.status = JobStatus.COMPLETED.value
+            job.error = None
+            job.error_code = None
+            job.completed_at = utcnow()
             db.commit()
         else:
             source_path = resolve_source_path(db, version_id)

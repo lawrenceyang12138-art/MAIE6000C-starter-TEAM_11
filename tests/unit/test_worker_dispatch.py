@@ -215,7 +215,12 @@ def test_index_dispatch_is_idempotent_per_version(worker_db, make_file_version, 
 def test_an_unsupported_document_completes_the_job_without_indexing(
     worker_db, make_file_version, monkeypatch
 ):
-    """``unsupported`` is a handled outcome: the document will never parse."""
+    """``unsupported`` is a handled outcome: the document will never parse.
+
+    The job is completed and carries ``error_code = NULL``: a completed job did
+    not fail, and the document's reason stays on the version where ``GET /files``
+    shows it.
+    """
     version_id = make_file_version(sha256="e" * 64)
     job_id = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
 
@@ -235,8 +240,10 @@ def test_an_unsupported_document_completes_the_job_without_indexing(
 
     job = _job(worker_db, job_id)
     assert job.status == JobStatus.COMPLETED.value
-    assert job.error_code == REASON_ENCRYPTED
+    assert job.error_code is None
     assert _index_jobs(worker_db, version_id) == []
+    # The reason is still recorded, on the version.
+    assert worker_db.get(FileVersion, version_id).error_code == REASON_ENCRYPTED
 
 
 def test_a_failed_version_fails_the_job_so_it_can_be_retried(
@@ -292,14 +299,15 @@ def test_an_unfinished_status_from_the_handler_is_a_bug(worker_db, make_file_ver
         worker_main.process_job(job_id)
 
 
-def test_a_retry_of_an_already_parsed_version_does_not_reparse_or_duplicate_index_jobs(
+def test_a_retry_of_an_already_parsed_version_reparses_nothing_and_queues_no_job(
     worker_db, make_file_version, monkeypatch
 ):
     """Retry is idempotent: published text is not replaced for nothing.
 
     Re-parsing would replace chunk rows, and chunk ids are what reviews and
     search indexes hang off. A version that already holds its text only needs
-    its job closed.
+    its job closed - and no second index job, because the embeddings were
+    built, or are the ``embed_file`` job's business.
     """
     version_id = make_file_version(sha256="2" * 64, status=VersionStatus.BASIC_READY.value)
     job_id = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
@@ -318,7 +326,7 @@ def test_a_retry_of_an_already_parsed_version_does_not_reparse_or_duplicate_inde
 
     assert calls == []
     assert _job(worker_db, job_id).status == JobStatus.COMPLETED.value
-    assert len(_index_jobs(worker_db, version_id)) == 1
+    assert _index_jobs(worker_db, version_id) == []
 
 
 def test_a_retry_of_an_enriched_version_queues_no_index_job(
