@@ -1,5 +1,11 @@
 # Search, local embeddings, and evaluation
 
+First-start deployment now uses [automatic model preparation](model-startup.md).
+`python scripts/start.py` installs image dependencies and starts background
+download/verification/warmup with progress and explicit retry. The manual commands
+below remain operator/evaluation tools, not prerequisites for the new launcher.
+Inference itself still uses local files only. Dated benchmark results are unchanged.
+
 The 2026-10-30 [team PDF evaluation and recovery guide](search-team-pdf-evaluation.md)
 adds the frozen D-gold adapter, real scan/parse/index runner, actual-source checks,
 model checksum validation and backfill instructions. Its dated results are

@@ -1,0 +1,227 @@
+{
+  "report_kind": "first_start_initialization_validation_not_gold_evaluation",
+  "captured_at": "2026-10-30T17:02:28.514Z",
+  "git": {
+    "branch": "feat/c-team-pdf-evaluation",
+    "head": "f6f347abad37345f0119c45b3913ce3ca1b6f5b6",
+    "merged_develop": "f6f347abad37345f0119c45b3913ce3ca1b6f5b6",
+    "implementation_uncommitted": true,
+    "pushed": false,
+    "implementation_manifest": "implementation-files.json"
+  },
+  "model": {
+    "id": "perplexity-ai/pplx-embed-v2-late-0.6b",
+    "revision": "7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+    "token_dimensions": 128,
+    "query_prefix": "[Q] ",
+    "passage_prefix": "[D] ",
+    "max_query_model_tokens": 1024,
+    "max_document_model_tokens": 4096,
+    "max_text_characters": 2000,
+    "api_batch_size": 16,
+    "forward_batch_size": 4,
+    "cpu_threads": 4,
+    "inference_local_only": true,
+    "cloud_fallback": false,
+    "files": 14,
+    "payload_bytes": 2397842839
+  },
+  "retrieval_unchanged": {
+    "keyword_weight": 0.65,
+    "semantic_weight": 0.35,
+    "candidate_limit_per_channel": 200,
+    "default_top_k": 10,
+    "max_top_k": 50,
+    "startup_smoke_requested_top_k": 3,
+    "search_timeout_seconds": 10,
+    "page_navigation_enabled": true,
+    "scoring": "native token MaxSim mean"
+  },
+  "preparation": {
+    "auto_prepare": true,
+    "download_timeout_seconds": 30,
+    "download_retries": 3
+  },
+  "installed_runtime": {
+    "python": "3.11.18",
+    "torch": "2.8.0+cpu",
+    "transformers": "5.22.0",
+    "sentence_transformers": "6.2.0",
+    "huggingface_hub": "2.4.0"
+  },
+  "cold_start": {
+    "started_at": "2026-10-30T16:40:02.312437+00:00",
+    "completed_at": "2026-10-30T16:44:06.641559+00:00",
+    "passed": true,
+    "checks": {
+      "live_while_preparing": true,
+      "not_ready_while_preparing": true,
+      "ready_after_warmup": true,
+      "query_inference": true,
+      "passage_inference": true,
+      "automatic_early_scan_recovery": true,
+      "required_download_observed": true,
+      "ready_observed": true,
+      "keyword_during_preparation": true,
+      "explicit_semantic_fallback": true,
+      "original_sources_unchanged": true
+    },
+    "states": [
+      "downloading",
+      "verifying",
+      "loading",
+      "warming_up",
+      "ready"
+    ],
+    "timeline_entries": 34,
+    "hashed_source_entries": 13,
+    "last_observation_error": "RemoteProtocolError",
+    "early_degraded": true,
+    "early_reason": "ai_unavailable",
+    "recovered_degraded": false,
+    "query_shape": [
+      5,
+      128
+    ],
+    "passage_shape": [
+      4,
+      128
+    ]
+  },
+  "browser": {
+    "initial_ready": true,
+    "retry_passed": true,
+    "retry_status": 202,
+    "retry_state": "checking_environment",
+    "retry_get_responses": 113,
+    "page_errors": [],
+    "cold_download_full_ui_recorded": false
+  },
+  "tests": {
+    "postgres": {
+      "tests": 705,
+      "passed": 703,
+      "skipped": 2,
+      "failures": 0,
+      "errors": 0,
+      "seconds": 272.073,
+      "report": "startup-full-postgres.xml",
+      "skips": [
+        "Windows file symlink privilege unavailable",
+        "Windows FIFO unsupported"
+      ]
+    },
+    "frontend": {
+      "vitest_passed": 48,
+      "vitest_total": 48,
+      "node_passed": 55,
+      "node_total": 55,
+      "production_build_passed": true
+    }
+  },
+  "cache_reuse": {
+    "model_local_only_reload_verified": true,
+    "dependency_layer_cached_on_source_rebuild": true,
+    "unchanged_launch_no_build": true
+  },
+  "frozen_answers": {
+    "submissions/week07/gold-queries.json": "d1d7b7daf285ed8ad596546dc1cacb28bca7b23cd26edc748e7636e1a23db053",
+    "submissions/week07/gold-queries.freeze.json": "2a1ca7744c3176cb9e4df69adaf2f13d087f3fe88d73cb71604a82a3fe88114d"
+  },
+  "final_setup_snapshot": {
+    "state": "ready",
+    "ready": true,
+    "stage_progress": 100,
+    "progress": 100,
+    "downloaded_bytes": 2397842839,
+    "total_bytes": 2397842839,
+    "completed_files": 14,
+    "total_files": 14,
+    "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+    "message": "Local AI is ready. Model integrity and warm-up checks passed.",
+    "error_code": null,
+    "retryable": false,
+    "updated_at": "2026-10-30T16:55:59.469942Z"
+  },
+  "artifacts": [
+    {
+      "name": "startup-cold.json",
+      "original_bytes": 29341,
+      "original_sha256": "68efabfa43feba953cbb52367bdfb080da059629072a3e6e78683827a267bc0c",
+      "bundled_sha256": "2dfc6095c2984f4f4d1806bbca6a30f135e47623708d141cf26ae872e9ce71ea",
+      "source": "work/startup-cold.json"
+    },
+    {
+      "name": "startup-browser.json",
+      "original_bytes": 1515,
+      "original_sha256": "d3b240028ce4322e92c3b38184e2db7edd9ece2cbbf6fe4315dabf6fbabee263",
+      "bundled_sha256": "d3b240028ce4322e92c3b38184e2db7edd9ece2cbbf6fe4315dabf6fbabee263",
+      "source": "work/startup-browser.json"
+    },
+    {
+      "name": "startup-browser-retry.json",
+      "original_bytes": 72275,
+      "original_sha256": "77ad48794d47e7f1bb58307c228df931e945615de81615c8ed08c6312eeaf9bc",
+      "bundled_sha256": "77ad48794d47e7f1bb58307c228df931e945615de81615c8ed08c6312eeaf9bc",
+      "source": "work/startup-browser-retry.json"
+    },
+    {
+      "name": "startup-full-postgres.xml",
+      "original_bytes": 101601,
+      "original_sha256": "ff57a17ef0c53edd69ec398e09a7f7cdfe894d56d1ca29f8cc1b201a6ea0ac28",
+      "bundled_sha256": "9487043d0e75e3874febd3e1073c7d2e8fb054899c90e9deb6cd9392815abd7e",
+      "source": "work/startup-full-postgres.xml"
+    },
+    {
+      "name": "startup-encoding-regression.xml",
+      "original_bytes": 9103,
+      "original_sha256": "7f260b95e99378a587e2b8a75813e7c344011eaa23bff596d1819660935b59b5",
+      "bundled_sha256": "68c04f212976db0ce2d6e5597641cd6512f0198b3e26b6e1b59a31c83fdb208f",
+      "source": "work/startup-encoding-regression.xml"
+    },
+    {
+      "name": "startup-warm-launch.log",
+      "original_bytes": 11792,
+      "original_sha256": "e5d895e1f805496f0a0f5143933637cd21ae7a647fc3aba72b4513a2b416c4ef",
+      "bundled_sha256": "128948375abf960674c5c26c73443f8d864e6d2908062b070f8bf299ff1757b8",
+      "source": "work/startup-warm-launch.log"
+    },
+    {
+      "name": "startup-unchanged-launch.log",
+      "original_bytes": 1073,
+      "original_sha256": "15dcd3fd329d29c0c7f06bb1028ab9a5669c7843b5c6e22ae1cd723539b36dc9",
+      "bundled_sha256": "b70eaa2176727669191e54e5861016f614f17ce434ea0d50878e01d2d51aee8b",
+      "source": "work/startup-unchanged-launch.log"
+    },
+    {
+      "name": "startup-vitest-final.json",
+      "original_bytes": 16542,
+      "original_sha256": "c500720e6e058b1d9c5f0a607be96b6c60a2d068cf2eee0ce35b644f0429c160",
+      "bundled_sha256": "213c8d6db8438287d6d52120d05844ec137911d0ed97241e454f04b157aff4ae",
+      "source": "work/startup-vitest-final.json"
+    },
+    {
+      "name": "startup-node-final.log",
+      "original_bytes": 11371,
+      "original_sha256": "397ba66000f49705dcfccdb2530af8ecc1c7d8a6c80be80ff553203968bb8261",
+      "bundled_sha256": "a054e0ce1bd3b98afa7725d673ad6dbd1716f7a7b9d3ac7778916867ced1193e",
+      "source": "work/startup-node-final.log"
+    },
+    {
+      "name": "startup-frontend-build-final.log",
+      "original_bytes": 403,
+      "original_sha256": "037d7525b26ac18a46d1245f99a0baf59df4d681f679fdaeef35cf8606505257",
+      "bundled_sha256": "f89f6bda0556d1fbc61371e157f0e385b9d6ce17ae5285200e55586cff19a4fa",
+      "source": "work/startup-frontend-build-final.log"
+    }
+  ],
+  "artifact_normalization": "Text artifacts normalize BOM/CRLF to UTF-8 LF and include a final newline; archived terminal logs also trim trailing horizontal whitespace. Original source hashes and bundled hashes are recorded separately. The original work artifacts remain available.",
+  "limitations": [
+    "Docker/Compose and Python are host prerequisites; Docker is not silently installed.",
+    "First dependency build progress is visible in terminal; frontend becomes available after its own image exists.",
+    "Browser started after the real cold download; API timeline proves download, browser records prove ready and real failure/retry.",
+    "Intermediate retry screenshot has stage:null due to old built data-state attribute; actual panel and HTTP 202 prove checking_environment.",
+    "B human gold review remains pending; pure-model/navigation evaluation scores are not remeasured by startup smoke.",
+    "Runtime versions recorded, but all transitive dependencies are not a complete lockfile."
+  ]
+}

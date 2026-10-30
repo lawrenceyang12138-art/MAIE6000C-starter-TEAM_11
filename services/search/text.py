@@ -35,6 +35,23 @@ MODEL_FILES = (
     "2_MultiVectorMask/config.json",
     "3_Normalize/config.json",
 )
+# Sizes of the SHA-pinned files, not an estimate from a download response.
+MODEL_FILE_BYTES = {
+    "config.json": 2305,
+    "model.safetensors": 2377321184,
+    "tokenizer.json": 19989705,
+    "tokenizer_config.json": 1195,
+    "modules.json": 535,
+    "config_sentence_transformers.json": 264,
+    "sentence_bert_config.json": 664,
+    "processor_config.json": 1351,
+    "chat_template.jinja": 479,
+    "requirements.txt": 63,
+    "1_Dense/config.json": 238,
+    "1_Dense/model.safetensors": 524376,
+    "2_MultiVectorMask/config.json": 391,
+    "3_Normalize/config.json": 89,
+}
 # Content identities verified against the official pinned Hugging Face git tree
 # (small-file blob OIDs and LFS SHA256s). A self-signed manifest is insufficient.
 PINNED_MODEL_SHA256 = {

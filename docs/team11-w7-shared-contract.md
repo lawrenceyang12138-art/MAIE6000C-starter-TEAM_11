@@ -757,7 +757,7 @@ The integrated `compose.yaml` must retain:
 - A's read-only source mount;
 - A's PostgreSQL host-port policy;
 - C's `pgvector/pgvector:pg16` image;
-- the read-only AI model directory mount;
+- the AI-only writable model-cache mount for startup preparation (section 13);
 - C's `pgvector` and embedding dependencies.
 
 Combine these requirements when resolving Compose changes. Rebuild after changes
@@ -1028,4 +1028,38 @@ A refused request leaves no `authorized_roots` row and no job. The worker repeat
 the same check before extraction, so a path cannot become valid by being recorded
 first. Directory junctions are treated as links by the scan walk as well, because
 `is_symlink()` reports a junction as an ordinary directory.
+
+## 13. Revision 2026-10-30: first-start local AI preparation
+
+The C branch adds an explicit startup boundary without changing file/version/
+chunk identities, search fields, frozen answers or the shared migration chain.
+The first-start entry point is `python scripts/start.py`; Docker/Compose must
+already be installed. Its build installs application/AI dependencies, with actual
+terminal logs. Once the frontend exists it displays backend preparation progress.
+
+- AI alone receives a writable model-cache mount, replacing the old read-only
+  model mount in section 7.3. This is **not** permission to write original sources:
+  all API/Worker corpus mounts and source/evidence authorization remain read-only.
+- Startup prepares only the public pinned PPLX revision, checks fixed file sizes
+  and SHA-256 identities, atomically publishes the manifest, loads locally and
+  warms up both native query/document paths. Inference/search cannot download.
+- `GET /setup` returns safe stage, byte/file counters, nullable measured progress,
+  model identity, readiness and error state. `POST /setup/retry` returns 202 and
+  coalesces concurrent retries. API proxies only its configured local AI service.
+- AI `/health/live` remains process liveness. AI `/health/ready` returns 503 until
+  verified loading and warmup finish. API/database readiness is independent;
+  keyword search/evidence do not wait for the download. Model readiness does not
+  mean every document already has vectors.
+- On a transition to ready, Worker queues normal idempotent `embed_file` jobs
+  for current, present, readable parsed versions in **active** roots whose vectors
+  are missing/incompatible. A short settling window catches early-scan completion
+  races. Paused/revoked roots, old/missing/changed sources and live jobs are not
+  requeued. The ordinary dispatcher and recovery use the same version-row lock.
+  This is not an implicit retry of failed extraction or a search-time database write.
+- Disabled AI, offline download policy, failed download/checksum, service loss
+  and timeout remain explicit. No hosted inference, cloud fallback, user query,
+  PDF content or gold is sent to the model host. Existing verified files work
+  offline; missing/corrupt files never count as ready.
+
+See [first-start operations](model-startup.md) for configuration and verification.
 

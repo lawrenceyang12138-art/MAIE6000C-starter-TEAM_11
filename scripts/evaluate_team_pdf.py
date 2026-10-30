@@ -380,11 +380,16 @@ def evaluate_corpus(
 
 
 def git_state() -> dict:
-    def git(*arguments: str) -> str:
+    def git_bytes(*arguments: str) -> bytes:
         result = subprocess.run(
-            ["git", *arguments], cwd=REPO, capture_output=True, text=True, check=False
+            ["git", *arguments], cwd=REPO, capture_output=True, check=False
         )
-        return result.stdout.strip() if result.returncode == 0 else "unavailable"
+        return result.stdout.strip() if result.returncode == 0 else b"unavailable"
+
+    def git(*arguments: str) -> str:
+        # Git emits repository bytes, not the Windows console's GBK code page.
+        # Replace undecodable display text only; the diff fingerprint stays exact.
+        return git_bytes(*arguments).decode("utf-8", errors="replace")
     source_files = [
         *sorted((REPO / "services/search").glob("*.py")), Path(__file__),
         REPO / "scripts/search_tools.py", REPO / "scripts/verify_team_search_runtime.py",
@@ -395,7 +400,7 @@ def git_state() -> dict:
         "sha": git("rev-parse", "HEAD"),
         "branch": git("branch", "--show-current"),
         "working_tree_status": git("status", "--porcelain", "--untracked-files=normal"),
-        "tracked_diff_sha256": hashlib.sha256(git("diff", "--binary").encode()).hexdigest(),
+        "tracked_diff_sha256": hashlib.sha256(git_bytes("diff", "--binary")).hexdigest(),
         "source_sha256": {
             path.relative_to(REPO).as_posix(): digest(path)
             for path in source_files if path.is_file()

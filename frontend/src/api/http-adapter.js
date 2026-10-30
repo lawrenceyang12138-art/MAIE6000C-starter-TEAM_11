@@ -30,14 +30,32 @@ const jobStates = ["pending", "running", "retry_wait", "completed", "failed", "c
 const searchModes = ["keyword", "semantic", "hybrid"];
 const decisions = ["confirmed", "corrected", "rejected"];
 const inScoreRange = (value) => Number.isFinite(value) && value >= 0 && value <= 1;
+const setupStates = ["pending", "checking_environment", "installing_dependencies", "checking_model", "downloading", "verifying", "loading", "warming_up", "ready", "error", "disabled", "unavailable"];
+const setupPercent = (value) => value == null || (Number.isFinite(value) && value >= 0 && value <= 100);
+function setupStatus(payload) {
+  requireValue(setupStates.includes(payload.state) && typeof payload.ready === "boolean" &&
+    payload.ready === (payload.state === "ready") && setupPercent(payload.progress) && setupPercent(payload.stage_progress) &&
+    Number.isSafeInteger(payload.downloaded_bytes) && payload.downloaded_bytes >= 0 &&
+    (payload.total_bytes == null || (Number.isSafeInteger(payload.total_bytes) && payload.total_bytes >= payload.downloaded_bytes)) &&
+    Number.isSafeInteger(payload.completed_files) && payload.completed_files >= 0 &&
+    Number.isSafeInteger(payload.total_files) && payload.total_files >= payload.completed_files &&
+    isId(payload.model) && typeof payload.message === "string" && typeof payload.retryable === "boolean" &&
+    (payload.error_code == null || /^[a-z][a-z0-9_]{1,63}$/.test(payload.error_code)) &&
+    isId(payload.updated_at) && Number.isFinite(Date.parse(payload.updated_at)));
+  return payload;
+}
 const safeErrorCode = (value) => value == null ? null : (
   [...Object.keys(messages), "encrypted", "corrupt", "no_text_layer", "unreadable", "unsupported_format", "source_changed", "processing_failed", "scan_failed", "job_failed", "SCAN_FAILED", "EMPTY_FILE", "CORRUPT_PDF", "TRUNCATED_PDF", "ENCRYPTED_PDF", "NO_TEXT_LAYER", "UNSUPPORTED_FORMAT", "JOB_FAILED"].includes(value) ? value : "JOB_FAILED"
 );
 
 export function createApiAdapter({ baseUrl = "/api", fetchImpl = globalThis.fetch, timeoutMs = 15000 } = {}) {
-  async function request(path, { method = "GET", body, expectedStatus = 200 } = {}) {
+  async function request(path, { method = "GET", body, expectedStatus = 200, signal } = {}) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    let timedOut = false;
+    const cancel = () => controller.abort();
+    if (signal?.aborted) cancel();
+    signal?.addEventListener("abort", cancel, { once: true });
+    const timer = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
     try {
       const response = await fetchImpl(`${baseUrl.replace(/\/$/, "")}${path}`, {
         method, signal: controller.signal, credentials: "same-origin", cache: "no-store",
@@ -58,12 +76,11 @@ export function createApiAdapter({ baseUrl = "/api", fetchImpl = globalThis.fetc
       return payload;
     } catch (error) {
       if (error instanceof AdapterError) throw error;
-      const timedOut = controller.signal.aborted;
       throw new AdapterError(timedOut
         ? "Request timed out. If this was an authorization request, verify acceptance before submitting again."
         : "Cannot reach the local API. Check the service and browser origin; no demo fallback was used.",
       { status: 0, code: timedOut ? "REQUEST_TIMEOUT" : "NETWORK_ERROR" });
-    } finally { clearTimeout(timer); }
+    } finally { clearTimeout(timer); signal?.removeEventListener("abort", cancel); }
   }
   function array(payload, predicate) {
     requireValue(Array.isArray(payload) && payload.every(predicate));
@@ -71,6 +88,12 @@ export function createApiAdapter({ baseUrl = "/api", fetchImpl = globalThis.fetc
   }
   return {
     mode: "api",
+    async getSetup({ signal } = {}) {
+      return setupStatus(await request("/setup", { signal }));
+    },
+    async retrySetup({ signal } = {}) {
+      return setupStatus(await request("/setup/retry", { method: "POST", expectedStatus: 202, signal }));
+    },
     async listMounts() {
       return array(await request("/mounts"), (item) => isId(item?.mount_id) && isId(item.label) && item.read_only === true);
     },

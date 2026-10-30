@@ -8,7 +8,7 @@ services:
     ports:
       # Windows: host port 5432 falls inside the Hyper-V reserved range
       # (5357-5657) and cannot be bound; 15432 is outside every reserved range.
-      - "${POSTGRES_HOST_PORT:-15432}:5432"
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-15432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -25,10 +25,13 @@ services:
     environment:
       AI_SERVICE_URL: http://ai:8100
       EMBEDDING_MODEL_PATH: /models/pplx-embed-v2-late-0.6b
+      EMBEDDING_AUTO_PREPARE: ${EMBEDDING_AUTO_PREPARE:-true}
     volumes:
-      - ./models:/models:ro
+      # Only the AI service can prepare its pinned local cache. User source
+      # mounts below remain read-only; model downloads never access them.
+      - ./models:/models
     ports:
-      - "${AI_HOST_PORT:-8100}:8100"
+      - "127.0.0.1:${AI_HOST_PORT:-8100}:8100"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8100/health/live')"]
       interval: 10s
@@ -44,7 +47,7 @@ services:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/maie6000c
       AI_SERVICE_URL: http://ai:8100
     ports:
-      - "${API_HOST_PORT:-8000}:8000"
+      - "127.0.0.1:${API_HOST_PORT:-8000}:8000"
     volumes:
       # Read-only source mounts (allowlist keys live in services/common/config.py).
       # Exact fixture corpus for the W7 vertical slice: 12 normal PDFs +
@@ -96,12 +99,10 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        # Mock stays the default so a bare `docker compose up` never pretends to
-        # serve real data. Every route the adapter calls is now assembled:
-        # mounts, roots, rescans, jobs and retry by A; files, evidence and
-        # relations by B. Set FRONTEND_DATA_MODE=api to run against the real
-        # stack; API failures never fall back to mock on their own.
-        VITE_DATA_MODE: ${FRONTEND_DATA_MODE:-mock}
+        # New installs use the real backend and display its preparation status.
+        # Explicit mock mode remains available and clearly labelled; failures
+        # never silently switch a real session to simulated data.
+        VITE_DATA_MODE: ${FRONTEND_DATA_MODE:-api}
         VITE_API_BASE_URL: ${FRONTEND_API_BASE_URL:-/api}
     ports:
       - "127.0.0.1:${FRONTEND_HOST_PORT:-3000}:80"
@@ -117,7 +118,7 @@ services:
     volumes:
       - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
     depends_on:
       api:
         condition: service_healthy

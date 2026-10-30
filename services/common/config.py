@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     embedding_dimensions: Literal[TOKEN_DIMENSIONS] = TOKEN_DIMENSIONS
     embedding_model_path: str = MODEL_DIRECTORY
     embedding_cpu_threads: int = Field(default=4, ge=1, le=32)
+    embedding_auto_prepare: bool = True
+    embedding_download_timeout_seconds: float = Field(default=30, ge=1, le=300)
+    embedding_download_retries: int = Field(default=3, ge=1, le=10)
     search_request_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
     search_keyword_weight: float = Field(default=0.65, gt=0, le=1)
     search_semantic_weight: float = Field(default=0.35, gt=0, le=1)

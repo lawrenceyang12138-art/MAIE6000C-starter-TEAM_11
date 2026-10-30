@@ -7,14 +7,22 @@ the main path.
 
 ## 1. Prepare
 
-1. `cp .env.example .env` and review `SOURCE_MOUNTS` (the allowlist the browser
-   can choose from), `DATABASE_URL`, and the host port overrides.
+1. Install/start Docker Desktop with Compose v2, then run
+   `python scripts/start.py` from this branch's repository root. The standard-library
+   launcher preserves any existing `.env`, builds dependency images when needed,
+   and starts the real API frontend. On first start the local AI task downloads,
+   verifies and warms the pinned model while the terminal and UI show progress.
+   See [the first-start guide](model-startup.md) for failure/retry and offline modes.
+   Review `SOURCE_MOUNTS` (the allowlist the browser can choose from),
+   `DATABASE_URL`, and host port overrides deliberately; do not replace `.env`.
 2. Put the corpus where `compose.yaml` mounts it. The default mount points at
    `tests/fixtures` and is **demo data only** - a real corpus is mounted from
    wherever the operator keeps it, read-only.
-3. Prepare the pinned local model under `models/pplx-embed-v2-late-0.6b` using
-   `python -m scripts.search_tools download-model`, then initialize the C token
-   index using `python -m scripts.search_tools prepare-token-index --database-url YOUR_URL`.
+3. Model preparation is automatic in the Docker startup flow. The explicit
+   `python -m scripts.search_tools download-model` command remains available for
+   manual/offline preparation. Shared migration `20261030_0005` creates the C token
+   and page-metadata sidecars during API startup; normal deployment no longer needs
+   a separate `prepare-token-index` invocation.
    This model uses 128-dimensional token vectors and MaxSim. Its weights and
    token index are described in `docs/search-team-pdf-evaluation.md`.
    Without it, keyword search still works and semantic results degrade visibly.
@@ -34,7 +42,7 @@ the main path.
 ## 2. Start, stop, reset
 
 ```bash
-docker compose up -d --build     # api runs `alembic upgrade head` first
+python scripts/start.py          # installs/builds as needed; displays model preparation
 docker compose ps                # wait for api/ai healthy, db healthy
 docker compose logs -f worker    # watch job processing
 docker compose down              # stop, keep data (postgres_data volume)
@@ -42,7 +50,7 @@ docker compose down -v           # stop and DELETE the database volume
 ```
 
 Host ports default to api `8000`, db `15432` (5432 sits in a Windows reserved
-range), ai `18100`, frontend `3000` (bound to loopback only).
+range), ai `8100`, frontend `3000`; all published ports bind to loopback only.
 
 ## 2b. Frontend mode
 
@@ -51,12 +59,12 @@ service, so the browser never needs a second origin. The mode is a **build
 argument**, not a runtime switch:
 
 ```bash
-# default: labelled simulation, safe for a bare `up`
+# new installs: real stack plus preparation progress
 docker compose up -d --build
 
-# real stack
-FRONTEND_DATA_MODE=api docker compose build frontend
-FRONTEND_DATA_MODE=api docker compose up -d frontend
+# explicit labelled simulation, for UI-only demonstrations
+FRONTEND_DATA_MODE=mock docker compose build frontend
+FRONTEND_DATA_MODE=mock docker compose up -d frontend
 ```
 
 Every route the adapter calls is assembled (mounts, roots, rescans, jobs and
@@ -69,6 +77,9 @@ API failures surface as errors; they never fall back to mock data.
 - `GET /metrics` - Prometheus counters and latency histograms.
 - AI readiness is separate: `/health/ready` on the ai service. The API and
   worker do not require it, and search degrades to keyword mode without it.
+- `GET /setup` reports real download, verification and warmup progress; only
+  successful warmup makes the local model ready. `POST /setup/retry` retries a
+  failed preparation. Liveness remains available while the model is preparing.
 
 ## 4. The main path
 
@@ -144,7 +155,7 @@ lost. `down -v` deleting the database is expected, not a bug.
 | `409 active_job_exists` | a scan for that folder is still running | wait, or watch the existing `job_id` |
 | file stuck at `discovered` | worker not running or cannot read the mount | `docker compose logs worker` |
 | file `present` but no text | content is unreadable or unsupported | check `presence_reason` and `error_code` in `GET /files` |
-| semantic results missing | no embedding model on disk | keyword search remains; see `degraded` in `POST /search` |
+| semantic results missing | model is preparing/unavailable, or document vectors are missing | inspect `GET /setup` and `degraded` in `POST /search`; keyword search remains |
 | api unhealthy after start | migration failed | `docker compose logs api` for the alembic error |
 
 ## 8. Tests

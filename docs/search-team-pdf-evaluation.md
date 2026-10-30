@@ -1,5 +1,11 @@
 # Team PDF search evaluation and recovery
 
+For current deployment use [first-start initialization](model-startup.md).
+Startup may automatically download the pinned model, verify it and warm it up;
+the inference backend still cannot download or use hosted inference. Worker now
+requeues missing current-source vectors when the model becomes ready. Manual
+recovery commands and the historical observations below retain their original scope.
+
 Prepared by C on 2026-10-29; model replacement updated 2026-10-30.
 Work branch: `codex/c-team-pdf-evaluation`.
 Integration baseline: `7522287126061da8977c253256e8f807143ab8b5`.

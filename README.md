@@ -10,7 +10,28 @@ File Management Assistant is a proposed local-first tool for people who accumula
 - [Week 4 proposal and project plan](submissions/week04/README.md): milestone summary, scope priorities, risks, artifact index, and AI Use Statement.
 - [Starter operations notes](docs/operations.md): existing service health, metrics, and development commands. These describe the baseline, not the proposed product.
 
-## Current repository status
+## Start the current local application
+
+With Python and Docker Desktop/Compose v2 available, run from this branch's root:
+
+```powershell
+python scripts/start.py
+```
+
+This standard-library launcher creates `.env` only when missing, automatically
+builds the dependency environments, and starts the real application. The AI task
+downloads the fixed PPLX revision if needed, verifies its hashes, loads it and
+warms it up. Build/install logs appear in the terminal; model preparation progress
+appears there and at [the frontend](http://127.0.0.1:3000/select). Verified weights
+and installed images are reused on later starts. Keyword search stays available
+while semantic capability is preparing or unavailable. See
+[first-start setup, retry and offline options](docs/model-startup.md).
+
+Existing `.env` choices, including explicitly simulated `mock` frontend mode,
+are preserved. No model weights or machine-wide environment are installed merely
+by cloning the repository, and Docker itself remains an explicit prerequisite.
+
+## Historical Week 4 repository status
 
 This Week 4 change is documentation only. Folder selection, document indexing, search, the graph, and human review are **not implemented yet**.
 
@@ -69,14 +90,12 @@ Normal shutdown preserves the named database volume. Volume-reset commands in th
 
 ## D frontend
 
-The D demo frontend is available at `http://localhost:3000/select`. Compose
-builds it with `FRONTEND_DATA_MODE=mock`, so the assembled demo runs the
-explicitly labeled simulation until the backend assembly is ready; the
-same-origin `/api` proxy applies when the mode is `api`. API errors remain
-explicit and the frontend never silently falls back to demo data. Set
-`FRONTEND_DATA_MODE=api` before rebuilding only after the mount, file, evidence
-and relation routes are assembled. Existing `.env` settings take precedence; do
-not overwrite them just to change modes. See
+The D frontend is available at `http://localhost:3000/select`. New Compose installs
+use `FRONTEND_DATA_MODE=api`, including live local-model preparation progress.
+Explicitly selected `mock` mode remains a labelled simulation; the same-origin
+`/api` proxy applies in real mode. API errors remain explicit and the frontend
+never silently falls back to demo data. Existing `.env` settings take precedence;
+do not overwrite them just to change modes. See
 [D's 16 October handoff](submissions/week07/ui-progress.md)
 and the [consumer contract](docs/frontend-integration-contract.md) for verified
 work and outstanding real-integration requirements.

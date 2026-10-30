@@ -1,5 +1,10 @@
 # C search integration handoff
 
+Current startup integration is documented in [first-start initialization](model-startup.md)
+and shared-contract section 13. It adds automatic preparation, safe status/retry
+routes and scoped model-ready vector recovery on top of develop `f6f347a`.
+The historical deployment/recovery limitations below do not override that flow.
+
 For the 2026-10-30 PPLX replacement, use the
 [team PDF evaluation and recovery guide](search-team-pdf-evaluation.md). It records
 the D/B corpus mismatch, immutable-answer mapping to scanned UUIDs, actual PDF

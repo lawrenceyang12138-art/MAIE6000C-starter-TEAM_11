@@ -1,0 +1,19 @@
+[checking_environment] Checking Docker and Compose v2.
+ Container team11-c-startup-20261030-ai-1 Running
+ Container team11-c-startup-20261030-api-1 Running
+ Container team11-c-startup-20261030-worker-1 Running
+ Container team11-c-startup-20261030-frontend-1 Running
+ Container team11-c-startup-20261030-db-1 Running
+ Container team11-c-startup-20261030-ai-1 Waiting
+ Container team11-c-startup-20261030-db-1 Waiting
+ Container team11-c-startup-20261030-ai-1 Healthy
+ Container team11-c-startup-20261030-db-1 Healthy
+ Container team11-c-startup-20261030-api-1 Waiting
+ Container team11-c-startup-20261030-db-1 Waiting
+ Container team11-c-startup-20261030-ai-1 Waiting
+ Container team11-c-startup-20261030-ai-1 Healthy
+ Container team11-c-startup-20261030-db-1 Healthy
+ Container team11-c-startup-20261030-api-1 Healthy
+[installing_dependencies] Reusing installed images; build inputs are unchanged.
+Open http://127.0.0.1:13000/select to see preparation progress.
+[ready] 100.0% Local AI is ready. Model integrity and warm-up checks passed.

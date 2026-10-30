@@ -1,0 +1,43 @@
+{
+  "origin": "http://127.0.0.1:13000",
+  "started_at": "2026-10-30T16:44:51.900Z",
+  "responses": [
+    {
+      "at": "2026-10-30T16:44:53.154Z",
+      "status": 200,
+      "body": {
+        "state": "ready",
+        "ready": true,
+        "stage_progress": 100,
+        "progress": 100,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Local AI is ready. Model integrity and warm-up checks passed.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-30T16:43:59.281644Z"
+      }
+    }
+  ],
+  "page_errors": [],
+  "captures": [
+    {
+      "stage": "ready",
+      "at": "2026-10-30T16:44:53.678Z",
+      "panel": "Local AI is ready\nModel verified and warmed up. Semantic search is available for indexed files.",
+      "progress": null,
+      "screenshot": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\work\\startup-browser-ready.png"
+    },
+    {
+      "stage": "ready",
+      "at": "2026-10-30T16:44:53.933Z",
+      "panel": "Local AI is ready\nModel verified and warmed up. Semantic search is available for indexed files.",
+      "screenshot": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\work\\startup-browser-ready.png"
+    }
+  ],
+  "passed": true,
+  "finished_at": "2026-10-30T16:44:53.936Z"
+}

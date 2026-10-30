@@ -148,7 +148,7 @@ def verified_model_manifest(destination: Path) -> dict:
 
 
 def prepare_model(destination: Path) -> None:
-    """Only this explicit preparation command can download model files."""
+    """Explicit operator download; service startup has its own progress-aware preparer."""
     from huggingface_hub import snapshot_download
 
     destination.mkdir(parents=True, exist_ok=True)

@@ -25,6 +25,8 @@ from services.parsing.handler import handle_extract_file
 from services.scan.handler import handle_scan_root, resolve_source_path
 from services.search.embeddings import HTTPEmbeddingBackend
 from services.search.indexing import embed_version
+from services.search.model_startup import SetupStatus
+from services.search.startup_recovery import queue_startup_embeddings
 
 configure_logging()
 logger = logging.getLogger("services.worker.main")
@@ -110,6 +112,8 @@ def _enqueue_embed_job(db: Session, version_id: str) -> None:
     stored. Idempotent - a version keeps at most one live embed job, so a
     re-run never queues a duplicate. The caller commits.
     """
+    # Share this per-version lock with the model-ready recovery sweep.
+    db.execute(select(FileVersion.id).where(FileVersion.id == version_id).with_for_update())
     existing = db.execute(
         select(Job)
         .where(
@@ -352,6 +356,31 @@ def _process_embed_job(job_id: int) -> None:
     )
 
 
+def recover_after_model_ready(*, reconcile: bool = True) -> bool:
+    """Repair early-scan keyword-only jobs once local inference becomes ready."""
+    if not settings.embedding_enabled:
+        return False
+    try:
+        response = httpx.get(
+            settings.ai_service_url.rstrip("/") + "/setup", timeout=2,
+            follow_redirects=False, trust_env=False,
+        )
+        response.raise_for_status()
+        status = SetupStatus.model_validate(response.json())
+    except (httpx.HTTPError, ValueError):
+        return False
+    if not status.ready or status.state != "ready":
+        return False
+    if not reconcile:
+        return True
+    with get_session_factory()() as db:
+        count = queue_startup_embeddings(db)
+        db.commit()
+    if count:
+        logger.info("startup_embeddings_queued", extra={"version_count": count})
+    return True
+
+
 def process_job(job_id: int) -> None:
     """Route one claimed job to its handler.
 
@@ -389,9 +418,24 @@ def run_worker() -> None:
         },
     )
 
+    next_recovery_check = 0.0
+    was_model_ready = False
+    recovery_until = 0.0
     while True:
         job = None
         try:
+            now = time.monotonic()
+            if now >= next_recovery_check:
+                # A short settling window also catches a pre-ready request that
+                # was still completing while the first sweep ran. Afterwards
+                # the normal extract->embed dispatcher owns newly parsed files.
+                ready = recover_after_model_ready(
+                    reconcile=not was_model_ready or now < recovery_until,
+                )
+                if ready and not was_model_ready:
+                    recovery_until = now + 60
+                was_model_ready = ready
+                next_recovery_check = now + 5
             with session_factory() as db:
                 job = claim_next_pending_job(db)
 

@@ -1,0 +1,13 @@
+
+> team11-file-assistant-demo@0.1.0 build
+> vite build
+
+vite v5.4.10 building for production...
+transforming...
+✓ 4919 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.48 kB │ gzip:   0.31 kB
+dist/assets/index-76PDh16A.css   47.61 kB │ gzip:   9.68 kB
+dist/assets/index-BGc-MM8v.js   362.66 kB │ gzip: 111.66 kB
+✓ built in 5.63s

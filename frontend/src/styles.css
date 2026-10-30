@@ -205,6 +205,11 @@ h1 { margin: 0; color: var(--ink); font-size: clamp(25px, 2.2vw, 31px); font-wei
 .notice-danger { color: var(--rose-text); border-color: #fecdd3; background: var(--rose-soft); }
 .notice-success { color: var(--green-text); border-color: #bbf7d0; background: var(--green-soft); }
 .notice-info { color: #3730a3; border-color: #c7d2fe; background: #f5f7ff; }
+.setup-progress { flex-wrap: wrap; }
+.setup-progress .setup-progress-content { flex-basis: 220px; }
+.setup-progress progress { display: block; width: 100%; height: 8px; margin: 5px 0; accent-color: var(--indigo); }
+.setup-progress .setup-progress-detail { font-variant-numeric: tabular-nums; }
+.setup-progress .secondary-button { margin-left: auto; }
 
 .progress-panel, .timeline-panel { padding: 21px 22px; }
 .progress-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; }

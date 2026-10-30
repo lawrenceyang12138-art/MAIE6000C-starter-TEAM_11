@@ -1,0 +1,254 @@
+[checking_environment] Checking Docker and Compose v2.
+[installing_dependencies] Building the runtime and UI. Docker installs the pinned Python/AI and Node packages; cached layers are reused.
+#1 [internal] load local bake definitions
+#1 reading from stdin 2.42kB 0.0s done
+#1 DONE 0.0s
+
+#2 [frontend internal] load build definition from Dockerfile
+#2 transferring dockerfile: 931B 0.0s done
+#2 DONE 0.0s
+
+#3 [api internal] load build definition from Dockerfile
+#3 transferring dockerfile: 943B 0.0s done
+#3 DONE 0.0s
+
+#4 [worker internal] load metadata for docker.io/library/python:3.11-slim
+#4 ...
+
+#5 [auth] library/nginx:pull token for registry-1.docker.io
+#5 DONE 0.0s
+
+#6 [auth] library/node:pull token for registry-1.docker.io
+#6 DONE 0.0s
+
+#7 [auth] library/python:pull token for registry-1.docker.io
+#7 DONE 0.0s
+
+#8 [frontend internal] load metadata for docker.io/library/nginx:1.27.4-alpine
+#8 DONE 1.8s
+
+#9 [frontend internal] load metadata for docker.io/library/node:22.14.0-alpine3.21
+#9 ...
+
+#4 [worker internal] load metadata for docker.io/library/python:3.11-slim
+#4 DONE 1.8s
+
+#10 [api internal] load .dockerignore
+#10 transferring context: 207B done
+#10 DONE 0.0s
+
+#11 [worker  1/11] FROM docker.io/library/python:3.11-slim@sha256:673719e071ecf27434fd2635bbd8d00f49f4fdd81f243143438a42ced8bedf60
+#11 resolve docker.io/library/python:3.11-slim@sha256:673719e071ecf27434fd2635bbd8d00f49f4fdd81f243143438a42ced8bedf60 0.0s done
+#11 DONE 0.0s
+
+#12 [ai internal] load build context
+#12 transferring context: 197.40kB 0.1s done
+#12 DONE 0.1s
+
+#13 [ai  2/11] WORKDIR /app
+#13 CACHED
+
+#14 [ai  3/11] COPY pyproject.toml README.md /app/
+#14 CACHED
+
+#15 [ai  4/11] RUN pip install --upgrade pip "setuptools>=80.0.0" wheel && pip install ".[dev,embeddings]" --extra-index-url https://download.pytorch.org/whl/cpu
+#15 CACHED
+
+#16 [ai  5/11] COPY services /app/services
+#16 DONE 0.1s
+
+#9 [frontend internal] load metadata for docker.io/library/node:22.14.0-alpine3.21
+#9 ...
+
+#16 [api  5/11] COPY services /app/services
+#16 DONE 0.1s
+
+#17 [worker  6/11] COPY scripts /app/scripts
+#17 DONE 0.1s
+
+#18 [ai  7/11] COPY fixtures /app/fixtures
+#18 DONE 0.1s
+
+#18 [api  7/11] COPY fixtures /app/fixtures
+#18 DONE 0.1s
+
+#19 [worker  8/11] COPY alembic /app/alembic
+#19 DONE 0.0s
+
+#20 [api  9/11] COPY alembic.ini /app/alembic.ini
+#20 DONE 0.0s
+
+#21 [worker 10/11] COPY tests /app/tests
+#21 DONE 0.1s
+
+#9 [frontend internal] load metadata for docker.io/library/node:22.14.0-alpine3.21
+#9 ...
+
+#21 [api 10/11] COPY tests /app/tests
+#21 DONE 0.1s
+
+#9 [frontend internal] load metadata for docker.io/library/node:22.14.0-alpine3.21
+#9 DONE 2.7s
+
+#22 [api 11/11] RUN pip install -e . --no-deps --no-build-isolation
+#22 ...
+
+#23 [frontend internal] load .dockerignore
+#23 transferring context: 90B done
+#23 DONE 0.0s
+
+#24 [frontend runtime 1/3] FROM docker.io/library/nginx:1.27.4-alpine@sha256:4ff102c5d78d254a6f0da062b3cf39eaf07f01eec0927fd21e219d0af8bc0591
+#24 resolve docker.io/library/nginx:1.27.4-alpine@sha256:4ff102c5d78d254a6f0da062b3cf39eaf07f01eec0927fd21e219d0af8bc0591 0.0s done
+#24 DONE 0.0s
+
+#25 [frontend build 1/6] FROM docker.io/library/node:22.14.0-alpine3.21@sha256:9bef0ef1e268f60627da9ba7d7605e8831d5b56ad07487d24d1aa386336d1944
+#25 resolve docker.io/library/node:22.14.0-alpine3.21@sha256:9bef0ef1e268f60627da9ba7d7605e8831d5b56ad07487d24d1aa386336d1944 0.0s done
+#25 DONE 0.0s
+
+#26 [frontend internal] load build context
+#26 transferring context: 4.78kB done
+#26 DONE 0.0s
+
+#27 [frontend build 2/6] WORKDIR /app
+#27 CACHED
+
+#28 [frontend build 3/6] COPY package*.json ./
+#28 CACHED
+
+#29 [frontend build 4/6] RUN if [ -f package-lock.json ]; then npm ci --ignore-scripts --no-audit --no-fund; else npm install --ignore-scripts --no-audit --no-fund; fi
+#29 CACHED
+
+#30 [frontend build 5/6] COPY . .
+#30 DONE 0.1s
+
+#31 [frontend build 6/6] RUN npm run build
+#31 0.885
+#31 0.885 > team11-file-assistant-demo@0.1.0 build
+#31 0.885 > vite build
+#31 0.885
+#31 1.420 vite v5.4.10 building for production...
+#31 1.513 transforming...
+#31 ...
+
+#22 [api 11/11] RUN pip install -e . --no-deps --no-build-isolation
+#22 1.556 Obtaining file:///app
+#22 1.560   Checking if build backend supports build_editable: started
+#22 2.094   Checking if build backend supports build_editable: finished with status 'done'
+#22 2.097   Preparing editable metadata (pyproject.toml): started
+#22 2.960   Preparing editable metadata (pyproject.toml): finished with status 'done'
+#22 2.964 Building wheels for collected packages: maie6000c-starter-template
+#22 2.969   Building editable for maie6000c-starter-template (pyproject.toml): started
+#22 3.897   Building editable for maie6000c-starter-template (pyproject.toml): finished with status 'done'
+#22 3.898   Created wheel for maie6000c-starter-template: filename=maie6000c_starter_template-0.1.0-0.editable-py3-none-any.whl size=5908 sha256=d63e3d8ae2b4a3ef883aea116f975c06d47185c00aa91fba21fb61cca283eaa6
+#22 3.898   Stored in directory: /tmp/pip-ephem-wheel-cache-kpxiv4a4/wheels/57/0f/98/bb57b2b57b95807699b822a35c022f139d38a02c27922f27ce
+#22 3.906 Successfully built maie6000c-starter-template
+#22 3.948 Installing collected packages: maie6000c-starter-template
+#22 3.948   Attempting uninstall: maie6000c-starter-template
+#22 3.950     Found existing installation: maie6000c-starter-template 0.1.0
+#22 3.955     Uninstalling maie6000c-starter-template-0.1.0:
+#22 3.962       Successfully uninstalled maie6000c-starter-template-0.1.0
+#22 3.980 Successfully installed maie6000c-starter-template-0.1.0
+#22 3.980 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#22 DONE 4.1s
+
+#22 [worker 11/11] RUN pip install -e . --no-deps --no-build-isolation
+#22 DONE 4.1s
+
+#32 [api] exporting to image
+#32 exporting layers
+#32 exporting layers 0.4s done
+#32 exporting manifest sha256:bfaac26a9916b89d468e144708be82595692568a65c7ab1a4c424c689e345624 0.0s done
+#32 exporting config sha256:42fce6ffb52a8815b9db69b144d8dab02c708057a0a081647603fd1ade20b490 0.0s done
+#32 exporting attestation manifest sha256:11674b6ba028b12388fed0ff238d8a3949194cc3e29bc87ed578418fa4661793
+#32 exporting attestation manifest sha256:11674b6ba028b12388fed0ff238d8a3949194cc3e29bc87ed578418fa4661793 0.1s done
+#32 exporting manifest list sha256:a288a84507a665e3302c49ca20e9db4406ae58481c9a3c97306673878b1ffa3a 0.0s done
+#32 naming to docker.io/library/team11-c-startup-20261030-api:latest
+#32 naming to docker.io/library/team11-c-startup-20261030-api:latest 0.0s done
+#32 unpacking to docker.io/library/team11-c-startup-20261030-api:latest
+#32 unpacking to docker.io/library/team11-c-startup-20261030-api:latest 0.6s done
+#32 DONE 1.3s
+
+#33 [worker] exporting to image
+#33 exporting layers 0.4s done
+#33 exporting manifest sha256:edf3c86b6c79a067ebeae7066fd69c7b79c67720e5dda1ed2f235a08f8b3c985 0.0s done
+#33 exporting config sha256:72f8bc88ed08d51e70cda226482ff0bae4fd97b4dbc6690f310172ed18132ae0 0.0s done
+#33 exporting attestation manifest sha256:b13962e413fb747f2ce751ef80a7ed30cb8ca8e98dbe57f60b83b8989a267434 0.0s done
+#33 exporting manifest list sha256:ef049764ab0170e3911d6540b11fb496bd081f969b58b74cba21cac2ef65d81b 0.0s done
+#33 naming to docker.io/library/team11-c-startup-20261030-worker:latest 0.0s done
+#33 unpacking to docker.io/library/team11-c-startup-20261030-worker:latest 0.6s done
+#33 DONE 1.3s
+
+#34 [ai] exporting to image
+#34 exporting layers 0.4s done
+#34 exporting manifest sha256:1e6e41b96150fbc468eee06370c13e2635f94958376e48444224fa12d78356e7 0.0s done
+#34 exporting config sha256:d98d4df7be02d9cb322571a938ed7f1d4e519704d17f6588107e189e5a463319 0.0s done
+#34 exporting attestation manifest sha256:8c502be296f497a99e1b396a77c9a499c2dacd23eb685adeac9225bc9bbc5a03 0.0s done
+#34 exporting manifest list sha256:50927233832c5fd2f7ef697ff6b41347e20ccc234a631c767856e75b57aad436 0.0s done
+#34 naming to docker.io/library/team11-c-startup-20261030-ai:latest 0.0s done
+#34 unpacking to docker.io/library/team11-c-startup-20261030-ai:latest 0.6s done
+#34 DONE 1.3s
+
+#31 [frontend build 6/6] RUN npm run build
+#31 ...
+
+#35 [api] resolving provenance for metadata file
+#35 ...
+
+#36 [worker] resolving provenance for metadata file
+#36 DONE 0.1s
+
+#37 [ai] resolving provenance for metadata file
+#37 DONE 0.0s
+
+#35 [api] resolving provenance for metadata file
+#35 DONE 0.1s
+
+#31 [frontend build 6/6] RUN npm run build
+#31 9.257 ✓ 4919 modules transformed.
+#31 9.774 rendering chunks...
+#31 9.810 computing gzip size...
+#31 9.874 dist/index.html                   0.48 kB │ gzip:   0.31 kB
+#31 9.874 dist/assets/index-76PDh16A.css   47.61 kB │ gzip:   9.68 kB
+#31 9.874 dist/assets/index-D3FtQ4fg.js   362.58 kB │ gzip: 111.64 kB
+#31 9.878 ✓ built in 8.41s
+#31 DONE 10.0s
+
+#38 [frontend runtime 2/3] COPY nginx.conf /etc/nginx/conf.d/default.conf
+#38 CACHED
+
+#39 [frontend runtime 3/3] COPY --from=build /app/dist /usr/share/nginx/html
+#39 DONE 0.0s
+
+#40 [frontend] exporting to image
+#40 exporting layers 0.1s done
+#40 exporting manifest sha256:c80781904b3982dded3cd1d6ed63eaa11621907a89141a0d419f1e9267206049 0.0s done
+#40 exporting config sha256:2bb8d7a919b476b3aff143539cce2259fcc8f8dce5511cc9fd594ed184a15fb7 0.0s done
+#40 exporting attestation manifest sha256:f76859d8e3b2f4219fb33b69076d585b0d2ca73bc5810af85bfbc0a7561496ec 0.0s done
+#40 exporting manifest list sha256:2dd9dbccea0b9c529bd4595c283634c31d6094f331a167479c7b640183fb7eda 0.0s done
+#40 naming to docker.io/library/team11-c-startup-20261030-frontend:latest done
+#40 unpacking to docker.io/library/team11-c-startup-20261030-frontend:latest 0.0s done
+#40 DONE 0.2s
+
+#41 [frontend] resolving provenance for metadata file
+#41 DONE 0.0s
+Open http://127.0.0.1:13000/select to see preparation progress.
+[checking_model] Checking the pinned local model files.
+[verifying] 4.2% Verifying all model files against the pinned SHA-256 hashes.
+[verifying] 10.6% Verifying all model files against the pinned SHA-256 hashes.
+[verifying] 17.0% Verifying all model files against the pinned SHA-256 hashes.
+[verifying] 22.2% Verifying all model files against the pinned SHA-256 hashes.
+[verifying] 27.7% Verifying all model files against the pinned SHA-256 hashes.
+[verifying] 34.0% Verifying all model files against the pinned SHA-256 hashes.
+[verifying] 40.5% Verifying all model files against the pinned SHA-256 hashes.
+[verifying] 45.7% Verifying all model files against the pinned SHA-256 hashes.
+[verifying] 51.6% Verifying all model files against the pinned SHA-256 hashes.
+[verifying] 57.6% Verifying all model files against the pinned SHA-256 hashes.
+[verifying] 63.9% Verifying all model files against the pinned SHA-256 hashes.
+[verifying] 70.1% Verifying all model files against the pinned SHA-256 hashes.
+[verifying] 77.1% Verifying all model files against the pinned SHA-256 hashes.
+[verifying] 83.0% Verifying all model files against the pinned SHA-256 hashes.
+[verifying] 89.0% Verifying all model files against the pinned SHA-256 hashes.
+[verifying] 94.6% Verifying all model files against the pinned SHA-256 hashes.
+[loading] Loading the verified model on the local CPU.
+[warming_up] Running local query and document inference to warm up the model.
+[ready] 100.0% Local AI is ready. Model integrity and warm-up checks passed.

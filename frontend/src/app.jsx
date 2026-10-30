@@ -16,6 +16,7 @@ import { useSearch } from "./lib/use-search.js";
 import { RelationsPage } from "./relations-page.jsx";
 import { RescanControl } from "./rescan-control.jsx";
 import { RetryJobControl } from "./retry-job-control.jsx";
+import { SetupProgress } from "./setup-progress.jsx";
 
 const adapter = createAdapter();
 
@@ -138,6 +139,7 @@ function Shell({ children, activeLabel, activeNav, inspector, rootId }) {
       </header>
       <main className="page-wrap" id="main-content">
         {adapter.mode === "mock" && <div className="notice notice-info" role="note">SIMULATED CONTRACT DATA — not real backend, parser, model, or product acceptance evidence.</div>}
+        <SetupProgress adapter={adapter} />
         {children}
       </main>
       <aside className={"inspector-pane " + (inspector ? "has-selection" : "")} aria-label="Context inspector">
