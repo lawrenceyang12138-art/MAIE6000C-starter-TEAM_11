@@ -13,6 +13,7 @@ from pathlib import Path
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import select
+from sqlalchemy.engine import make_url
 
 from services.common.config import Settings
 from services.common.db import make_engine, make_session_factory
@@ -177,12 +178,19 @@ def main() -> None:
         try:
             validate_report_destination(
                 args.output,
-                protected_files=[args.gold, args.fixture]
+                protected_files=[args.gold, args.fixture,
+                    REPO / "submissions/week07/gold-queries.json",
+                    REPO / "submissions/week07/gold-queries.freeze.json"]
                 + ([args.manifest] if args.manifest else [])
                 + ([args.freeze] if args.freeze else []),
                 source_directories=[REPO / "fixtures", REPO / "work/team-pdf-corpus"]
                 + [Path(value) for value in Settings(_env_file=None).source_mounts.values()],
             )
+            database = make_url(args.database_url)
+            if (database.get_backend_name() == "sqlite"
+                    and database.database not in (None, ":memory:")):
+                if args.output.resolve() == Path(database.database).resolve():
+                    raise ValueError("output_path_conflict: report would overwrite its database")
             report = backfill_page_metadata(args.database_url, args.root_id, args.version_id)
         except ValueError as exc:
             parser.error(str(exc))

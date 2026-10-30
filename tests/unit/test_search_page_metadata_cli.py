@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import sqlite3
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -212,6 +214,46 @@ def test_report_inside_configured_source_mount_is_refused_before_database_access
     assert error.value.code == 2
     assert "output_path_inside_source" in capsys.readouterr().err
     assert not output.exists()
+
+
+@pytest.mark.parametrize("collision", ["team_gold", "team_freeze", "sqlite_database"])
+def test_report_cannot_overwrite_team_answers_freeze_or_database(
+    tmp_path, monkeypatch, capsys, collision,
+):
+    database = tmp_path / "protected.db"
+    with sqlite3.connect(database) as connection:
+        connection.execute("CREATE TABLE sentinel (value TEXT NOT NULL)")
+        connection.execute("INSERT INTO sentinel VALUES ('preserve database bytes')")
+    protected = {
+        "team_gold": REPO / "submissions/week07/gold-queries.json",
+        "team_freeze": REPO / "submissions/week07/gold-queries.freeze.json",
+        "sqlite_database": database,
+    }
+    original_bytes = {name: path.read_bytes() for name, path in protected.items()}
+    original_hashes = {
+        name: hashlib.sha256(content).hexdigest() for name, content in original_bytes.items()
+    }
+    output = protected[collision]
+    # An alternate --gold must not bypass the fixed team-answer protections.
+    output_alias = str(output.parent) + os.sep + "." + os.sep + output.name
+    monkeypatch.setattr(sys, "argv", [
+        "search_tools", "page-metadata", "--root-id", "scope-must-not-be-opened",
+        "--database-url", f"sqlite:///{database}", "--output", output_alias,
+        "--gold", str(tmp_path / "alternate-gold.json"),
+    ])
+    for name in (
+        "make_engine", "backfill_page_metadata", "prepare_version_page_metadata",
+        "LocalPplxEmbeddingBackend", "HTTPEmbeddingBackend",
+    ):
+        monkeypatch.setattr(search_tools, name, _forbid_work)
+    with pytest.raises(SystemExit) as error:
+        search_tools.main()
+    assert error.value.code == 2
+    assert "output_path_conflict" in capsys.readouterr().err
+    for name, path in protected.items():
+        current = path.read_bytes()
+        assert current == original_bytes[name]
+        assert hashlib.sha256(current).hexdigest() == original_hashes[name]
 
 
 def test_real_cli_preserves_evidence_and_reports_changed_source_separately(
