@@ -34,6 +34,41 @@ def test_prepare_token_index_cli_adds_only_derived_storage_without_loading_ai(db
     assert set(inspect(engine).get_table_names()) - before == {ChunkTokenIndex.__tablename__}
 
 
+def test_seed_then_evaluate_uses_real_fixture_sources(db_session, tmp_path):
+    fixture_root = tmp_path / "search-fixture-sources"
+    gold = json.loads((REPO / "fixtures/search/gold-queries.json").read_text(encoding="utf-8"))
+    gold["queries"] = [
+        query for query in gold["queries"] if query["kind"] == "keyword"
+    ]
+    gold_path = tmp_path / "keyword-gold.json"
+    gold_path.write_text(json.dumps(gold), encoding="utf-8")
+    output = tmp_path / "evaluation.json"
+    database_url = str(db_session.get_bind().url)
+
+    seeded = subprocess.run([
+        sys.executable, "-m", "scripts.search_tools", "seed",
+        "--database-url", database_url,
+        "--fixture", str(REPO / "fixtures/search/mock-chunks.json"),
+        "--fixture-root", str(fixture_root),
+        "--backend", "off",
+    ], cwd=REPO, capture_output=True, text=True, encoding="utf-8", check=False, timeout=60)
+    assert seeded.returncode == 0, seeded.stderr
+
+    evaluated = subprocess.run([
+        sys.executable, "-m", "scripts.search_tools", "evaluate",
+        "--database-url", database_url,
+        "--fixture", str(REPO / "fixtures/search/mock-chunks.json"),
+        "--fixture-root", str(fixture_root),
+        "--gold", str(gold_path), "--backend", "off", "--output", str(output),
+    ], cwd=REPO, capture_output=True, text=True, encoding="utf-8", check=False, timeout=60)
+    assert evaluated.returncode == 0, evaluated.stderr
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["summary"]["keyword_top1"] == "5/5"
+    assert report["summary"]["evidence_failures"] == 0
+    assert report["summary"]["source_diagnostics"] == 0
+    assert report["evaluation_valid"]
+
+
 @pytest.mark.parametrize(
     "changed_input,code", [
         ("gold", "frozen_gold_hash_mismatch"),

@@ -15,7 +15,10 @@ Three things matter here:
    version was created with, the bytes on disk are no longer the version we
    were asked to process, so the chunks are discarded rather than stored
    against the wrong content.
-3. **Anything else propagates.** A database outage is not a property of the
+3. **Relations are part of a successful parse.** Chunks, rule-based entity
+   candidates, their source evidence and the `basic_ready` result commit
+   together. An incomplete relation batch must not look like a usable document.
+4. **Anything else propagates.** A database outage is not a property of the
    file, so it is not swallowed here; the worker decides how to retry.
 """
 
@@ -34,7 +37,8 @@ from services.parsing.pdf import (
     UnsupportedDocument,
     extract_document,
 )
-from services.parsing.persist import persist_chunks
+from services.parsing.persist import persist_chunks, persist_relations
+from services.parsing.relations import candidate_relations
 
 # Stamped onto every version this handler processes, so chunks can be traced
 # back to the parser that produced them. Bump it when the parsing behaviour
@@ -85,7 +89,16 @@ def handle_extract_file(db: Session, version_id: str, source_path: str | Path) -
             )
 
         chunks = chunk_document(document)
-        persist_chunks(db, version_id, chunks)
+        # Chunks, rule candidates and the final ready status form one
+        # transaction. A relation persistence failure must not publish a
+        # half-built parse that looks complete to the worker or API.
+        persist_chunks(db, version_id, chunks, commit=False)
+        persist_relations(
+            db,
+            version_id,
+            candidate_relations(chunks),
+            commit=False,
+        )
 
         version = db.get(FileVersion, version_id)
         if version is None:

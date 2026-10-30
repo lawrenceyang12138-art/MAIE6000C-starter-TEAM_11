@@ -40,11 +40,12 @@ proposed in the shared contract and the executable chain in this branch.
 The PPLX model uses C's separate `ChunkTokenIndex` sidecar. It stores token
 matrices, model ID/revision, token dimensions/count and source-text fingerprint.
 The original shared `vector(384)` column is preserved and unused by the active
-model. `search_tools migrate` runs shared migrations before calling
-`prepare_search_schema`; `search_tools prepare-token-index` adds only C's derived
-table to an existing canonical database. A owns rollout and any shared migration
-integration. Existing E5 dense vectors require re-indexing with PPLX and cannot
-be used as compatible semantic evidence.
+model. Shared migration `20261030_0005`, following A's `20261029_0004`, creates
+both C sidecars. `search_tools migrate` runs the same Alembic chain and then calls
+the idempotent `prepare_search_schema` compatibility helper;
+`search_tools prepare-token-index` remains available for databases that were
+created before the sidecar migration. Existing E5 dense vectors require
+re-indexing with PPLX and cannot be used as compatible semantic evidence.
 
 `embed_version(db, version_id, backend)` creates keyword sidecars before calling
 the embedding backend. It returns `version_id`, `chunk_count`, `embedded_count`,
@@ -173,6 +174,6 @@ the existing vector-recovery command. Public fields and PPLX inputs/weights stay
 unchanged. Compare `pplx_only` with `pplx_page_navigation_v1` separately in
 `submissions/week07/evidence/C/20261030-page-navigation/`; historical pure-model
 3/5 and B's pending review remain visible. A must integrate C's new
-`version_page_search_metadata` table into shared migrations and service
-preparation. The existing `prepare-token-index` command explicitly creates this
-table and token storage meanwhile; search performs no implicit schema writes.
+`version_page_search_metadata` table through migration `20261030_0005`. The
+`prepare-token-index` command remains an idempotent compatibility path for older
+databases; search performs no implicit schema writes.

@@ -20,10 +20,11 @@ from services.search.embeddings import (
     HTTPEmbeddingBackend,
     LocalPplxEmbeddingBackend,
 )
-from services.search.indexing import embed_version, index_document
+from services.search.indexing import embed_version, index_document as _index_document
 from services.search.retrieval import search_chunks
 from services.search.text import MODEL_ID, TOKEN_DIMENSIONS
 from services.search.token_store import ChunkTokenIndex
+from tests.support.search import materialize_search_source
 
 
 class FixedBackend:
@@ -32,6 +33,12 @@ class FixedBackend:
 
     def embed(self, texts, kind="passage"):
         return [[[1.0] + [0.0] * (TOKEN_DIMENSIONS - 1)] for _ in texts]
+
+
+def index_document(db, *args, **kwargs):
+    version = _index_document(db, *args, **kwargs)
+    materialize_search_source(db, version)
+    return version
 
 
 def add_document(db, file_id="document", **kwargs):

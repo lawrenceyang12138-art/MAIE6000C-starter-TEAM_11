@@ -13,12 +13,17 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from services.common.models import (
+    AuthorizedRoot,
     Entity,
+    FileRecord,
+    FileVersion,
     RelationshipEvidence,
     Review,
     ReviewDecision,
+    RootStatus,
     SourceChunk,
 )
+from services.parsing.evidence import SourceUnavailable, read_evidence
 from services.parsing import graph
 from services.parsing.chunking import Chunk, chunk_document
 from services.parsing.graph import (
@@ -43,6 +48,10 @@ FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "relations"
 def _version_with_relations(db: Session, make_file_version) -> str:
     real_hash, _ = file_identity(FIXTURES / "entities.pdf")
     version_id = make_file_version(sha256=real_hash)
+    version = db.get(FileVersion, version_id)
+    file_record = db.get(FileRecord, version.file_id)
+    file_record.current_version_id = version_id
+    db.commit()
     chunks = chunk_document(extract_document(FIXTURES / "entities.pdf"))
     persist_chunks(db, version_id, chunks)
     persist_relations(db, version_id, candidate_relations(chunks))
@@ -71,10 +80,15 @@ def test_relations_are_read_back_with_their_evidence(
     for view in views:
         assert view.quote, "a relation was served without its evidence"
         assert view.page_number is not None
+        assert getattr(view, "chunk_id", None), "relation lacks its direct evidence chunk"
         assert view.origin == "rule"
         assert view.producer_revision
         assert view.decision is None
         assert view.decision_revision == 0
+        evidence = read_evidence(db_session, view.chunk_id)
+        assert evidence.version_id == version_id
+        assert evidence.page_number == view.page_number
+        assert view.quote.split()[0].casefold() in evidence.text.casefold()
 
 
 def test_a_relation_whose_passage_was_replaced_says_so(
@@ -209,6 +223,7 @@ def test_evidence_from_another_version_is_not_shown_as_this_relation(
     }
     assert refreshed[view.relationship_id].evidence_missing is True
     assert refreshed[view.relationship_id].quote == ""
+    assert refreshed[view.relationship_id].chunk_id is None
     assert refreshed[view.relationship_id].page_number is None
 
 
@@ -240,6 +255,86 @@ def test_evidence_whose_chunk_text_changed_is_not_shown(
     assert refreshed[view.relationship_id].quote == ""
 
 
+@pytest.mark.parametrize("mismatch", ["quote", "offset", "entity"])
+def test_relation_evidence_must_match_quote_offsets_and_entity(
+    db_session: Session, make_file_version, mismatch: str
+):
+    version_id = _version_with_relations(db_session, make_file_version)
+    view = read_relationships(db_session, version_id)[0]
+    evidence = db_session.execute(
+        select(RelationshipEvidence).where(
+            RelationshipEvidence.relationship_id == view.relationship_id
+        )
+    ).scalars().first()
+    assert evidence is not None
+
+    if mismatch == "quote":
+        evidence.quote = "A quote that contains no matching entity"
+    elif mismatch == "offset":
+        evidence.start_offset += 1
+    else:
+        entity = db_session.execute(
+            select(Entity).where(Entity.display_label == view.label)
+        ).scalars().one()
+        entity.display_label = "Different Entity"
+        entity.normalized_label = "different entity"
+    db_session.commit()
+
+    refreshed = {
+        candidate.relationship_id: candidate
+        for candidate in read_relationships(db_session, version_id)
+    }[view.relationship_id]
+    assert refreshed.evidence_missing is True
+    assert refreshed.chunk_id is None
+    assert refreshed.quote == ""
+
+
+def test_historical_version_relations_are_refused(
+    db_session: Session, make_file_version
+):
+    version_id = _version_with_relations(db_session, make_file_version)
+    version = db_session.get(FileVersion, version_id)
+    file_record = db_session.get(FileRecord, version.file_id)
+    file_record.current_version_id = "11111111-1111-1111-1111-111111111111"
+    db_session.commit()
+
+    with pytest.raises(SourceUnavailable) as excinfo:
+        read_relationships(db_session, version_id)
+
+    assert excinfo.value.reason_code == "version_superseded"
+
+
+def test_revoked_root_relations_are_refused(
+    db_session: Session, make_file_version
+):
+    version_id = _version_with_relations(db_session, make_file_version)
+    version = db_session.get(FileVersion, version_id)
+    file_record = db_session.get(FileRecord, version.file_id)
+    root = db_session.get(AuthorizedRoot, file_record.root_id)
+    root.status = RootStatus.REVOKED.value
+    db_session.commit()
+
+    with pytest.raises(SourceUnavailable) as excinfo:
+        read_relationships(db_session, version_id)
+
+    assert excinfo.value.reason_code == "root_revoked"
+
+
+def test_modified_source_relations_are_refused(
+    db_session: Session, make_file_version
+):
+    from services.scan.handler import resolve_source_path
+
+    version_id = _version_with_relations(db_session, make_file_version)
+    source_path = resolve_source_path(db_session, version_id, for_write=False)
+    source_path.write_bytes(source_path.read_bytes() + b"external edit")
+
+    with pytest.raises(SourceUnavailable) as excinfo:
+        read_relationships(db_session, version_id)
+
+    assert excinfo.value.reason_code == "source_changed"
+
+
 def test_first_review_is_revision_one(db_session: Session, make_file_version):
     version_id = _version_with_relations(db_session, make_file_version)
     view = read_relationships(db_session, version_id)[0]
@@ -256,6 +351,53 @@ def test_first_review_is_revision_one(db_session: Session, make_file_version):
     refreshed = {v.relationship_id: v for v in read_relationships(db_session, version_id)}
     assert refreshed[view.relationship_id].decision == "confirmed"
     assert refreshed[view.relationship_id].decision_revision == 1
+
+
+def test_review_refuses_a_modified_source(
+    db_session: Session, make_file_version
+):
+    from services.scan.handler import resolve_source_path
+
+    version_id = _version_with_relations(db_session, make_file_version)
+    view = read_relationships(db_session, version_id)[0]
+    source_path = resolve_source_path(db_session, version_id, for_write=False)
+    source_path.write_bytes(source_path.read_bytes() + b"external edit")
+
+    with pytest.raises(SourceUnavailable) as excinfo:
+        record_review(
+            db_session,
+            view.relationship_id,
+            ReviewDecision.CONFIRMED.value,
+            expected_revision=0,
+        )
+
+    assert excinfo.value.reason_code == "source_changed"
+    assert db_session.execute(select(Review)).scalars().all() == []
+
+
+def test_review_refuses_a_relation_without_valid_evidence(
+    db_session: Session, make_file_version
+):
+    version_id = _version_with_relations(db_session, make_file_version)
+    view = read_relationships(db_session, version_id)[0]
+    for evidence in db_session.execute(
+        select(RelationshipEvidence).where(
+            RelationshipEvidence.relationship_id == view.relationship_id
+        )
+    ).scalars():
+        db_session.delete(evidence)
+    db_session.commit()
+
+    with pytest.raises(ReviewRefused) as excinfo:
+        record_review(
+            db_session,
+            view.relationship_id,
+            ReviewDecision.CONFIRMED.value,
+            expected_revision=0,
+        )
+
+    assert excinfo.value.reason_code == "evidence_missing"
+    assert db_session.execute(select(Review)).scalars().all() == []
 
 
 def test_two_reviewers_writing_the_same_revision_collide_cleanly(

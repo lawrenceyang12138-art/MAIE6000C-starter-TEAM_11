@@ -18,6 +18,7 @@ from services.search.evaluation import evaluate_queries
 from services.search.evaluation_sources import resolve_expected
 from services.search.text import MODEL_ID, MODEL_REVISION, TOKEN_DIMENSIONS
 from services.search.token_store import ChunkTokenIndex, text_fingerprint
+from tests.support.search import materialize_search_source
 
 
 class FixedBackend:
@@ -31,7 +32,7 @@ class FixedBackend:
 @pytest.fixture()
 def corpus(db_session):
     db = db_session
-    root = AuthorizedRoot(mount_id="evaluation", relative_path=".", status="active")
+    root = AuthorizedRoot(mount_id="search-fixtures", relative_path=".", status="active")
     db.add(root)
     db.flush()
     files = []
@@ -66,6 +67,7 @@ def corpus(db_session):
                 token_vectors=FixedBackend().embed([text])[0], text_sha256=text_fingerprint(text),
             ))
             chunks.append(chunk)
+        materialize_search_source(db, version)
         alias = f"file-{len(files) + 1:03}"
         version_alias = f"version-{len(files) + 1:03}-v1"
         expected = {
@@ -74,7 +76,8 @@ def corpus(db_session):
         }
         manifest_record = {
             "file_id": alias, "version_id": version_alias, "relative_path": path,
-            "sha256": sha, "page_count": max(pages), "root_id": "frozen-root-alias",
+            "sha256": version.content_sha256, "page_count": max(pages),
+            "root_id": "frozen-root-alias",
         }
         files.append(manifest_record)
         db.flush()

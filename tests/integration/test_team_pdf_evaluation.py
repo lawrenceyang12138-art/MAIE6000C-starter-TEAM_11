@@ -22,7 +22,6 @@ from scripts.evaluate_team_pdf import (
 )
 from services.common.config import Settings
 from services.common.models import ChunkSearchIndex, FileRecord, SourceChunk
-from services.parsing.evidence import read_evidence
 from services.search.text import (
     MAX_DOCUMENT_MODEL_TOKENS,
     MAX_QUERY_MODEL_TOKENS,
@@ -60,12 +59,9 @@ def test_team_pdf_scan_parse_index_uses_real_uuids_and_source_evidence(db_sessio
     assert UUID(report["pipeline"]["root_id"])
     for source in report["pipeline"]["files"]:
         assert UUID(source["file_id"]) and UUID(source["version_id"])
-    for chunk in db_session.scalars(select(SourceChunk)):
-        evidence = read_evidence(db_session, chunk.id)
-        assert UUID(evidence.chunk_id)
-        assert evidence.version_id == chunk.version_id
-        assert evidence.page_number == chunk.page_number
-        assert evidence.text == chunk.text
+    assert report["on_disk_evidence"]
+    assert all(item["readable"] for item in report["on_disk_evidence"])
+    assert report["summary"]["on_disk_evidence_failures"] == 0
     original_chunks = {
         (chunk.version_id, chunk.ordinal): chunk.id
         for chunk in db_session.scalars(select(SourceChunk))

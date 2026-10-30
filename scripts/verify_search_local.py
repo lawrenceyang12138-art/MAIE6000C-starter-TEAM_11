@@ -13,6 +13,7 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
+from scripts.search_tools import fixture_source_mounts
 from services.api.app.main import app, get_embedding_backend
 from services.common.config import Settings, get_settings
 from services.common.db import get_db, make_engine, make_session_factory
@@ -25,6 +26,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--database-url", default="sqlite:///work/search-demo.db")
     parser.add_argument("--model-path", default=MODEL_DIRECTORY)
+    parser.add_argument(
+        "--fixture-root",
+        type=Path,
+        default=Path("work/search-fixtures"),
+    )
     parser.add_argument("--output", type=Path, default=Path("work/offline-check.json"))
     args = parser.parse_args()
     gold = json.loads(Path("fixtures/search/gold-queries.json").read_text(encoding="utf-8"))
@@ -32,7 +38,7 @@ def main() -> None:
     backend = LocalPplxEmbeddingBackend(args.model_path)
     settings = Settings(_env_file=None)
     try:
-        with make_session_factory(engine)() as db:
+        with fixture_source_mounts(args.fixture_root), make_session_factory(engine)() as db:
             original_connect = socket.socket.connect
             original_connect_ex = socket.socket.connect_ex
             original_create_connection = socket.create_connection

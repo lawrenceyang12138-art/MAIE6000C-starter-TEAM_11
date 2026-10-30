@@ -1,8 +1,8 @@
 # Team 11 W7 Shared Integration Contract
 
-Version: **v1.0 release candidate**
+Version: **v1.1 relation-evidence closure**
 
-Date: 2026-10-17
+Date: 2026-10-30
 
 Branches: `w7-scan-dispatch` (A), `w7-parsing` (B),
 `feat/c-search-model-evaluation` (C), `Role_D` (D)
@@ -322,7 +322,10 @@ Case path. A failed `embed_file` job must not delete parsed source text.
 
 1. Scanning creates `files`, `file_versions`, and `extract_file` jobs in one
    transaction.
-2. B's `handle_extract_file()` stores chunks and the version result.
+2. B's `handle_extract_file()` stores chunks, rule-based relation candidates and
+   their evidence, then commits the version result. These writes share the final
+   parse transaction; a relation persistence failure records `failed` instead of
+   publishing a partial `basic_ready` version.
 3. A creates or continues search-index jobs only after source text is stored
    successfully.
 4. C prepares keyword indexes before attempting embeddings.
@@ -630,13 +633,18 @@ Refusal rules:
 | `chunk_not_found` | 404 | The chunk does not exist |
 | `file_missing` | 404 | The file record or on-disk source is unavailable |
 | `root_revoked` | 403 | The directory is being revoked or has been revoked |
+| `path_out_of_scope` | 403 | The stored path no longer resolves safely inside its configured mount |
 | `version_superseded` | 409 | The chunk belongs to a historical version |
+| `source_changed` | 409 | The on-disk bytes no longer match the indexed SHA-256 or byte size |
 | `no_current_version` | 503 | Processing has not established the current version |
 
 Relation evidence must belong to the relation's declared version. Offsets must
 fall within the chunk text, and the quote must contain the corresponding entity
 label. Read paths must repeat these checks; an existing foreign-key target alone
-is insufficient proof of valid evidence.
+is insufficient proof of valid evidence. Every relation read and review write
+must also re-resolve the authorized source path and verify its current version,
+root status, SHA-256 and byte size. `active` and `paused` roots remain readable;
+`revoking` and `revoked` roots do not.
 
 ### 6.6 Relations and review
 
@@ -650,6 +658,7 @@ Returns at most 20 candidates. Each candidate must include:
   "entity_type": "person",
   "label": "Chen",
   "relation_type": "mentions",
+  "chunk_id": "uuid",
   "page_number": 3,
   "quote": "supported text",
   "evidence_missing": false,
@@ -658,6 +667,12 @@ Returns at most 20 candidates. Each candidate must include:
   "corrected_entity_id": null
 }
 ```
+
+`chunk_id` is the first evidence passage that still matches the relation's
+version, entity, offsets and quote. It can be passed directly to
+`GET /evidence/{chunk_id}`. For malformed or missing evidence,
+`evidence_missing=true`, `quote=""`, and `chunk_id=null`; review writes for that
+relation return `409 evidence_missing`.
 
 #### `POST /relations/{relationship_id}/reviews`
 
@@ -675,8 +690,13 @@ Rules:
 
 - `confirmed/rejected` must not include `corrected_entity_id`.
 - `corrected` requires an existing entity ID.
+- A successful append returns HTTP 200 with
+  `{relationship_id, decision, decision_revision}`, where the new revision is
+  the prior revision plus one.
 - A mismatched `expected_revision` returns `409 review_conflict`.
 - Append a new row for every decision; preserve review history.
+- The review write revalidates the relation's current version, authorization,
+  source identity and at least one valid evidence row before appending.
 
 ---
 
@@ -691,20 +711,25 @@ Keep B's existing chain:
   -> c2d1ac693a0e
   -> 318ab5be35e0
   -> 445f908b73b4
-  -> C: add chunk_search_index
+  -> 20261015_0002: add chunk_search_index
+  -> 20261029_0003: add file_presence_reason
+  -> 20261029_0004: add jobs.error_code
+  -> 20261030_0005: add token and physical-page search sidecars
 ```
 
-C's incremental migration must use:
+The integrated token/page migration uses:
 
 ```python
-revision = "20261017_0003"
-down_revision = "445f908b73b4"
+revision = "20261030_0005"
+down_revision = "20261029_0004"
 ```
 
-It creates only:
+The complete search integration creates:
 
 - the `vector` extension on PostgreSQL;
 - `chunk_search_index`;
+- `chunk_token_search_index` with JSONB token matrices on PostgreSQL;
+- `version_page_search_metadata` with identity and page-count constraints;
 - the corresponding foreign keys and GIN index.
 
 It must not create `source_files`, `source_versions`, or `source_chunks` again.

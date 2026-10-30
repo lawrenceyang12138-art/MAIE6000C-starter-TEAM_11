@@ -12,7 +12,7 @@ from services.common.models import ChunkSearchIndex, SourceChunk
 from services.common.schemas import SearchRequest
 from services.parsing.evidence import read_evidence
 from services.search.embeddings import EmbeddingUnavailable, late_interaction_score
-from services.search.indexing import embed_version, index_document
+from services.search.indexing import embed_version, index_document as _index_document
 from services.search.retrieval import search_chunks
 from services.search.text import DIMENSIONS, MODEL_ID, MODEL_REVISION, TOKEN_DIMENSIONS
 from services.search.token_store import (
@@ -23,6 +23,7 @@ from services.search.token_store import (
     text_fingerprint,
     token_index_available,
 )
+from tests.support.search import materialize_search_source
 
 
 def token(*coordinates):
@@ -40,6 +41,12 @@ class HandConstructedBackend:
             else [token(1 / math.sqrt(2), 1 / math.sqrt(2))]
             for text in texts
         ]
+
+
+def index_document(db, *args, **kwargs):
+    version = _index_document(db, *args, **kwargs)
+    materialize_search_source(db, version)
+    return version
 
 
 def add_document(db, *, file_id="document", text="separate concepts", backend=None):

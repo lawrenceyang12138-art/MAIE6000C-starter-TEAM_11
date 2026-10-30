@@ -20,7 +20,9 @@ from services.parsing.evidence import (
     REASON_CHUNK_NOT_FOUND,
     REASON_FILE_MISSING,
     REASON_NO_CURRENT_VERSION,
+    REASON_PATH_OUT_OF_SCOPE,
     REASON_ROOT_REVOKED,
+    REASON_SOURCE_CHANGED,
     REASON_VERSION_SUPERSEDED,
     SourceUnavailable,
     read_evidence,
@@ -30,6 +32,7 @@ from services.parsing.graph import (
     REASON_CORRECTED_ENTITY_NOT_FOUND,
     REASON_CORRECTION_TARGET_NOT_ALLOWED,
     REASON_CORRECTION_WITHOUT_TARGET,
+    REASON_EVIDENCE_MISSING,
     REASON_INVALID_DECISION,
     REASON_RELATIONSHIP_NOT_FOUND,
     REASON_REVIEW_CONFLICT,
@@ -82,8 +85,43 @@ class ReviewResponse(BaseModel):
     decision_revision: int
 
 
+class RelationshipResponse(BaseModel):
+    relationship_id: str
+    entity_type: str
+    label: str
+    relation_type: str
+    kind: str
+    origin: str
+    producer_revision: str
+    chunk_id: str | None
+    page_number: int | None
+    quote: str
+    evidence_missing: bool
+    decision: str | None
+    corrected_entity_id: str | None
+    decision_revision: int
+
+
 def _reason(code: str, message: str) -> dict[str, str]:
     return reason(code, message)
+
+
+_SOURCE_ERROR_STATUS = {
+    REASON_CHUNK_NOT_FOUND: 404,
+    REASON_FILE_MISSING: 404,
+    REASON_ROOT_REVOKED: 403,
+    REASON_PATH_OUT_OF_SCOPE: 403,
+    REASON_VERSION_SUPERSEDED: 409,
+    REASON_SOURCE_CHANGED: 409,
+    REASON_NO_CURRENT_VERSION: 503,
+}
+
+
+def _source_error(exc: SourceUnavailable) -> HTTPException:
+    return HTTPException(
+        status_code=_SOURCE_ERROR_STATUS[exc.reason_code],
+        detail=_reason(exc.reason_code, exc.message),
+    )
 
 
 @router.get("/files", response_model=list[FileListItem])
@@ -139,17 +177,7 @@ def get_evidence(
     try:
         evidence = read_evidence(db, chunk_id)
     except SourceUnavailable as exc:
-        status_code = {
-            REASON_CHUNK_NOT_FOUND: 404,
-            REASON_FILE_MISSING: 404,
-            REASON_ROOT_REVOKED: 403,
-            REASON_VERSION_SUPERSEDED: 409,
-            REASON_NO_CURRENT_VERSION: 503,
-        }[exc.reason_code]
-        raise HTTPException(
-            status_code=status_code,
-            detail=_reason(exc.reason_code, exc.message),
-        ) from exc
+        raise _source_error(exc) from exc
 
     return EvidenceResponse(
         chunk_id=evidence.chunk_id,
@@ -191,17 +219,7 @@ def get_file_evidence(
     try:
         evidence_items = read_version_evidence(db, version_id)
     except SourceUnavailable as exc:
-        status_code = {
-            REASON_CHUNK_NOT_FOUND: 404,
-            REASON_FILE_MISSING: 404,
-            REASON_ROOT_REVOKED: 403,
-            REASON_VERSION_SUPERSEDED: 409,
-            REASON_NO_CURRENT_VERSION: 503,
-        }[exc.reason_code]
-        raise HTTPException(
-            status_code=status_code,
-            detail=_reason(exc.reason_code, exc.message),
-        ) from exc
+        raise _source_error(exc) from exc
 
     if not evidence_items:
         raise HTTPException(
@@ -222,7 +240,10 @@ def get_file_evidence(
     ]
 
 
-@router.get("/versions/{version_id}/relations")
+@router.get(
+    "/versions/{version_id}/relations",
+    response_model=list[RelationshipResponse],
+)
 def get_relations(
     version_id: str,
     db: Session = Depends(get_db),
@@ -233,6 +254,11 @@ def get_relations(
             detail=_reason("version_not_found", "No such file version"),
         )
 
+    try:
+        views = read_relationships(db, version_id)
+    except SourceUnavailable as exc:
+        raise _source_error(exc) from exc
+
     return [
         {
             "relationship_id": view.relationship_id,
@@ -242,6 +268,7 @@ def get_relations(
             "kind": view.kind,
             "origin": view.origin,
             "producer_revision": view.producer_revision,
+            "chunk_id": view.chunk_id,
             "page_number": view.page_number,
             "quote": view.quote,
             "evidence_missing": view.evidence_missing,
@@ -249,7 +276,7 @@ def get_relations(
             "corrected_entity_id": view.corrected_entity_id,
             "decision_revision": view.decision_revision,
         }
-        for view in read_relationships(db, version_id)
+        for view in views
     ]
 
 
@@ -272,11 +299,14 @@ def create_review(
             actor=payload.actor,
             corrected_entity_id=payload.corrected_entity_id,
         )
+    except SourceUnavailable as exc:
+        raise _source_error(exc) from exc
     except ReviewRefused as exc:
         status_code = {
             REASON_RELATIONSHIP_NOT_FOUND: 404,
             REASON_CORRECTED_ENTITY_NOT_FOUND: 404,
             REASON_REVIEW_CONFLICT: 409,
+            REASON_EVIDENCE_MISSING: 409,
             REASON_INVALID_DECISION: 422,
             REASON_CORRECTION_WITHOUT_TARGET: 422,
             REASON_CORRECTION_TARGET_NOT_ALLOWED: 422,

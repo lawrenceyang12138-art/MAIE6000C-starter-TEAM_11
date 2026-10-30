@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import hashlib
 import os
+import shutil
 import subprocess
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 
 from services.api.app.main import app
+from services.common.config import get_settings
 from services.common.db import Base, get_db, make_engine, make_session_factory
 from services.common.models import (
     AuthorizedRoot,
@@ -51,7 +55,16 @@ def make_directory_link():
 
 
 @pytest.fixture()
-def db_session(tmp_path):
+def db_session(tmp_path, monkeypatch):
+    source_root = tmp_path / "source"
+    monkeypatch.setattr(
+        get_settings(),
+        "source_mounts",
+        {
+            "corpus": str(source_root / "corpus"),
+            "search-fixtures": str(source_root / "search-fixtures"),
+        },
+    )
     database_url = f"sqlite:///{tmp_path / 'test.db'}"
     engine = make_engine(database_url)
     testing_session_factory = make_session_factory(engine)
@@ -84,21 +97,36 @@ def client(db_session):
 
 
 @pytest.fixture()
-def make_file_version(db_session):
+def make_file_version(db_session, monkeypatch):
     """Create the root -> file -> version chain a chunk row has to hang off.
 
-    Root paths are unique per mount, so the chain is keyed off the content hash
-    to keep the helper reusable for more than one version in a single test.
+    Every record is backed by a real temporary source file. Read paths now
+    verify the source identity on every access, so a database-only fixture
+    would no longer exercise the product boundary.
     """
+    settings = get_settings()
+    mount_root = Path(db_session.get_bind().url.database).parent / "source"
+    monkeypatch.setattr(settings, "source_mounts", {"corpus": str(mount_root)})
 
     def _make(
-        sha256: str = "a" * 64,
+        sha256: str | None = None,
         status: str = VersionStatus.DISCOVERED.value,
+        source_path: str | Path | None = None,
     ) -> str:
-        key = sha256[:8]
+        key = uuid4().hex
+        root_dir = mount_root / f"root-{key}"
+        root_dir.mkdir(parents=True)
+        source = root_dir / "invoice.pdf"
+        if source_path is None:
+            source.write_bytes(f"temporary evidence source {sha256 or key}".encode())
+        else:
+            shutil.copyfile(source_path, source)
+
+        source_bytes = source.read_bytes()
+        content_sha256 = hashlib.sha256(source_bytes).hexdigest()
         root = AuthorizedRoot(
-            mount_id=f"collection-{key}",
-            relative_path=f"reports-{key}",
+            mount_id="corpus",
+            relative_path=root_dir.name,
             status=RootStatus.ACTIVE.value,
         )
         db_session.add(root)
@@ -106,7 +134,7 @@ def make_file_version(db_session):
 
         file_record = FileRecord(
             root_id=root.id,
-            relative_path=f"reports-{key}/invoice.pdf",
+            relative_path=source.name,
             name="invoice.pdf",
             presence_status=FilePresence.PRESENT.value,
         )
@@ -115,8 +143,8 @@ def make_file_version(db_session):
 
         version = FileVersion(
             file_id=file_record.id,
-            content_sha256=sha256,
-            byte_size=1234,
+            content_sha256=content_sha256,
+            byte_size=len(source_bytes),
             status=status,
         )
         db_session.add(version)

@@ -94,10 +94,10 @@ the query-token count. This keeps the semantic channel comparable across query
 lengths for hybrid weighting. This implementation reads token matrices to score
 them; it does not claim pgvector ANN acceleration or large-corpus performance.
 
-`search_tools migrate` first runs the existing Alembic chain, then prepares the
-C-owned token table. For an already migrated canonical database, run
+`search_tools migrate` first runs the Alembic chain now ending in
+`20261030_0005`, which creates both C-owned sidecars, then calls the idempotent
+preparation helper. For an older canonical database, run
 `search_tools prepare-token-index`; that command creates derived storage only.
-A owns any later consolidation into shared migrations or service startup.
 
 Search accepts `active` or `paused` roots, present files, and the file's current
 version in `basic_ready` or `enriched`. Root and file filters further restrict the
@@ -183,9 +183,9 @@ Use a compatible environment if Anaconda base has another Python version.
 python -m pip install -e ".[dev,embeddings]"
 python -m scripts.search_tools download-model
 python -m scripts.search_tools migrate
-python -m scripts.search_tools seed
-python -m scripts.search_tools evaluate
-python -m scripts.verify_search_local
+python -m scripts.search_tools seed --fixture-root work/search-fixtures
+python -m scripts.search_tools evaluate --fixture-root work/search-fixtures
+python -m scripts.verify_search_local --fixture-root work/search-fixtures
 python -m scripts.verify_search_http
 python -m pytest -q tests/unit tests/integration -m "not postgres"
 python -m ruff check .
@@ -194,6 +194,13 @@ python -m ruff check .
 `download-model` requires network access during preparation. Existing verified
 model files can be reused for subsequent offline runs. Prepare `.env` without
 overwriting an existing file, then start Compose:
+
+`seed` writes deterministic source bytes for the hand-authored chunks under the
+isolated `--fixture-root`, sets their version SHA-256 and byte size from those
+bytes, and configures the `search-fixtures` mount through the production path
+resolver. `evaluate` and `verify_search_http` must use the same fixture root.
+These bytes are synthetic source-identity fixtures, not parsed PDF acceptance
+evidence, and do not bypass production evidence checks.
 
 ```cmd
 python -c "from pathlib import Path; p=Path('.env'); p.write_bytes(Path('.env.example').read_bytes()) if not p.exists() else None"
@@ -222,6 +229,6 @@ optional PPLX location layer, explicit schema/page-count preparation, scoped
 backfill, unchanged model parameters and separate pure-model/assisted evaluation.
 The historical pure PPLX semantic result stays 3/5; new results belong in
 `submissions/week07/evidence/C/20261030-page-navigation/`. B review and team
-threshold/corpus approval remain pending. C's new
-`version_page_search_metadata` sidecar is prepared explicitly alongside token
-storage; A owns consolidation into shared migrations and deployment.
+threshold/corpus approval remain pending. C's
+`version_page_search_metadata` and token-vector sidecars are now created by
+shared migration `20261030_0005`.

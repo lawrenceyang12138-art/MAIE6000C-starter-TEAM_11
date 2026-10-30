@@ -31,6 +31,7 @@ from services.parsing.evidence import (
     read_evidence,
 )
 from services.parsing.persist import persist_chunks
+from services.scan.handler import resolve_source_path
 
 
 def _ready_chunks(
@@ -62,14 +63,20 @@ def test_reading_a_current_passage_returns_it_with_its_citation(
     db_session: Session, make_file_version
 ):
     chunk_ids = _ready_chunks(db_session, make_file_version, "a" * 64, SIMPLE)
+    source_path = resolve_source_path(
+        db_session, _version_of(db_session, chunk_ids[0]), for_write=False
+    )
+    original_bytes = source_path.read_bytes()
 
     evidence = read_evidence(db_session, chunk_ids[1])
+    version = db_session.get(FileVersion, evidence.version_id)
 
     assert evidence.text == "the second passage"
     assert evidence.page_number == 2
     assert evidence.ordinal == 2
-    assert evidence.content_sha256 == "a" * 64
+    assert evidence.content_sha256 == version.content_sha256
     assert evidence.relative_path.endswith("invoice.pdf")
+    assert source_path.read_bytes() == original_bytes, "evidence reads must not write the source"
 
 
 def test_unknown_chunk_is_refused(db_session: Session):
@@ -166,6 +173,21 @@ def test_a_revoked_folder_stops_being_served(db_session: Session, make_file_vers
     assert excinfo.value.reason_code == REASON_ROOT_REVOKED
 
 
+def test_a_revoking_folder_stops_being_served(db_session: Session, make_file_version):
+    chunk_ids = _ready_chunks(db_session, make_file_version, "r" * 64, SIMPLE)
+
+    version = db_session.get(FileVersion, _version_of(db_session, chunk_ids[0]))
+    file_record = db_session.get(FileRecord, version.file_id)
+    root = db_session.get(AuthorizedRoot, file_record.root_id)
+    root.status = RootStatus.REVOKING.value
+    db_session.commit()
+
+    with pytest.raises(SourceUnavailable) as excinfo:
+        read_evidence(db_session, chunk_ids[0])
+
+    assert excinfo.value.reason_code == REASON_ROOT_REVOKED
+
+
 def test_a_paused_folder_keeps_existing_evidence_readable(
     db_session: Session, make_file_version
 ):
@@ -181,6 +203,36 @@ def test_a_paused_folder_keeps_existing_evidence_readable(
     evidence = read_evidence(db_session, chunk_ids[0])
 
     assert evidence.text == "the first passage"
+
+
+def test_a_source_modified_without_a_rescan_is_refused(
+    db_session: Session, make_file_version
+):
+    chunk_ids = _ready_chunks(db_session, make_file_version, "m" * 64, SIMPLE)
+    version_id = _version_of(db_session, chunk_ids[0])
+    source_path = resolve_source_path(db_session, version_id, for_write=False)
+
+    source_path.write_bytes(source_path.read_bytes() + b"\nnot a rescan\n")
+
+    with pytest.raises(SourceUnavailable) as excinfo:
+        read_evidence(db_session, chunk_ids[0])
+
+    assert excinfo.value.reason_code == "source_changed"
+
+
+def test_a_source_moved_without_a_rescan_is_refused(
+    db_session: Session, make_file_version
+):
+    chunk_ids = _ready_chunks(db_session, make_file_version, "n" * 64, SIMPLE)
+    version_id = _version_of(db_session, chunk_ids[0])
+    source_path = resolve_source_path(db_session, version_id, for_write=False)
+
+    source_path.unlink()
+
+    with pytest.raises(SourceUnavailable) as excinfo:
+        read_evidence(db_session, chunk_ids[0])
+
+    assert excinfo.value.reason_code == REASON_FILE_MISSING
 
 
 def test_ten_passages_resolve_to_the_page_they_were_stored_on(

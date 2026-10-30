@@ -117,6 +117,7 @@ def index_document(
     version_id: str | None = None,
     sha256: str | None = None,
     mime_type: str = "application/pdf",
+    byte_size: int | None = None,
     backend: EmbeddingBackend | None = None,
     commit: bool = False,
 ) -> FileVersion:
@@ -130,6 +131,8 @@ def index_document(
         raise ValueError("file identity, name and path are required")
     if version_number < 1:
         raise ValueError("version_number must be positive")
+    if byte_size is not None and (type(byte_size) is not int or byte_size < 0):
+        raise ValueError("byte_size must be a nonnegative integer")
 
     items: list[dict[str, object]] = []
     for position, item in enumerate(chunks):
@@ -214,7 +217,11 @@ def index_document(
         id=version_id or str(uuid.uuid4()),
         file_id=file_id,
         content_sha256=content_hash,
-        byte_size=sum(len(str(item["text"]).encode("utf-8")) for item in items),
+        byte_size=(
+            byte_size
+            if byte_size is not None
+            else sum(len(str(item["text"]).encode("utf-8")) for item in items)
+        ),
         status=VersionStatus.BASIC_READY.value,
     )
     db.add(version)

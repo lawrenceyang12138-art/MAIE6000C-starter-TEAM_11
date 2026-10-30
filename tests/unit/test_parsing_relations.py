@@ -90,6 +90,41 @@ def test_every_candidate_carries_page_and_quote():
         assert candidate.producer_revision == PRODUCER_REVISION
 
 
+def test_names_split_across_source_lines_keep_raw_offsets():
+    text = (
+        "The Alpha\nProject documents this result. "
+        "Dr. Jane\nDoe approved the design yesterday."
+    )
+    chunks = [Chunk(ordinal=1, page_number=1, text=text)]
+    candidates = candidate_relations(chunks)
+    by_type = {candidate.entity_type: candidate for candidate in candidates}
+
+    assert by_type[ENTITY_PROJECT].label == "Alpha Project"
+    assert by_type[ENTITY_PERSON].label == "Jane Doe"
+    for candidate in (by_type[ENTITY_PROJECT], by_type[ENTITY_PERSON]):
+        mention = text[candidate.start_offset : candidate.end_offset]
+        assert "\n" in mention
+        assert " ".join(mention.split()) == candidate.label
+        assert candidate.quote
+
+
+def test_relations_split_across_source_lines_persist(
+    db_session: Session, make_file_version
+):
+    version_id = make_file_version(sha256="4" * 64)
+    text = "The Alpha\nProject documents this result. Dr. Jane\nDoe approved it."
+    chunks = [Chunk(ordinal=1, page_number=1, text=text)]
+    persist_chunks(db_session, version_id, chunks)
+
+    written = persist_relations(
+        db_session,
+        version_id,
+        candidate_relations(chunks),
+    )
+
+    assert written >= 2
+
+
 def test_candidates_are_deduplicated_to_one_row_per_entity():
     chunks = _chunks()
     candidates = candidate_relations(chunks)

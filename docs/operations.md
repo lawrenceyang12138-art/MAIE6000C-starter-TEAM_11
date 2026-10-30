@@ -19,6 +19,18 @@ the main path.
    token index are described in `docs/search-team-pdf-evaluation.md`.
    Without it, keyword search still works and semantic results degrade visibly.
 
+   The synthetic C chunk fixture uses an isolated, generated source tree:
+
+   ```bash
+   python -m scripts.search_tools seed --fixture-root work/search-fixtures
+   python -m scripts.search_tools evaluate --fixture-root work/search-fixtures
+   ```
+
+   The API HTTP verifier sets `search-fixtures` to the same default root. For a
+   separately started API, set `SOURCE_MOUNTS` to
+   `{"search-fixtures":"<absolute fixture root>"}`. These generated text bytes
+   are identity fixtures for hand-authored chunks, not parsed-PDF evidence.
+
 ## 2. Start, stop, reset
 
 ```bash

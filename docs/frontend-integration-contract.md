@@ -26,22 +26,25 @@ is an integration target; missing routes still produce visible errors.
 - `/graph` reads `GET /versions/{version_id}/relations`; `/review` adds confirm,
   correct and reject forms. Reads are limited to 20 candidates; empty data and a
   missing endpoint have separate states. Provenance and revision are displayed.
-- The shared relation example lacks a chunk ID. D resolves its quote with a
-  root+file-scoped keyword search, then opens canonical chunk evidence and
-  checks the full quote and selected version/page. If the bounded/deduplicated
-  search cannot locate that page, review stays disabled. A/B can improve this
-  by returning an evidence chunk ID through an agreed contract update.
+- Each valid relation now returns `chunk_id`. Open
+  `GET /evidence/{relation.chunk_id}` directly and verify that chunk, file,
+  version, page and quote match before enabling review. If `evidence_missing`
+  is true or `chunk_id` is null, keep the quote hidden and review disabled.
 - Review sends decision, expected_revision, reason and actor to
   `POST /relations/{relationship_id}/reviews`. Corrections additionally require
   an existing corrected_entity_id; D does not invent entities. Confirmation and
-  rejection omit that field. D currently expects HTTP 200 with
-  `{decision_revision: expected_revision + 1}`; the shared document leaves the
-  success envelope unspecified, so A/B must confirm this response when wiring
-  the route. A different response is a visible contract error, never fake success.
+  rejection omit that field. HTTP 200 returns
+  `{relationship_id, decision, decision_revision}`, where
+  `decision_revision` is the prior revision plus one. A different response is a
+  visible contract error, never fake success.
 - Save is disabled until evidence has been verified. Double submissions are
   blocked, and UI status changes only after a valid server receipt. Revision
   conflict, timeout, network error, 5xx or malformed receipt require a fresh read
   before a further submission. Requests are never automatically replayed.
+- Source refusals use the shared codes: deleted/unreadable source is
+  `file_missing` (404), changed bytes are `source_changed` (409), historical
+  content is `version_superseded` (409), and `revoking/revoked` authorization is
+  `root_revoked` (403). Unstable stored paths are `path_out_of_scope` (403).
 - Candidate quotes are labelled unverified before source inspection. A failed
   source check hides the stored quote even for ordinary transport/HTTP errors;
   review stays disabled until a later source check succeeds.
@@ -49,11 +52,13 @@ is an integration target; missing routes still produce visible errors.
   consumer requires HTTP 202 and the same Job/Root identity with `pending`; this
   is a proposed boundary contract, and A must confirm and assemble the route.
 
-The current branch API does not assemble the mount, file, evidence, relation or
-review routes. These frontend consumer changes and the fixture browser tests
-do not establish a passed M1. Relation pages describe suggestions and human
-decisions; M1 pending status is recorded in the submission documents, without
-putting project acceptance details into the product flow. No team member's approval is fabricated.
+The current development API assembles mount, root, file, job, evidence,
+relation and review routes. That route presence does not by itself establish a
+passed M1: the browser fixture tests are not live-service acceptance, and D must
+still switch from quote-search discovery to the relation's direct `chunk_id`.
+Relation pages describe suggestions and human decisions; M1 pending status is
+recorded in the submission documents, without putting project acceptance details
+into the product flow. No team member's approval is fabricated.
 
 For an operable UI-only sample, explicitly select `VITE_DATA_MODE=mock` and
 `VITE_MOCK_SCENARIO=relations` when starting local Vite. This uses the separate

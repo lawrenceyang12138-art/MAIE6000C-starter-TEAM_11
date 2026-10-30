@@ -31,10 +31,13 @@ from services.parsing.evidence import (
     REASON_CHUNK_NOT_FOUND,
     REASON_FILE_MISSING,
     REASON_NO_CURRENT_VERSION,
+    REASON_PATH_OUT_OF_SCOPE,
     REASON_ROOT_REVOKED,
+    REASON_SOURCE_CHANGED,
     REASON_VERSION_SUPERSEDED,
     Evidence,
     SourceUnavailable,
+    readable_version_source,
     read_version_evidence,
     read_evidence,
 )
@@ -44,6 +47,7 @@ from services.parsing.graph import (
     REASON_CORRECTION_TARGET_NOT_ALLOWED,
     REASON_CORRECTION_WITHOUT_TARGET,
     REASON_INVALID_DECISION,
+    REASON_EVIDENCE_MISSING,
     REASON_RELATIONSHIP_NOT_FOUND,
     REASON_REVIEW_CONFLICT,
     RelationshipView,
@@ -54,7 +58,6 @@ from services.parsing.graph import (
 )
 from services.parsing.handler import (
     PARSER_REVISION,
-    REASON_SOURCE_CHANGED,
     handle_extract_file,
 )
 from services.parsing.pdf import (
@@ -99,10 +102,12 @@ __all__ = [
     "REASON_CORRECTION_WITHOUT_TARGET",
     "REASON_FILE_MISSING",
     "REASON_INVALID_DECISION",
+    "REASON_EVIDENCE_MISSING",
     "REASON_NO_CURRENT_VERSION",
     "REASON_RELATIONSHIP_NOT_FOUND",
     "REASON_REVIEW_CONFLICT",
     "REASON_ROOT_REVOKED",
+    "REASON_PATH_OUT_OF_SCOPE",
     "REASON_SOURCE_CHANGED",
     "REASON_UNSUPPORTED_FORMAT",
     "REASON_VERSION_SUPERSEDED",
@@ -130,6 +135,7 @@ __all__ = [
     "persist_chunks",
     "persist_relations",
     "read_evidence",
+    "readable_version_source",
     "read_version_evidence",
     "read_relationships",
     "record_review",

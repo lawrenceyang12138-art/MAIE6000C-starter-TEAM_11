@@ -33,6 +33,7 @@ from services.common.models import (
     ReviewDecision,
     SourceChunk,
 )
+from services.parsing.evidence import readable_version_source
 
 # A read is bounded in code, not by convention.
 MAX_RELATIONSHIPS = 20
@@ -50,6 +51,7 @@ REASON_RELATIONSHIP_NOT_FOUND = "relationship_not_found"
 REASON_CORRECTION_WITHOUT_TARGET = "correction_without_target"
 REASON_CORRECTION_TARGET_NOT_ALLOWED = "correction_target_not_allowed"
 REASON_CORRECTED_ENTITY_NOT_FOUND = "corrected_entity_not_found"
+REASON_EVIDENCE_MISSING = "evidence_missing"
 
 
 class ReviewRefused(Exception):
@@ -72,6 +74,10 @@ class RelationshipView:
     kind: str
     origin: str
     producer_revision: str
+    # The canonical source_chunks.id behind the first valid quote. It can be
+    # passed directly to GET /evidence/{chunk_id}; None means this relation has
+    # no evidence that still matches its entity and source text.
+    chunk_id: str | None
     page_number: int | None
     quote: str
     # True when the passage that justified this relation is gone - for
@@ -126,7 +132,38 @@ def _valid_evidence(
         return False
 
     normalized_quote = " ".join(evidence.quote.split()).casefold()
-    return bool(normalized_quote) and entity.normalized_label in normalized_quote
+    normalized_chunk = " ".join(chunk.text.split()).casefold()
+    return (
+        bool(normalized_quote)
+        and entity.normalized_label in normalized_quote
+        and normalized_quote in normalized_chunk
+    )
+
+
+def _first_valid_evidence(
+    db: Session, relationship: Relationship, entity: Entity
+) -> tuple[RelationshipEvidence, SourceChunk] | None:
+    evidence_rows = db.execute(
+        select(RelationshipEvidence, SourceChunk)
+        .join(
+            SourceChunk,
+            and_(
+                RelationshipEvidence.chunk_id == SourceChunk.id,
+                SourceChunk.version_id == relationship.source_version_id,
+            ),
+        )
+        .where(RelationshipEvidence.relationship_id == relationship.id)
+        .order_by(RelationshipEvidence.start_offset)
+        .limit(MAX_EVIDENCE_PER_RELATIONSHIP)
+    ).all()
+    return next(
+        (
+            (evidence_row, chunk)
+            for evidence_row, chunk in evidence_rows
+            if _valid_evidence(entity, evidence_row, chunk)
+        ),
+        None,
+    )
 
 
 def read_relationships(
@@ -141,6 +178,11 @@ def read_relationships(
     if bounded == 0:
         return []
 
+    # A relation is only current when its version, authorization and source
+    # bytes are current. Repeating this check here matters because a host file
+    # can be changed or removed without a scan having run.
+    readable_version_source(db, version_id)
+
     rows = db.execute(
         select(Relationship, Entity)
         .join(Entity, Relationship.object_entity_id == Entity.id)
@@ -151,27 +193,7 @@ def read_relationships(
 
     views: list[RelationshipView] = []
     for relationship, entity in rows:
-        evidence = db.execute(
-            select(RelationshipEvidence, SourceChunk)
-            .join(
-                SourceChunk,
-                and_(
-                    RelationshipEvidence.chunk_id == SourceChunk.id,
-                    SourceChunk.version_id == relationship.source_version_id,
-                ),
-            )
-            .where(RelationshipEvidence.relationship_id == relationship.id)
-            .order_by(RelationshipEvidence.start_offset)
-            .limit(MAX_EVIDENCE_PER_RELATIONSHIP)
-        ).all()
-        first_valid = next(
-            (
-                (evidence_row, chunk)
-                for evidence_row, chunk in evidence
-                if _valid_evidence(entity, evidence_row, chunk)
-            ),
-            None,
-        )
+        first_valid = _first_valid_evidence(db, relationship, entity)
 
         latest = _latest_review(db, relationship.id)
         views.append(
@@ -183,6 +205,7 @@ def read_relationships(
                 kind=relationship.kind,
                 origin=relationship.origin,
                 producer_revision=relationship.producer_revision,
+                chunk_id=first_valid[1].id if first_valid else None,
                 page_number=first_valid[1].page_number if first_valid else None,
                 quote=first_valid[0].quote if first_valid else "",
                 evidence_missing=first_valid is None,
@@ -223,6 +246,14 @@ def record_review(
     if relationship is None:
         raise ReviewRefused(
             REASON_RELATIONSHIP_NOT_FOUND, "No such relationship"
+        )
+
+    readable_version_source(db, relationship.source_version_id)
+    entity = db.get(Entity, relationship.object_entity_id)
+    if entity is None or _first_valid_evidence(db, relationship, entity) is None:
+        raise ReviewRefused(
+            REASON_EVIDENCE_MISSING,
+            "the relationship has no valid evidence in its current source version",
         )
 
     is_correction = decision == ReviewDecision.CORRECTED.value
