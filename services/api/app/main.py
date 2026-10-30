@@ -641,31 +641,15 @@ def _contained_mount_dir(mount_id: str, relative_path: str) -> Path:
         ) from exc
 
 
-def _authorized_directory(mount_id: str, relative_path: str) -> Path:
-    """Validate a directory the caller wants to authorize, before any row exists.
+def _require_directory(directory: Path) -> Path:
+    """Refuse a path that exists but is not a directory inside the mount.
 
-    Authorization is where an out-of-scope request has to die. Checking here
-    means a symlink escape is refused with ``403 path_out_of_scope`` and leaves
-    no root, no scan job and nothing for the worker to fail later. The same
-    containment rule is applied again by the worker, so a path cannot become
-    valid by being recorded first.
-
-    A path that does not resolve to a directory is refused with
-    ``404 source_unavailable``: authorizing something that cannot be scanned
-    would only queue work that is certain to fail.
+    ``404 source_unavailable`` reuses the code the directory listing already
+    returns for the same condition. Authorizing a file, or a path that is not
+    there, would only queue work that is certain to fail.
     """
     try:
-        candidate = contained_path(_mount_path(mount_id), relative_path)
-    except PathEscapesRoot as exc:
-        raise HTTPException(
-            status_code=403,
-            detail=reason(
-                "path_out_of_scope",
-                "Path escapes the allowed mount or resolves outside it",
-            ),
-        ) from exc
-    try:
-        is_directory = candidate.is_dir()
+        is_directory = directory.is_dir()
     except OSError:
         is_directory = False
     if not is_directory:
@@ -676,7 +660,7 @@ def _authorized_directory(mount_id: str, relative_path: str) -> Path:
                 "The selected directory is not available inside the mount",
             ),
         )
-    return candidate
+    return directory
 
 
 @app.get("/mounts", response_model=list[MountRead])
@@ -751,7 +735,8 @@ def create_root(payload: RootCreate, db: Session = Depends(get_db)) -> RootJobAc
     relative_path = normalise_relative_path(payload.relative_path)
     # Contract 4.3: canonical containment (symlinks included) is decided before
     # the root or its job is written, so a refused request leaves nothing behind.
-    _authorized_directory(mount_id, relative_path)
+    # The same rule the worker applies, from the same implementation.
+    _require_directory(_contained_mount_dir(mount_id, relative_path))
 
     root, job = create_root_with_scan_job(db, mount_id, relative_path)
 
