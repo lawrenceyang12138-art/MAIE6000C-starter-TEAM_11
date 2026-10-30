@@ -14,6 +14,7 @@ scanner.
 
 from __future__ import annotations
 
+import os
 import shutil
 from pathlib import Path
 
@@ -292,6 +293,51 @@ def test_a_file_removed_after_a_scan_is_listed_as_missing_with_a_reason(
     # The indexed text is still described by its version; it is just not current.
     assert item["status"] == VersionStatus.BASIC_READY.value
     assert item["version_id"] == version.id
+
+
+def test_a_directory_that_cannot_be_listed_keeps_its_files_unavailable(
+    client, corpus, db_session, monkeypatch
+):
+    """A1 over HTTP: "we could not look inside" must not read as "deleted".
+
+    The file is still on disk and still indexed; only the scan lost sight of its
+    directory. Reporting `missing` would send the user looking for a deleted file.
+    """
+    (corpus / "locked").mkdir()
+    shutil.copyfile(FIXTURE_PDF, corpus / "locked" / "nested.pdf")
+
+    root_id, scan_job_id = _authorize(client)
+    worker_main.process_job(scan_job_id)
+    while (job := worker_main.claim_next_pending_job(db_session)) is not None:
+        worker_main.process_job(job.id)
+
+    db_session.expire_all()
+    rows = {item["relative_path"]: item for item in client.get(
+        "/files", params={"root_id": root_id}
+    ).json()}
+    assert set(rows) == {"lecture.pdf", "locked/nested.pdf"}
+    assert all(item["status"] == VersionStatus.BASIC_READY.value for item in rows.values())
+
+    real_scandir = os.scandir
+
+    def failing_scandir(path="."):
+        if Path(path).name == "locked":
+            raise PermissionError(13, "Permission denied", str(path))
+        return real_scandir(path)
+
+    monkeypatch.setattr(scan_handler.os, "scandir", failing_scandir)
+    worker_main.process_job(_scan_and_collect(db_session, client, root_id))
+
+    db_session.expire_all()
+    rows = {item["relative_path"]: item for item in client.get(
+        "/files", params={"root_id": root_id}
+    ).json()}
+    nested = rows["locked/nested.pdf"]
+    assert nested["presence_status"] == "unavailable"
+    assert nested["presence_reason"] == "unreadable"
+    # The indexed text is untouched: the version is still usable, just not current.
+    assert nested["status"] == VersionStatus.BASIC_READY.value
+    assert rows["lecture.pdf"]["presence_status"] == "present"
 
 
 def test_an_unreadable_file_is_listed_as_unavailable_with_its_reason(
