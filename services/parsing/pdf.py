@@ -87,6 +87,14 @@ class ExtractedDocument:
     pages: tuple[PageText, ...]
 
 
+def _source_read_failure(path: Path, exc: OSError) -> SourceMissing:
+    if isinstance(exc, FileNotFoundError):
+        return SourceMissing(REASON_FILE_MISSING, f"No such file: {path}")
+    if isinstance(exc, IsADirectoryError):
+        return SourceMissing(REASON_FILE_MISSING, f"Not a file: {path}")
+    return SourceMissing(REASON_UNREADABLE, f"Cannot read file: {path}")
+
+
 def file_identity(path: str | Path) -> tuple[str, int]:
     """Return (sha256, byte size) for a file, read in bounded chunks.
 
@@ -97,27 +105,18 @@ def file_identity(path: str | Path) -> tuple[str, int]:
     digest = hashlib.sha256()
     size = 0
     try:
-        handle = path.open("rb")
-    except FileNotFoundError as exc:
-        raise SourceMissing(
-            REASON_FILE_MISSING, f"No such file: {path}"
-        ) from exc
-    except IsADirectoryError as exc:
-        raise SourceMissing(
-            REASON_FILE_MISSING, f"Not a file: {path}"
-        ) from exc
-    except PermissionError as exc:
-        raise SourceMissing(
-            REASON_UNREADABLE, f"Cannot read file: {path}"
-        ) from exc
-
-    with handle:
-        while True:
-            block = handle.read(_CHUNK_SIZE)
-            if not block:
-                break
-            size += len(block)
-            digest.update(block)
+        with path.open("rb") as handle:
+            while True:
+                block = handle.read(_CHUNK_SIZE)
+                if not block:
+                    break
+                size += len(block)
+                digest.update(block)
+    except OSError as exc:
+        # External disks and network mounts can fail after open succeeded.
+        # Keep those source failures on the same explicit refusal/retry path
+        # as an unreadable file instead of leaking an HTTP 500 from evidence.
+        raise _source_read_failure(path, exc) from exc
     return digest.hexdigest(), size
 
 
@@ -125,8 +124,8 @@ def _read_pages(path: Path) -> list[str]:
     """Return the raw extracted text of each page in document order."""
     try:
         reader = PdfReader(str(path))
-    except FileNotFoundError as exc:
-        raise SourceMissing(REASON_FILE_MISSING, f"No such file: {path}") from exc
+    except OSError as exc:
+        raise _source_read_failure(path, exc) from exc
     except FileNotDecryptedError as exc:
         raise UnsupportedDocument(REASON_ENCRYPTED, "PDF is encrypted") from exc
     except PdfReadError as exc:
@@ -149,6 +148,8 @@ def _read_pages(path: Path) -> list[str]:
     try:
         for page in reader.pages:
             pages.append(page.extract_text() or "")
+    except OSError as exc:
+        raise _source_read_failure(path, exc) from exc
     except Exception as exc:  # noqa: BLE001 - damaged page objects
         raise UnsupportedDocument(REASON_CORRUPT, f"Cannot read page: {exc}") from exc
     return pages
@@ -169,19 +170,16 @@ def extract_document(path: str | Path) -> ExtractedDocument:
     # broken". Both stop processing, but only one of them is a bug report about
     # the document.
     try:
-        handle = pdf_path.open("rb")
-    except FileNotFoundError as exc:
-        # The file was there a moment ago, when it was hashed. It is gone now.
-        raise SourceMissing(
-            REASON_FILE_MISSING, f"No such file: {pdf_path}"
-        ) from exc
-
-    with handle:
-        if not handle.read(len(_PDF_MAGIC)).startswith(_PDF_MAGIC):
-            raise UnsupportedDocument(
-                REASON_UNSUPPORTED_FORMAT,
-                "Not a PDF file; only PDF documents are supported",
-            )
+        with pdf_path.open("rb") as handle:
+            if not handle.read(len(_PDF_MAGIC)).startswith(_PDF_MAGIC):
+                raise UnsupportedDocument(
+                    REASON_UNSUPPORTED_FORMAT,
+                    "Not a PDF file; only PDF documents are supported",
+                )
+    except OSError as exc:
+        # Losing access between hashing and format inspection is retryable;
+        # it says nothing about whether this document's format is supported.
+        raise _source_read_failure(pdf_path, exc) from exc
 
     raw_pages = _read_pages(pdf_path)
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 from pathlib import Path
 
 from sqlalchemy import select
@@ -340,6 +341,42 @@ def test_relation_read_and_review_refuse_a_modified_source(
     assert relations.json()["detail"]["code"] == "source_changed"
     assert review.status_code == 409
     assert review.json()["detail"]["code"] == "source_changed"
+
+
+def test_source_read_io_failure_refuses_evidence_relations_and_reviews(
+    client, db_session: Session, make_file_version, monkeypatch
+):
+    path = FIXTURES / "relations" / "entities.pdf"
+    version_id, _, _ = _current_version(db_session, make_file_version)
+    chunks = chunk_document(extract_document(path))
+    persist_chunks(db_session, version_id, chunks)
+    persist_relations(db_session, version_id, candidate_relations(chunks))
+    relation = client.get(f"/versions/{version_id}/relations").json()[0]
+    source_path = resolve_source_path(db_session, version_id, for_write=False)
+    real_open = Path.open
+
+    class DisconnectedStream(io.BytesIO):
+        def read(self, size=-1):
+            raise OSError("external drive disconnected during read")
+
+    def open_source(path, *args, **kwargs):
+        if path == source_path:
+            return DisconnectedStream()
+        return real_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", open_source)
+    responses = [
+        client.get(f"/evidence/{relation['chunk_id']}"),
+        client.get(f"/versions/{version_id}/relations"),
+        client.post(
+            f"/relations/{relation['relationship_id']}/reviews",
+            json={"decision": "confirmed", "expected_revision": 0},
+        ),
+    ]
+    for response in responses:
+        assert response.status_code == 404, response.text
+        assert response.json()["detail"]["code"] == "file_missing"
+    assert db_session.scalars(select(Review)).all() == []
 
 
 def test_relation_read_and_review_refuse_a_revoked_root(
