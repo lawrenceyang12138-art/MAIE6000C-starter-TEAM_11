@@ -10,6 +10,7 @@ const messages = {
   no_current_version: "This file has no current indexed version.",
   file_missing: "The source file is no longer available in the authorized directory.",
   root_revoked: "This directory authorization is no longer active.",
+  source_changed: "The source bytes changed. Rescan the directory before viewing evidence.",
   chunk_not_found: "The requested source passage is no longer available.",
   path_out_of_scope: "Choose a relative directory inside an approved read-only mount.",
   source_unavailable: "Source unavailable. Re-check access to the authorized directory.",
@@ -171,8 +172,9 @@ export function createApiAdapter({ baseUrl = "/api", fetchImpl = globalThis.fetc
     },
     async listRelations(versionId) {
       const relations = array(await request(`/versions/${encodeURIComponent(versionId)}/relations`), (item) =>
-        isId(item?.relationship_id) && ["person", "project", "topic"].includes(item.entity_type) &&
+        isId(item?.relationship_id) && isId(item.entity_id) && ["person", "project", "topic"].includes(item.entity_type) &&
         isId(item.label) && isId(item.relation_type) && typeof item.evidence_missing === "boolean" &&
+        (item.evidence_missing ? item.chunk_id === null : isId(item.chunk_id)) &&
         (item.page_number == null || (Number.isInteger(item.page_number) && item.page_number > 0)) &&
         typeof item.quote === "string" && (item.decision == null || decisions.includes(item.decision)) &&
         Number.isSafeInteger(item.decision_revision) && item.decision_revision >= 0 &&
@@ -191,7 +193,8 @@ export function createApiAdapter({ baseUrl = "/api", fetchImpl = globalThis.fetc
           ...(decision === "corrected" ? { corrected_entity_id: correctedEntityId } : {}),
         },
       });
-      requireValue(Number.isSafeInteger(result.decision_revision) && result.decision_revision === expectedRevision + 1);
+      requireValue(result.relationship_id === relationshipId && result.decision === decision &&
+        Number.isSafeInteger(result.decision_revision) && result.decision_revision === expectedRevision + 1);
       return result;
     },
     async getEvidence(fileId, versionId) {

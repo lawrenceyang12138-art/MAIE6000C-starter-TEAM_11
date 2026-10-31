@@ -257,7 +257,7 @@ export function createMockAdapter(data, { latency = 80 } = {}) {
       relation.decision = decision;
       relation.corrected_entity_id = correctedEntityId;
       relation.decision_revision += 1;
-      return { decision_revision: relation.decision_revision };
+      return { relationship_id: relationshipId, decision, decision_revision: relation.decision_revision };
     },
   };
 }

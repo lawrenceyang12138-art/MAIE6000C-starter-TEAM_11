@@ -12,7 +12,7 @@ const require = createRequire(path.join(repo, "frontend/package.json"));
 const { chromium } = require(process.env.D_PLAYWRIGHT_MODULE || "playwright-core");
 const baseUrl = process.env.D_UI_URL || "http://127.0.0.1:5173";
 assert.ok(["localhost", "127.0.0.1", "[::1]"].includes(new URL(baseUrl).hostname));
-const output = path.join(repo, "submissions/week07/evidence/1019-D");
+const output = process.env.D_UI_OUTPUT ? path.resolve(repo, process.env.D_UI_OUTPUT) : path.join(repo, "submissions/week07/evidence/1019-D");
 fs.mkdirSync(output, { recursive: true });
 const browser = await chromium.launch({ headless: true, ...(process.env.D_BROWSER_EXECUTABLE ? { executablePath: process.env.D_BROWSER_EXECUTABLE } : { channel: "chrome" }) });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
@@ -22,7 +22,7 @@ const file = { root_id: "root-contract", file_id: "file-contract", version_id: "
 const hit = { root_id: file.root_id, file_id: file.file_id, file_name: file.display_name, file_path: file.relative_path,
   version_id: file.version_id, version_created_at: "2026-10-19T00:00:00Z", chunk_id: "chunk-contract", ordinal: 1,
   page: 2, text: quote, reason: "keyword: database", score: 0.9, keyword_score: 1, semantic_score: 0 };
-let relations = [["person", "Chen"], ["project", "Atlas Project"], ["topic", "Database Reliability"]].map(([entity_type, label], index) => ({ relationship_id: "rel-" + index, entity_type, label, relation_type: "mentions", kind: "source_supported", origin: "rule", producer_revision: "rules-contract-v1", page_number: 2, quote, evidence_missing: false, decision: null, decision_revision: 0, corrected_entity_id: null }));
+let relations = [["person", "Chen"], ["project", "Atlas Project"], ["topic", "Database Reliability"]].map(([entity_type, label], index) => ({ entity_id: "entity-" + index, chunk_id: hit.chunk_id, relationship_id: "rel-" + index, entity_type, label, relation_type: "mentions", kind: "source_supported", origin: "rule", producer_revision: "rules-contract-v1", page_number: 2, quote, evidence_missing: false, decision: null, decision_revision: 0, corrected_entity_id: null }));
 const evidence = { chunk_id: hit.chunk_id, file_id: file.file_id, version_id: file.version_id,
   relative_path: file.relative_path, page_number: 2, ordinal: 1, text: quote, content_sha256: "a".repeat(64) };
 const errors = [], searches = [], writes = [], scans = [], cases = [];
@@ -76,7 +76,7 @@ await page.route(new URL("/api/**", baseUrl).href, async (route) => {
       assert.equal(request.expected_revision, relation.decision_revision);
       relation.decision_revision += 1; relation.decision = request.decision;
       relation.corrected_entity_id = request.corrected_entity_id || null;
-      body = { decision_revision: relation.decision_revision };
+      body = { relationship_id: relation.relationship_id, decision: request.decision, decision_revision: relation.decision_revision };
     }
   } else { status = 404; body = { detail: { code: "not_found" } }; }
   await route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
@@ -107,7 +107,7 @@ async function reviewCard(label, decision) {
   await card.getByText("Source verified", { exact: false }).waitFor();
   await card.getByLabel("Reviewer", { exact: true }).fill("contract-reviewer");
   await card.getByLabel("Decision for " + label, { exact: true }).selectOption(decision);
-  if (decision === "corrected") await card.getByLabel("Existing replacement entity ID").fill("existing-contract-entity");
+  if (decision === "corrected") await card.getByLabel("Replacement entity for " + label, { exact: true }).selectOption("entity-0");
   await card.getByRole("button", { name: "Save decision", exact: true }).click();
   return card;
 }
@@ -164,6 +164,7 @@ try {
     await card.getByText("Decision saved by service", { exact: false }).waitFor();
   }
   assert.deepEqual(writes.map((item) => item.decision), ["confirmed", "corrected", "rejected"]);
+  assert.equal(writes[1].corrected_entity_id, "entity-0");
   await capture("review-decisions");
   await page.reload();
   scenario = "conflict";
@@ -191,7 +192,7 @@ try {
   await page.goto(baseUrl + "/results/" + file.root_id);
   await page.getByRole("button", { name: "Rescan directory", exact: true }).click();
   await page.getByRole("heading", { name: "Scan progress", exact: true }).waitFor();
-  await page.getByText("Job job-rescan-contract", { exact: false }).waitFor();
+  await page.locator(".page-heading .lede").filter({ hasText: "Job job-rescan-contract" }).waitFor();
   assert.deepEqual(scans, [{ method: "POST", endpoint: "/roots/root-contract/scans", body: null }]);
   await capture("rescan-accepted");
   await page.goto(baseUrl + "/scan/" + retryJobId);

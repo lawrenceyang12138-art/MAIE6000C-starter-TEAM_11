@@ -32,7 +32,8 @@ is an integration target; missing routes still produce visible errors.
   is true or `chunk_id` is null, keep the quote hidden and review disabled.
 - Review sends decision, expected_revision, reason and actor to
   `POST /relations/{relationship_id}/reviews`. Corrections additionally require
-  an existing corrected_entity_id; D does not invent entities. Confirmation and
+  an existing corrected_entity_id. The candidate's `entity_id` supplies labelled
+  existing-entity choices in the correction form; D does not invent entities. Confirmation and
   rejection omit that field. HTTP 200 returns
   `{relationship_id, decision, decision_revision}`, where
   `decision_revision` is the prior revision plus one. A different response is a
@@ -50,12 +51,12 @@ is an integration target; missing routes still produce visible errors.
   review stays disabled until a later source check succeeds.
 - Failed scan Jobs expose `POST /jobs/{job_id}/retry` with no business body. The
   consumer requires HTTP 202 and the same Job/Root identity with `pending`; this
-  is a proposed boundary contract, and A must confirm and assemble the route.
+  is the assembled retry route.
 
 The current development API assembles mount, root, file, job, evidence,
 relation and review routes. That route presence does not by itself establish a
-passed M1: the browser fixture tests are not live-service acceptance, and D must
-still switch from quote-search discovery to the relation's direct `chunk_id`.
+passed M1: browser fixture tests require separate live-service acceptance. D now
+opens the relation's direct `chunk_id` and validates the returned source identity.
 Relation pages describe suggestions and human decisions; M1 pending status is
 recorded in the submission documents, without putting project acceptance details
 into the product flow. No team member's approval is fabricated.
