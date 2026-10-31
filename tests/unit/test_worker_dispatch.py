@@ -22,16 +22,19 @@ from services.common.models import (
     AuthorizedRoot,
     Case,
     CaseStatus,
+    ChunkSearchIndex,
+    FileRecord,
     FileVersion,
     Job,
     JobStatus,
     JobType,
     RootJobType,
     RootStatus,
+    SourceChunk,
     VersionStatus,
 )
 from services.parsing.pdf import REASON_ENCRYPTED, REASON_FILE_MISSING
-from services.search.embeddings import HTTPEmbeddingBackend
+from services.search.embeddings import EmbeddingUnavailable, HTTPEmbeddingBackend
 from services.search.indexing import IndexResult
 from services.worker.app import main as worker_main
 
@@ -299,8 +302,9 @@ def test_an_unfinished_status_from_the_handler_is_a_bug(worker_db, make_file_ver
         worker_main.process_job(job_id)
 
 
-def test_a_retry_of_an_already_parsed_version_reparses_nothing_and_queues_no_job(
-    worker_db, make_file_version, monkeypatch
+@pytest.mark.parametrize("embed_status", [status.value for status in JobStatus])
+def test_a_retry_of_an_already_parsed_version_keeps_its_existing_index_job(
+    worker_db, make_file_version, monkeypatch, embed_status
 ):
     """Retry is idempotent: published text is not replaced for nothing.
 
@@ -311,6 +315,9 @@ def test_a_retry_of_an_already_parsed_version_reparses_nothing_and_queues_no_job
     """
     version_id = make_file_version(sha256="2" * 64, status=VersionStatus.BASIC_READY.value)
     job_id = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
+    embed_id = _make_job(worker_db, RootJobType.EMBED_FILE.value, version_id=version_id)
+    _job(worker_db, embed_id).status = embed_status
+    worker_db.commit()
 
     calls: list[str] = []
     monkeypatch.setattr(
@@ -326,7 +333,68 @@ def test_a_retry_of_an_already_parsed_version_reparses_nothing_and_queues_no_job
 
     assert calls == []
     assert _job(worker_db, job_id).status == JobStatus.COMPLETED.value
+    index_jobs = _index_jobs(worker_db, version_id)
+    assert len(index_jobs) == 1
+    assert index_jobs[0].id == embed_id
+    assert index_jobs[0].status == embed_status
+
+
+def test_retry_repairs_failed_first_index_dispatch_without_replacing_parsed_text(
+    client, worker_db, make_file_version, monkeypatch
+):
+    fixture = Path(__file__).resolve().parents[1] / "fixtures" / "parsing" / "normal.pdf"
+    version_id = make_file_version(source_path=fixture)
+    version = worker_db.get(FileVersion, version_id)
+    worker_db.get(FileRecord, version.file_id).current_version_id = version_id
+    worker_db.commit()
+    job_id = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
+    assert worker_main.claim_next_pending_job(worker_db).id == job_id
+    real_enqueue = worker_main._enqueue_embed_job
+
+    def fail_dispatch(*args, **kwargs):
+        raise RuntimeError("index dispatch transaction failed")
+
+    monkeypatch.setattr(worker_main, "_enqueue_embed_job", fail_dispatch)
+    with pytest.raises(RuntimeError, match="index dispatch transaction failed"):
+        worker_main.process_job(job_id)
+    worker_main.mark_job_failed(job_id, "index dispatch transaction failed")
+    worker_db.expire_all()
+    assert worker_db.get(FileVersion, version_id).status == VersionStatus.BASIC_READY.value
+    chunks = worker_db.scalars(
+        select(SourceChunk).where(SourceChunk.version_id == version_id)
+    ).all()
+    chunk_ids = {chunk.id for chunk in chunks}
+    assert chunk_ids
     assert _index_jobs(worker_db, version_id) == []
+
+    monkeypatch.setattr(worker_main, "_enqueue_embed_job", real_enqueue)
+
+    def no_reparse(*args, **kwargs):
+        pytest.fail("a committed parse must retain its chunk and relation identities")
+
+    monkeypatch.setattr(worker_main, "handle_extract_file", no_reparse)
+    assert client.post(f"/jobs/{job_id}/retry").status_code == 202
+    assert worker_main.claim_next_pending_job(worker_db).id == job_id
+    worker_main.process_job(job_id)
+    worker_db.expire_all()
+
+    assert _job(worker_db, job_id).status == JobStatus.COMPLETED.value
+    assert _job(worker_db, job_id).attempts == 2
+    assert {chunk.id for chunk in worker_db.scalars(select(SourceChunk))} == chunk_ids
+    assert len(_index_jobs(worker_db, version_id)) == 1
+
+    def unavailable(*args, **kwargs):
+        raise EmbeddingUnavailable("ai_unavailable")
+
+    monkeypatch.setattr(HTTPEmbeddingBackend, "embed", unavailable)
+    index_job = worker_main.claim_next_pending_job(worker_db)
+    assert index_job.job_type == RootJobType.EMBED_FILE.value
+    worker_main.process_job(index_job.id)
+    worker_db.expire_all()
+    assert {index.chunk_id for index in worker_db.scalars(select(ChunkSearchIndex))} == chunk_ids
+    result = client.post("/search", json={"query": "ALPHA", "mode": "keyword"})
+    assert result.status_code == 200
+    assert result.json()["results"][0]["version_id"] == version_id
 
 
 def test_a_retry_of_an_enriched_version_queues_no_index_job(

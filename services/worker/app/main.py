@@ -105,26 +105,37 @@ def _complete_job(db: Session, job: Job) -> None:
     db.commit()
 
 
-def _enqueue_embed_job(db: Session, version_id: str) -> None:
+def _enqueue_embed_job(
+    db: Session, version_id: str, *, first_dispatch_only: bool = False
+) -> None:
     """Dispatch the search-index job for one successfully parsed version.
 
     Shared contract 3.4.3: index jobs are created only after source text is
     stored. Idempotent - a version keeps at most one live embed job, so a
-    re-run never queues a duplicate. The caller commits.
+    re-run never queues a duplicate. ``first_dispatch_only`` repairs a parse
+    whose first dispatch failed, without retrying an existing finished job.
+    The caller commits.
     """
     # Share this per-version lock with the model-ready recovery sweep.
     db.execute(select(FileVersion.id).where(FileVersion.id == version_id).with_for_update())
-    existing = db.execute(
+    existing_query = (
         select(Job)
         .where(
             Job.version_id == version_id,
             Job.job_type == RootJobType.EMBED_FILE.value,
-            Job.status.in_([JobStatus.PENDING.value, JobStatus.CLAIMED.value]),
         )
-        .limit(1)
-    ).scalars().first()
+    )
+    if not first_dispatch_only:
+        existing_query = existing_query.where(
+            Job.status.in_([JobStatus.PENDING.value, JobStatus.CLAIMED.value])
+        )
+    existing = db.execute(existing_query.limit(1)).scalars().first()
     if existing is not None:
         return
+    if first_dispatch_only:
+        # This retry can close an existing parse without reading it again,
+        # but creating new work still requires an active, contained root.
+        resolve_source_path(db, version_id)
     db.add(
         Job(
             version_id=version_id,
@@ -287,15 +298,16 @@ def _process_extract_job(job_id: int) -> None:
         # published the text. Re-reading is harmless for the text itself, but
         # ``persist_chunks`` replaces rows, and replacing chunks for nothing
         # would detach reviews and search indexes that hang off their stable
-        # ids. The job is closed instead, and no index job is queued: the
-        # embeddings were either already built or are the business of the
-        # ``embed_file`` job that owns them, so enqueueing here would only buy
-        # another embedding call.
+        # ids. Existing embed jobs keep their own completion/retry policy.
+        # If the first dispatch failed after parsing committed, repair that
+        # missing job in the same transaction that closes this retry.
         version = db.get(FileVersion, version_id)
         if version is not None and version.status in (
             VersionStatus.BASIC_READY.value,
             VersionStatus.ENRICHED.value,
         ):
+            if version.status == VersionStatus.BASIC_READY.value:
+                _enqueue_embed_job(db, version_id, first_dispatch_only=True)
             job.status = JobStatus.COMPLETED.value
             job.error = None
             job.error_code = None
