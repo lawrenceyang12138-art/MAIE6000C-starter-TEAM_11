@@ -12,6 +12,10 @@ RUN pip install --upgrade pip "setuptools>=80.0.0" wheel && pip install ".[dev,e
 COPY services /app/services
 COPY scripts /app/scripts
 COPY fixtures /app/fixtures
+# Frozen evaluation inputs are part of the operator CLI runtime. Keep their
+# original bytes and include only the three small JSON files the tools use.
+COPY submissions/week07/gold-queries.json submissions/week07/gold-queries.freeze.json /app/submissions/week07/
+COPY submissions/week07/evidence/C/model-manifest.json /app/submissions/week07/evidence/C/model-manifest.json
 COPY alembic /app/alembic
 COPY alembic.ini /app/alembic.ini
 COPY tests /app/tests

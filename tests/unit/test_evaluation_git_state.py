@@ -1,6 +1,7 @@
 """Evidence collection must not depend on a Windows console's text encoding."""
 
 import hashlib
+from pathlib import Path
 from types import SimpleNamespace
 
 from scripts import evaluate_team_pdf
@@ -41,3 +42,15 @@ def test_unavailable_git_still_produces_safe_reproducibility_fields(monkeypatch)
     assert state["branch"] == "unavailable"
     assert state["working_tree_status"] == "unavailable"
     assert state["tracked_diff_sha256"] == hashlib.sha256(b"unavailable").hexdigest()
+
+
+def test_runtime_without_git_still_fingerprints_the_evaluated_sources(monkeypatch):
+    def git_not_installed(*args, **kwargs):
+        raise FileNotFoundError("git is not installed in the runtime image")
+
+    monkeypatch.setattr(evaluate_team_pdf.subprocess, "run", git_not_installed)
+    state = evaluate_team_pdf.git_state()
+    assert state["sha"] == state["branch"] == state["working_tree_status"] == "unavailable"
+    assert state["source_sha256"]["scripts/evaluate_team_pdf.py"] == hashlib.sha256(
+        Path(evaluate_team_pdf.__file__).read_bytes()
+    ).hexdigest()

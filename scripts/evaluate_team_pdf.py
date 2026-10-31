@@ -381,9 +381,14 @@ def evaluate_corpus(
 
 def git_state() -> dict:
     def git_bytes(*arguments: str) -> bytes:
-        result = subprocess.run(
-            ["git", *arguments], cwd=REPO, capture_output=True, check=False
-        )
+        try:
+            result = subprocess.run(
+                ["git", *arguments], cwd=REPO, capture_output=True, check=False
+            )
+        except OSError:
+            # Runtime images intentionally omit Git and repository metadata.
+            # Source hashes still identify the evaluated implementation.
+            return b"unavailable"
         return result.stdout.strip() if result.returncode == 0 else b"unavailable"
 
     def git(*arguments: str) -> str:

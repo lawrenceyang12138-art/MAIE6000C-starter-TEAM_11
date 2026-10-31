@@ -13,4 +13,14 @@ __pycache__
 !.env.example
 models
 work
-submissions
+# Runtime evaluation inputs only; screenshots and historical reports stay out.
+submissions/*
+!submissions/week07/
+submissions/week07/*
+!submissions/week07/gold-queries.json
+!submissions/week07/gold-queries.freeze.json
+!submissions/week07/evidence/
+submissions/week07/evidence/*
+!submissions/week07/evidence/C/
+submissions/week07/evidence/C/*
+!submissions/week07/evidence/C/model-manifest.json

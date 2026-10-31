@@ -6,7 +6,6 @@ import argparse
 import hashlib
 import json
 import os
-import subprocess
 import sys
 from contextlib import contextmanager, nullcontext
 from dataclasses import asdict
@@ -396,12 +395,11 @@ def main() -> None:
                     report["fixture_sha256"] = hashlib.sha256(
                         args.fixture.read_bytes()
                     ).hexdigest()
-                commit = subprocess.run(
-                    ["git", "rev-parse", "HEAD"], cwd=REPO,
-                    capture_output=True, text=True, check=False,
-                )
-                report["git_sha"] = commit.stdout.strip() if commit.returncode == 0 else None
-                from scripts.evaluate_team_pdf import public_command
+                from scripts.evaluate_team_pdf import git_state, public_command
+
+                report["git"] = git_state()
+                sha = report["git"]["sha"]
+                report["git_sha"] = sha if sha != "unavailable" else None
 
                 report["command"] = public_command([
                     sys.executable, "-m", "scripts.search_tools", *sys.argv[1:]
