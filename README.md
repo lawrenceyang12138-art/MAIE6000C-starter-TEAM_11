@@ -1,8 +1,8 @@
-# File Management Assistant
+# SourceLens
 
 MAIE 6000C Team 11
 
-File Management Assistant is a proposed local-first tool for people who accumulate personal and project files across folders. Starting from a selected, authorized folder, it will support keyword and semantic retrieval, source-linked evidence, and a graph connecting files with the people, projects, and topics they mention. Original files remain read-only for the core release; moving, renaming, and undoing file operations are stretch goals, not R1 acceptance gates.
+SourceLens is a proposed local-first tool for people who accumulate personal and project files across folders. Starting from a selected, authorized folder, it supports keyword and semantic retrieval, source-linked evidence, and a graph connecting files with the people, projects, and topics they mention. Original files remain read-only for the core release; moving, renaming, and undoing file operations are stretch goals, not R1 acceptance gates.
 
 ## Documentation
 
@@ -37,7 +37,7 @@ by cloning the repository, and Docker itself remains an explicit prerequisite.
 
 This Week 4 change is documentation only. Folder selection, document indexing, search, the graph, and human review are **not implemented yet**.
 
-The existing course starter demonstrates case creation through FastAPI, PostgreSQL persistence, a queued background job, an internal AI-service call, and worker result write-back. It includes SQLAlchemy/Alembic, Docker Compose, health endpoints, structured logging, metrics, and test scaffolding. The architecture document distinguishes these existing capabilities from the proposed File Management Assistant.
+The existing course starter demonstrates case creation through FastAPI, PostgreSQL persistence, a queued background job, an internal AI-service call, and worker result write-back. It includes SQLAlchemy/Alembic, Docker Compose, health endpoints, structured logging, metrics, and test scaffolding. The architecture document distinguishes these existing capabilities from the implemented SourceLens workflow.
 
 ## Run the starter baseline
 

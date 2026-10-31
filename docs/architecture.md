@@ -1,4 +1,4 @@
-# File Management Assistant architecture
+# SourceLens architecture
 
 ## Historical starter baseline
 

@@ -1,6 +1,6 @@
 # In-Class Studio: API and Service Boundary Design
 
-Project: File Management Assistant - MAIE 6000C Team 11  
+Project: SourceLens - MAIE 6000C Team 11
 Prepared: 2026-10-10
 
 This document uses the [project brief](../README.md), [architecture proposal](architecture.md), and [Week 4 project plan](../submissions/week04/README.md) to answer the interface questions from the in-class screenshot.

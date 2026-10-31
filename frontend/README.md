@@ -1,4 +1,4 @@
-# Team 11 File Trace frontend
+# Team 11 SourceLens frontend
 
 The React/Vite frontend uses the real local API by default. Its W7 workflow is:
 choose an allowlisted read-only directory, authorize and scan, inspect persisted
@@ -14,7 +14,7 @@ From the repository root, with Python and Docker Desktop/Compose installed:
 python scripts/start.py
 ```
 
-Open [File Trace](http://127.0.0.1:3000/select). The launcher preserves existing
+Open [SourceLens](http://127.0.0.1:3000/select). The launcher preserves existing
 `.env` settings. Compose defaults to `FRONTEND_DATA_MODE=api`; an existing
 explicit `mock` setting still selects a labelled simulation. The frontend
 shows real local-model preparation status and supports retry without blocking

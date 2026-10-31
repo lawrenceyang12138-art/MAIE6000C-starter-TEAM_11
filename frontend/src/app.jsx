@@ -96,8 +96,8 @@ function Shell({ children, activeLabel, activeNav, inspector, rootId }) {
       <a className="skip-link" href="#main-content">Skip to main content</a>
       <aside className="side-rail" aria-label="Application navigation">
         <button className="brand" onClick={() => navigate(searchPath)} aria-label="Open Search and Discover">
-          <span className="brand-mark" aria-hidden="true"><span>F</span><i /></span>
-          <span className="brand-copy"><strong>File Trace</strong><small>LOCAL WORKSPACE</small></span>
+          <span className="brand-mark" aria-hidden="true"><span>S</span><i /></span>
+          <span className="brand-copy"><strong>SourceLens</strong><small>LOCAL WORKSPACE</small></span>
         </button>
         <div className="engine-state">
           <span className="engine-dot" />

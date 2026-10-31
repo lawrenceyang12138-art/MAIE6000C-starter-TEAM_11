@@ -7,7 +7,7 @@ claim per page, with readable evidence captions and the same visual hierarchy.
 
 | Page | Main claim / title | Primary visual | Evidence / owner |
 | --- | --- | --- | --- |
-| 1 | File Trace: local, read-only, source-backed document discovery | One document-to-search-to-source flow, followed by team names | Project README; team confirms names |
+| 1 | SourceLens: local, read-only, source-backed document discovery | One document-to-search-to-source flow, followed by team names | Project README; team confirms names |
 | 2 | Users need to find a passage and verify its current source | A short running example: query, matched file, page and quote | Product scope; D; representative real example pending B |
 | 3 | W07 scope is deliberately bounded | In-scope/out-of-scope table: local text PDFs and evidence; OCR/organize deferred | Week07 README and scope decision; all members |
 | 4 | One shared data model connects four modules | A scan, B parse/chunks, C index/search, D UI, one PostgreSQL boundary | Architecture/shared contract; A supplies current diagram |
