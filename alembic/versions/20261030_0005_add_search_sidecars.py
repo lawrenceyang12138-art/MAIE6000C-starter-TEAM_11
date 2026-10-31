@@ -240,9 +240,11 @@ def upgrade() -> None:
 def downgrade() -> None:
     bind = op.get_bind()
     inspector = sa.inspect(bind)
-    # These additive sidecars may predate Alembic adoption. Retain their data
-    # on downgrade; the canonical database is still valid at revision 0004.
+    # Drop derived data before older migrations remove its canonical FK
+    # targets. Keeping these tables breaks the documented downgrade to the
+    # starter revision. Source text, identities and reviews remain at 0004;
+    # normal indexing can rebuild these caches after upgrading again.
     if inspector.has_table("version_page_search_metadata"):
-        op.execute("SELECT 1")
+        op.drop_table("version_page_search_metadata")
     if inspector.has_table("chunk_token_search_index"):
-        op.execute("SELECT 1")
+        op.drop_table("chunk_token_search_index")

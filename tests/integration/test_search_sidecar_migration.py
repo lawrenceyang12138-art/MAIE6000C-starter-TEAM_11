@@ -171,3 +171,36 @@ def test_alembic_head_creates_missing_sidecars_and_preserves_existing_data(exist
             engine.dispose()
     finally:
         _drop_database(admin_engine, database_name)
+
+
+def test_populated_sidecars_allow_downgrade_and_upgrade_of_the_complete_chain():
+    base_url = os.getenv("SEARCH_TEST_DATABASE_URL")
+    if not base_url:
+        pytest.skip("SEARCH_TEST_DATABASE_URL not set")
+    admin_engine, scoped_url, database_name = _temporary_database(base_url)
+    config = _alembic_config(scoped_url)
+    engine = create_engine(scoped_url)
+    try:
+        command.upgrade(config, "head")
+        _seed_sidecar_data(engine, token=True, metadata=True)
+        command.downgrade(config, "20261029_0004")
+        tables = set(inspect(engine).get_table_names())
+        assert "chunk_token_search_index" not in tables
+        assert "version_page_search_metadata" not in tables
+        with engine.connect() as connection:
+            assert connection.scalar(text("SELECT id FROM source_chunks")) == "chunk-migration"
+        command.upgrade(config, "head")
+        with engine.connect() as connection:
+            assert connection.scalar(text("SELECT count(*) FROM chunk_token_search_index")) == 0
+            assert connection.scalar(text("SELECT count(*) FROM version_page_search_metadata")) == 0
+        # These migrations used to fail when dropping source_chunks, because
+        # the retained token sidecar still referenced it.
+        command.downgrade(config, "base")
+        assert set(inspect(engine).get_table_names()) == {"alembic_version"}
+        command.upgrade(config, "head")
+        assert {"source_chunks", "chunk_token_search_index", "version_page_search_metadata"} <= set(
+            inspect(engine).get_table_names()
+        )
+    finally:
+        engine.dispose()
+        _drop_database(admin_engine, database_name)
