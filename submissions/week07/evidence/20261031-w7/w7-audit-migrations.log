@@ -127,6 +127,6 @@ Traceback (most recent call last):
 sqlalchemy.exc.InternalError: (psycopg.errors.DependentObjectsStillExist) cannot drop table source_chunks because other objects depend on it
 DETAIL:  constraint chunk_token_search_index_chunk_id_fkey on table chunk_token_search_index depends on table source_chunks
 HINT:  Use DROP ... CASCADE to drop the dependent objects too.
-[SQL: 
+[SQL:
 DROP TABLE source_chunks]
 (Background on this error at: https://sqlalche.me/e/20/2j85)

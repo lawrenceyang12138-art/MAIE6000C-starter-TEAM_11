@@ -72,7 +72,7 @@ jobs:
           node-version: "22"
 
       - name: Node contract tests
-        run: node --test scripts/test_d_integration.test.mjs scripts/test_d_search_review.test.mjs
+        run: node --test scripts/test_d_integration.test.mjs scripts/test_d_search_review.test.mjs scripts/test_startup_browser.test.mjs
 
       - name: Mock adapter harness
         run: node scripts/test_d_mock.mjs

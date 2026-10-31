@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import { mkdir, stat, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { launchStartupBrowser } from "./startup_browser.mjs";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
@@ -18,11 +19,7 @@ if (retryMode) {
   assert.ok(!relative(repo, retryGate).startsWith(".."), "Retry gate must be within this worktree.");
   await assert.rejects(stat(retryGate), { code: "ENOENT" }, "Retry gate must not already exist.");
 }
-const browser = await chromium.launch({
-  headless: true,
-  executablePath: process.env.STARTUP_BROWSER_EXECUTABLE || "C:/Program Files/Google/Chrome/Application/chrome.exe",
-  args: ["--disable-gpu"],
-});
+const browser = await launchStartupBrowser(chromium);
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1050 } });
   page.on("pageerror", (error) => evidence.page_errors.push(error.message));

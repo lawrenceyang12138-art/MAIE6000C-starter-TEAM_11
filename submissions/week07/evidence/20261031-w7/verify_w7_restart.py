@@ -42,7 +42,9 @@ try:
             time.sleep(1)
         assert client.get('/health/ready').status_code == 200
         with engine.connect() as db:
-            assert db.scalar(text("SELECT count(*) FROM jobs WHERE status IN ('pending','claimed')")) == 0
+            assert db.scalar(text(
+                "SELECT count(*) FROM jobs WHERE status IN ('pending','claimed')"
+            )) == 0
             tables = {name: [dict(row) for row in db.execute(text(sql)).mappings()]
                       for name, sql in queries.items()}
         result['rows'] = {name: len(rows) for name, rows in tables.items()}
@@ -69,7 +71,9 @@ except Exception as exc:
     raise
 finally:
     report[phase] = result
-    report['passed'] = report.get('before', {}).get('passed') and report.get('after', {}).get('passed')
+    report['passed'] = (
+        report.get('before', {}).get('passed') and report.get('after', {}).get('passed')
+    )
     destination.write_text(json.dumps(report, indent=2, default=str) + '\n', encoding='utf-8')
     engine.dispose()
 print(json.dumps({'phase': phase, 'passed': result['passed'], 'rows': result['rows']}))

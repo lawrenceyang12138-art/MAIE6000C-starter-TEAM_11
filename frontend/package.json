@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:mock": "node ../scripts/test_d_mock.mjs",
-    "test:integration": "node --test ../scripts/test_d_integration.test.mjs ../scripts/test_d_search_review.test.mjs",
+    "test:integration": "node --test ../scripts/test_d_integration.test.mjs ../scripts/test_d_search_review.test.mjs ../scripts/test_startup_browser.test.mjs",
     "test:browser:contract": "node ../scripts/capture_d_1019.mjs",
     "test:browser:mock": "node ../scripts/capture_d_relations_mock.mjs",
     "test:browser:live": "node ../scripts/verify_w7_browser.mjs",

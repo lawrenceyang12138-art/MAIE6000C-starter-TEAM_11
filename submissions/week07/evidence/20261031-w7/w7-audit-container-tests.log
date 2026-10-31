@@ -15,12 +15,12 @@ _____________ test_retired_e5_manifest_remains_historical_evidence _____________
 
 >   ???
 
-D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_model_preparation.py:48: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_model_preparation.py:48:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 /usr/local/lib/python3.11/pathlib.py:1058: in read_text
     with self.open(mode='r', encoding=encoding, errors=errors) as f:
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = PosixPath('/app/submissions/week07/evidence/C/model-manifest.json')
 mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
@@ -47,14 +47,14 @@ collision = 'team_gold'
 
 >   ???
 
-D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_page_metadata_cli.py:232: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_page_metadata_cli.py:232:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_page_metadata_cli.py:232: in <dictcomp>
     ???
 /usr/local/lib/python3.11/pathlib.py:1050: in read_bytes
     with self.open(mode='rb') as f:
          ^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'rb'
 buffering = -1, encoding = None, errors = None, newline = None
@@ -81,14 +81,14 @@ collision = 'team_freeze'
 
 >   ???
 
-D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_page_metadata_cli.py:232: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_page_metadata_cli.py:232:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_page_metadata_cli.py:232: in <dictcomp>
     ???
 /usr/local/lib/python3.11/pathlib.py:1050: in read_bytes
     with self.open(mode='rb') as f:
          ^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'rb'
 buffering = -1, encoding = None, errors = None, newline = None
@@ -115,14 +115,14 @@ collision = 'sqlite_database'
 
 >   ???
 
-D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_page_metadata_cli.py:232: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_page_metadata_cli.py:232:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_page_metadata_cli.py:232: in <dictcomp>
     ???
 /usr/local/lib/python3.11/pathlib.py:1050: in read_bytes
     with self.open(mode='rb') as f:
          ^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'rb'
 buffering = -1, encoding = None, errors = None, newline = None
@@ -172,7 +172,7 @@ E         self._execute_child(args, executable, preexec_fn, close_fds,
 E       File "/usr/local/lib/python3.11/subprocess.py", line 1955, in _execute_child
 E         raise child_exception_type(errno_num, err_msg, err_filename)
 E     FileNotFoundError: [Errno 2] No such file or directory: 'git'
-E     
+E
 E   assert 1 == 0
 E    +  where 1 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'scripts.search_tools', 'page-metadata', '--database-url', 'sqli...d_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: \'git\'\n').returncode
 
@@ -199,7 +199,7 @@ E         self._execute_child(args, executable, preexec_fn, close_fds,
 E       File "/usr/local/lib/python3.11/subprocess.py", line 1955, in _execute_child
 E         raise child_exception_type(errno_num, err_msg, err_filename)
 E     FileNotFoundError: [Errno 2] No such file or directory: 'git'
-E     
+E
 E   assert 1 == 0
 E    +  where 1 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'scripts.search_tools', 'evaluate', '--database-url', 'sqlite://...d_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: \'git\'\n').returncode
 
@@ -211,12 +211,12 @@ changed_input = 'gold', code = 'frozen_gold_hash_mismatch'
 
 >   ???
 
-D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_tools_evaluation.py:80: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_tools_evaluation.py:80:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 /usr/local/lib/python3.11/pathlib.py:1050: in read_bytes
     with self.open(mode='rb') as f:
          ^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'rb'
 buffering = -1, encoding = None, errors = None, newline = None
@@ -241,12 +241,12 @@ changed_input = 'manifest', code = 'frozen_manifest_hash_mismatch'
 
 >   ???
 
-D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_tools_evaluation.py:80: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_tools_evaluation.py:80:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 /usr/local/lib/python3.11/pathlib.py:1050: in read_bytes
     with self.open(mode='rb') as f:
          ^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'rb'
 buffering = -1, encoding = None, errors = None, newline = None
@@ -271,12 +271,12 @@ tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_matching_freeze_cli_pres
 
 >   ???
 
-D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_tools_evaluation.py:119: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_tools_evaluation.py:119:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 /usr/local/lib/python3.11/pathlib.py:1058: in read_text
     with self.open(mode='r', encoding=encoding, errors=errors) as f:
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = PosixPath('/tmp/pytest-of-root/pytest-0/test_matching_freeze_cli_prese0/matching-freeze.json')
 mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
@@ -301,12 +301,12 @@ protected = 'gold'
 
 >   ???
 
-D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_tools_evaluation.py:135: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_tools_evaluation.py:135:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 /usr/local/lib/python3.11/pathlib.py:1050: in read_bytes
     with self.open(mode='rb') as f:
          ^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'rb'
 buffering = -1, encoding = None, errors = None, newline = None
@@ -331,12 +331,12 @@ protected = 'manifest'
 
 >   ???
 
-D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_tools_evaluation.py:135: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_tools_evaluation.py:135:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 /usr/local/lib/python3.11/pathlib.py:1050: in read_bytes
     with self.open(mode='rb') as f:
          ^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'rb'
 buffering = -1, encoding = None, errors = None, newline = None
@@ -361,12 +361,12 @@ protected = 'freeze'
 
 >   ???
 
-D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_tools_evaluation.py:135: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_tools_evaluation.py:135:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 /usr/local/lib/python3.11/pathlib.py:1050: in read_bytes
     with self.open(mode='rb') as f:
          ^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'rb'
 buffering = -1, encoding = None, errors = None, newline = None
@@ -414,7 +414,7 @@ E         self._execute_child(args, executable, preexec_fn, close_fds,
 E       File "/usr/local/lib/python3.11/subprocess.py", line 1955, in _execute_child
 E         raise child_exception_type(errno_num, err_msg, err_filename)
 E     FileNotFoundError: [Errno 2] No such file or directory: 'git'
-E     
+E
 E   assert 1 == 0
 E    +  where 1 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'scripts.verify_page_navigation', '--database-url', 'sqlite:////...d_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: \'git\'\n').returncode
 
@@ -426,12 +426,12 @@ tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_navigation_runner_refuse
 
 >   ???
 
-D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\integration\test_page_navigation_regression.py:74: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\integration\test_page_navigation_regression.py:74:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 /usr/local/lib/python3.11/pathlib.py:1058: in read_text
     with self.open(mode='r', encoding=encoding, errors=errors) as f:
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = PosixPath('/tmp/pytest-of-root/pytest-0/test_navigation_runner_refuses0/refused.json')
 mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
@@ -456,12 +456,12 @@ tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_team_pdf_scan_parse_inde
 
 >   ???
 
-D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\integration\test_team_pdf_evaluation.py:42: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\integration\test_team_pdf_evaluation.py:42:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 /usr/local/lib/python3.11/pathlib.py:1058: in read_text
     with self.open(mode='r', encoding=encoding, errors=errors) as f:
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'r'
 buffering = -1, encoding = 'utf-8', errors = None, newline = None
@@ -486,12 +486,12 @@ tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_reused_database_reparses
 
 >   ???
 
-D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\integration\test_team_pdf_evaluation.py:86: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\integration\test_team_pdf_evaluation.py:86:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 /usr/local/lib/python3.11/pathlib.py:1058: in read_text
     with self.open(mode='r', encoding=encoding, errors=errors) as f:
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'r'
 buffering = -1, encoding = 'utf-8', errors = None, newline = None
@@ -516,12 +516,12 @@ tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_reused_database_with_oth
 
 >   ???
 
-D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\integration\test_team_pdf_evaluation.py:108: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\integration\test_team_pdf_evaluation.py:108:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 /usr/local/lib/python3.11/pathlib.py:1058: in read_text
     with self.open(mode='r', encoding=encoding, errors=errors) as f:
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'r'
 buffering = -1, encoding = 'utf-8', errors = None, newline = None
@@ -545,12 +545,12 @@ tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_actual_cli_initializes_s
 
 >   ???
 
-D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\integration\test_team_pdf_evaluation.py:188: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\integration\test_team_pdf_evaluation.py:188:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 /usr/local/lib/python3.11/pathlib.py:1058: in read_text
     with self.open(mode='r', encoding=encoding, errors=errors) as f:
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = PosixPath('/tmp/pytest-of-root/pytest-0/test_actual_cli_initializes_sq0/report.json')
 mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
@@ -574,12 +574,12 @@ tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_actual_cli_refuses_parti
 
 >   ???
 
-D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\integration\test_team_pdf_evaluation.py:242: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\integration\test_team_pdf_evaluation.py:242:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 /usr/local/lib/python3.11/pathlib.py:1058: in read_text
     with self.open(mode='r', encoding=encoding, errors=errors) as f:
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 self = PosixPath('/tmp/pytest-of-root/pytest-0/test_actual_cli_refuses_partia0/partial-report.json')
 mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None

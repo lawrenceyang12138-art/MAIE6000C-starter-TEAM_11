@@ -102,8 +102,14 @@ def test_search_hit_evidence_mismatch_is_a_recorded_failure(tmp_path):
 
 def test_diagnostic_exception_does_not_leak_database_credentials(tmp_path):
     engine = create_engine("sqlite://")
-    args = argparse.Namespace(base_url="http://localhost", source_root=tmp_path,
-                              database_url="postgresql+psycopg://private:secret@localhost/test")
+    # macOS temporary paths contain /private; that is valid report metadata.
+    source_root = tmp_path / "private" / "sources"
+    username = "w7-diagnostic-user"
+    password = "w7-diagnostic-secret"
+    args = argparse.Namespace(
+        base_url="http://localhost", source_root=source_root,
+        database_url=f"postgresql+psycopg://{username}:{password}@localhost/test",
+    )
     with httpx.Client(base_url=args.base_url) as client:
         verifier = Verification(client, engine, args)
 
@@ -112,7 +118,10 @@ def test_diagnostic_exception_does_not_leak_database_credentials(tmp_path):
 
         assert not verifier.phase("database step", failing_action)
         serialized = json.dumps(verifier.report)
-        assert "secret" not in serialized
-        assert "private" not in serialized
+        assert args.database_url not in serialized
+        assert username not in serialized
+        assert password not in serialized
+        assert verifier.report["source_root"] == str(source_root.resolve())
+        assert verifier.report["database"] == "postgresql+psycopg://localhost/test"
         assert verifier.report["checks"][-1]["evidence"] == {"exception_type": "RuntimeError"}
     engine.dispose()

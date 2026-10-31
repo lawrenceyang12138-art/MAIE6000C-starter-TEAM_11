@@ -125,6 +125,19 @@ An existing `.env` with `FRONTEND_DATA_MODE=mock` stays in mock mode. Set it to
 `api` and rerun the launcher; the build-argument fingerprint triggers the needed
 frontend rebuild. No mock status should be read as evidence of a real download.
 
+## Browser verification
+
+After `npm ci` in `frontend/`, run `node scripts/verify_startup_browser.mjs`
+from the repository root against a running real stack. Set
+`STARTUP_BROWSER_ORIGIN` to its frontend URL (default `http://127.0.0.1:13000`).
+The script launches an isolated headless browser using Playwright's installed
+Chrome channel on Windows, macOS or Linux, then tries an installed Playwright
+Chromium if Chrome cannot launch. To install the latter explicitly, run
+`node frontend/node_modules/playwright-core/cli.js install chromium` from the
+repository root. Set `STARTUP_BROWSER_EXECUTABLE` to use a particular Chromium
+executable; an invalid override fails rather than selecting another browser.
+Browser installation is never triggered automatically by the verification script.
+
 ## Reproducing a missing-model first start
 
 Stop the branch's AI container first. Resolve and inspect the exact
