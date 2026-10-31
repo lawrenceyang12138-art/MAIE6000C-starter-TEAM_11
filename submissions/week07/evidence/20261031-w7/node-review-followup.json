@@ -1,0 +1,52 @@
+{
+  "kind": "local_node_review_followup",
+  "tested_commit": "2b975a02d42c636384c0e95a5f7f3d7bd0271729",
+  "started_at_utc": "2026-10-31T07:40:45.135722+00:00",
+  "finished_at_utc": "2026-10-31T07:40:47.028271+00:00",
+  "platform": "Windows-10-10.0.26100-SP0",
+  "node_version": "v22.23.1",
+  "command": [
+    "node",
+    "--test",
+    "scripts/test_d_integration.test.mjs",
+    "scripts/test_d_search_review.test.mjs",
+    "scripts/test_startup_browser.test.mjs"
+  ],
+  "working_tree_status_before": [
+    " M scripts/start.py",
+    " M tests/unit/test_startup_launcher.py"
+  ],
+  "source_files_sha256": {
+    ".github/workflows/ci.yml": "29de3a008453fbe4786b45c59fc4a0e8bb03ab272449b9a76cde2e084fd773c3",
+    "frontend/package.json": "f450c8cc62de794a90b13d713668cb3023fcd9dcbae6c9a51300cdb9eb4279b8",
+    "frontend/src/api/adapter.js": "23dbd8f987c132a02171f0e9c6087adfbd82cd705771590376bf5ee7b3a14499",
+    "frontend/src/api/adapter.test.js": "103429e1654407c7e495625882d0e6f5cdb74304fb7945951e949e4e8b28db77",
+    "frontend/src/api/errors.js": "4536902671266304a8e7a6396e39a371109ba6c540c9cdd4db39b6f330a8a8dc",
+    "frontend/src/api/http-adapter.js": "086cf38a814580650a6ad1d0c9aad98f0349f971501d70e90bdb3b1471b1fa12",
+    "frontend/src/api/mock-adapter.js": "2cfc2cb507efe2bacc6ec34ab2dd7a48d9c6c2683db572b08c884223e9c6d6de",
+    "frontend/src/api/setup-adapter.test.js": "7a689f83272454fbaf062a809f044882f8390f1c5da8eedb6764586d1d93ec07",
+    "frontend/src/lib/scan.js": "6ffc56bb83ba4c45b0ea9743557d075cef373cd1c5b87202974f8fe86cd0f1ba",
+    "frontend/src/lib/scan.test.js": "413dc6183b6daffb028e3984535225ed41713b31d741348259bfab8dad149498",
+    "frontend/src/lib/search.js": "2d91b5c84175aeedd7588abea778bce8afc5ad19d5d18926a7b6f9161e82f19f",
+    "frontend/src/lib/use-search.js": "3f5f0f1933b118a0162c7ddee0743e69a7a70a2f3e63145a6f575f9a259a2bd0",
+    "frontend/src/lib/use-setup.js": "d820fbd2232bcac12ae469bff50fbb682c628debf8141a87d653eaed4909cdff",
+    "frontend/src/mock/data.json": "b85e95a8b2eb7e11e327f94a35329b4b01a0059362c9453c3fcd843458108855",
+    "frontend/src/mock/relations.json": "b8dff366a5a0ce6cb3c1c89eeafd33ecc2bb7ead92b1134e51440a7bff127835",
+    "scripts/startup_browser.mjs": "fca1cebdafb16fe68b3d762041c6fe9cb282db6e8dcc45ace3d459d993a331b5",
+    "scripts/test_d_integration.test.mjs": "02e9f3d60f9e6ebcdba95fb26fc596e2bd1cc81d5c1a7e4eb960efe155329311",
+    "scripts/test_d_search_review.test.mjs": "29e3c6abcc99b2eda7135fd2fd73ad3e76565db922faee06b0d32a5dbe5061ce",
+    "scripts/test_startup_browser.test.mjs": "0405ea252c31b0103a71a827a2b71bd2b669e96fd58351d8992738f20944a7dd"
+  },
+  "exit_code": 0,
+  "results": {
+    "tests": 62,
+    "pass": 62,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "log": "node-review-followup.tap",
+  "log_sha256": "93fc780225303a9a2d7f3942eda98a029d3f5e7a943d13d8f9cfbeda9b09c1a2",
+  "scope": "The same three Node test modules as the CI contract job: 56 existing contract tests plus 6 browser-launcher tests. Launcher tests use fake launchers; this run does not launch a browser or rerun backend, PostgreSQL, model, frontend build or live workflow verification."
+}

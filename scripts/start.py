@@ -25,6 +25,10 @@ REPO = Path(__file__).resolve().parents[1]
 BUILD_INPUTS = (
     "Dockerfile", ".dockerignore", "compose.yaml", "pyproject.toml", "README.md",
     "alembic.ini", "services", "scripts", "fixtures", "alembic", "tests", "frontend",
+    # Match the runtime evaluation assets copied explicitly by Dockerfile.
+    "submissions/week07/gold-queries.json",
+    "submissions/week07/gold-queries.freeze.json",
+    "submissions/week07/evidence/C/model-manifest.json",
 )
 IGNORED_PARTS = {"node_modules", "dist", "__pycache__", ".pytest_cache", ".git", ".ruff_cache"}
 

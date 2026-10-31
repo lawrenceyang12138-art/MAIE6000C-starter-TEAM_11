@@ -48,6 +48,14 @@ checks, and `evidence/C/20261030-page-navigation/` and `20261030-startup/` recor
 C's earlier model/navigation/startup checks. They are supporting history, not a
 substitute for executing the current combined tree.
 
+A subsequent Node-only check at `2b975a0` passed **62/62 tests**: the 56 existing
+contracts plus 6 browser-launcher regressions, using the same three modules as CI.
+The [raw output](../submissions/week07/evidence/20261031-w7/node-review-followup.tap)
+and [execution metadata](../submissions/week07/evidence/20261031-w7/node-review-followup.json)
+record the command, host, exact commit, pending launcher Python edits and Node
+source hashes. The original runtime/image results below retain their original
+execution identity; this follow-up does not claim they were rerun.
+
 ## Acceptance matrix
 
 | ID | Requirement and source | Test / execution entry point | Current-run result |
@@ -69,7 +77,7 @@ substitute for executing the current combined tree.
 | W7-15 | Local Host/Origin protection; safe input refusals (proposal 83, 282; contract 4) | Real local allowed request and eight unsafe request classes; integration tests | **PASS** — `runtime-safety-pages.json` 102 checks/0 failures, eight unsafe classes rejected with no DB writes; final Linux also executes symlink and FIFO cases. |
 | W7-16 | API/scan/keyword available when AI cannot start (proposal 85; contract 13) | Cold-start API/Worker without AI; independent health/search/evidence | **PASS** — AI absent during initial 202-check HTTP/DB run; empty-DB browser also passes with AI disabled; Compose no longer waits for AI health. |
 | W7-17 | Setup progress, retry, true model readiness and missing-vector recovery (contract 13) | Native startup probe, live preparation/retry UI, background indexing recovery | **PASS** — `model-ready.json`, `model-browser.json`, `model-retry-browser.json`; real offline-cache error → Retry 202 → ready after cache repair. Existing cache reused, no new download claim. Canonical token rows recover automatically from 0 to 30 in `model-modes.json`. |
-| W7-18 | Branch checks pass after rebuilt images; skips reported (contract 9.1) | Final image Ruff/Python + PostgreSQL; Node/Vitest/build; fixtures/gold | **PASS** — final Linux **744 passed, 0 skipped**, Ruff clean (`linux-final-tests.xml`, `w7-final-container-tests.log`); Vitest 56, Node 56, build and fixture/mock checks pass. Windows earlier 737/2 skips are historical; Linux executes both skipped OS cases. |
+| W7-18 | Branch checks pass after rebuilt images; skips reported (contract 9.1) | Final image Ruff/Python + PostgreSQL; Node/Vitest/build; fixtures/gold | **PASS** — original integrated Linux run: **744 passed, 0 skipped**, Ruff clean (`linux-final-tests.xml`, `w7-final-container-tests.log`); Vitest 56, historical Node 56, build and fixture/mock checks pass. Current CI Node follow-up at `2b975a0`: **62/62 passed**, 0 skipped ([output](../submissions/week07/evidence/20261031-w7/node-review-followup.tap)). Windows earlier 737/2 skips are historical; the original Linux run executed both skipped OS cases. |
 
 For every completion claim, record the tested commit, command, actual output,
 database/extension and image versions (contract 9.3). SQLite tests establish

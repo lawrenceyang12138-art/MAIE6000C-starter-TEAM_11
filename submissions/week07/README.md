@@ -101,9 +101,12 @@ routes and future queue architecture are distinguished in the acceptance matrix.
 
 ## 6. Testing and verification
 
-Final rebuilt Linux image: **744 Python tests passed, 0 skipped; Ruff clean**,
+Original integrated run's rebuilt Linux image: **744 Python tests passed, 0 skipped; Ruff clean**,
 including real PostgreSQL/pgvector and five migration tests. Frontend: **56 Vitest
-and 56 Node contract tests passed**, production build passed. Fixture and mock
+and 56 Node contract tests passed** in that snapshot, production build passed. The
+[current CI Node follow-up at `2b975a0`](evidence/20261031-w7/node-review-followup.json)
+passed **62/62 tests** (56 contracts plus 6 browser-launcher regressions;
+[output](evidence/20261031-w7/node-review-followup.tap)). Fixture and mock
 adapter validation passed. Frozen source-location checks verified 10/10 locations
 and 16 file hashes; these are source checks, not a retrieval-quality result.
 

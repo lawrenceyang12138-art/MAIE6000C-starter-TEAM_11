@@ -18,8 +18,12 @@ their dated snapshots and are not totals for this working tree. The verified
 changes were subsequently committed by topic; the repository owner will handle
 the remote push.
 
-Final rebuilt Linux/Python/PostgreSQL suite: **744 passed, 0 skipped**, Ruff clean.
-Frontend: **56 Vitest and 56 Node tests passed**, production build passed.
+Original integrated Linux/Python/PostgreSQL suite: **744 passed, 0 skipped**, Ruff clean.
+Frontend in that snapshot: **56 Vitest and 56 Node tests passed**, production build passed.
+The [current CI Node follow-up at `2b975a0`](evidence/20261031-w7/node-review-followup.json)
+passed **62/62 tests** (56 contracts plus 6 browser-launcher regressions;
+[output](evidence/20261031-w7/node-review-followup.tap)). This Node check did not
+rerun the original runtime/image workflow below.
 Real HTTP/DB: **202 checks/0 failures**; safety and independent physical pages:
 **102 checks/0 failures**, 30/30 chunks. Empty-database browser first import,
 single search/evidence and rescan passed; mixed import plus three review decisions

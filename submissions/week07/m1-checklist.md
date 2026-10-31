@@ -24,7 +24,7 @@
 | 请求和路径边界 | 至少六种危险输入拒绝；本地 Host/Origin、越界路径与授权检查 | 通过：`runtime-safety-pages.json` 八类请求拒绝、DB 无写，102 检查/0 失败；Linux 真 symlink/FIFO 测试通过 |
 | AI 独立启动 | AI 不能启动时 API/Worker、关键词和源证据仍可用 | 通过：初次无 AI 冷启动 HTTP/DB 202/0；空数据库浏览器在 AI 禁用下完成首次全流程 |
 | 持久性和只读 | 正常重启后数据和复核仍可读；源文件前后 SHA-256 变化为零 | 通过：`restart.json` DB/API/Worker/frontend 换容器后 12 表摘要一致、三份源证据仍可读；17 原件 hash/size 不变；source mounts 只读 |
-| 分支检查 | Ruff、Python/真实 PostgreSQL、Node/Vitest/build；记录镜像/版本和所有跳过原因 | 通过：最终 Linux 744 passed/0 skipped、Ruff clean；Vitest 56、Node 56、build/fixture/mock passed。镜像和版本见 `identity.json`；Windows 历史两项平台跳过均已在 Linux 执行 |
+| 分支检查 | Ruff、Python/真实 PostgreSQL、Node/Vitest/build；记录镜像/版本和所有跳过原因 | 通过：原集成快照 Linux 744 passed/0 skipped、Ruff clean；Vitest 56、历史 Node 56、build/fixture/mock passed。当前 CI Node 在 `2b975a0` 后续复跑 **62/62 passed、0 skipped**（56 合同 + 6 浏览器启动回归），见[输出](evidence/20261031-w7/node-review-followup.tap)与[执行身份](evidence/20261031-w7/node-review-followup.json)。原镜像和版本见 `identity.json`；Windows 历史两项平台跳过已在原 Linux 执行；本次 Node 检查未重跑运行栈 |
 
 语义 4/5 是 C 早期候选阈值，未经团队冻结。页导航辅助结果与纯模型结果分别
 报告；源定位验证不等同于语义质量或 B 的人工审阅。

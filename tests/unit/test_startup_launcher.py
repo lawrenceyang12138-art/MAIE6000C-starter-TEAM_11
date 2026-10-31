@@ -63,6 +63,55 @@ def test_restart_reuses_installed_images_but_source_changes_rebuild(launcher_rep
     assert ["docker", "compose", "--progress", "plain", "build"] in docker
 
 
+@pytest.mark.parametrize("changed_input", [
+    "submissions/week07/gold-queries.json",
+    "submissions/week07/gold-queries.freeze.json",
+    "submissions/week07/evidence/C/model-manifest.json",
+])
+def test_changed_packaged_evaluation_input_rebuilds_cached_images(
+    launcher_repo, docker, changed_input,
+):
+    source = launcher_repo / changed_input
+    source.parent.mkdir(parents=True, exist_ok=True)
+    source.write_text('{"revision": 1}\n', encoding="utf-8")
+
+    build = ["docker", "compose", "--progress", "plain", "build"]
+    assert start.main(["--no-wait"], repo=launcher_repo) == 0
+    original = start.build_fingerprint(launcher_repo, {})
+    docker.clear()
+    assert start.main(["--no-wait"], repo=launcher_repo) == 0
+    assert build not in docker
+
+    # A same-length content edit must invalidate the saved image fingerprint.
+    source.write_text('{"revision": 2}\n', encoding="utf-8")
+    updated = start.build_fingerprint(launcher_repo, {})
+    assert updated != original
+    docker.clear()
+    assert start.main(["--no-wait"], repo=launcher_repo) == 0
+    assert build in docker
+    assert docker.index(build) < docker.index(["docker", "compose", "up", "-d", "--no-build"])
+    marker = launcher_repo / "work/startup-build.json"
+    assert json.loads(marker.read_text(encoding="utf-8"))["fingerprint"] == updated
+
+    docker.clear()
+    assert start.main(["--no-wait"], repo=launcher_repo) == 0
+    assert build not in docker
+
+
+def test_new_evaluation_reports_do_not_rebuild_images(launcher_repo, docker):
+    assert start.main(["--no-wait"], repo=launcher_repo) == 0
+    original = start.build_fingerprint(launcher_repo, {})
+    evidence = launcher_repo / "submissions/week07/evidence/20261031-w7"
+    evidence.mkdir(parents=True)
+    (evidence / "README.md").write_text("Updated verification notes\n", encoding="utf-8")
+    (evidence / "results.json").write_text('{"passed": true}\n', encoding="utf-8")
+
+    assert start.build_fingerprint(launcher_repo, {}) == original
+    docker.clear()
+    assert start.main(["--no-wait"], repo=launcher_repo) == 0
+    assert ["docker", "compose", "--progress", "plain", "build"] not in docker
+
+
 def test_rebuild_flag_and_missing_image_force_build(launcher_repo, docker, monkeypatch):
     start.main(["--no-wait"], repo=launcher_repo)
     docker.clear()

@@ -11,13 +11,21 @@ The verified changes were subsequently committed by topic, with remote push left
 to the repository owner. Referenced text logs are included in Git; screenshots
 follow the existing local-only evidence-image rule.
 
-The final runtime verifier passed **202 checks with zero failures**. The final
+The original integrated run's runtime verifier passed **202 checks with zero failures**. Its final
 Linux image passed **744 backend tests with zero skips**, plus Ruff. Frontend
-Vitest passed **56 tests**, Node integration checks passed **56 tests**, and the
+Vitest passed **56 tests**, the then-current Node suite passed **56 tests**, and the
 production build succeeded. These establish implementation and workflow
 behavior. This directory's frozen-gold check verifies source locations, without
 claiming a new retrieval-quality score. B's human gold review remains pending;
 the shared W7 contract does not freeze a semantic-quality score as a release gate.
+
+The current CI Node suite was rerun at `2b975a0`: **62 passed, 0 failed, 0 skipped**
+(the original 56 contract tests plus 6 browser-launcher regression tests). See
+[the follow-up output](node-review-followup.tap) and
+[execution identity, command and source hashes](node-review-followup.json).
+Only the launcher Python files had pending edits when this Node check started;
+the tested Node sources matched that commit. This follow-up does not rerun or
+replace the original Linux/backend/model/browser evidence.
 
 ## Final runtime and browser evidence
 
@@ -63,7 +71,8 @@ remain local rather than being included in Git.
 | --- | --- |
 | [linux-final-tests.xml](linux-final-tests.xml), [w7-final-container-tests.log](w7-final-container-tests.log) | Authoritative final Linux image run: Ruff passed; 744 tests passed, 0 skipped. Includes PostgreSQL-backed integration checks. Tests ran from the built image without binding the host source tree over it. |
 | [w7-final-vitest.log](w7-final-vitest.log) | 5 test files, 56 tests passed. |
-| [w7-final-node.log](w7-final-node.log) | 56 passed, 0 failed, 0 skipped. |
+| [node-review-followup.tap](node-review-followup.tap), [node-review-followup.json](node-review-followup.json) | Current CI Node suite at `2b975a0`: 62 passed, 0 failed, 0 skipped; 56 existing contracts plus 6 browser-launcher tests. Metadata records command, host, pending edits and source hashes. |
+| [w7-final-node.log](w7-final-node.log) | Historical integrated-run snapshot before the 6 browser-launcher tests: 56 passed, 0 failed, 0 skipped. |
 | [w7-final-frontend-build.log](w7-final-frontend-build.log) | Production frontend build succeeded. |
 | [w7-audit-migration.xml](w7-audit-migration.xml) | 5 migration tests passed, including downgrade/upgrade with populated keyword sidecar data. |
 | [w7-final-image-build.log](w7-final-image-build.log), [w7-audit-packaging-build.log](w7-audit-packaging-build.log) | Image and evaluation-asset packaging build records. |
