@@ -1,8 +1,74 @@
 # Team 11 — Week 07 report
 
-Status: draft for the 2026-10-23 freeze, prepared against `Role_D` at `ed1f307` (22 October).
-It records what is built and verified, what is still missing, and which claims are explicitly
-**not** made. No teammate's approval is recorded or implied.
+## Current integrated review: 2026-10-31
+
+Target: `feat/c-team-pdf-evaluation`; audit baseline: `0e3d715`, before this
+run's fixes. The current implementation combines scanning, extraction, automatic
+relation candidates, source evidence and reviews, search, a real API-mode UI,
+and automatic local-model preparation with recovery indexing. The former missing
+route assembly, relation `chunk_id` and unspecified review-response blockers are
+closed in code and in the shared contract. Human milestone sign-off is separate.
+
+Current-run implementation and automated acceptance are **complete: 18/18 gates
+pass** in [the acceptance matrix](../../docs/w7-acceptance.md). The
+[evidence index](evidence/20261031-w7/README.md) records the tree as tested before
+committing, exact commands, source hashes, PostgreSQL/extension and image versions,
+preserved failures and subsequent repairs. Historical counts below belong to
+their dated snapshots and are not totals for this working tree. The verified
+changes were subsequently committed by topic; the repository owner will handle
+the remote push.
+
+Final rebuilt Linux/Python/PostgreSQL suite: **744 passed, 0 skipped**, Ruff clean.
+Frontend: **56 Vitest and 56 Node tests passed**, production build passed.
+Real HTTP/DB: **202 checks/0 failures**; safety and independent physical pages:
+**102 checks/0 failures**, 30/30 chunks. Empty-database browser first import,
+single search/evidence and rescan passed; mixed import plus three review decisions
+and reload persistence passed. Native PPLX semantic/hybrid, full AI disconnection
+and restoration, setup/retry, missing-vector recovery and normal DB/API/Worker/UI
+container recreation also passed. The existing pinned model cache was verified
+and reused; this run did not repeat downloading.
+
+The user-facing sequence is authorize a read-only directory, watch durable
+background progress, search and inspect current source passages, inspect bounded
+person/project/topic candidates, save a revisioned decision, exercise explicit
+failure/retry and AI degradation, and verify persistence and unchanged originals.
+The current new-install default is API mode. An existing explicit mock setting
+remains a labelled simulation and does not provide real acceptance evidence.
+
+This audit identified checks for AI-independent cold startup and local Host/Origin
+protection from the original architecture, plus parser/UI/model-recovery edge
+cases. Verified repairs include precise relation evidence/correction and receipt
+validation, unreadable-source refusal, missing initial indexing dispatch recovery,
+disabled-AI behavior, atomic keyword readiness, local request protection,
+AI-independent startup, sidecar downgrade order and complete evaluation packaging.
+The real browser exercises first import, repeated scan and mixed abnormal input;
+DB identity sets prove rescan idempotency. The verifier also has regression tests
+for legitimate completed model-recovery jobs and duplicate live work.
+
+Two historical corpora remain distinct. B/Compose uses twelve normal PDFs plus
+corrupt/encrypted/no-text-layer/unsupported-format inputs. D's frozen corpus has
+different bytes and obsolete abnormal status/code expectations. Preserve old
+freezes and answers, document any new unified acceptance version, and separate
+pure-model retrieval from physical-page-navigation-assisted results. B's human
+gold review and A/B/C/D signatures cannot be supplied by automated execution.
+
+W7 remains the manual text-PDF slice with a bounded basic relation view and saved
+reviews. OCR, other formats, monitoring, full graph exploration, purge/export,
+multi-worker lease recovery and file organization remain later work. The shared
+contract governs the current narrowed route and job vocabulary; old proposal
+routes and its broader queue sketch are not newly claimed implemented features.
+
+The [current README](README.md), [M1 checklist](m1-checklist.md) and
+[scope record](scope-decision.md) supersede the current-status statements in the
+historical report below. Original evidence files remain unchanged.
+
+## Historical freeze report: 2026-10-23
+
+The following sections preserve the draft prepared against `Role_D` at `ed1f307`
+(22 October), including its historical counts, risks and limits. Statements such
+as missing relation chunk IDs, a mock default or unassembled routes describe
+that snapshot, not the current combined branch. No teammate's approval is
+recorded or implied.
 
 ## 1. Project overview
 

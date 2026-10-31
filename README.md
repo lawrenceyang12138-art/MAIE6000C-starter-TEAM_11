@@ -6,6 +6,8 @@ File Management Assistant is a proposed local-first tool for people who accumula
 
 ## Documentation
 
+- [W7 implementation and acceptance](docs/w7-acceptance.md): current integration
+  requirements, fixes and reproducible verification; [milestone report](submissions/week07/README.md).
 - [Detailed architecture](docs/architecture.md): workflow, service boundaries, persistence, state transitions, AI processing, failure behavior, and design evidence.
 - [Week 4 proposal and project plan](submissions/week04/README.md): milestone summary, scope priorities, risks, artifact index, and AI Use Statement.
 - [Starter operations notes](docs/operations.md): existing service health, metrics, and development commands. These describe the baseline, not the proposed product.

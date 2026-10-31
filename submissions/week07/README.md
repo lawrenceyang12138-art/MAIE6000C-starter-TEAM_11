@@ -1,188 +1,159 @@
 # Team 11 — Week 07 midterm milestone
 
-Checkpoint: `w07-midterm` tag on `develop`.
-Status: the read-files vertical slice runs end to end on a local Docker Compose stack —
-authorize a read-only folder, scan it, parse and index the text, search it, and open the
-source passage behind a hit. Everything below was measured on this branch, not projected.
+Audit date: 2026-10-31. Branch: `feat/c-team-pdf-evaluation`.
+Code-inspection baseline: `0e3d715`, before the current fixes and rerun.
 
-Roles: A owns mounts, scanning, the root/version model, job assembly and the API surface;
-B owns parsing, evidence, relations and review; C owns retrieval and index configuration;
-D owns the UI, the browser-side contract and the milestone materials.
+The W7 workflow is implemented and its **18 automated acceptance gates pass**
+across the API, Worker, parser, search and frontend. This audit fixed defects and
+tested the resulting working tree before committing it, using real PostgreSQL,
+built Linux images, the pinned local model and an independent browser. The
+verified changes were subsequently committed by topic; the repository owner
+will handle the remote push. See the
+[acceptance matrix](../../docs/w7-acceptance.md) and
+[current evidence index](evidence/20261031-w7/README.md).
+Human gold review and team signatures remain separate; none are supplied here.
 
-## 1. What currently works
+Roles: A owns authorization, scanning, durable jobs and assembly; B owns parsing,
+evidence, relation candidates and reviews; C owns retrieval, model preparation
+and evaluation; D owns the browser workflow and milestone materials.
 
-One sentence: a user picks a folder inside an allowlisted read-only mount, gets a durable
-scan, watches per-file progress, searches the text, and reads the exact page a hit came
-from — with the version pinned to the bytes on disk.
+## 1. Verified workflow
 
-Measured on 2026-10-21/22 against the fixed 16-file corpus:
+A user selects a directory beneath an allowlisted read-only mount. The API stores
+an authorized root and pending scan job atomically and returns 202. The Worker
+scans subfolders, records immutable content versions, extracts page-bound chunks,
+automatically stores rule-based person/project/topic candidates and indexes the
+text. Search supports keyword, semantic and hybrid modes; each hit resolves to
+its canonical chunk evidence. The relation/review screens consume direct chunk
+IDs and persist revisioned confirm/correct/reject decisions.
 
-| Step | Result |
-| --- | --- |
-| Authorize + first scan | 16 files, 16 versions, one `scan_root` job |
-| Parsing | 12 `basic_ready`, 4 `unsupported` with reasons: `corrupt`, `encrypted`, `no_text_layer`, `unsupported_format` |
-| Indexing | 12 `embed_file` jobs, one per ready version, all `completed` |
-| Rescan | 0 new file rows, 0 duplicate versions or jobs |
-| Database after 11 scans across two roots | 29 files, 29 versions, 64 jobs — one version per file |
-| Restart and container recreation | same roots, same counts, originals' SHA-256 unchanged |
-| Relevance | keyword search returns the expected passage; semantic mode degrades visibly without a local model |
-
-The API serves 22 routes: mounts, directories, roots, rescans, jobs and retry, files,
-evidence, relations, review, search, plus the starter's case routes and health/metrics.
-The frontend consumes them through a same-origin `/api` proxy and validates every field
-it reads.
-
-**What "works" does not include**: no filesystem watcher (scans are explicit), one worker
-(no claim lease, no skip-locked claim, no automatic backoff), no OCR, no move detection,
-no purge, and overlapping authorized roots are not rejected. Symlink-escape rejection is
-implemented but only verifiable on a host that can create symlinks — the two cases skip on
-Windows.
+The first-start launcher prepares the pinned local PPLX model, exposes real setup
+progress and retry, and queues missing document embeddings when the model becomes
+ready. Keyword search and evidence remain separate capabilities from semantic
+readiness. First-import keyword sidecars are published atomically with parsed
+chunks, so a newly ready document is searchable before AI indexing completes.
 
 ## 2. Live demo sequence
 
-Five beats, in the order the rubric asks for them. Each has an observable artefact; none
-needs narration to be believed.
+| Beat | Action | Observable result |
+| --- | --- | --- |
+| Input and durable acceptance | Open `/select`, choose an allowlisted directory and authorize | Real 202 response with root/job IDs; persisted root and pending scan job |
+| Async processing | Open progress and wait for file stages | Scan/extract/embed jobs, current file counts and safe abnormal reasons |
+| Persisted output | Search a cross-folder keyword, then semantic/hybrid; open a hit | Requested/effective modes, matching file/version/page/chunk and source passage |
+| Human correction | Open relations and review a source-backed candidate | Direct evidence, saved decision revision and explicit stale-revision conflict |
+| Failure and recovery | Disconnect AI; exercise a recoverable failed source job | Visible keyword fallback; explicit retry with retained attempts |
+| Durability and operations | Restart normally; reread IDs and inspect health/metrics | Same data/reviews, database readiness, counters and unchanged source hashes |
 
-| # | Beat | Action | What the reviewer sees |
-| --- | --- | --- | --- |
-| 1 | Input enters | Pick `corpus` → `regression` in the UI, press authorize | `POST /roots` → `202 {root_id, job_id, status: "pending"}` |
-| 2 | Persisted state change | `GET /roots/{root_id}` | `file_counts` moves from 0 to 13 total, 12 `basic_ready`, 1 `unsupported` |
-| 3 | Async worker step | `GET /jobs/{job_id}` and `docker compose logs worker` | `pending → running → completed`; 13 `extract_file` + 12 `embed_file` jobs |
-| 4 | Persisted output | `GET /files?root_id=`, then search and open a hit | one row per file, then the source page with version, page and excerpt |
-| 5 | Operational signal | `GET /health/ready`, `GET /metrics` | readiness ok; request counters and job counters move |
-
-Fallbacks if the live demo misbehaves: `submissions/week07/demo-script.md` (six-step
-script), the recorded run JSONs in `submissions/week07/evidence/`, and the commands in
-`docs/operations.md`. Any step that fails is reported as failed on the spot — the contract
-for this milestone is an honest slice, not a flawless one.
+All three scenarios passed against real services. First import used a new empty
+database with AI disabled; repeated scans preserved canonical IDs and queued no
+new extraction/embedding work. Mixed import reported twelve ready documents and
+four handled unsupported inputs. The review browser saved all three decisions
+and verified persistence after reload. The dedicated demo is available at
+`http://127.0.0.1:13001` while the audit stack is running.
 
 ## 3. Current implementation status
 
-### Implemented
+Implemented: canonical files/versions/chunks and one migration chain; scanning
+and current-version pointers; stable chunks; durable jobs and explicit retries;
+PDF text extraction and abnormal reasons; automatic bounded relation candidates;
+source identity checks; revisioned append-only reviews; keyword/semantic/hybrid
+search and degradation; real API-mode UI; local model preparation and recovery
+indexing. New frontend builds default to API mode; an existing explicit mock
+configuration remains a labelled simulation.
 
-- **Mounts and authorization.** Allowlisted read-only mounts, relative-path resolution with
-  canonical containment, symlink-escape rejection, `404 unknown_mount`, `403 path_out_of_scope`.
-- **Scanning and versions.** One `file_versions` row per distinct content, `current_version_id`
-  moved in the same transaction as the job, revert handling that moves the pointer back,
-  `missing` presence without deleting history, idempotent rescans.
-- **Jobs.** Durable `scan_root` / `extract_file` / `embed_file` jobs; atomic claim-and-enqueue
-  under a root row lock; `POST /jobs/{id}/retry` guarded by a conditional state update;
-  lifecycle refusals for paused, revoking and revoked roots.
-- **API surface.** The seven routes the frontend needs, plus flattened `POST /roots`,
-  `GET /roots/{id}` with stage counts, and `GET /jobs/{id}` with a public status vocabulary.
-- **Search and evidence.** Keyword, semantic and hybrid modes with explicit degradation;
-  evidence bound to file, version, page and ordinal; relations and review with optimistic
-  concurrency.
-- **UI.** Folder selection, scan progress, file list, search, evidence inspector, relations
-  and review pages; runs against the real service when built with
-  `FRONTEND_DATA_MODE=api`, while the default build stays in the labelled simulation.
+Repairs verified in this run include direct relation chunk evidence and correction
+selection; review receipt validation; safe unreadable-source refusals; missing
+first-index dispatch recovery; no AI calls with embeddings disabled; atomic
+keyword readiness; local Host/Origin protection; AI-independent cold startup;
+complete sidecar migration rollback; and packaged frozen evaluation inputs with
+graceful Git-unavailable reporting. The verifier now allows completed model-recovery
+indexing history while retaining strict rescan and live-job checks.
 
-### Partially implemented
-
-- **Graph view.** Renders candidates from the relation routes; no similarity edges, no
-  cross-file traversal.
-- **Retry UX.** Available for failed jobs; a job never fails for a damaged document, so the
-  control is only reachable on infrastructure errors.
-- **Semantic search.** Works when the local embedding model is present; otherwise it
-  degrades to keyword and says so.
-
-### Not implemented
-
-- Filesystem watcher; multi-worker safety (leases, `FOR UPDATE SKIP LOCKED`, backoff).
-- OCR, non-PDF formats beyond "detected and recorded as unsupported".
-- Move/rename detection, root deletion and purge, overlapping-root rejection.
-- Symlink-escape verification on Linux (the code is there; the host cannot create links).
+Later scope: filesystem watcher, OCR, other document formats, complete graph
+traversal, multi-worker leases/backoff, export/purge and all file organization.
+A crash during a claimed job currently has no lease recovery; explicit retry of
+an ordinarily recorded failed job is supported.
 
 ## 4. Architecture status
 
-Four services behind Compose: `frontend` (static Vite build, nginx, `/api` proxy, bound to
-loopback), `api` (FastAPI), `worker` (polling process, no HTTP), `ai` (embeddings only, and
-optional), and `db` (PostgreSQL 16 + pgvector). The canonical tables are `authorized_roots`,
-`files`, `file_versions`, `source_chunks` and the search index; `docs/architecture.md`
-records the built components and their limits, and `docs/team11-w7-shared-contract.md` is
-the authority for route shapes and error envelopes.
+Five Compose services form the application: frontend/nginx, API, Worker, local
+AI and PostgreSQL/pgvector. API and Worker read the same source mounts read-only.
+The AI service alone can write its model cache. The source-of-truth tables are
+`authorized_roots`, `files`, `file_versions`, `source_chunks`, jobs, entities,
+relationships, relation evidence and reviews. Search sidecars contain derived
+keyword/token/page metadata and retain the canonical chunk/version identities.
 
-Two design decisions are worth naming. First, a content hash never authorizes deletion or
-deduplication: identical bytes at two paths stay two records. Second, the pointer means
-"latest content observed", not "latest content parsed", which is why a scan moves it and
-parsing only records status — serving stale text as current was the one defect the review
-treated as blocking.
+The [shared contract](../../docs/team11-w7-shared-contract.md) defines current
+routes and semantics. The Week 4 proposal defines the W7 scope; later draft
+routes and future queue architecture are distinguished in the acceptance matrix.
 
-## 5. Current evidence of integration
+## 5. Evidence of integration
 
-| Boundary | Evidence | What it proves |
-| --- | --- | --- |
-| DB write path | `evidence/scan-idempotency.md`, `evidence/m1-catalog.md` | files/versions/jobs created once per content, across 11 scans |
-| API path | `tests/integration/test_api_w7_routes.py`, frontend adapters | request/response shapes the browser actually validates |
-| Worker path | `evidence/scan-run.json`, worker logs | dispatch, completion and terminal states per job type |
-| AI path | `docs/search-integration-handoff.md`, degraded-mode tests | keyword stays usable without the model; degradation is visible |
-| Operational signal | `docs/operations.md`, `/health/*`, `/metrics` | readiness, counters and troubleshooting steps |
-| Persistence | `evidence/restart-v1.md` | restart and container recreation keep roots, counts and hashes |
+| Evidence | Scope |
+| --- | --- |
+| [Current acceptance matrix](../../docs/w7-acceptance.md) | Requirement sources, test entries and current-run results |
+| [2026-10-31 evidence](evidence/20261031-w7/README.md) | Final commands, 18-gate results, image/tree identities, real browser/API/DB/model/restart reports and preserved failure-to-fix records |
+| [B pipeline and relation evidence](evidence/B/README.md) | Historical real Compose/API/Worker and direct relation/review checks |
+| [C navigation evidence](evidence/C/20261030-page-navigation/README.md) | Historical local-model SQLite/PostgreSQL evaluation and HTTP recovery |
+| [C startup evidence](evidence/C/20261030-startup/README.md) | Historical first-start verification; retain its stated limits |
+| `evidence/1016-D/`, `evidence/1019-D/` | Historical intercepted HTTP-contract and explicit mock browser checks; not product acceptance |
+| [M1 checklist](m1-checklist.md) | Three real scenarios and human sign-off status |
 
-## 6. Testing and verification performed
+## 6. Testing and verification
 
-```bash
-pytest tests/unit tests/integration -q      # 222 passed, 10 skipped
-ruff check .                                # clean
-SEARCH_TEST_DATABASE_URL=... pytest tests/unit tests/integration -q   # 230 passed, 2 skipped
-python scripts/w7_evidence_probe.py --out submissions/week07/evidence/scan-run.json
-```
+Final rebuilt Linux image: **744 Python tests passed, 0 skipped; Ruff clean**,
+including real PostgreSQL/pgvector and five migration tests. Frontend: **56 Vitest
+and 56 Node contract tests passed**, production build passed. Fixture and mock
+adapter validation passed. Frozen source-location checks verified 10/10 locations
+and 16 file hashes; these are source checks, not a retrieval-quality result.
 
-- 10 skips are honest: two symlink cases the Windows host cannot create, eight PostgreSQL
-  cases that need a database.
-- The queue invariants have PostgreSQL concurrency tests (concurrent rescans, concurrent
-  authorizations, stale retries against a worker claim/completion). Each was mutation-checked:
-  removing the guard turns them red.
-- Security refusals are enumerated in `evidence/security-check.md` (19 cases).
-- Known limitation of the suite: route tests run on SQLite, so they prove the HTTP contract,
-  not PostgreSQL behaviour; the compose stack covers the positive path end to end.
+Real HTTP/DB: 202 checks/0 failures both with AI absent initially and after final
+rebuild. Safety/independent physical pages: 102 checks/0 failures, 30/30 chunks.
+Real browsers: empty-DB import/search/rescan 3 cases, fresh-root 3 cases, mixed
+import/reviews 6 cases; fixture contract 19 and explicit mock 5 are recorded
+separately. Real model ready/disconnected/restored modes, setup retry and normal
+container recreation all passed. PostgreSQL is 16.15 with pgvector 0.8.7.
+
+The model startup run verified/reused the existing fixed cache and executed native
+inference; it did not repeat model downloading. Windows' earlier two platform
+skips (symlink privilege/FIFO) both execute successfully in Linux. Historical
+222/230/530/587/737/741 counts retain their dated identities and are not final totals.
+
+`scripts/w7_evidence_probe.py` is a scan probe. Its older output only compares
+file totals/stages; use persisted IDs and DB counts to prove version/chunk/job
+idempotency rather than inferring it from unchanged UI counters.
 
 ## 7. Risks and revised scope
 
-| Id | Risk | Severity | Owner | State at freeze |
-| --- | --- | --- | --- | --- |
-| R1 | Seven file-management, evidence, relation and retry routes not assembled | P0 | A / B | **Closed** — merged in PR #6 (2026-10-23) |
-| R2 | Fixture error codes do not match the parser taxonomy | P1 | B + D | Open; deferred past the freeze, needs a corpus re-freeze |
-| R3 | M1 three-scenario browser run on a clean database | P0 | A+B+C+D | Partially run: scan/parse/index/search/evidence measured; the browser pass with signatures is not |
-| R4 | Relation candidates carry no addressable chunk id | P1 | A / B | Open; review stays disabled when a quote cannot be located |
-| R5 | Review success envelope is D's expectation, not an agreed contract | P1 | A / B | Open; consumer fails loud on any other shape |
-| R6 | Single worker, no lease or backoff | P2 | A | Accepted for W7; R1 work item |
+The former missing-route, missing relation `chunk_id` and unspecified review
+response blockers are closed. The current run also closes the implementation and
+testing blockers for the combined tree and local request/startup boundaries.
+Two different historical corpora remain documented: D's frozen abnormal manifest has obsolete
+status/code expectations; B's live mounted corpus uses the parser's actual
+`corrupt`, `encrypted`, `no_text_layer`, `unsupported_format` taxonomy. Preserve
+old answers and bytes; a unified acceptance manifest needs its own version.
 
-Scope for the second half is narrowed deliberately: local read-only sources, text PDFs,
-one worker, small candidate sets, no remote models.
+Human gold review and A/B/C/D milestone signatures remain explicit human tasks;
+automated implementation and verification do not supply those signatures.
 
 ## 8. Plan from Week 7 to Week 13
 
-1. **Correctness debt.** Regenerate the abnormal fixtures against the real taxonomy and
-   re-freeze `gold-queries`; add the missing two scenarios to the M1 record.
-2. **Queue maturity.** Claim tokens, leases and recovery of expired claims; bounded backoff;
-   a multi-worker test.
-3. **Scope safety.** Reject overlapping roots; implement root revocation and purge with an
-   explicit confirmation path.
-4. **Formats and extraction.** OCR for image-only PDFs; keep every unsupported class visible
-   with a reason code rather than silently skipping it.
-5. **Graph.** Similarity edges marked as recommendations, never as confirmed relations.
-6. **Docs and evidence.** Keep `docs/operations.md` and the evidence set regenerable from a
-   single command; every number in the report must be reproducible from the repository.
+The W7 implementation and automated verification are complete. Subsequent work includes queue leases
+and crash recovery, monitoring, scope management/export, additional formats/OCR
+and broader graph exploration. Move/rename/undo remain stretch capabilities.
 
 ## 9. Artifact index
 
-| Path | What it is |
-| --- | --- |
-| `submissions/week07/README.md` | this file — the primary artifact |
-| `submissions/week07/report.md` | the full milestone report |
-| `submissions/week07/demo-script.md` | six-step demo narration with timings |
-| `submissions/week07/sections/` | per-role contributions — `A.md` and `D.md` present; `B.md` and `C.md` pending |
-| `submissions/week07/evidence/` | scan, security, M1 and restart evidence plus run JSONs |
-| `submissions/week07/evidence/1016-D/`, `1019-D/`, `C/` | UI contract reports and retrieval evidence |
-| `docs/architecture.md`, `docs/operations.md` | as-built architecture and runbook |
-| `docs/team11-w7-shared-contract.md` | route shapes, error envelopes, state vocabulary |
-| `scripts/w7_evidence_probe.py` | regenerates the scan evidence against a live stack |
-| `submissions/week07/ai-use-statement.md` | AI use declaration for this milestone |
+- [Acceptance matrix](../../docs/w7-acceptance.md)
+- [Report and historical freeze record](report.md)
+- [M1 checklist](m1-checklist.md), [scope decisions](scope-decision.md)
+- [Demo script](demo-script.md), [architecture](../../docs/architecture.md), [operations](../../docs/operations.md)
+- [Shared contract](../../docs/team11-w7-shared-contract.md), `evidence/`, `sections/`
+- [AI use statement](ai-use-statement.md)
 
 ## 10. AI use statement
 
-See `submissions/week07/ai-use-statement.md`. In short: generative tools were used for
-drafting documentation and for reviewing code and tests; every number quoted in this folder
-came from a command run in this repository, and every claim that could not be reproduced was
-either removed or labelled as not verified.
+AI assisted the requirement audit, implementation review, bug fixes, test execution
+and documentation. Claims of successful execution require recorded command output
+and evidence. No human gold review or teammate approval is generated on behalf of
+another person. Earlier disclosures remain in their dated evidence records.
