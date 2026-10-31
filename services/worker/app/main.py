@@ -145,10 +145,12 @@ def _enqueue_embed_job(
     )
 
 
-def _embedding_backend() -> HTTPEmbeddingBackend:
+def _embedding_backend() -> HTTPEmbeddingBackend | None:
     """The ai service owns the model. A missing or disabled model degrades
     search to keyword mode instead of failing the index job (contract 3.4.5).
     """
+    if not settings.embedding_enabled:
+        return None
     return HTTPEmbeddingBackend(
         settings.ai_service_url, settings.search_request_timeout_seconds
     )

@@ -40,7 +40,7 @@ class IndexResult:
     page_metadata_error: str | None = None
 
 
-def embed_version(db: Session, version_id: str, backend: EmbeddingBackend) -> IndexResult:
+def embed_version(db: Session, version_id: str, backend: EmbeddingBackend | None) -> IndexResult:
     """Publish native token matrices atomically after every document batch passes."""
     version = db.get(FileVersion, version_id)
     if version is None:
@@ -76,6 +76,8 @@ def embed_version(db: Session, version_id: str, backend: EmbeddingBackend) -> In
         indexes.append(index)
     db.flush()
 
+    if backend is None:
+        return result(len(chunks), 0, "ai_disabled")
     if backend.model_id != MODEL_ID or backend.dimensions != TOKEN_DIMENSIONS:
         return result(len(chunks), 0, "embedding_model_mismatch")
     if not token_index_available(db):

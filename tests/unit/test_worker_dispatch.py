@@ -468,6 +468,60 @@ def test_an_index_job_without_a_version_is_rejected(worker_db):
         worker_main.process_job(job_id)
 
 
+def test_disabled_ai_still_builds_keyword_indexes_without_contacting_ai(
+    worker_db, make_file_version, monkeypatch
+):
+    from services.parsing.handler import handle_extract_file
+    from services.scan.handler import resolve_source_path
+
+    source = Path(__file__).resolve().parents[1] / "fixtures/parsing/normal.pdf"
+    version_id = make_file_version(source_path=source)
+    assert handle_extract_file(worker_db, version_id, resolve_source_path(worker_db, version_id))
+    monkeypatch.setattr(worker_main.settings, "embedding_enabled", False)
+
+    def forbidden_request(*args, **kwargs):
+        pytest.fail("Explicitly disabled AI must not receive document text")
+
+    monkeypatch.setattr(worker_main.httpx, "post", forbidden_request)
+    job_id = _make_job(worker_db, RootJobType.EMBED_FILE.value, version_id=version_id)
+    worker_main.process_job(job_id)
+    worker_db.expire_all()
+    assert _job(worker_db, job_id).status == JobStatus.COMPLETED.value
+    indexes = worker_db.execute(
+        select(ChunkSearchIndex).join(SourceChunk).where(SourceChunk.version_id == version_id)
+    ).scalars().all()
+    assert indexes
+    assert any("alpha" in index.search_terms for index in indexes)
+    assert all(index.embedding is None for index in indexes)
+
+
+def test_newly_parsed_document_is_searchable_before_its_embedding_job_runs(
+    client, worker_db, make_file_version, monkeypatch
+):
+    source = Path(__file__).resolve().parents[1] / "fixtures/parsing/normal.pdf"
+    version_id = make_file_version(source_path=source)
+    version = worker_db.get(FileVersion, version_id)
+    worker_db.get(FileRecord, version.file_id).current_version_id = version_id
+    worker_db.commit()
+    job_id = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
+
+    def forbidden_request(*args, **kwargs):
+        pytest.fail("Keyword readiness must not wait for any AI request")
+
+    monkeypatch.setattr(worker_main.httpx, "post", forbidden_request)
+    worker_main.process_job(job_id)
+    worker_db.expire_all()
+    assert worker_db.get(FileVersion, version_id).status == VersionStatus.BASIC_READY.value
+    assert _index_jobs(worker_db, version_id)[0].status == JobStatus.PENDING.value
+    response = client.post("/search", json={"query": "ALPHA", "mode": "keyword"})
+    assert response.status_code == 200
+    hit = response.json()["results"][0]
+    assert hit["version_id"] == version_id
+    evidence = client.get("/evidence/" + hit["chunk_id"])
+    assert evidence.status_code == 200
+    assert "ALPHA" in evidence.json()["text"]
+
+
 def test_claiming_skips_job_types_the_worker_does_not_handle(worker_db, make_file_version):
     _make_job(worker_db, "some_future_type")
     version_id = make_file_version()
