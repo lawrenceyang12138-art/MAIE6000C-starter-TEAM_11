@@ -1,0 +1,110 @@
+{
+  "finished_at": "2026-10-31T03:39:33.675765+00:00",
+  "passed": true,
+  "checks": [
+    {
+      "name": "http-db-final.json",
+      "passed": true
+    },
+    {
+      "name": "http-db-ai-unavailable.json",
+      "passed": true
+    },
+    {
+      "name": "runtime-safety-pages.json",
+      "passed": true
+    },
+    {
+      "name": "model-ready.json",
+      "passed": true
+    },
+    {
+      "name": "model-browser.json",
+      "passed": true
+    },
+    {
+      "name": "model-retry-browser.json",
+      "passed": true
+    },
+    {
+      "name": "model-modes.json",
+      "passed": true
+    },
+    {
+      "name": "restart.json",
+      "passed": true
+    },
+    {
+      "name": "version and retry scenarios",
+      "passed": true
+    },
+    {
+      "name": "frontend-live-clean",
+      "passed": true,
+      "cases": 3
+    },
+    {
+      "name": "frontend-live-fresh",
+      "passed": true,
+      "cases": 3
+    },
+    {
+      "name": "frontend-live-mixed",
+      "passed": true,
+      "cases": 6
+    },
+    {
+      "name": "frontend-contract",
+      "passed": true,
+      "cases": 19
+    },
+    {
+      "name": "frontend-mock",
+      "passed": true,
+      "cases": 5
+    },
+    {
+      "name": "final Linux test result",
+      "passed": true,
+      "passed_tests": 744,
+      "skipped": 0
+    },
+    {
+      "name": "18 acceptance rows have evidence and pass",
+      "passed": true
+    },
+    {
+      "name": "document local links resolve",
+      "passed": true,
+      "checked": 68,
+      "missing": []
+    },
+    {
+      "name": "test/runtime image and source match",
+      "passed": true
+    },
+    {
+      "name": "gold and manifest unchanged",
+      "passed": true
+    },
+    {
+      "name": "API remains ready",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "AI remains ready",
+      "passed": true,
+      "status": 200
+    },
+    {
+      "name": "UI remains ready",
+      "passed": true,
+      "status": 200
+    }
+  ],
+  "summary": {
+    "passed": 22,
+    "failed": 0
+  }
+}

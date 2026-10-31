@@ -1,0 +1,1177 @@
+{
+  "schema_version": "team11-w7-runtime-safety-pages-v1",
+  "started_at": "2026-10-31T03:02:17.581960+00:00",
+  "script_sha256": "37ae2def28f4b03147d61f985303d31241c814094dd414cf042279c74aa6e977",
+  "base_url": "http://127.0.0.1:18081",
+  "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+  "database": "isolated PostgreSQL 16 / pgvector acceptance database",
+  "page_reader": {
+    "tool": "PyMuPDF",
+    "version": "1.28.2",
+    "policy": "Independent physical PDF pages; no product parser invoked"
+  },
+  "safety": [
+    {
+      "name": "external_host",
+      "method": "POST",
+      "path": "/roots",
+      "request_headers": {
+        "host": "attacker.invalid"
+      },
+      "request_body": {
+        "mount_id": "corpus",
+        "relative_path": "."
+      },
+      "status": 403,
+      "body": {
+        "detail": {
+          "code": "invalid_host",
+          "message": "Host is outside the local API allowlist"
+        }
+      }
+    },
+    {
+      "name": "userinfo_host",
+      "method": "POST",
+      "path": "/roots",
+      "request_headers": {
+        "host": "attacker@localhost"
+      },
+      "request_body": {
+        "mount_id": "corpus",
+        "relative_path": "."
+      },
+      "status": 403,
+      "body": {
+        "detail": {
+          "code": "invalid_host",
+          "message": "Host is outside the local API allowlist"
+        }
+      }
+    },
+    {
+      "name": "external_origin",
+      "method": "POST",
+      "path": "/roots",
+      "request_headers": {
+        "origin": "https://attacker.invalid"
+      },
+      "request_body": {
+        "mount_id": "corpus",
+        "relative_path": "."
+      },
+      "status": 403,
+      "body": {
+        "detail": {
+          "code": "origin_not_allowed",
+          "message": "Request origin is not authorized"
+        }
+      }
+    },
+    {
+      "name": "null_origin",
+      "method": "POST",
+      "path": "/roots",
+      "request_headers": {
+        "origin": "null"
+      },
+      "request_body": {
+        "mount_id": "corpus",
+        "relative_path": "."
+      },
+      "status": 403,
+      "body": {
+        "detail": {
+          "code": "origin_not_allowed",
+          "message": "Request origin is not authorized"
+        }
+      }
+    },
+    {
+      "name": "cross_site_fetch",
+      "method": "POST",
+      "path": "/roots",
+      "request_headers": {
+        "sec-fetch-site": "cross-site"
+      },
+      "request_body": {
+        "mount_id": "corpus",
+        "relative_path": "."
+      },
+      "status": 403,
+      "body": {
+        "detail": {
+          "code": "origin_not_allowed",
+          "message": "Request origin is not authorized"
+        }
+      }
+    },
+    {
+      "name": "simple_form",
+      "method": "POST",
+      "path": "/roots",
+      "request_headers": {
+        "content-type": "text/plain"
+      },
+      "request_body": {
+        "mount_id": "corpus",
+        "relative_path": "."
+      },
+      "status": 403,
+      "body": {
+        "detail": {
+          "code": "origin_not_allowed",
+          "message": "Request origin is not authorized"
+        }
+      }
+    },
+    {
+      "name": "traversal",
+      "method": "POST",
+      "path": "/roots",
+      "request_headers": {},
+      "request_body": {
+        "mount_id": "corpus",
+        "relative_path": "../w7-refused-eb007b7386fd40b7bf7c8d8329f13047"
+      },
+      "status": 403,
+      "body": {
+        "detail": {
+          "code": "path_out_of_scope",
+          "message": "Path escapes the allowed mount"
+        }
+      }
+    },
+    {
+      "name": "unknown_mount",
+      "method": "POST",
+      "path": "/roots",
+      "request_headers": {},
+      "request_body": {
+        "mount_id": "w7-refused-eb007b7386fd40b7bf7c8d8329f13047",
+        "relative_path": "."
+      },
+      "status": 404,
+      "body": {
+        "detail": {
+          "code": "unknown_mount",
+          "message": "Unknown mount_id: 'w7-refused-eb007b7386fd40b7bf7c8d8329f13047'"
+        }
+      }
+    }
+  ],
+  "physical_pages": [
+    {
+      "chunk_id": "45718fbe-cded-463f-8542-3ea22866d83b",
+      "version_id": "61952865-6e86-4ea8-bfbf-6861c4b643d3",
+      "relative_path": "regression/group-a/doc01.pdf",
+      "page_number": 1,
+      "physical_page_count": 2,
+      "marker": "Marker01P1",
+      "source_sha256": "b3aecb9e83ba110c7f86294bd6c4ca9860aaec1dc335309a26eadc92b2537c23",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Document 01 - invoices and refunds Page 1 of 2 Marker01P1 reference for invoices and refunds on page 1. This synthetic page exists to rehearse the regression run."
+    },
+    {
+      "chunk_id": "8d90d7e7-215d-45ef-ba59-69696dbec1b7",
+      "version_id": "61952865-6e86-4ea8-bfbf-6861c4b643d3",
+      "relative_path": "regression/group-a/doc01.pdf",
+      "page_number": 2,
+      "physical_page_count": 2,
+      "marker": "Marker01P2",
+      "source_sha256": "b3aecb9e83ba110c7f86294bd6c4ca9860aaec1dc335309a26eadc92b2537c23",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Document 01 - invoices and refunds Page 2 of 2 Marker01P2 reference for invoices and refunds on page 2. This synthetic page exists to rehearse the regression run."
+    },
+    {
+      "chunk_id": "879e5eea-8a96-4a4b-9d45-d9e328c89574",
+      "version_id": "7e61cc7e-fb93-48ab-ba12-1a061a703740",
+      "relative_path": "regression/group-a/doc02.pdf",
+      "page_number": 1,
+      "physical_page_count": 3,
+      "marker": "Marker02P1",
+      "source_sha256": "6bece63ca8c96c3bb514df65338889c5027bee9b26ad1f9675aca195b7bf0ef2",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Page 1 of 3 Marker02P1 reference for access and login on page 1."
+    },
+    {
+      "chunk_id": "5f53c597-f913-4718-8c1d-754da56b57d0",
+      "version_id": "7e61cc7e-fb93-48ab-ba12-1a061a703740",
+      "relative_path": "regression/group-a/doc02.pdf",
+      "page_number": 2,
+      "physical_page_count": 3,
+      "marker": "Marker02P2",
+      "source_sha256": "6bece63ca8c96c3bb514df65338889c5027bee9b26ad1f9675aca195b7bf0ef2",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Page 2 of 3 Marker02P2 reference for access and login on page 2."
+    },
+    {
+      "chunk_id": "efe31ca3-1a9d-4f6a-b1b0-d5b13a77273b",
+      "version_id": "7e61cc7e-fb93-48ab-ba12-1a061a703740",
+      "relative_path": "regression/group-a/doc02.pdf",
+      "page_number": 3,
+      "physical_page_count": 3,
+      "marker": "Marker02P3",
+      "source_sha256": "6bece63ca8c96c3bb514df65338889c5027bee9b26ad1f9675aca195b7bf0ef2",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Page 3 of 3 Marker02P3 reference for access and login on page 3."
+    },
+    {
+      "chunk_id": "06e31129-5162-4f72-9b78-0c4a6246fab2",
+      "version_id": "130e95a8-27e3-4dd2-a0ad-d00dfe6b5f86",
+      "relative_path": "regression/group-a/doc03.pdf",
+      "page_number": 1,
+      "physical_page_count": 2,
+      "marker": "Marker03P1",
+      "source_sha256": "0385f56fb99f193a4dcc18ec4466c3e539e6befdcec8ba291f528459e518ec5a",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Document 03 - maintenance windows Page 1 of 2 Marker03P1 reference for maintenance windows on page 1. This synthetic page exists to rehearse the regression run."
+    },
+    {
+      "chunk_id": "aebde197-5c92-4535-aadd-b66ce8b20e38",
+      "version_id": "130e95a8-27e3-4dd2-a0ad-d00dfe6b5f86",
+      "relative_path": "regression/group-a/doc03.pdf",
+      "page_number": 2,
+      "physical_page_count": 2,
+      "marker": "Marker03P2",
+      "source_sha256": "0385f56fb99f193a4dcc18ec4466c3e539e6befdcec8ba291f528459e518ec5a",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Document 03 - maintenance windows Page 2 of 2 Marker03P2 reference for maintenance windows on page 2. This synthetic page exists to rehearse the regression run."
+    },
+    {
+      "chunk_id": "547ab93e-42f5-429d-910d-1f080a8706ac",
+      "version_id": "2cf3f8c6-1807-4e0a-b8c8-79f61c2bb03e",
+      "relative_path": "regression/group-a/doc04.pdf",
+      "page_number": 1,
+      "physical_page_count": 3,
+      "marker": "Marker04P1",
+      "source_sha256": "7c43a40883c7963513a508a1a86a977821916c619f74a9065d3f42c36d226acc",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Page 1 of 3 Marker04P1 reference for network outages on page 1."
+    },
+    {
+      "chunk_id": "6376091d-bbb9-48a1-9487-dfd145b8f6ab",
+      "version_id": "2cf3f8c6-1807-4e0a-b8c8-79f61c2bb03e",
+      "relative_path": "regression/group-a/doc04.pdf",
+      "page_number": 2,
+      "physical_page_count": 3,
+      "marker": "Marker04P2",
+      "source_sha256": "7c43a40883c7963513a508a1a86a977821916c619f74a9065d3f42c36d226acc",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Page 2 of 3 Marker04P2 reference for network outages on page 2."
+    },
+    {
+      "chunk_id": "64f8581b-6c13-4d8e-83eb-3427421e98af",
+      "version_id": "2cf3f8c6-1807-4e0a-b8c8-79f61c2bb03e",
+      "relative_path": "regression/group-a/doc04.pdf",
+      "page_number": 3,
+      "physical_page_count": 3,
+      "marker": "Marker04P3",
+      "source_sha256": "7c43a40883c7963513a508a1a86a977821916c619f74a9065d3f42c36d226acc",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Page 3 of 3 Marker04P3 reference for network outages on page 3."
+    },
+    {
+      "chunk_id": "11152637-a271-43cb-8edf-f897c547aa50",
+      "version_id": "c2839640-473d-4c04-8689-7d70944edd19",
+      "relative_path": "regression/group-a/doc05.pdf",
+      "page_number": 1,
+      "physical_page_count": 2,
+      "marker": "Marker05P1",
+      "source_sha256": "5729e4e231f0aa39edbb02ab3adddca9250ecaff1c17eec1b11727e87723d48b",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Document 05 - billing disputes Page 1 of 2 Marker05P1 reference for billing disputes on page 1. This synthetic page exists to rehearse the regression run."
+    },
+    {
+      "chunk_id": "af4bdbd7-60cb-420c-bd29-9eaf07c0ad61",
+      "version_id": "c2839640-473d-4c04-8689-7d70944edd19",
+      "relative_path": "regression/group-a/doc05.pdf",
+      "page_number": 2,
+      "physical_page_count": 2,
+      "marker": "Marker05P2",
+      "source_sha256": "5729e4e231f0aa39edbb02ab3adddca9250ecaff1c17eec1b11727e87723d48b",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Document 05 - billing disputes Page 2 of 2 Marker05P2 reference for billing disputes on page 2. This synthetic page exists to rehearse the regression run."
+    },
+    {
+      "chunk_id": "51b464fc-ee77-49fe-9007-af2d88e89510",
+      "version_id": "2111e15c-1fad-4b21-934a-6a14e73524ea",
+      "relative_path": "regression/group-a/doc06.pdf",
+      "page_number": 1,
+      "physical_page_count": 3,
+      "marker": "Marker06P1",
+      "source_sha256": "41bb75ec0c661afcc7c3970fa60f15c811d3a009e04f50a36afe2442066d6be5",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Page 1 of 3 Marker06P1 reference for shipping delays on page 1."
+    },
+    {
+      "chunk_id": "9012fd8e-d40c-4fcd-b1e3-761953c5b746",
+      "version_id": "2111e15c-1fad-4b21-934a-6a14e73524ea",
+      "relative_path": "regression/group-a/doc06.pdf",
+      "page_number": 2,
+      "physical_page_count": 3,
+      "marker": "Marker06P2",
+      "source_sha256": "41bb75ec0c661afcc7c3970fa60f15c811d3a009e04f50a36afe2442066d6be5",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Page 2 of 3 Marker06P2 reference for shipping delays on page 2."
+    },
+    {
+      "chunk_id": "e1438f90-4070-4a36-8d92-4db79dfbd933",
+      "version_id": "2111e15c-1fad-4b21-934a-6a14e73524ea",
+      "relative_path": "regression/group-a/doc06.pdf",
+      "page_number": 3,
+      "physical_page_count": 3,
+      "marker": "Marker06P3",
+      "source_sha256": "41bb75ec0c661afcc7c3970fa60f15c811d3a009e04f50a36afe2442066d6be5",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Page 3 of 3 Marker06P3 reference for shipping delays on page 3."
+    },
+    {
+      "chunk_id": "c9fcc9fa-3be3-4452-a25d-0b8358b6a559",
+      "version_id": "eb63a63e-be25-45f5-827b-c46be200891b",
+      "relative_path": "regression/group-b/doc07.pdf",
+      "page_number": 1,
+      "physical_page_count": 2,
+      "marker": "Marker07P1",
+      "source_sha256": "a37b9463d67f8ba068ce904feeb81e57ca89de4eea80943f1b49e50175443326",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Document 07 - account permissions Page 1 of 2 Marker07P1 reference for account permissions on page 1. This synthetic page exists to rehearse the regression run."
+    },
+    {
+      "chunk_id": "d47c5dc0-cab0-4bcd-84e2-69984c98a9be",
+      "version_id": "eb63a63e-be25-45f5-827b-c46be200891b",
+      "relative_path": "regression/group-b/doc07.pdf",
+      "page_number": 2,
+      "physical_page_count": 2,
+      "marker": "Marker07P2",
+      "source_sha256": "a37b9463d67f8ba068ce904feeb81e57ca89de4eea80943f1b49e50175443326",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Document 07 - account permissions Page 2 of 2 Marker07P2 reference for account permissions on page 2. This synthetic page exists to rehearse the regression run."
+    },
+    {
+      "chunk_id": "e45330ce-6fd2-4222-9e6f-30611f076630",
+      "version_id": "b2e4ed25-b552-4c65-a4b2-15d0bc331895",
+      "relative_path": "regression/group-b/doc08.pdf",
+      "page_number": 1,
+      "physical_page_count": 3,
+      "marker": "Marker08P1",
+      "source_sha256": "5f92782abba0cb42061b4def5f6917adbcffa4c5957c9f94a46bb27c27b6bef6",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Page 1 of 3 Marker08P1 reference for data retention on page 1."
+    },
+    {
+      "chunk_id": "beb26ce6-aa08-4798-baa3-e884104919c4",
+      "version_id": "b2e4ed25-b552-4c65-a4b2-15d0bc331895",
+      "relative_path": "regression/group-b/doc08.pdf",
+      "page_number": 2,
+      "physical_page_count": 3,
+      "marker": "Marker08P2",
+      "source_sha256": "5f92782abba0cb42061b4def5f6917adbcffa4c5957c9f94a46bb27c27b6bef6",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Page 2 of 3 Marker08P2 reference for data retention on page 2."
+    },
+    {
+      "chunk_id": "9fe4e698-8ac2-4050-b301-3c832898aa2f",
+      "version_id": "b2e4ed25-b552-4c65-a4b2-15d0bc331895",
+      "relative_path": "regression/group-b/doc08.pdf",
+      "page_number": 3,
+      "physical_page_count": 3,
+      "marker": "Marker08P3",
+      "source_sha256": "5f92782abba0cb42061b4def5f6917adbcffa4c5957c9f94a46bb27c27b6bef6",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Page 3 of 3 Marker08P3 reference for data retention on page 3."
+    },
+    {
+      "chunk_id": "17499560-d8b5-49d6-9570-25e903a567e5",
+      "version_id": "1f3dafb5-b632-47f2-a208-6c23b8e90c4b",
+      "relative_path": "regression/group-b/doc09.pdf",
+      "page_number": 1,
+      "physical_page_count": 2,
+      "marker": "Marker09P1",
+      "source_sha256": "352ddffe379b3a67beef1571dd823290ee42959ff5e95a50650ab801ebda16f4",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Document 09 - incident reports Page 1 of 2 Marker09P1 reference for incident reports on page 1. This synthetic page exists to rehearse the regression run."
+    },
+    {
+      "chunk_id": "cf1dcde1-11d6-4143-b41c-0dd4fb0e4056",
+      "version_id": "1f3dafb5-b632-47f2-a208-6c23b8e90c4b",
+      "relative_path": "regression/group-b/doc09.pdf",
+      "page_number": 2,
+      "physical_page_count": 2,
+      "marker": "Marker09P2",
+      "source_sha256": "352ddffe379b3a67beef1571dd823290ee42959ff5e95a50650ab801ebda16f4",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Document 09 - incident reports Page 2 of 2 Marker09P2 reference for incident reports on page 2. This synthetic page exists to rehearse the regression run."
+    },
+    {
+      "chunk_id": "08a1c581-591f-46e3-abfa-6132a13bb94c",
+      "version_id": "165b0df2-36f3-4cd3-8b3b-041d97e585d5",
+      "relative_path": "regression/group-b/doc10.pdf",
+      "page_number": 1,
+      "physical_page_count": 3,
+      "marker": "Marker10P1",
+      "source_sha256": "f2ee630cf53812bdc30c44ef7f5a94dcba2195f12b36c2c676300737a7e4774d",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Page 1 of 3 Marker10P1 reference for vendor contracts on page 1."
+    },
+    {
+      "chunk_id": "e3a49de7-c27b-4b8f-8bbb-119191d02743",
+      "version_id": "165b0df2-36f3-4cd3-8b3b-041d97e585d5",
+      "relative_path": "regression/group-b/doc10.pdf",
+      "page_number": 2,
+      "physical_page_count": 3,
+      "marker": "Marker10P2",
+      "source_sha256": "f2ee630cf53812bdc30c44ef7f5a94dcba2195f12b36c2c676300737a7e4774d",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Page 2 of 3 Marker10P2 reference for vendor contracts on page 2."
+    },
+    {
+      "chunk_id": "06f1df94-1ece-4786-a1ab-d677c1465961",
+      "version_id": "165b0df2-36f3-4cd3-8b3b-041d97e585d5",
+      "relative_path": "regression/group-b/doc10.pdf",
+      "page_number": 3,
+      "physical_page_count": 3,
+      "marker": "Marker10P3",
+      "source_sha256": "f2ee630cf53812bdc30c44ef7f5a94dcba2195f12b36c2c676300737a7e4774d",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Page 3 of 3 Marker10P3 reference for vendor contracts on page 3."
+    },
+    {
+      "chunk_id": "801c3f4a-bdd6-4ceb-89de-8891b27efa75",
+      "version_id": "778a8b5f-ebc9-4078-b83c-2f85411ad36b",
+      "relative_path": "regression/group-b/doc11.pdf",
+      "page_number": 1,
+      "physical_page_count": 2,
+      "marker": "Marker11P1",
+      "source_sha256": "8285e7cf6340aec416e80036fd2973c71fa778957820c0b1065a4a087dce1c48",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Document 11 - support escalations Page 1 of 2 Marker11P1 reference for support escalations on page 1. This synthetic page exists to rehearse the regression run."
+    },
+    {
+      "chunk_id": "573c8501-02bd-4c8f-8ce1-9ea6478a7af6",
+      "version_id": "778a8b5f-ebc9-4078-b83c-2f85411ad36b",
+      "relative_path": "regression/group-b/doc11.pdf",
+      "page_number": 2,
+      "physical_page_count": 2,
+      "marker": "Marker11P2",
+      "source_sha256": "8285e7cf6340aec416e80036fd2973c71fa778957820c0b1065a4a087dce1c48",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Document 11 - support escalations Page 2 of 2 Marker11P2 reference for support escalations on page 2. This synthetic page exists to rehearse the regression run."
+    },
+    {
+      "chunk_id": "797d3e34-afd3-4e6c-ba3e-6c6009d08e04",
+      "version_id": "45610335-7418-405c-b7e7-e8d9caad1391",
+      "relative_path": "regression/group-b/doc12.pdf",
+      "page_number": 1,
+      "physical_page_count": 3,
+      "marker": "Marker12P1",
+      "source_sha256": "0baf086c0742ce6267fdd1423bcd0fd090bebf52c094a0ece8bf75e8dd14c3ce",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Page 1 of 3 Marker12P1 reference for release notes on page 1."
+    },
+    {
+      "chunk_id": "e128438c-d37a-41c3-9c93-7ffbe1234340",
+      "version_id": "45610335-7418-405c-b7e7-e8d9caad1391",
+      "relative_path": "regression/group-b/doc12.pdf",
+      "page_number": 2,
+      "physical_page_count": 3,
+      "marker": "Marker12P2",
+      "source_sha256": "0baf086c0742ce6267fdd1423bcd0fd090bebf52c094a0ece8bf75e8dd14c3ce",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Page 2 of 3 Marker12P2 reference for release notes on page 2."
+    },
+    {
+      "chunk_id": "fa1f8e23-2014-4963-b813-525255d5b240",
+      "version_id": "45610335-7418-405c-b7e7-e8d9caad1391",
+      "relative_path": "regression/group-b/doc12.pdf",
+      "page_number": 3,
+      "physical_page_count": 3,
+      "marker": "Marker12P3",
+      "source_sha256": "0baf086c0742ce6267fdd1423bcd0fd090bebf52c094a0ece8bf75e8dd14c3ce",
+      "source_identity_matches": true,
+      "marker_matches_physical_page": true,
+      "chunk_is_physical_page_substring": true,
+      "verified_fragment": "Page 3 of 3 Marker12P3 reference for release notes on page 3."
+    }
+  ],
+  "checks": [
+    {
+      "name": "external_host",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "userinfo_host",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "external_origin",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "null_origin",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "cross_site_fetch",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "simple_form",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "traversal",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "unknown_mount",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "No persistent writes from rejected requests: canonical_scan_jobs",
+      "passed": true,
+      "evidence": {
+        "before": [
+          1,
+          32,
+          100,
+          101
+        ],
+        "after": [
+          1,
+          32,
+          100,
+          101
+        ]
+      }
+    },
+    {
+      "name": "No persistent writes from rejected requests: canonical_reviews",
+      "passed": true,
+      "evidence": {
+        "before": [],
+        "after": []
+      }
+    },
+    {
+      "name": "No persistent writes from rejected requests: illegal_roots",
+      "passed": true,
+      "evidence": {
+        "before": [],
+        "after": []
+      }
+    },
+    {
+      "name": "Canonical database contains 30 source chunks",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-a/doc01.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: 45718fbe-cded-463f-8542-3ea22866d83b",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: 45718fbe-cded-463f-8542-3ea22866d83b",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-a/doc01.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: 8d90d7e7-215d-45ef-ba59-69696dbec1b7",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: 8d90d7e7-215d-45ef-ba59-69696dbec1b7",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-a/doc02.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: 879e5eea-8a96-4a4b-9d45-d9e328c89574",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: 879e5eea-8a96-4a4b-9d45-d9e328c89574",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-a/doc02.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: 5f53c597-f913-4718-8c1d-754da56b57d0",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: 5f53c597-f913-4718-8c1d-754da56b57d0",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-a/doc02.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: efe31ca3-1a9d-4f6a-b1b0-d5b13a77273b",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: efe31ca3-1a9d-4f6a-b1b0-d5b13a77273b",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-a/doc03.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: 06e31129-5162-4f72-9b78-0c4a6246fab2",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: 06e31129-5162-4f72-9b78-0c4a6246fab2",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-a/doc03.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: aebde197-5c92-4535-aadd-b66ce8b20e38",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: aebde197-5c92-4535-aadd-b66ce8b20e38",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-a/doc04.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: 547ab93e-42f5-429d-910d-1f080a8706ac",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: 547ab93e-42f5-429d-910d-1f080a8706ac",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-a/doc04.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: 6376091d-bbb9-48a1-9487-dfd145b8f6ab",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: 6376091d-bbb9-48a1-9487-dfd145b8f6ab",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-a/doc04.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: 64f8581b-6c13-4d8e-83eb-3427421e98af",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: 64f8581b-6c13-4d8e-83eb-3427421e98af",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-a/doc05.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: 11152637-a271-43cb-8edf-f897c547aa50",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: 11152637-a271-43cb-8edf-f897c547aa50",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-a/doc05.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: af4bdbd7-60cb-420c-bd29-9eaf07c0ad61",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: af4bdbd7-60cb-420c-bd29-9eaf07c0ad61",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-a/doc06.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: 51b464fc-ee77-49fe-9007-af2d88e89510",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: 51b464fc-ee77-49fe-9007-af2d88e89510",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-a/doc06.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: 9012fd8e-d40c-4fcd-b1e3-761953c5b746",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: 9012fd8e-d40c-4fcd-b1e3-761953c5b746",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-a/doc06.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: e1438f90-4070-4a36-8d92-4db79dfbd933",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: e1438f90-4070-4a36-8d92-4db79dfbd933",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-b/doc07.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: c9fcc9fa-3be3-4452-a25d-0b8358b6a559",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: c9fcc9fa-3be3-4452-a25d-0b8358b6a559",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-b/doc07.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: d47c5dc0-cab0-4bcd-84e2-69984c98a9be",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: d47c5dc0-cab0-4bcd-84e2-69984c98a9be",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-b/doc08.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: e45330ce-6fd2-4222-9e6f-30611f076630",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: e45330ce-6fd2-4222-9e6f-30611f076630",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-b/doc08.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: beb26ce6-aa08-4798-baa3-e884104919c4",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: beb26ce6-aa08-4798-baa3-e884104919c4",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-b/doc08.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: 9fe4e698-8ac2-4050-b301-3c832898aa2f",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: 9fe4e698-8ac2-4050-b301-3c832898aa2f",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-b/doc09.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: 17499560-d8b5-49d6-9570-25e903a567e5",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: 17499560-d8b5-49d6-9570-25e903a567e5",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-b/doc09.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: cf1dcde1-11d6-4143-b41c-0dd4fb0e4056",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: cf1dcde1-11d6-4143-b41c-0dd4fb0e4056",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-b/doc10.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: 08a1c581-591f-46e3-abfa-6132a13bb94c",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: 08a1c581-591f-46e3-abfa-6132a13bb94c",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-b/doc10.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: e3a49de7-c27b-4b8f-8bbb-119191d02743",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: e3a49de7-c27b-4b8f-8bbb-119191d02743",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-b/doc10.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: 06f1df94-1ece-4786-a1ab-d677c1465961",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: 06f1df94-1ece-4786-a1ab-d677c1465961",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-b/doc11.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: 801c3f4a-bdd6-4ceb-89de-8891b27efa75",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: 801c3f4a-bdd6-4ceb-89de-8891b27efa75",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-b/doc11.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: 573c8501-02bd-4c8f-8ce1-9ea6478a7af6",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: 573c8501-02bd-4c8f-8ce1-9ea6478a7af6",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-b/doc12.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: 797d3e34-afd3-4e6c-ba3e-6c6009d08e04",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: 797d3e34-afd3-4e6c-ba3e-6c6009d08e04",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-b/doc12.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: e128438c-d37a-41c3-9c93-7ffbe1234340",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: e128438c-d37a-41c3-9c93-7ffbe1234340",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Independent source hash and size match stored version: regression/group-b/doc12.pdf",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Claimed physical page exists: fa1f8e23-2014-4963-b813-525255d5b240",
+      "passed": true,
+      "evidence": {}
+    },
+    {
+      "name": "Chunk text and marker match independent physical page: fa1f8e23-2014-4963-b813-525255d5b240",
+      "passed": true,
+      "evidence": {}
+    }
+  ],
+  "database_before": {
+    "global_counts": {
+      "authorized_roots": 6,
+      "jobs": 102,
+      "reviews": 9
+    },
+    "canonical_scan_jobs": [
+      1,
+      32,
+      100,
+      101
+    ],
+    "canonical_reviews": [],
+    "illegal_roots": []
+  },
+  "database_after": {
+    "global_counts": {
+      "authorized_roots": 6,
+      "jobs": 102,
+      "reviews": 9
+    },
+    "canonical_scan_jobs": [
+      1,
+      32,
+      100,
+      101
+    ],
+    "canonical_reviews": [],
+    "illegal_roots": []
+  },
+  "global_counts_unchanged": true,
+  "concurrency_policy": "Global counts are observational because other browser/model acceptance may write concurrently. Rejected root requests target canonical root and unique illegal mount/path; their scan-job/review IDs and illegal-root absence are asserted.",
+  "physical_documents": {
+    "regression/group-a/doc01.pdf": {
+      "sha256": "b3aecb9e83ba110c7f86294bd6c4ca9860aaec1dc335309a26eadc92b2537c23",
+      "byte_size": 2149
+    },
+    "regression/group-a/doc02.pdf": {
+      "sha256": "6bece63ca8c96c3bb514df65338889c5027bee9b26ad1f9675aca195b7bf0ef2",
+      "byte_size": 2739
+    },
+    "regression/group-a/doc03.pdf": {
+      "sha256": "0385f56fb99f193a4dcc18ec4466c3e539e6befdcec8ba291f528459e518ec5a",
+      "byte_size": 2151
+    },
+    "regression/group-a/doc04.pdf": {
+      "sha256": "7c43a40883c7963513a508a1a86a977821916c619f74a9065d3f42c36d226acc",
+      "byte_size": 2737
+    },
+    "regression/group-a/doc05.pdf": {
+      "sha256": "5729e4e231f0aa39edbb02ab3adddca9250ecaff1c17eec1b11727e87723d48b",
+      "byte_size": 2149
+    },
+    "regression/group-a/doc06.pdf": {
+      "sha256": "41bb75ec0c661afcc7c3970fa60f15c811d3a009e04f50a36afe2442066d6be5",
+      "byte_size": 2743
+    },
+    "regression/group-b/doc07.pdf": {
+      "sha256": "a37b9463d67f8ba068ce904feeb81e57ca89de4eea80943f1b49e50175443326",
+      "byte_size": 2143
+    },
+    "regression/group-b/doc08.pdf": {
+      "sha256": "5f92782abba0cb42061b4def5f6917adbcffa4c5957c9f94a46bb27c27b6bef6",
+      "byte_size": 2736
+    },
+    "regression/group-b/doc09.pdf": {
+      "sha256": "352ddffe379b3a67beef1571dd823290ee42959ff5e95a50650ab801ebda16f4",
+      "byte_size": 2143
+    },
+    "regression/group-b/doc10.pdf": {
+      "sha256": "f2ee630cf53812bdc30c44ef7f5a94dcba2195f12b36c2c676300737a7e4774d",
+      "byte_size": 2741
+    },
+    "regression/group-b/doc11.pdf": {
+      "sha256": "8285e7cf6340aec416e80036fd2973c71fa778957820c0b1065a4a087dce1c48",
+      "byte_size": 2147
+    },
+    "regression/group-b/doc12.pdf": {
+      "sha256": "0baf086c0742ce6267fdd1423bcd0fd090bebf52c094a0ece8bf75e8dd14c3ce",
+      "byte_size": 2731
+    }
+  },
+  "physical_page_score": "30/30",
+  "finished_at": "2026-10-31T03:02:18.119223+00:00",
+  "passed": true,
+  "summary": {
+    "checks_passed": 102,
+    "checks_failed": 0,
+    "safety_refusals": 8,
+    "physical_chunks_verified": 30
+  }
+}

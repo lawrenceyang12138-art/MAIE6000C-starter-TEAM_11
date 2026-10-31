@@ -1,0 +1,561 @@
+{
+  "status": "passed",
+  "observed_at": "2026-10-31T03:24:26.950Z",
+  "evidence_type": "live_browser_api_worker",
+  "http_interception": false,
+  "mock_data": false,
+  "request": {
+    "mount_id": "scenarios",
+    "relative_path": "normal12-fresh",
+    "expected_files": 12,
+    "expected_unsupported": 0,
+    "review_workflow": false
+  },
+  "ui_url": "http://127.0.0.1:13002",
+  "browser": "156.0.8078.79",
+  "cases": [
+    {
+      "name": "01-import-progress",
+      "status": "passed"
+    },
+    {
+      "name": "02-search-source-evidence",
+      "status": "passed"
+    },
+    {
+      "name": "03-rescan-reuses-file-versions",
+      "status": "passed"
+    }
+  ],
+  "page_errors": [],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/setup",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/mounts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/mounts/corpus/directories",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/mounts/scenarios/directories",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/roots",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/1",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/513d3bc3-2412-4f4b-8267-40ae8a857d99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/1",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/513d3bc3-2412-4f4b-8267-40ae8a857d99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/setup",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/1",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/513d3bc3-2412-4f4b-8267-40ae8a857d99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/files",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/search",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/evidence/fa24699a-bb18-4711-8f1f-c16449b26af1",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/roots/513d3bc3-2412-4f4b-8267-40ae8a857d99/scans",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/26",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/513d3bc3-2412-4f4b-8267-40ae8a857d99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/26",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/513d3bc3-2412-4f4b-8267-40ae8a857d99",
+      "status": 200
+    }
+  ],
+  "setup": {
+    "state": "disabled",
+    "ready": false,
+    "stage_progress": null,
+    "progress": null,
+    "downloaded_bytes": 0,
+    "total_bytes": null,
+    "completed_files": 0,
+    "total_files": 14,
+    "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+    "message": "Local AI is disabled. Keyword search remains available.",
+    "error_code": null,
+    "retryable": false,
+    "updated_at": "2026-10-31T03:24:26.989605Z"
+  },
+  "import": {
+    "accepted": {
+      "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+      "job_id": 1,
+      "status": "pending"
+    },
+    "job": {
+      "job_id": 1,
+      "case_id": null,
+      "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+      "version_id": null,
+      "job_type": "scan_root",
+      "status": "completed",
+      "attempts": 1,
+      "error_code": null,
+      "created_at": "2026-10-31T03:24:27.777906Z",
+      "claimed_at": "2026-10-31T03:24:27.962750Z",
+      "completed_at": "2026-10-31T03:24:28.293963Z"
+    },
+    "root": {
+      "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+      "mount_id": "scenarios",
+      "relative_path": "normal12-fresh",
+      "status": "active",
+      "availability": "available",
+      "file_counts": {
+        "total": 12,
+        "discovered": 0,
+        "extracting": 0,
+        "basic_ready": 12,
+        "enriched": 0,
+        "failed": 0,
+        "unsupported": 0
+      },
+      "last_successful_scan_at": "2026-10-31T03:24:28.290099Z"
+    },
+    "files": [
+      {
+        "file_id": "22576d84-ed4a-4109-9571-a4da98271e8a",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "4d49a3f4-b3e5-48c8-91fd-d9158b4dc94a",
+        "display_name": "doc01.pdf",
+        "relative_path": "group-a/doc01.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:28.076067Z"
+      },
+      {
+        "file_id": "b974c238-0232-4b8f-bc7a-cd76ea5e8719",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "d63c162f-ff31-490b-8aa4-464515ddcbc3",
+        "display_name": "doc02.pdf",
+        "relative_path": "group-a/doc02.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:28.099332Z"
+      },
+      {
+        "file_id": "e475c007-ba47-4c7e-ba1e-7bffc2569d06",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "d28f5db8-bc06-4317-a562-192adc81ec04",
+        "display_name": "doc03.pdf",
+        "relative_path": "group-a/doc03.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:28.123873Z"
+      },
+      {
+        "file_id": "b4e84889-2b39-4297-a77b-de427c68ba63",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "19c88427-d659-4b12-a116-332756f27f6e",
+        "display_name": "doc04.pdf",
+        "relative_path": "group-a/doc04.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:28.146486Z"
+      },
+      {
+        "file_id": "b7cf572b-a3a7-46c1-97b4-9b3d1ccf1094",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "24c9cb7e-db9f-4c39-90fd-a96d5221ea13",
+        "display_name": "doc05.pdf",
+        "relative_path": "group-a/doc05.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:28.166081Z"
+      },
+      {
+        "file_id": "e410e618-b87e-4009-9458-0925277ea1eb",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "55f4f2e7-843d-4713-8031-a053e3570cd6",
+        "display_name": "doc06.pdf",
+        "relative_path": "group-a/doc06.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:28.195857Z"
+      },
+      {
+        "file_id": "10403e1b-cd28-4180-8a36-adfc0319fda2",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "0ca3e77a-bab9-4277-8dc4-468287b987fe",
+        "display_name": "doc07.pdf",
+        "relative_path": "group-b/doc07.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:28.223421Z"
+      },
+      {
+        "file_id": "9f35ad83-87f0-4436-94a9-4def2d3557a4",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "43727ed6-e855-4c6a-a71b-7e03270d8d82",
+        "display_name": "doc08.pdf",
+        "relative_path": "group-b/doc08.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:28.242204Z"
+      },
+      {
+        "file_id": "9b50736a-006e-4513-8962-f9fa4fb7ebcd",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "9caea2e8-2b08-482c-844d-aea1c66dbe54",
+        "display_name": "doc09.pdf",
+        "relative_path": "group-b/doc09.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:28.256529Z"
+      },
+      {
+        "file_id": "4a1b8c9a-32bb-48fb-a302-fe33ac9613cc",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "092c47a2-7d03-466b-9df1-714be705a4df",
+        "display_name": "doc10.pdf",
+        "relative_path": "group-b/doc10.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:28.271817Z"
+      },
+      {
+        "file_id": "639c60ad-9da2-415f-bbd4-6827d5cd2726",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "4229c042-5e63-4d88-bcb8-8b02dc72c5f3",
+        "display_name": "doc11.pdf",
+        "relative_path": "group-b/doc11.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:28.286965Z"
+      },
+      {
+        "file_id": "aa1c1e78-b2c2-4624-b9bc-670fc5fe00b9",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "e6b28f59-4bf2-4287-9a64-3ee1388a5269",
+        "display_name": "doc12.pdf",
+        "relative_path": "group-b/doc12.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:28.291170Z"
+      }
+    ]
+  },
+  "search": {
+    "query": "invoices",
+    "mode": "keyword",
+    "effective_mode": "keyword",
+    "results": [
+      {
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "file_id": "22576d84-ed4a-4109-9571-a4da98271e8a",
+        "file_name": "doc01.pdf",
+        "file_path": "group-a/doc01.pdf",
+        "version_id": "4d49a3f4-b3e5-48c8-91fd-d9158b4dc94a",
+        "version_created_at": "2026-10-31T03:24:28.052835Z",
+        "chunk_id": "fa24699a-bb18-4711-8f1f-c16449b26af1",
+        "ordinal": 1,
+        "page": 1,
+        "text": "Document 01 - invoices and refunds\nPage 1 of 2\nMarker01P1 reference for invoices and refunds on page 1.\nThis synthetic page exists to rehearse the regression run.",
+        "reason": "keyword: invoices",
+        "score": 1,
+        "keyword_score": 1,
+        "semantic_score": 0
+      }
+    ],
+    "total": 1,
+    "degraded": false,
+    "degradation_reason": null,
+    "embedding_model": null,
+    "embedding_dimensions": null,
+    "candidate_count": 1,
+    "candidate_limit": 200
+  },
+  "evidence": {
+    "chunk_id": "fa24699a-bb18-4711-8f1f-c16449b26af1",
+    "file_id": "22576d84-ed4a-4109-9571-a4da98271e8a",
+    "version_id": "4d49a3f4-b3e5-48c8-91fd-d9158b4dc94a",
+    "relative_path": "group-a/doc01.pdf",
+    "page_number": 1,
+    "ordinal": 1,
+    "text": "Document 01 - invoices and refunds\nPage 1 of 2\nMarker01P1 reference for invoices and refunds on page 1.\nThis synthetic page exists to rehearse the regression run.",
+    "content_sha256": "b3aecb9e83ba110c7f86294bd6c4ca9860aaec1dc335309a26eadc92b2537c23"
+  },
+  "rescan": {
+    "accepted": {
+      "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+      "job_id": 26,
+      "status": "pending"
+    },
+    "job": {
+      "job_id": 26,
+      "case_id": null,
+      "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+      "version_id": null,
+      "job_type": "scan_root",
+      "status": "completed",
+      "attempts": 1,
+      "error_code": null,
+      "created_at": "2026-10-31T03:24:30.188734Z",
+      "claimed_at": "2026-10-31T03:24:30.378883Z",
+      "completed_at": "2026-10-31T03:24:30.573442Z"
+    },
+    "root": {
+      "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+      "mount_id": "scenarios",
+      "relative_path": "normal12-fresh",
+      "status": "active",
+      "availability": "available",
+      "file_counts": {
+        "total": 12,
+        "discovered": 0,
+        "extracting": 0,
+        "basic_ready": 12,
+        "enriched": 0,
+        "failed": 0,
+        "unsupported": 0
+      },
+      "last_successful_scan_at": "2026-10-31T03:24:30.570655Z"
+    },
+    "files": [
+      {
+        "file_id": "22576d84-ed4a-4109-9571-a4da98271e8a",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "4d49a3f4-b3e5-48c8-91fd-d9158b4dc94a",
+        "display_name": "doc01.pdf",
+        "relative_path": "group-a/doc01.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:30.571561Z"
+      },
+      {
+        "file_id": "b974c238-0232-4b8f-bc7a-cd76ea5e8719",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "d63c162f-ff31-490b-8aa4-464515ddcbc3",
+        "display_name": "doc02.pdf",
+        "relative_path": "group-a/doc02.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:30.571564Z"
+      },
+      {
+        "file_id": "e475c007-ba47-4c7e-ba1e-7bffc2569d06",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "d28f5db8-bc06-4317-a562-192adc81ec04",
+        "display_name": "doc03.pdf",
+        "relative_path": "group-a/doc03.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:30.571565Z"
+      },
+      {
+        "file_id": "b4e84889-2b39-4297-a77b-de427c68ba63",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "19c88427-d659-4b12-a116-332756f27f6e",
+        "display_name": "doc04.pdf",
+        "relative_path": "group-a/doc04.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:30.571564Z"
+      },
+      {
+        "file_id": "b7cf572b-a3a7-46c1-97b4-9b3d1ccf1094",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "24c9cb7e-db9f-4c39-90fd-a96d5221ea13",
+        "display_name": "doc05.pdf",
+        "relative_path": "group-a/doc05.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:30.571564Z"
+      },
+      {
+        "file_id": "e410e618-b87e-4009-9458-0925277ea1eb",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "55f4f2e7-843d-4713-8031-a053e3570cd6",
+        "display_name": "doc06.pdf",
+        "relative_path": "group-a/doc06.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:30.571565Z"
+      },
+      {
+        "file_id": "10403e1b-cd28-4180-8a36-adfc0319fda2",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "0ca3e77a-bab9-4277-8dc4-468287b987fe",
+        "display_name": "doc07.pdf",
+        "relative_path": "group-b/doc07.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:30.571559Z"
+      },
+      {
+        "file_id": "9f35ad83-87f0-4436-94a9-4def2d3557a4",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "43727ed6-e855-4c6a-a71b-7e03270d8d82",
+        "display_name": "doc08.pdf",
+        "relative_path": "group-b/doc08.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:30.571563Z"
+      },
+      {
+        "file_id": "9b50736a-006e-4513-8962-f9fa4fb7ebcd",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "9caea2e8-2b08-482c-844d-aea1c66dbe54",
+        "display_name": "doc09.pdf",
+        "relative_path": "group-b/doc09.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:30.571563Z"
+      },
+      {
+        "file_id": "4a1b8c9a-32bb-48fb-a302-fe33ac9613cc",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "092c47a2-7d03-466b-9df1-714be705a4df",
+        "display_name": "doc10.pdf",
+        "relative_path": "group-b/doc10.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:30.571562Z"
+      },
+      {
+        "file_id": "639c60ad-9da2-415f-bbd4-6827d5cd2726",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "4229c042-5e63-4d88-bcb8-8b02dc72c5f3",
+        "display_name": "doc11.pdf",
+        "relative_path": "group-b/doc11.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:30.571562Z"
+      },
+      {
+        "file_id": "aa1c1e78-b2c2-4624-b9bc-670fc5fe00b9",
+        "root_id": "513d3bc3-2412-4f4b-8267-40ae8a857d99",
+        "version_id": "e6b28f59-4bf2-4287-9a64-3ee1388a5269",
+        "display_name": "doc12.pdf",
+        "relative_path": "group-b/doc12.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:24:30.571563Z"
+      }
+    ]
+  },
+  "finished_at": "2026-10-31T03:24:31.733Z",
+  "git_head": "0e3d715d75373f33ece45192fc3ae63cc4496de6",
+  "source_sha256": {
+    "frontend/src/app.jsx": "21b12a1c95f0be968fa981a257368562b70f8929da8add87d1cb26dac9987173",
+    "frontend/src/relations-page.jsx": "c372e72276d87b1162b28bf06ac87d52fa067ab90cbd3b1a7efd086d27e2c684",
+    "frontend/src/api/http-adapter.js": "086cf38a814580650a6ad1d0c9aad98f0349f971501d70e90bdb3b1471b1fa12"
+  }
+}

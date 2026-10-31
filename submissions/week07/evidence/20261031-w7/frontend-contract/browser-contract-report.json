@@ -1,0 +1,142 @@
+{
+  "status": "passed",
+  "observed_at": "2026-10-31T02:44:40.191Z",
+  "evidence_type": "browser_http_contract_fixture_not_product",
+  "product_acceptance": false,
+  "git_head": "0e3d715d75373f33ece45192fc3ae63cc4496de6",
+  "source_sha256": {
+    "frontend/src/app.jsx": "21b12a1c95f0be968fa981a257368562b70f8929da8add87d1cb26dac9987173",
+    "frontend/src/relations-page.jsx": "c372e72276d87b1162b28bf06ac87d52fa067ab90cbd3b1a7efd086d27e2c684",
+    "frontend/src/rescan-control.jsx": "c9647645d8989b5ec91c5f404ca98a16106716af54ae505a1bc3c1422704d992",
+    "frontend/src/retry-job-control.jsx": "31875bfd04378fdeefd173ae271f8660a02dbca0891ea3338e1db32e06372cea",
+    "frontend/src/api/adapter.js": "23dbd8f987c132a02171f0e9c6087adfbd82cd705771590376bf5ee7b3a14499",
+    "frontend/src/api/http-adapter.js": "086cf38a814580650a6ad1d0c9aad98f0349f971501d70e90bdb3b1471b1fa12",
+    "frontend/src/api/mock-adapter.js": "2cfc2cb507efe2bacc6ec34ab2dd7a48d9c6c2683db572b08c884223e9c6d6de",
+    "frontend/src/mock/relations.json": "b8dff366a5a0ce6cb3c1c89eeafd33ecc2bb7ead92b1134e51440a7bff127835",
+    "frontend/src/lib/search.js": "2d91b5c84175aeedd7588abea778bce8afc5ad19d5d18926a7b6f9161e82f19f",
+    "frontend/src/lib/use-search.js": "3f5f0f1933b118a0162c7ddee0743e69a7a70a2f3e63145a6f575f9a259a2bd0",
+    "frontend/src/styles.css": "09ed6332de6b236c0d063eb940a1fb7de4b4be70b9f9ebb60bca509184e935ba"
+  },
+  "browser": "156.0.8078.79",
+  "cases": [
+    {
+      "name": "keyword-evidence",
+      "status": "passed"
+    },
+    {
+      "name": "keyword-fallback",
+      "status": "passed"
+    },
+    {
+      "name": "empty-search",
+      "status": "passed"
+    },
+    {
+      "name": "search-error",
+      "status": "passed"
+    },
+    {
+      "name": "stale-evidence",
+      "status": "passed"
+    },
+    {
+      "name": "relation-candidates",
+      "status": "passed"
+    },
+    {
+      "name": "review-source-unavailable",
+      "status": "passed"
+    },
+    {
+      "name": "review-source-recovered",
+      "status": "passed"
+    },
+    {
+      "name": "review-decisions",
+      "status": "passed"
+    },
+    {
+      "name": "review-conflict",
+      "status": "passed"
+    },
+    {
+      "name": "relation-endpoint-unavailable",
+      "status": "passed"
+    },
+    {
+      "name": "search-width-375",
+      "status": "passed"
+    },
+    {
+      "name": "review-width-375",
+      "status": "passed"
+    },
+    {
+      "name": "search-width-768",
+      "status": "passed"
+    },
+    {
+      "name": "review-width-768",
+      "status": "passed"
+    },
+    {
+      "name": "search-width-1024",
+      "status": "passed"
+    },
+    {
+      "name": "review-width-1024",
+      "status": "passed"
+    },
+    {
+      "name": "rescan-accepted",
+      "status": "passed"
+    },
+    {
+      "name": "retry-job-accepted",
+      "status": "passed"
+    }
+  ],
+  "page_errors": [],
+  "search_requests": 8,
+  "review_posts": [
+    {
+      "decision": "confirmed",
+      "expected_revision": 0,
+      "reason": "",
+      "actor": "contract-reviewer"
+    },
+    {
+      "decision": "corrected",
+      "expected_revision": 0,
+      "reason": "",
+      "actor": "contract-reviewer",
+      "corrected_entity_id": "entity-0"
+    },
+    {
+      "decision": "rejected",
+      "expected_revision": 0,
+      "reason": "",
+      "actor": "contract-reviewer"
+    },
+    {
+      "decision": "rejected",
+      "expected_revision": 1,
+      "reason": "",
+      "actor": "contract-reviewer"
+    }
+  ],
+  "rescan_posts": [
+    {
+      "method": "POST",
+      "endpoint": "/roots/root-contract/scans",
+      "body": null
+    }
+  ],
+  "retry_posts": [
+    {
+      "method": "POST",
+      "endpoint": "/jobs/job-retry-contract/retry",
+      "body": null
+    }
+  ]
+}

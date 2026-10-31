@@ -1,0 +1,488 @@
+{
+  "ready": {
+    "at": "2026-10-31T03:06:44.245859+00:00",
+    "checks": {
+      "keyword_correct_mode_and_source": true,
+      "semantic_correct_mode_and_source": true,
+      "hybrid_correct_mode_and_source": true,
+      "api_remains_ready": true,
+      "all_30_original_chunks_automatically_received_vectors": true
+    },
+    "responses": {
+      "keyword": {
+        "query": "invoices refunds",
+        "mode": "keyword",
+        "effective_mode": "keyword",
+        "results": [
+          {
+            "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+            "file_id": "0dbb7310-e491-4730-b8a5-3af816ea0af0",
+            "file_name": "doc01.pdf",
+            "file_path": "regression/group-a/doc01.pdf",
+            "version_id": "61952865-6e86-4ea8-bfbf-6861c4b643d3",
+            "version_created_at": "2026-10-31T02:48:30.724424Z",
+            "chunk_id": "45718fbe-cded-463f-8542-3ea22866d83b",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Document 01 - invoices and refunds\nPage 1 of 2\nMarker01P1 reference for invoices and refunds on page 1.\nThis synthetic page exists to rehearse the regression run.",
+            "reason": "keyword: invoices, refunds",
+            "score": 0.8,
+            "keyword_score": 0.8,
+            "semantic_score": 0.0
+          }
+        ],
+        "total": 1,
+        "degraded": false,
+        "degradation_reason": null,
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 1,
+        "candidate_limit": 200
+      },
+      "semantic": {
+        "query": "invoices refunds",
+        "mode": "semantic",
+        "effective_mode": "semantic",
+        "results": [
+          {
+            "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+            "file_id": "0dbb7310-e491-4730-b8a5-3af816ea0af0",
+            "file_name": "doc01.pdf",
+            "file_path": "regression/group-a/doc01.pdf",
+            "version_id": "61952865-6e86-4ea8-bfbf-6861c4b643d3",
+            "version_created_at": "2026-10-31T02:48:30.724424Z",
+            "chunk_id": "45718fbe-cded-463f-8542-3ea22866d83b",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Document 01 - invoices and refunds\nPage 1 of 2\nMarker01P1 reference for invoices and refunds on page 1.\nThis synthetic page exists to rehearse the regression run.",
+            "reason": "keyword: invoices, refunds; token MaxSim mean: 0.7840",
+            "score": 0.78398,
+            "keyword_score": 0.8,
+            "semantic_score": 0.78398
+          },
+          {
+            "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+            "file_id": "9d0c78ba-ae10-4f2b-828b-96a87e4d8ceb",
+            "file_name": "doc05.pdf",
+            "file_path": "regression/group-a/doc05.pdf",
+            "version_id": "c2839640-473d-4c04-8689-7d70944edd19",
+            "version_created_at": "2026-10-31T02:48:30.803245Z",
+            "chunk_id": "11152637-a271-43cb-8edf-f897c547aa50",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Document 05 - billing disputes\nPage 1 of 2\nMarker05P1 reference for billing disputes on page 1.\nThis synthetic page exists to rehearse the regression run.",
+            "reason": "token MaxSim mean: 0.6948",
+            "score": 0.694826,
+            "keyword_score": 0.0,
+            "semantic_score": 0.694826
+          },
+          {
+            "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+            "file_id": "65f00dca-3044-42b8-b7f8-6ba7c26d241c",
+            "file_name": "doc10.pdf",
+            "file_path": "regression/group-b/doc10.pdf",
+            "version_id": "165b0df2-36f3-4cd3-8b3b-041d97e585d5",
+            "version_created_at": "2026-10-31T02:48:30.922129Z",
+            "chunk_id": "08a1c581-591f-46e3-abfa-6132a13bb94c",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Page 1 of 3\nMarker10P1 reference for vendor contracts on page 1.",
+            "reason": "token MaxSim mean: 0.6786",
+            "score": 0.678595,
+            "keyword_score": 0.0,
+            "semantic_score": 0.678595
+          }
+        ],
+        "total": 12,
+        "degraded": false,
+        "degradation_reason": null,
+        "embedding_model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "embedding_dimensions": 128,
+        "candidate_count": 12,
+        "candidate_limit": 200
+      },
+      "hybrid": {
+        "query": "invoices refunds",
+        "mode": "hybrid",
+        "effective_mode": "hybrid",
+        "results": [
+          {
+            "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+            "file_id": "0dbb7310-e491-4730-b8a5-3af816ea0af0",
+            "file_name": "doc01.pdf",
+            "file_path": "regression/group-a/doc01.pdf",
+            "version_id": "61952865-6e86-4ea8-bfbf-6861c4b643d3",
+            "version_created_at": "2026-10-31T02:48:30.724424Z",
+            "chunk_id": "45718fbe-cded-463f-8542-3ea22866d83b",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Document 01 - invoices and refunds\nPage 1 of 2\nMarker01P1 reference for invoices and refunds on page 1.\nThis synthetic page exists to rehearse the regression run.",
+            "reason": "keyword: invoices, refunds; token MaxSim mean: 0.7840",
+            "score": 0.794393,
+            "keyword_score": 0.8,
+            "semantic_score": 0.78398
+          },
+          {
+            "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+            "file_id": "9d0c78ba-ae10-4f2b-828b-96a87e4d8ceb",
+            "file_name": "doc05.pdf",
+            "file_path": "regression/group-a/doc05.pdf",
+            "version_id": "c2839640-473d-4c04-8689-7d70944edd19",
+            "version_created_at": "2026-10-31T02:48:30.803245Z",
+            "chunk_id": "11152637-a271-43cb-8edf-f897c547aa50",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Document 05 - billing disputes\nPage 1 of 2\nMarker05P1 reference for billing disputes on page 1.\nThis synthetic page exists to rehearse the regression run.",
+            "reason": "token MaxSim mean: 0.6948",
+            "score": 0.243189,
+            "keyword_score": 0.0,
+            "semantic_score": 0.694826
+          },
+          {
+            "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+            "file_id": "65f00dca-3044-42b8-b7f8-6ba7c26d241c",
+            "file_name": "doc10.pdf",
+            "file_path": "regression/group-b/doc10.pdf",
+            "version_id": "165b0df2-36f3-4cd3-8b3b-041d97e585d5",
+            "version_created_at": "2026-10-31T02:48:30.922129Z",
+            "chunk_id": "08a1c581-591f-46e3-abfa-6132a13bb94c",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Page 1 of 3\nMarker10P1 reference for vendor contracts on page 1.",
+            "reason": "token MaxSim mean: 0.6786",
+            "score": 0.237508,
+            "keyword_score": 0.0,
+            "semantic_score": 0.678595
+          }
+        ],
+        "total": 12,
+        "degraded": false,
+        "degradation_reason": null,
+        "embedding_model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "embedding_dimensions": 128,
+        "candidate_count": 12,
+        "candidate_limit": 200
+      }
+    },
+    "setup": {
+      "state": "ready",
+      "ready": true,
+      "stage_progress": 100.0,
+      "progress": 100.0,
+      "downloaded_bytes": 2397842839,
+      "total_bytes": 2397842839,
+      "completed_files": 14,
+      "total_files": 14,
+      "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+      "message": "Local AI is ready. Model integrity and warm-up checks passed.",
+      "error_code": null,
+      "retryable": false,
+      "updated_at": "2026-10-31T03:02:12.282477Z"
+    },
+    "canonical_token_index_count": 30,
+    "passed": true
+  },
+  "passed": true,
+  "disconnected": {
+    "at": "2026-10-31T03:17:45.191560+00:00",
+    "checks": {
+      "keyword_correct_mode_and_source": true,
+      "semantic_correct_mode_and_source": true,
+      "hybrid_correct_mode_and_source": true,
+      "api_remains_ready": true,
+      "all_30_original_chunks_automatically_received_vectors": true
+    },
+    "responses": {
+      "keyword": {
+        "query": "invoices refunds",
+        "mode": "keyword",
+        "effective_mode": "keyword",
+        "results": [
+          {
+            "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+            "file_id": "0dbb7310-e491-4730-b8a5-3af816ea0af0",
+            "file_name": "doc01.pdf",
+            "file_path": "regression/group-a/doc01.pdf",
+            "version_id": "61952865-6e86-4ea8-bfbf-6861c4b643d3",
+            "version_created_at": "2026-10-31T02:48:30.724424Z",
+            "chunk_id": "45718fbe-cded-463f-8542-3ea22866d83b",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Document 01 - invoices and refunds\nPage 1 of 2\nMarker01P1 reference for invoices and refunds on page 1.\nThis synthetic page exists to rehearse the regression run.",
+            "reason": "keyword: invoices, refunds",
+            "score": 0.8,
+            "keyword_score": 0.8,
+            "semantic_score": 0.0
+          }
+        ],
+        "total": 1,
+        "degraded": false,
+        "degradation_reason": null,
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 1,
+        "candidate_limit": 200
+      },
+      "semantic": {
+        "query": "invoices refunds",
+        "mode": "semantic",
+        "effective_mode": "keyword",
+        "results": [
+          {
+            "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+            "file_id": "0dbb7310-e491-4730-b8a5-3af816ea0af0",
+            "file_name": "doc01.pdf",
+            "file_path": "regression/group-a/doc01.pdf",
+            "version_id": "61952865-6e86-4ea8-bfbf-6861c4b643d3",
+            "version_created_at": "2026-10-31T02:48:30.724424Z",
+            "chunk_id": "45718fbe-cded-463f-8542-3ea22866d83b",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Document 01 - invoices and refunds\nPage 1 of 2\nMarker01P1 reference for invoices and refunds on page 1.\nThis synthetic page exists to rehearse the regression run.",
+            "reason": "keyword: invoices, refunds",
+            "score": 0.8,
+            "keyword_score": 0.8,
+            "semantic_score": 0.0
+          }
+        ],
+        "total": 1,
+        "degraded": true,
+        "degradation_reason": "ai_unavailable",
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 1,
+        "candidate_limit": 200
+      },
+      "hybrid": {
+        "query": "invoices refunds",
+        "mode": "hybrid",
+        "effective_mode": "keyword",
+        "results": [
+          {
+            "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+            "file_id": "0dbb7310-e491-4730-b8a5-3af816ea0af0",
+            "file_name": "doc01.pdf",
+            "file_path": "regression/group-a/doc01.pdf",
+            "version_id": "61952865-6e86-4ea8-bfbf-6861c4b643d3",
+            "version_created_at": "2026-10-31T02:48:30.724424Z",
+            "chunk_id": "45718fbe-cded-463f-8542-3ea22866d83b",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Document 01 - invoices and refunds\nPage 1 of 2\nMarker01P1 reference for invoices and refunds on page 1.\nThis synthetic page exists to rehearse the regression run.",
+            "reason": "keyword: invoices, refunds",
+            "score": 0.8,
+            "keyword_score": 0.8,
+            "semantic_score": 0.0
+          }
+        ],
+        "total": 1,
+        "degraded": true,
+        "degradation_reason": "ai_unavailable",
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 1,
+        "candidate_limit": 200
+      }
+    },
+    "setup": {
+      "state": "unavailable",
+      "ready": false,
+      "stage_progress": null,
+      "progress": null,
+      "downloaded_bytes": 0,
+      "total_bytes": null,
+      "completed_files": 0,
+      "total_files": 14,
+      "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+      "message": "Local AI service is unavailable. Keyword search remains available.",
+      "error_code": "ai_unavailable",
+      "retryable": true,
+      "updated_at": "2026-10-31T03:17:49.619549Z"
+    },
+    "canonical_token_index_count": 30,
+    "passed": true
+  },
+  "restored": {
+    "at": "2026-10-31T03:24:25.073099+00:00",
+    "checks": {
+      "keyword_correct_mode_and_source": true,
+      "semantic_correct_mode_and_source": true,
+      "hybrid_correct_mode_and_source": true,
+      "api_remains_ready": true,
+      "all_30_original_chunks_automatically_received_vectors": true
+    },
+    "responses": {
+      "keyword": {
+        "query": "invoices refunds",
+        "mode": "keyword",
+        "effective_mode": "keyword",
+        "results": [
+          {
+            "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+            "file_id": "0dbb7310-e491-4730-b8a5-3af816ea0af0",
+            "file_name": "doc01.pdf",
+            "file_path": "regression/group-a/doc01.pdf",
+            "version_id": "61952865-6e86-4ea8-bfbf-6861c4b643d3",
+            "version_created_at": "2026-10-31T02:48:30.724424Z",
+            "chunk_id": "45718fbe-cded-463f-8542-3ea22866d83b",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Document 01 - invoices and refunds\nPage 1 of 2\nMarker01P1 reference for invoices and refunds on page 1.\nThis synthetic page exists to rehearse the regression run.",
+            "reason": "keyword: invoices, refunds",
+            "score": 0.8,
+            "keyword_score": 0.8,
+            "semantic_score": 0.0
+          }
+        ],
+        "total": 1,
+        "degraded": false,
+        "degradation_reason": null,
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 1,
+        "candidate_limit": 200
+      },
+      "semantic": {
+        "query": "invoices refunds",
+        "mode": "semantic",
+        "effective_mode": "semantic",
+        "results": [
+          {
+            "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+            "file_id": "0dbb7310-e491-4730-b8a5-3af816ea0af0",
+            "file_name": "doc01.pdf",
+            "file_path": "regression/group-a/doc01.pdf",
+            "version_id": "61952865-6e86-4ea8-bfbf-6861c4b643d3",
+            "version_created_at": "2026-10-31T02:48:30.724424Z",
+            "chunk_id": "45718fbe-cded-463f-8542-3ea22866d83b",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Document 01 - invoices and refunds\nPage 1 of 2\nMarker01P1 reference for invoices and refunds on page 1.\nThis synthetic page exists to rehearse the regression run.",
+            "reason": "keyword: invoices, refunds; token MaxSim mean: 0.7840",
+            "score": 0.78398,
+            "keyword_score": 0.8,
+            "semantic_score": 0.78398
+          },
+          {
+            "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+            "file_id": "9d0c78ba-ae10-4f2b-828b-96a87e4d8ceb",
+            "file_name": "doc05.pdf",
+            "file_path": "regression/group-a/doc05.pdf",
+            "version_id": "c2839640-473d-4c04-8689-7d70944edd19",
+            "version_created_at": "2026-10-31T02:48:30.803245Z",
+            "chunk_id": "11152637-a271-43cb-8edf-f897c547aa50",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Document 05 - billing disputes\nPage 1 of 2\nMarker05P1 reference for billing disputes on page 1.\nThis synthetic page exists to rehearse the regression run.",
+            "reason": "token MaxSim mean: 0.6948",
+            "score": 0.694826,
+            "keyword_score": 0.0,
+            "semantic_score": 0.694826
+          },
+          {
+            "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+            "file_id": "65f00dca-3044-42b8-b7f8-6ba7c26d241c",
+            "file_name": "doc10.pdf",
+            "file_path": "regression/group-b/doc10.pdf",
+            "version_id": "165b0df2-36f3-4cd3-8b3b-041d97e585d5",
+            "version_created_at": "2026-10-31T02:48:30.922129Z",
+            "chunk_id": "08a1c581-591f-46e3-abfa-6132a13bb94c",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Page 1 of 3\nMarker10P1 reference for vendor contracts on page 1.",
+            "reason": "token MaxSim mean: 0.6786",
+            "score": 0.678595,
+            "keyword_score": 0.0,
+            "semantic_score": 0.678595
+          }
+        ],
+        "total": 12,
+        "degraded": false,
+        "degradation_reason": null,
+        "embedding_model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "embedding_dimensions": 128,
+        "candidate_count": 12,
+        "candidate_limit": 200
+      },
+      "hybrid": {
+        "query": "invoices refunds",
+        "mode": "hybrid",
+        "effective_mode": "hybrid",
+        "results": [
+          {
+            "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+            "file_id": "0dbb7310-e491-4730-b8a5-3af816ea0af0",
+            "file_name": "doc01.pdf",
+            "file_path": "regression/group-a/doc01.pdf",
+            "version_id": "61952865-6e86-4ea8-bfbf-6861c4b643d3",
+            "version_created_at": "2026-10-31T02:48:30.724424Z",
+            "chunk_id": "45718fbe-cded-463f-8542-3ea22866d83b",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Document 01 - invoices and refunds\nPage 1 of 2\nMarker01P1 reference for invoices and refunds on page 1.\nThis synthetic page exists to rehearse the regression run.",
+            "reason": "keyword: invoices, refunds; token MaxSim mean: 0.7840",
+            "score": 0.794393,
+            "keyword_score": 0.8,
+            "semantic_score": 0.78398
+          },
+          {
+            "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+            "file_id": "9d0c78ba-ae10-4f2b-828b-96a87e4d8ceb",
+            "file_name": "doc05.pdf",
+            "file_path": "regression/group-a/doc05.pdf",
+            "version_id": "c2839640-473d-4c04-8689-7d70944edd19",
+            "version_created_at": "2026-10-31T02:48:30.803245Z",
+            "chunk_id": "11152637-a271-43cb-8edf-f897c547aa50",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Document 05 - billing disputes\nPage 1 of 2\nMarker05P1 reference for billing disputes on page 1.\nThis synthetic page exists to rehearse the regression run.",
+            "reason": "token MaxSim mean: 0.6948",
+            "score": 0.243189,
+            "keyword_score": 0.0,
+            "semantic_score": 0.694826
+          },
+          {
+            "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+            "file_id": "65f00dca-3044-42b8-b7f8-6ba7c26d241c",
+            "file_name": "doc10.pdf",
+            "file_path": "regression/group-b/doc10.pdf",
+            "version_id": "165b0df2-36f3-4cd3-8b3b-041d97e585d5",
+            "version_created_at": "2026-10-31T02:48:30.922129Z",
+            "chunk_id": "08a1c581-591f-46e3-abfa-6132a13bb94c",
+            "ordinal": 1,
+            "page": 1,
+            "text": "Page 1 of 3\nMarker10P1 reference for vendor contracts on page 1.",
+            "reason": "token MaxSim mean: 0.6786",
+            "score": 0.237508,
+            "keyword_score": 0.0,
+            "semantic_score": 0.678595
+          }
+        ],
+        "total": 12,
+        "degraded": false,
+        "degradation_reason": null,
+        "embedding_model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "embedding_dimensions": 128,
+        "candidate_count": 12,
+        "candidate_limit": 200
+      }
+    },
+    "setup": {
+      "state": "ready",
+      "ready": true,
+      "stage_progress": 100.0,
+      "progress": 100.0,
+      "downloaded_bytes": 2397842839,
+      "total_bytes": 2397842839,
+      "completed_files": 14,
+      "total_files": 14,
+      "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+      "message": "Local AI is ready. Model integrity and warm-up checks passed.",
+      "error_code": null,
+      "retryable": false,
+      "updated_at": "2026-10-31T03:22:58.736703Z"
+    },
+    "canonical_token_index_count": 30,
+    "passed": true
+  }
+}

@@ -1,0 +1,1405 @@
+{
+  "origin": "http://127.0.0.1:13001",
+  "mode": "error_explicit_retry_offline_recovery",
+  "started_at": "2026-10-31T03:19:17.428Z",
+  "responses": [
+    {
+      "at": "2026-10-31T03:19:18.834Z",
+      "status": 200,
+      "body": {
+        "state": "error",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 0,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Local AI preparation failed. Keyword search remains available; retry setup.",
+        "error_code": "local_model_missing_or_corrupt",
+        "retryable": true,
+        "updated_at": "2026-10-31T03:19:07.215121Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:28.863Z",
+      "status": 200,
+      "body": {
+        "state": "error",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 0,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Local AI preparation failed. Keyword search remains available; retry setup.",
+        "error_code": "local_model_missing_or_corrupt",
+        "retryable": true,
+        "updated_at": "2026-10-31T03:19:07.215121Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:38.882Z",
+      "status": 200,
+      "body": {
+        "state": "error",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 0,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Local AI preparation failed. Keyword search remains available; retry setup.",
+        "error_code": "local_model_missing_or_corrupt",
+        "retryable": true,
+        "updated_at": "2026-10-31T03:19:07.215121Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:40.653Z",
+      "status": 200,
+      "body": {
+        "state": "checking_model",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 0,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Checking the pinned local model files.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:19:40.636523Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:41.676Z",
+      "status": 200,
+      "body": {
+        "state": "checking_model",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 1,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Checking the pinned local model files.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:19:40.650488Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:42.703Z",
+      "status": 200,
+      "body": {
+        "state": "checking_model",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 1,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Checking the pinned local model files.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:19:40.650488Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:43.719Z",
+      "status": 200,
+      "body": {
+        "state": "checking_model",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 1,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Checking the pinned local model files.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:19:40.650488Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:44.733Z",
+      "status": 200,
+      "body": {
+        "state": "checking_model",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 1,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Checking the pinned local model files.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:19:40.650488Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:45.752Z",
+      "status": 200,
+      "body": {
+        "state": "checking_model",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 1,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Checking the pinned local model files.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:19:40.650488Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:46.778Z",
+      "status": 200,
+      "body": {
+        "state": "checking_model",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 1,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Checking the pinned local model files.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:19:40.650488Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:47.798Z",
+      "status": 200,
+      "body": {
+        "state": "checking_model",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 1,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Checking the pinned local model files.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:19:40.650488Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:48.816Z",
+      "status": 200,
+      "body": {
+        "state": "checking_model",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 1,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Checking the pinned local model files.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:19:40.650488Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:49.842Z",
+      "status": 200,
+      "body": {
+        "state": "checking_model",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 1,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Checking the pinned local model files.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:19:40.650488Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:50.861Z",
+      "status": 200,
+      "body": {
+        "state": "checking_model",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 1,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Checking the pinned local model files.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:19:40.650488Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:51.875Z",
+      "status": 200,
+      "body": {
+        "state": "checking_model",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 1,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Checking the pinned local model files.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:19:40.650488Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:52.889Z",
+      "status": 200,
+      "body": {
+        "state": "checking_model",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 1,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Checking the pinned local model files.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:19:40.650488Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:53.921Z",
+      "status": 200,
+      "body": {
+        "state": "checking_model",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 1,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Checking the pinned local model files.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:19:40.650488Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:54.947Z",
+      "status": 200,
+      "body": {
+        "state": "checking_model",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 1,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Checking the pinned local model files.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:19:40.650488Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:55.965Z",
+      "status": 200,
+      "body": {
+        "state": "checking_model",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 1,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Checking the pinned local model files.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:19:40.650488Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:56.988Z",
+      "status": 200,
+      "body": {
+        "state": "checking_model",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 1,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Checking the pinned local model files.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:19:40.650488Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:58.003Z",
+      "status": 200,
+      "body": {
+        "state": "checking_model",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 1,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Checking the pinned local model files.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:19:40.650488Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:19:59.017Z",
+      "status": 200,
+      "body": {
+        "state": "checking_model",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 1,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Checking the pinned local model files.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:19:40.650488Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:00.044Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 1.5743751169173268,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:00.037137Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:01.072Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 6.953161662151787,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:01.063103Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:02.088Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 12.069568375911395,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:02.079194Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:03.112Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 16.223915707596547,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:03.093334Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:04.138Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 19.503663601032194,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:04.131573Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:05.155Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 22.477301691080513,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:05.130216Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:06.197Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 26.15061933172844,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:06.161953Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:07.226Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 27.899818208227448,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:07.212389Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:08.264Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 30.742266382538343,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:08.246315Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:09.295Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 33.93455433214904,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:09.279904Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:10.325Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 37.25803219749716,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:10.306325Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:11.351Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 40.88761986623261,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:11.341325Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:12.372Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 44.82331733835539,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:12.361219Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:13.395Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 48.75901481047816,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:13.380032Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:14.425Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 53.263201917463114,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:14.419428Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:15.454Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 58.4233386031352,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:15.443035Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:16.470Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 62.840065766295204,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:16.464155Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:17.496Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 67.69409264857995,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:17.485763Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:18.517Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 72.67930944660215,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:18.510574Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:19.536Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 77.48960635697442,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:19.525681Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:20.553Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 82.51855312690908,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:20.540340Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:21.566Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 87.89733967214354,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:21.561009Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:22.594Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 93.40731613311543,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:22.579915Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:23.615Z",
+      "status": 200,
+      "body": {
+        "state": "verifying",
+        "ready": false,
+        "stage_progress": 99.31917781538976,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Verifying all model files against the pinned SHA-256 hashes.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.610486Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:24.636Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:25.663Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:26.676Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:27.703Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:28.729Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:29.751Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:30.771Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:31.795Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:32.821Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:33.834Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:34.847Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:35.866Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:36.885Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:37.912Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:38.927Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:39.946Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:40.976Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:42.021Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:43.032Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:44.064Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:45.089Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:46.114Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:47.156Z",
+      "status": 200,
+      "body": {
+        "state": "loading",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Loading the verified model on the local CPU.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:23.886629Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:48.173Z",
+      "status": 200,
+      "body": {
+        "state": "warming_up",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Running local query and document inference to warm up the model.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:48.049399Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:20:49.192Z",
+      "status": 200,
+      "body": {
+        "state": "ready",
+        "ready": true,
+        "stage_progress": 100,
+        "progress": 100,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Local AI is ready. Model integrity and warm-up checks passed.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:20:48.415020Z"
+      }
+    }
+  ],
+  "page_errors": [],
+  "captures": [
+    {
+      "stage": "error",
+      "at": "2026-10-31T03:19:19.299Z",
+      "panel": "Local AI preparation stopped\nKeyword search and original source evidence remain available.\nError code: local_model_missing_or_corrupt\nRetry AI preparation",
+      "screenshot": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\work\\startup-browser-error.png"
+    },
+    {
+      "stage": "checking_model",
+      "at": "2026-10-31T03:19:40.994Z",
+      "panel": "Checking local model files\nKeyword search and original source evidence remain available.\nPreparation progress is not yet known · 0 / 14 files",
+      "screenshot": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\work\\startup-browser-retry.png"
+    },
+    {
+      "stage": "ready",
+      "at": "2026-10-31T03:20:49.801Z",
+      "panel": "Local AI is ready\nModel verified and warmed up. Semantic search is available for indexed files.",
+      "screenshot": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\work\\startup-browser-retry-ready.png"
+    }
+  ],
+  "retry_receipt": {
+    "at": "2026-10-31T03:19:40.632Z",
+    "status": 202,
+    "body": {
+      "state": "checking_environment",
+      "ready": false,
+      "stage_progress": null,
+      "progress": null,
+      "downloaded_bytes": 0,
+      "total_bytes": null,
+      "completed_files": 0,
+      "total_files": 14,
+      "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+      "message": "Checking the installed local inference environment.",
+      "error_code": null,
+      "retryable": false,
+      "updated_at": "2026-10-31T03:19:40.617696Z"
+    }
+  },
+  "observed_recovery_states": [
+    "checking_model",
+    "verifying",
+    "loading",
+    "warming_up",
+    "ready"
+  ],
+  "passed": true,
+  "finished_at": "2026-10-31T03:20:49.803Z"
+}

@@ -1,0 +1,209 @@
+{
+  "origin": "http://127.0.0.1:13001",
+  "mode": "error_explicit_retry_offline_recovery",
+  "started_at": "2026-10-31T03:08:37.972Z",
+  "responses": [
+    {
+      "at": "2026-10-31T03:08:39.413Z",
+      "status": 200,
+      "body": {
+        "state": "error",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 0,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Local AI preparation failed. Keyword search remains available; retry setup.",
+        "error_code": "local_model_missing_or_corrupt",
+        "retryable": true,
+        "updated_at": "2026-10-31T03:08:00.809478Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:08:49.431Z",
+      "status": 200,
+      "body": {
+        "state": "error",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 0,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Local AI preparation failed. Keyword search remains available; retry setup.",
+        "error_code": "local_model_missing_or_corrupt",
+        "retryable": true,
+        "updated_at": "2026-10-31T03:08:00.809478Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:08:59.446Z",
+      "status": 200,
+      "body": {
+        "state": "error",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 0,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Local AI preparation failed. Keyword search remains available; retry setup.",
+        "error_code": "local_model_missing_or_corrupt",
+        "retryable": true,
+        "updated_at": "2026-10-31T03:08:00.809478Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:09:09.183Z",
+      "status": 200,
+      "body": {
+        "state": "error",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 0,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Local AI preparation failed. Keyword search remains available; retry setup.",
+        "error_code": "local_model_missing_or_corrupt",
+        "retryable": true,
+        "updated_at": "2026-10-31T03:09:09.146937Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:09:19.203Z",
+      "status": 200,
+      "body": {
+        "state": "error",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 0,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Local AI preparation failed. Keyword search remains available; retry setup.",
+        "error_code": "local_model_missing_or_corrupt",
+        "retryable": true,
+        "updated_at": "2026-10-31T03:09:09.146937Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:09:29.221Z",
+      "status": 200,
+      "body": {
+        "state": "error",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 0,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Local AI preparation failed. Keyword search remains available; retry setup.",
+        "error_code": "local_model_missing_or_corrupt",
+        "retryable": true,
+        "updated_at": "2026-10-31T03:09:09.146937Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:09:39.250Z",
+      "status": 200,
+      "body": {
+        "state": "error",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 0,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Local AI preparation failed. Keyword search remains available; retry setup.",
+        "error_code": "local_model_missing_or_corrupt",
+        "retryable": true,
+        "updated_at": "2026-10-31T03:09:09.146937Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:09:49.275Z",
+      "status": 200,
+      "body": {
+        "state": "error",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 0,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Local AI preparation failed. Keyword search remains available; retry setup.",
+        "error_code": "local_model_missing_or_corrupt",
+        "retryable": true,
+        "updated_at": "2026-10-31T03:09:09.146937Z"
+      }
+    },
+    {
+      "at": "2026-10-31T03:09:59.295Z",
+      "status": 200,
+      "body": {
+        "state": "error",
+        "ready": false,
+        "stage_progress": null,
+        "progress": null,
+        "downloaded_bytes": 0,
+        "total_bytes": 2397842839,
+        "completed_files": 0,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Local AI preparation failed. Keyword search remains available; retry setup.",
+        "error_code": "local_model_missing_or_corrupt",
+        "retryable": true,
+        "updated_at": "2026-10-31T03:09:09.146937Z"
+      }
+    }
+  ],
+  "page_errors": [],
+  "captures": [
+    {
+      "stage": "error",
+      "at": "2026-10-31T03:08:39.827Z",
+      "panel": "Local AI preparation stopped\nKeyword search and original source evidence remain available.\nError code: local_model_missing_or_corrupt\nRetry AI preparation",
+      "screenshot": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\work\\startup-browser-error.png"
+    }
+  ],
+  "retry_receipt": {
+    "at": "2026-10-31T03:09:09.159Z",
+    "status": 202,
+    "body": {
+      "state": "checking_environment",
+      "ready": false,
+      "stage_progress": null,
+      "progress": null,
+      "downloaded_bytes": 0,
+      "total_bytes": null,
+      "completed_files": 0,
+      "total_files": 14,
+      "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+      "message": "Checking the installed local inference environment.",
+      "error_code": null,
+      "retryable": false,
+      "updated_at": "2026-10-31T03:09:09.141045Z"
+    }
+  },
+  "passed": false,
+  "failure": "page.waitForFunction: Timeout 60000ms exceeded.",
+  "finished_at": "2026-10-31T03:10:09.171Z"
+}

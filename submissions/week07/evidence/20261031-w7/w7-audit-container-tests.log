@@ -1,0 +1,635 @@
+All checks passed!
+........................................................................ [  9%]
+........................................................................ [ 19%]
+........................................................................ [ 29%]
+........................................................................ [ 38%]
+.................F...................................................... [ 48%]
+...........FFFF......................................................... [ 58%]
+.................................................FFFFFFF................ [ 68%]
+........................................................................ [ 77%]
+........................................................................ [ 87%]
+.................FF..................................................... [ 97%]
+.....FFF....FF.....                                                      [100%]
+=================================== FAILURES ===================================
+_____________ test_retired_e5_manifest_remains_historical_evidence _____________
+
+>   ???
+
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_model_preparation.py:48: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/pathlib.py:1058: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/app/submissions/week07/evidence/C/model-manifest.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/app/submissions/week07/evidence/C/model-manifest.json'
+
+/usr/local/lib/python3.11/pathlib.py:1044: FileNotFoundError
+___ test_report_cannot_overwrite_team_answers_freeze_or_database[team_gold] ____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_report_cannot_overwrite_t0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x773697b61950>
+capsys = <_pytest.capture.CaptureFixture object at 0x773695598950>
+collision = 'team_gold'
+
+>   ???
+
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_page_metadata_cli.py:232: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_page_metadata_cli.py:232: in <dictcomp>
+    ???
+/usr/local/lib/python3.11/pathlib.py:1050: in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'rb'
+buffering = -1, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/app/submissions/week07/gold-queries.json'
+
+/usr/local/lib/python3.11/pathlib.py:1044: FileNotFoundError
+__ test_report_cannot_overwrite_team_answers_freeze_or_database[team_freeze] ___
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_report_cannot_overwrite_t1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7736955996d0>
+capsys = <_pytest.capture.CaptureFixture object at 0x77369794ac10>
+collision = 'team_freeze'
+
+>   ???
+
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_page_metadata_cli.py:232: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_page_metadata_cli.py:232: in <dictcomp>
+    ???
+/usr/local/lib/python3.11/pathlib.py:1050: in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'rb'
+buffering = -1, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/app/submissions/week07/gold-queries.json'
+
+/usr/local/lib/python3.11/pathlib.py:1044: FileNotFoundError
+_ test_report_cannot_overwrite_team_answers_freeze_or_database[sqlite_database] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_report_cannot_overwrite_t2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7736952552d0>
+capsys = <_pytest.capture.CaptureFixture object at 0x773697d26150>
+collision = 'sqlite_database'
+
+>   ???
+
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_page_metadata_cli.py:232: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_page_metadata_cli.py:232: in <dictcomp>
+    ???
+/usr/local/lib/python3.11/pathlib.py:1050: in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'rb'
+buffering = -1, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/app/submissions/week07/gold-queries.json'
+
+/usr/local/lib/python3.11/pathlib.py:1044: FileNotFoundError
+____ test_real_cli_preserves_evidence_and_reports_changed_source_separately ____
+
+db_session = <sqlalchemy.orm.session.Session object at 0x773697bc0bd0>
+scanned_corpus = ScannedCorpus(database_url='sqlite:////tmp/pytest-of-root/pytest-0/test_real_cli_preserves_eviden0/test.db', root_id='...n0/sources/other/other.pdf')}, mount=PosixPath('/tmp/pytest-of-root/pytest-0/test_real_cli_preserves_eviden0/sources'))
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_real_cli_preserves_eviden0')
+
+>   ???
+E   AssertionError: Traceback (most recent call last):
+E       File "<frozen runpy>", line 198, in _run_module_as_main
+E       File "<frozen runpy>", line 88, in _run_code
+E       File "/app/scripts/search_tools.py", line 423, in <module>
+E         main()
+E       File "/app/scripts/search_tools.py", line 263, in main
+E         ]), git=git_state())
+E                 ^^^^^^^^^^^
+E       File "/app/scripts/evaluate_team_pdf.py", line 400, in git_state
+E         "sha": git("rev-parse", "HEAD"),
+E                ^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/app/scripts/evaluate_team_pdf.py", line 392, in git
+E         return git_bytes(*arguments).decode("utf-8", errors="replace")
+E                ^^^^^^^^^^^^^^^^^^^^^
+E       File "/app/scripts/evaluate_team_pdf.py", line 384, in git_bytes
+E         result = subprocess.run(
+E                  ^^^^^^^^^^^^^^^
+E       File "/usr/local/lib/python3.11/subprocess.py", line 548, in run
+E         with Popen(*popenargs, **kwargs) as process:
+E              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/usr/local/lib/python3.11/subprocess.py", line 1026, in __init__
+E         self._execute_child(args, executable, preexec_fn, close_fds,
+E       File "/usr/local/lib/python3.11/subprocess.py", line 1955, in _execute_child
+E         raise child_exception_type(errno_num, err_msg, err_filename)
+E     FileNotFoundError: [Errno 2] No such file or directory: 'git'
+E     
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'scripts.search_tools', 'page-metadata', '--database-url', 'sqli...d_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: \'git\'\n').returncode
+
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_page_metadata_cli.py:292: AssertionError
+______________ test_seed_then_evaluate_uses_real_fixture_sources _______________
+
+db_session = <sqlalchemy.orm.session.Session object at 0x773697922350>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_seed_then_evaluate_uses_r0')
+
+>   ???
+E   AssertionError: Traceback (most recent call last):
+E       File "<frozen runpy>", line 198, in _run_module_as_main
+E       File "<frozen runpy>", line 88, in _run_code
+E       File "/app/scripts/search_tools.py", line 423, in <module>
+E         main()
+E       File "/app/scripts/search_tools.py", line 399, in main
+E         commit = subprocess.run(
+E                  ^^^^^^^^^^^^^^^
+E       File "/usr/local/lib/python3.11/subprocess.py", line 548, in run
+E         with Popen(*popenargs, **kwargs) as process:
+E              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/usr/local/lib/python3.11/subprocess.py", line 1026, in __init__
+E         self._execute_child(args, executable, preexec_fn, close_fds,
+E       File "/usr/local/lib/python3.11/subprocess.py", line 1955, in _execute_child
+E         raise child_exception_type(errno_num, err_msg, err_filename)
+E     FileNotFoundError: [Errno 2] No such file or directory: 'git'
+E     
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'scripts.search_tools', 'evaluate', '--database-url', 'sqlite://...d_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: \'git\'\n').returncode
+
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_tools_evaluation.py:64: AssertionError
+_ test_frozen_mismatch_cli_stops_before_database_or_ai_creation[gold-frozen_gold_hash_mismatch] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_frozen_mismatch_cli_stops0')
+changed_input = 'gold', code = 'frozen_gold_hash_mismatch'
+
+>   ???
+
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_tools_evaluation.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/pathlib.py:1050: in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'rb'
+buffering = -1, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/app/submissions/week07/gold-queries.json'
+
+/usr/local/lib/python3.11/pathlib.py:1044: FileNotFoundError
+_ test_frozen_mismatch_cli_stops_before_database_or_ai_creation[manifest-frozen_manifest_hash_mismatch] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_frozen_mismatch_cli_stops1')
+changed_input = 'manifest', code = 'frozen_manifest_hash_mismatch'
+
+>   ???
+
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_tools_evaluation.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/pathlib.py:1050: in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'rb'
+buffering = -1, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/app/submissions/week07/gold-queries.json'
+
+/usr/local/lib/python3.11/pathlib.py:1044: FileNotFoundError
+_____ test_matching_freeze_cli_preserves_team_shape_and_scope_denominators _____
+
+db_session = <sqlalchemy.orm.session.Session object at 0x773697a68e90>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_matching_freeze_cli_prese0')
+
+>   ???
+
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_tools_evaluation.py:119: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/pathlib.py:1058: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/pytest-of-root/pytest-0/test_matching_freeze_cli_prese0/matching-freeze.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/pytest-of-root/pytest-0/test_matching_freeze_cli_prese0/matching-freeze.json'
+
+/usr/local/lib/python3.11/pathlib.py:1044: FileNotFoundError
+_________ test_evaluation_cli_refuses_overwriting_frozen_inputs[gold] __________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_evaluation_cli_refuses_ov0')
+protected = 'gold'
+
+>   ???
+
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_tools_evaluation.py:135: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/pathlib.py:1050: in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'rb'
+buffering = -1, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/app/submissions/week07/gold-queries.json'
+
+/usr/local/lib/python3.11/pathlib.py:1044: FileNotFoundError
+_______ test_evaluation_cli_refuses_overwriting_frozen_inputs[manifest] ________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_evaluation_cli_refuses_ov1')
+protected = 'manifest'
+
+>   ???
+
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_tools_evaluation.py:135: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/pathlib.py:1050: in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'rb'
+buffering = -1, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/app/submissions/week07/gold-queries.json'
+
+/usr/local/lib/python3.11/pathlib.py:1044: FileNotFoundError
+________ test_evaluation_cli_refuses_overwriting_frozen_inputs[freeze] _________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_evaluation_cli_refuses_ov2')
+protected = 'freeze'
+
+>   ???
+
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\unit\test_search_tools_evaluation.py:135: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/pathlib.py:1050: in read_bytes
+    with self.open(mode='rb') as f:
+         ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'rb'
+buffering = -1, encoding = None, errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/app/submissions/week07/gold-queries.json'
+
+/usr/local/lib/python3.11/pathlib.py:1044: FileNotFoundError
+__ test_frozen_navigation_regression_uses_real_pdf_pipeline_and_fails_safely ___
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_frozen_navigation_regress0')
+
+>   ???
+E   AssertionError: Traceback (most recent call last):
+E       File "<frozen runpy>", line 198, in _run_module_as_main
+E       File "<frozen runpy>", line 88, in _run_code
+E       File "/app/scripts/verify_page_navigation.py", line 442, in <module>
+E         main()
+E       File "/app/scripts/verify_page_navigation.py", line 405, in main
+E         "git": git_state(), "runtime": dependency_versions(),
+E                ^^^^^^^^^^^
+E       File "/app/scripts/evaluate_team_pdf.py", line 400, in git_state
+E         "sha": git("rev-parse", "HEAD"),
+E                ^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/app/scripts/evaluate_team_pdf.py", line 392, in git
+E         return git_bytes(*arguments).decode("utf-8", errors="replace")
+E                ^^^^^^^^^^^^^^^^^^^^^
+E       File "/app/scripts/evaluate_team_pdf.py", line 384, in git_bytes
+E         result = subprocess.run(
+E                  ^^^^^^^^^^^^^^^
+E       File "/usr/local/lib/python3.11/subprocess.py", line 548, in run
+E         with Popen(*popenargs, **kwargs) as process:
+E              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       File "/usr/local/lib/python3.11/subprocess.py", line 1026, in __init__
+E         self._execute_child(args, executable, preexec_fn, close_fds,
+E       File "/usr/local/lib/python3.11/subprocess.py", line 1955, in _execute_child
+E         raise child_exception_type(errno_num, err_msg, err_filename)
+E     FileNotFoundError: [Errno 2] No such file or directory: 'git'
+E     
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'scripts.verify_page_navigation', '--database-url', 'sqlite:////...d_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: \'git\'\n').returncode
+
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\integration\test_page_navigation_regression.py:28: AssertionError
+_ test_navigation_runner_refuses_other_roots_before_corpus_or_database_writes __
+
+db_session = <sqlalchemy.orm.session.Session object at 0x773695704490>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_navigation_runner_refuses0')
+
+>   ???
+
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\integration\test_page_navigation_regression.py:74: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/pathlib.py:1058: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/pytest-of-root/pytest-0/test_navigation_runner_refuses0/refused.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/pytest-of-root/pytest-0/test_navigation_runner_refuses0/refused.json'
+
+/usr/local/lib/python3.11/pathlib.py:1044: FileNotFoundError
+______ test_team_pdf_scan_parse_index_uses_real_uuids_and_source_evidence ______
+
+db_session = <sqlalchemy.orm.session.Session object at 0x77369c53a810>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_team_pdf_scan_parse_index0')
+
+>   ???
+
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\integration\test_team_pdf_evaluation.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/pathlib.py:1058: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'r'
+buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/app/submissions/week07/gold-queries.json'
+
+/usr/local/lib/python3.11/pathlib.py:1044: FileNotFoundError
+______ test_reused_database_reparses_pdf_instead_of_hand_authored_chunks _______
+
+db_session = <sqlalchemy.orm.session.Session object at 0x77368fb61a10>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_reused_database_reparses_0')
+
+>   ???
+
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\integration\test_team_pdf_evaluation.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/pathlib.py:1058: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'r'
+buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/app/submissions/week07/gold-queries.json'
+
+/usr/local/lib/python3.11/pathlib.py:1044: FileNotFoundError
+_ test_reused_database_with_other_corpus_paths_is_diagnosed_without_silent_filtering _
+
+db_session = <sqlalchemy.orm.session.Session object at 0x77368ff32450>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_reused_database_with_othe0')
+
+>   ???
+
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\integration\test_team_pdf_evaluation.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/pathlib.py:1058: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/app/submissions/week07/gold-queries.json'), mode = 'r'
+buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/app/submissions/week07/gold-queries.json'
+
+/usr/local/lib/python3.11/pathlib.py:1044: FileNotFoundError
+_____ test_actual_cli_initializes_sqlite_and_reports_migration_limitations _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_actual_cli_initializes_sq0')
+
+>   ???
+
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\integration\test_team_pdf_evaluation.py:188: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/pathlib.py:1058: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/pytest-of-root/pytest-0/test_actual_cli_initializes_sq0/report.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/pytest-of-root/pytest-0/test_actual_cli_initializes_sq0/report.json'
+
+/usr/local/lib/python3.11/pathlib.py:1044: FileNotFoundError
+_________ test_actual_cli_refuses_partial_sqlite_without_repairing_it __________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_actual_cli_refuses_partia0')
+
+>   ???
+
+D:\HKUST AIE\MAIE6000C\MAIE6000C-starter-TEAM_11\tmp\c-team-pdf-evaluation\tests\integration\test_team_pdf_evaluation.py:242: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/local/lib/python3.11/pathlib.py:1058: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/tmp/pytest-of-root/pytest-0/test_actual_cli_refuses_partia0/partial-report.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/tmp/pytest-of-root/pytest-0/test_actual_cli_refuses_partia0/partial-report.json'
+
+/usr/local/lib/python3.11/pathlib.py:1044: FileNotFoundError
+=============================== warnings summary ===============================
+../usr/local/lib/python3.11/site-packages/starlette/testclient.py:51
+  /usr/local/lib/python3.11/site-packages/starlette/testclient.py:51: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+../usr/local/lib/python3.11/site-packages/pythonjsonlogger/jsonlogger.py:11
+  /usr/local/lib/python3.11/site-packages/pythonjsonlogger/jsonlogger.py:11: DeprecationWarning: pythonjsonlogger.jsonlogger has been moved to pythonjsonlogger.json
+    warnings.warn(
+
+tests/integration/test_search_sidecar_migration.py: 13 warnings
+  /usr/local/lib/python3.11/site-packages/alembic/config.py:592: DeprecationWarning: No path_separator found in configuration; falling back to legacy splitting on spaces, commas, and colons for prepend_sys_path.  Consider adding path_separator=os to Alembic config.
+    util.warn_deprecated(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+-------------------- generated xml file: /tmp/w7-linux.xml ---------------------
+=========================== short test summary info ============================
+FAILED tests/unit/test_search_model_preparation.py::test_retired_e5_manifest_remains_historical_evidence
+FAILED tests/unit/test_search_page_metadata_cli.py::test_report_cannot_overwrite_team_answers_freeze_or_database[team_gold]
+FAILED tests/unit/test_search_page_metadata_cli.py::test_report_cannot_overwrite_team_answers_freeze_or_database[team_freeze]
+FAILED tests/unit/test_search_page_metadata_cli.py::test_report_cannot_overwrite_team_answers_freeze_or_database[sqlite_database]
+FAILED tests/unit/test_search_page_metadata_cli.py::test_real_cli_preserves_evidence_and_reports_changed_source_separately
+FAILED tests/unit/test_search_tools_evaluation.py::test_seed_then_evaluate_uses_real_fixture_sources
+FAILED tests/unit/test_search_tools_evaluation.py::test_frozen_mismatch_cli_stops_before_database_or_ai_creation[gold-frozen_gold_hash_mismatch]
+FAILED tests/unit/test_search_tools_evaluation.py::test_frozen_mismatch_cli_stops_before_database_or_ai_creation[manifest-frozen_manifest_hash_mismatch]
+FAILED tests/unit/test_search_tools_evaluation.py::test_matching_freeze_cli_preserves_team_shape_and_scope_denominators
+FAILED tests/unit/test_search_tools_evaluation.py::test_evaluation_cli_refuses_overwriting_frozen_inputs[gold]
+FAILED tests/unit/test_search_tools_evaluation.py::test_evaluation_cli_refuses_overwriting_frozen_inputs[manifest]
+FAILED tests/unit/test_search_tools_evaluation.py::test_evaluation_cli_refuses_overwriting_frozen_inputs[freeze]
+FAILED tests/integration/test_page_navigation_regression.py::test_frozen_navigation_regression_uses_real_pdf_pipeline_and_fails_safely
+FAILED tests/integration/test_page_navigation_regression.py::test_navigation_runner_refuses_other_roots_before_corpus_or_database_writes
+FAILED tests/integration/test_team_pdf_evaluation.py::test_team_pdf_scan_parse_index_uses_real_uuids_and_source_evidence
+FAILED tests/integration/test_team_pdf_evaluation.py::test_reused_database_reparses_pdf_instead_of_hand_authored_chunks
+FAILED tests/integration/test_team_pdf_evaluation.py::test_reused_database_with_other_corpus_paths_is_diagnosed_without_silent_filtering
+FAILED tests/integration/test_team_pdf_evaluation.py::test_actual_cli_initializes_sqlite_and_reports_migration_limitations
+FAILED tests/integration/test_team_pdf_evaluation.py::test_actual_cli_refuses_partial_sqlite_without_repairing_it
+19 failed, 720 passed, 15 warnings in 138.66s (0:02:18)

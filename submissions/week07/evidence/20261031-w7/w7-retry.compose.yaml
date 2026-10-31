@@ -1,0 +1,5 @@
+services:
+  ai:
+    environment:
+      EMBEDDING_MODEL_PATH: /tmp/w7-retry-model
+      EMBEDDING_AUTO_PREPARE: 'false'

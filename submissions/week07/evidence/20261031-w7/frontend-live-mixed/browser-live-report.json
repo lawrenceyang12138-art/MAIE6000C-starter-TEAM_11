@@ -1,0 +1,961 @@
+{
+  "status": "passed",
+  "observed_at": "2026-10-31T03:01:25.291Z",
+  "evidence_type": "live_browser_api_worker",
+  "http_interception": false,
+  "mock_data": false,
+  "request": {
+    "mount_id": "corpus",
+    "relative_path": ".",
+    "expected_files": 16,
+    "expected_unsupported": 4,
+    "review_workflow": true
+  },
+  "ui_url": "http://127.0.0.1:13001",
+  "browser": "156.0.8078.79",
+  "cases": [
+    {
+      "name": "01-import-progress",
+      "status": "passed"
+    },
+    {
+      "name": "02-search-source-evidence",
+      "status": "passed"
+    },
+    {
+      "name": "03-rescan-reuses-file-versions",
+      "status": "passed"
+    },
+    {
+      "name": "04-real-relation-candidates",
+      "status": "passed"
+    },
+    {
+      "name": "05-confirm-correct-reject",
+      "status": "passed"
+    },
+    {
+      "name": "06-review-persists-after-reload",
+      "status": "passed"
+    }
+  ],
+  "page_errors": [],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/mounts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/setup",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/mounts/corpus/directories",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/roots",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/100",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/100",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/setup",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/setup",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/files",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/search",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/evidence/45718fbe-cded-463f-8542-3ea22866d83b",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/setup",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/roots/fdf4ab46-b7ea-4bff-96bd-6fd496272134/scans",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/101",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/setup",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/101",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/setup",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/mounts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/mounts/corpus/directories",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/setup",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/mounts/relations/directories",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/roots",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/102",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/01f9f803-9854-4b24-ad9c-c6fdd9141be0",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/files",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/versions/9b22e4dc-db09-49db-9daa-05ec312f8821/relations",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/setup",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/files",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/versions/9b22e4dc-db09-49db-9daa-05ec312f8821/relations",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/evidence/d28546ff-a75f-449e-b5f4-9418ef830cd5",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/relations/150e384e-0474-40f6-8c68-d5c0442a6db6/reviews",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/evidence/d28546ff-a75f-449e-b5f4-9418ef830cd5",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/relations/348bec89-3b99-45bc-bf57-be6b5424888e/reviews",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/evidence/d28546ff-a75f-449e-b5f4-9418ef830cd5",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/relations/9af0d3f9-6ab6-4a0f-8016-edd39b648367/reviews",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/setup",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/files",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/setup",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/versions/9b22e4dc-db09-49db-9daa-05ec312f8821/relations",
+      "status": 200
+    }
+  ],
+  "setup": {
+    "state": "verifying",
+    "ready": false,
+    "stage_progress": 94.19445562753998,
+    "progress": null,
+    "downloaded_bytes": 2397842839,
+    "total_bytes": 2397842839,
+    "completed_files": 14,
+    "total_files": 14,
+    "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+    "message": "Verifying all model files against the pinned SHA-256 hashes.",
+    "error_code": null,
+    "retryable": false,
+    "updated_at": "2026-10-31T03:01:25.331477Z"
+  },
+  "import": {
+    "accepted": {
+      "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+      "job_id": 100,
+      "status": "pending"
+    },
+    "job": {
+      "job_id": 100,
+      "case_id": null,
+      "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+      "version_id": null,
+      "job_type": "scan_root",
+      "status": "completed",
+      "attempts": 1,
+      "error_code": null,
+      "created_at": "2026-10-31T03:01:25.734933Z",
+      "claimed_at": "2026-10-31T03:01:25.917426Z",
+      "completed_at": "2026-10-31T03:01:26.198412Z"
+    },
+    "root": {
+      "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+      "mount_id": "corpus",
+      "relative_path": ".",
+      "status": "active",
+      "availability": "available",
+      "file_counts": {
+        "total": 16,
+        "discovered": 0,
+        "extracting": 0,
+        "basic_ready": 12,
+        "enriched": 0,
+        "failed": 0,
+        "unsupported": 4
+      },
+      "last_successful_scan_at": "2026-10-31T03:01:26.191654Z"
+    },
+    "files": [
+      {
+        "file_id": "d06a9376-58c0-472c-bbfe-d6056f4411c1",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "cf2912f8-3cc2-4654-87fb-a32f60882340",
+        "display_name": "corrupt.pdf",
+        "relative_path": "abnormal/corrupt.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "unsupported",
+        "error_code": "corrupt",
+        "updated_at": "2026-10-31T03:01:26.193134Z"
+      },
+      {
+        "file_id": "0c6fea06-9dac-434a-8491-08a0a5e3c318",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "61c135d7-2938-42fe-ac32-22472336fb3a",
+        "display_name": "encrypted.pdf",
+        "relative_path": "abnormal/encrypted.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "unsupported",
+        "error_code": "encrypted",
+        "updated_at": "2026-10-31T03:01:26.193123Z"
+      },
+      {
+        "file_id": "9fa49460-206f-408c-8bac-6d3a3fe9057d",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "81f05d69-5f34-4745-8f21-10fccbe0a506",
+        "display_name": "no_text_layer.pdf",
+        "relative_path": "abnormal/no_text_layer.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "unsupported",
+        "error_code": "no_text_layer",
+        "updated_at": "2026-10-31T03:01:26.193133Z"
+      },
+      {
+        "file_id": "0dbb7310-e491-4730-b8a5-3af816ea0af0",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "61952865-6e86-4ea8-bfbf-6861c4b643d3",
+        "display_name": "doc01.pdf",
+        "relative_path": "regression/group-a/doc01.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:26.193127Z"
+      },
+      {
+        "file_id": "6b8a4f3f-a029-4266-b34e-a5ea60d616ab",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "7e61cc7e-fb93-48ab-ba12-1a061a703740",
+        "display_name": "doc02.pdf",
+        "relative_path": "regression/group-a/doc02.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:26.193131Z"
+      },
+      {
+        "file_id": "16911f52-50bb-40bb-97c4-d72092422a21",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "130e95a8-27e3-4dd2-a0ad-d00dfe6b5f86",
+        "display_name": "doc03.pdf",
+        "relative_path": "regression/group-a/doc03.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:26.193128Z"
+      },
+      {
+        "file_id": "3e2eda94-f762-4ec6-9522-400e21127e5e",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "2cf3f8c6-1807-4e0a-b8c8-79f61c2bb03e",
+        "display_name": "doc04.pdf",
+        "relative_path": "regression/group-a/doc04.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:26.193129Z"
+      },
+      {
+        "file_id": "9d0c78ba-ae10-4f2b-828b-96a87e4d8ceb",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "c2839640-473d-4c04-8689-7d70944edd19",
+        "display_name": "doc05.pdf",
+        "relative_path": "regression/group-a/doc05.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:26.193132Z"
+      },
+      {
+        "file_id": "bdf0d36a-f9df-4751-aec9-6becf6f21e9f",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "2111e15c-1fad-4b21-934a-6a14e73524ea",
+        "display_name": "doc06.pdf",
+        "relative_path": "regression/group-a/doc06.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:26.193133Z"
+      },
+      {
+        "file_id": "2b9720b7-911d-4323-8c80-d74c1817838c",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "eb63a63e-be25-45f5-827b-c46be200891b",
+        "display_name": "doc07.pdf",
+        "relative_path": "regression/group-b/doc07.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:26.193128Z"
+      },
+      {
+        "file_id": "7cd023e7-4e52-4447-986c-76c1bf03cb45",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "b2e4ed25-b552-4c65-a4b2-15d0bc331895",
+        "display_name": "doc08.pdf",
+        "relative_path": "regression/group-b/doc08.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:26.193131Z"
+      },
+      {
+        "file_id": "4f377da4-05fe-4571-8228-0272835b5f4a",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "1f3dafb5-b632-47f2-a208-6c23b8e90c4b",
+        "display_name": "doc09.pdf",
+        "relative_path": "regression/group-b/doc09.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:26.193130Z"
+      },
+      {
+        "file_id": "65f00dca-3044-42b8-b7f8-6ba7c26d241c",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "165b0df2-36f3-4cd3-8b3b-041d97e585d5",
+        "display_name": "doc10.pdf",
+        "relative_path": "regression/group-b/doc10.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:26.193130Z"
+      },
+      {
+        "file_id": "fe639b30-9494-4941-ba55-952be5301eed",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "778a8b5f-ebc9-4078-b83c-2f85411ad36b",
+        "display_name": "doc11.pdf",
+        "relative_path": "regression/group-b/doc11.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:26.193134Z"
+      },
+      {
+        "file_id": "8c0650e2-3f62-4c96-89b2-d96bcc9d48ab",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "45610335-7418-405c-b7e7-e8d9caad1391",
+        "display_name": "doc12.pdf",
+        "relative_path": "regression/group-b/doc12.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:26.193132Z"
+      },
+      {
+        "file_id": "334e2160-cce3-437d-9612-f8001b7d036f",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "a02f9b3d-739e-4145-8bb8-d526333f7b2a",
+        "display_name": "unsupported.txt",
+        "relative_path": "regression/unsupported.txt",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "unsupported",
+        "error_code": "unsupported_format",
+        "updated_at": "2026-10-31T03:01:26.193129Z"
+      }
+    ]
+  },
+  "search": {
+    "query": "invoices",
+    "mode": "keyword",
+    "effective_mode": "keyword",
+    "results": [
+      {
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "file_id": "0dbb7310-e491-4730-b8a5-3af816ea0af0",
+        "file_name": "doc01.pdf",
+        "file_path": "regression/group-a/doc01.pdf",
+        "version_id": "61952865-6e86-4ea8-bfbf-6861c4b643d3",
+        "version_created_at": "2026-10-31T02:48:30.724424Z",
+        "chunk_id": "45718fbe-cded-463f-8542-3ea22866d83b",
+        "ordinal": 1,
+        "page": 1,
+        "text": "Document 01 - invoices and refunds\nPage 1 of 2\nMarker01P1 reference for invoices and refunds on page 1.\nThis synthetic page exists to rehearse the regression run.",
+        "reason": "keyword: invoices",
+        "score": 1,
+        "keyword_score": 1,
+        "semantic_score": 0
+      }
+    ],
+    "total": 1,
+    "degraded": false,
+    "degradation_reason": null,
+    "embedding_model": null,
+    "embedding_dimensions": null,
+    "candidate_count": 1,
+    "candidate_limit": 200
+  },
+  "evidence": {
+    "chunk_id": "45718fbe-cded-463f-8542-3ea22866d83b",
+    "file_id": "0dbb7310-e491-4730-b8a5-3af816ea0af0",
+    "version_id": "61952865-6e86-4ea8-bfbf-6861c4b643d3",
+    "relative_path": "regression/group-a/doc01.pdf",
+    "page_number": 1,
+    "ordinal": 1,
+    "text": "Document 01 - invoices and refunds\nPage 1 of 2\nMarker01P1 reference for invoices and refunds on page 1.\nThis synthetic page exists to rehearse the regression run.",
+    "content_sha256": "b3aecb9e83ba110c7f86294bd6c4ca9860aaec1dc335309a26eadc92b2537c23"
+  },
+  "rescan": {
+    "accepted": {
+      "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+      "job_id": 101,
+      "status": "pending"
+    },
+    "job": {
+      "job_id": 101,
+      "case_id": null,
+      "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+      "version_id": null,
+      "job_type": "scan_root",
+      "status": "completed",
+      "attempts": 1,
+      "error_code": null,
+      "created_at": "2026-10-31T03:01:28.769786Z",
+      "claimed_at": "2026-10-31T03:01:28.865245Z",
+      "completed_at": "2026-10-31T03:01:29.209013Z"
+    },
+    "root": {
+      "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+      "mount_id": "corpus",
+      "relative_path": ".",
+      "status": "active",
+      "availability": "available",
+      "file_counts": {
+        "total": 16,
+        "discovered": 0,
+        "extracting": 0,
+        "basic_ready": 12,
+        "enriched": 0,
+        "failed": 0,
+        "unsupported": 4
+      },
+      "last_successful_scan_at": "2026-10-31T03:01:29.200000Z"
+    },
+    "files": [
+      {
+        "file_id": "d06a9376-58c0-472c-bbfe-d6056f4411c1",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "cf2912f8-3cc2-4654-87fb-a32f60882340",
+        "display_name": "corrupt.pdf",
+        "relative_path": "abnormal/corrupt.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "unsupported",
+        "error_code": "corrupt",
+        "updated_at": "2026-10-31T03:01:29.201431Z"
+      },
+      {
+        "file_id": "0c6fea06-9dac-434a-8491-08a0a5e3c318",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "61c135d7-2938-42fe-ac32-22472336fb3a",
+        "display_name": "encrypted.pdf",
+        "relative_path": "abnormal/encrypted.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "unsupported",
+        "error_code": "encrypted",
+        "updated_at": "2026-10-31T03:01:29.201415Z"
+      },
+      {
+        "file_id": "9fa49460-206f-408c-8bac-6d3a3fe9057d",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "81f05d69-5f34-4745-8f21-10fccbe0a506",
+        "display_name": "no_text_layer.pdf",
+        "relative_path": "abnormal/no_text_layer.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "unsupported",
+        "error_code": "no_text_layer",
+        "updated_at": "2026-10-31T03:01:29.201429Z"
+      },
+      {
+        "file_id": "0dbb7310-e491-4730-b8a5-3af816ea0af0",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "61952865-6e86-4ea8-bfbf-6861c4b643d3",
+        "display_name": "doc01.pdf",
+        "relative_path": "regression/group-a/doc01.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:29.201420Z"
+      },
+      {
+        "file_id": "6b8a4f3f-a029-4266-b34e-a5ea60d616ab",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "7e61cc7e-fb93-48ab-ba12-1a061a703740",
+        "display_name": "doc02.pdf",
+        "relative_path": "regression/group-a/doc02.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:29.201426Z"
+      },
+      {
+        "file_id": "16911f52-50bb-40bb-97c4-d72092422a21",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "130e95a8-27e3-4dd2-a0ad-d00dfe6b5f86",
+        "display_name": "doc03.pdf",
+        "relative_path": "regression/group-a/doc03.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:29.201421Z"
+      },
+      {
+        "file_id": "3e2eda94-f762-4ec6-9522-400e21127e5e",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "2cf3f8c6-1807-4e0a-b8c8-79f61c2bb03e",
+        "display_name": "doc04.pdf",
+        "relative_path": "regression/group-a/doc04.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:29.201423Z"
+      },
+      {
+        "file_id": "9d0c78ba-ae10-4f2b-828b-96a87e4d8ceb",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "c2839640-473d-4c04-8689-7d70944edd19",
+        "display_name": "doc05.pdf",
+        "relative_path": "regression/group-a/doc05.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:29.201428Z"
+      },
+      {
+        "file_id": "bdf0d36a-f9df-4751-aec9-6becf6f21e9f",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "2111e15c-1fad-4b21-934a-6a14e73524ea",
+        "display_name": "doc06.pdf",
+        "relative_path": "regression/group-a/doc06.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:29.201430Z"
+      },
+      {
+        "file_id": "2b9720b7-911d-4323-8c80-d74c1817838c",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "eb63a63e-be25-45f5-827b-c46be200891b",
+        "display_name": "doc07.pdf",
+        "relative_path": "regression/group-b/doc07.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:29.201422Z"
+      },
+      {
+        "file_id": "7cd023e7-4e52-4447-986c-76c1bf03cb45",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "b2e4ed25-b552-4c65-a4b2-15d0bc331895",
+        "display_name": "doc08.pdf",
+        "relative_path": "regression/group-b/doc08.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:29.201426Z"
+      },
+      {
+        "file_id": "4f377da4-05fe-4571-8228-0272835b5f4a",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "1f3dafb5-b632-47f2-a208-6c23b8e90c4b",
+        "display_name": "doc09.pdf",
+        "relative_path": "regression/group-b/doc09.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:29.201424Z"
+      },
+      {
+        "file_id": "65f00dca-3044-42b8-b7f8-6ba7c26d241c",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "165b0df2-36f3-4cd3-8b3b-041d97e585d5",
+        "display_name": "doc10.pdf",
+        "relative_path": "regression/group-b/doc10.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:29.201425Z"
+      },
+      {
+        "file_id": "fe639b30-9494-4941-ba55-952be5301eed",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "778a8b5f-ebc9-4078-b83c-2f85411ad36b",
+        "display_name": "doc11.pdf",
+        "relative_path": "regression/group-b/doc11.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:29.201432Z"
+      },
+      {
+        "file_id": "8c0650e2-3f62-4c96-89b2-d96bcc9d48ab",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "45610335-7418-405c-b7e7-e8d9caad1391",
+        "display_name": "doc12.pdf",
+        "relative_path": "regression/group-b/doc12.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:29.201427Z"
+      },
+      {
+        "file_id": "334e2160-cce3-437d-9612-f8001b7d036f",
+        "root_id": "fdf4ab46-b7ea-4bff-96bd-6fd496272134",
+        "version_id": "a02f9b3d-739e-4145-8bb8-d526333f7b2a",
+        "display_name": "unsupported.txt",
+        "relative_path": "regression/unsupported.txt",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "unsupported",
+        "error_code": "unsupported_format",
+        "updated_at": "2026-10-31T03:01:29.201422Z"
+      }
+    ]
+  },
+  "relation_import": {
+    "accepted": {
+      "root_id": "01f9f803-9854-4b24-ad9c-c6fdd9141be0",
+      "job_id": 102,
+      "status": "pending"
+    },
+    "job": {
+      "job_id": 102,
+      "case_id": null,
+      "root_id": "01f9f803-9854-4b24-ad9c-c6fdd9141be0",
+      "version_id": null,
+      "job_type": "scan_root",
+      "status": "completed",
+      "attempts": 1,
+      "error_code": null,
+      "created_at": "2026-10-31T03:01:30.736172Z",
+      "claimed_at": "2026-10-31T03:01:30.845783Z",
+      "completed_at": "2026-10-31T03:01:30.892760Z"
+    },
+    "root": {
+      "root_id": "01f9f803-9854-4b24-ad9c-c6fdd9141be0",
+      "mount_id": "relations",
+      "relative_path": ".",
+      "status": "active",
+      "availability": "available",
+      "file_counts": {
+        "total": 1,
+        "discovered": 0,
+        "extracting": 0,
+        "basic_ready": 1,
+        "enriched": 0,
+        "failed": 0,
+        "unsupported": 0
+      },
+      "last_successful_scan_at": "2026-10-31T03:01:30.884555Z"
+    },
+    "files": [
+      {
+        "file_id": "01d310b8-b0d7-4200-bfa0-3ee862e8390e",
+        "root_id": "01f9f803-9854-4b24-ad9c-c6fdd9141be0",
+        "version_id": "9b22e4dc-db09-49db-9daa-05ec312f8821",
+        "display_name": "entities.pdf",
+        "relative_path": "entities.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:01:30.886058Z"
+      }
+    ]
+  },
+  "relations_before": [
+    {
+      "relationship_id": "150e384e-0474-40f6-8c68-d5c0442a6db6",
+      "entity_id": "f679cd54-ca57-4d05-b9b9-b15e907fa15b",
+      "entity_type": "person",
+      "label": "Chen",
+      "relation_type": "mentions",
+      "kind": "source_supported",
+      "origin": "rule",
+      "producer_revision": "relations-rules-v1",
+      "chunk_id": "d28546ff-a75f-449e-b5f4-9418ef830cd5",
+      "page_number": 1,
+      "quote": "Notes page 1 The File Management Assistant indexes documents. Dr. Chen reviewed the first prototype. Schema Design appears throughout this document. T",
+      "evidence_missing": false,
+      "decision": "confirmed",
+      "corrected_entity_id": null,
+      "decision_revision": 1
+    },
+    {
+      "relationship_id": "348bec89-3b99-45bc-bf57-be6b5424888e",
+      "entity_id": "787e0415-c47d-4278-a0ab-a0ae82672b25",
+      "entity_type": "project",
+      "label": "File Management Assistant",
+      "relation_type": "mentions",
+      "kind": "source_supported",
+      "origin": "rule",
+      "producer_revision": "relations-rules-v1",
+      "chunk_id": "d28546ff-a75f-449e-b5f4-9418ef830cd5",
+      "page_number": 1,
+      "quote": "Notes page 1 The File Management Assistant indexes documents. Dr. Chen reviewed the first prototype. Schema Design appears",
+      "evidence_missing": false,
+      "decision": "corrected",
+      "corrected_entity_id": "f679cd54-ca57-4d05-b9b9-b15e907fa15b",
+      "decision_revision": 1
+    },
+    {
+      "relationship_id": "9af0d3f9-6ab6-4a0f-8016-edd39b648367",
+      "entity_id": "7888257e-96ce-4288-8a19-a7746ec9b0f2",
+      "entity_type": "topic",
+      "label": "Schema Design",
+      "relation_type": "mentions",
+      "kind": "source_supported",
+      "origin": "rule",
+      "producer_revision": "relations-rules-v1",
+      "chunk_id": "d28546ff-a75f-449e-b5f4-9418ef830cd5",
+      "page_number": 1,
+      "quote": "Management Assistant indexes documents. Dr. Chen reviewed the first prototype. Schema Design appears throughout this document. The File Management Assistant reads PDF files",
+      "evidence_missing": false,
+      "decision": "rejected",
+      "corrected_entity_id": null,
+      "decision_revision": 1
+    }
+  ],
+  "reviews": [
+    {
+      "relationship_id": "150e384e-0474-40f6-8c68-d5c0442a6db6",
+      "decision": "confirmed",
+      "decision_revision": 2,
+      "corrected_entity_id": null
+    },
+    {
+      "relationship_id": "348bec89-3b99-45bc-bf57-be6b5424888e",
+      "decision": "corrected",
+      "decision_revision": 2,
+      "corrected_entity_id": "f679cd54-ca57-4d05-b9b9-b15e907fa15b"
+    },
+    {
+      "relationship_id": "9af0d3f9-6ab6-4a0f-8016-edd39b648367",
+      "decision": "rejected",
+      "decision_revision": 2,
+      "corrected_entity_id": null
+    }
+  ],
+  "relations_after": [
+    {
+      "relationship_id": "150e384e-0474-40f6-8c68-d5c0442a6db6",
+      "entity_id": "f679cd54-ca57-4d05-b9b9-b15e907fa15b",
+      "entity_type": "person",
+      "label": "Chen",
+      "relation_type": "mentions",
+      "kind": "source_supported",
+      "origin": "rule",
+      "producer_revision": "relations-rules-v1",
+      "chunk_id": "d28546ff-a75f-449e-b5f4-9418ef830cd5",
+      "page_number": 1,
+      "quote": "Notes page 1 The File Management Assistant indexes documents. Dr. Chen reviewed the first prototype. Schema Design appears throughout this document. T",
+      "evidence_missing": false,
+      "decision": "confirmed",
+      "corrected_entity_id": null,
+      "decision_revision": 2
+    },
+    {
+      "relationship_id": "348bec89-3b99-45bc-bf57-be6b5424888e",
+      "entity_id": "787e0415-c47d-4278-a0ab-a0ae82672b25",
+      "entity_type": "project",
+      "label": "File Management Assistant",
+      "relation_type": "mentions",
+      "kind": "source_supported",
+      "origin": "rule",
+      "producer_revision": "relations-rules-v1",
+      "chunk_id": "d28546ff-a75f-449e-b5f4-9418ef830cd5",
+      "page_number": 1,
+      "quote": "Notes page 1 The File Management Assistant indexes documents. Dr. Chen reviewed the first prototype. Schema Design appears",
+      "evidence_missing": false,
+      "decision": "corrected",
+      "corrected_entity_id": "f679cd54-ca57-4d05-b9b9-b15e907fa15b",
+      "decision_revision": 2
+    },
+    {
+      "relationship_id": "9af0d3f9-6ab6-4a0f-8016-edd39b648367",
+      "entity_id": "7888257e-96ce-4288-8a19-a7746ec9b0f2",
+      "entity_type": "topic",
+      "label": "Schema Design",
+      "relation_type": "mentions",
+      "kind": "source_supported",
+      "origin": "rule",
+      "producer_revision": "relations-rules-v1",
+      "chunk_id": "d28546ff-a75f-449e-b5f4-9418ef830cd5",
+      "page_number": 1,
+      "quote": "Management Assistant indexes documents. Dr. Chen reviewed the first prototype. Schema Design appears throughout this document. The File Management Assistant reads PDF files",
+      "evidence_missing": false,
+      "decision": "rejected",
+      "corrected_entity_id": null,
+      "decision_revision": 2
+    }
+  ],
+  "finished_at": "2026-10-31T03:01:33.193Z",
+  "git_head": "0e3d715d75373f33ece45192fc3ae63cc4496de6",
+  "source_sha256": {
+    "frontend/src/app.jsx": "21b12a1c95f0be968fa981a257368562b70f8929da8add87d1cb26dac9987173",
+    "frontend/src/relations-page.jsx": "c372e72276d87b1162b28bf06ac87d52fa067ab90cbd3b1a7efd086d27e2c684",
+    "frontend/src/api/http-adapter.js": "086cf38a814580650a6ad1d0c9aad98f0349f971501d70e90bdb3b1471b1fa12"
+  }
+}

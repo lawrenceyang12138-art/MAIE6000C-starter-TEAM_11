@@ -1,0 +1,20 @@
+{
+  "status": 202,
+  "body": {
+    "state": "checking_environment",
+    "ready": false,
+    "stage_progress": null,
+    "progress": null,
+    "downloaded_bytes": 0,
+    "total_bytes": null,
+    "completed_files": 0,
+    "total_files": 14,
+    "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+    "message": "Checking the installed local inference environment.",
+    "error_code": null,
+    "retryable": false,
+    "updated_at": "2026-10-31T03:10:45.228401Z"
+  },
+  "cache_repaired": true,
+  "trigger": "real UI button after test cache repair"
+}

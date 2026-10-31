@@ -1,0 +1,131 @@
+ Image team11-w7-audit-20261031-ai Building 
+ Image team11-w7-audit-20261031-api Building 
+ Image team11-w7-audit-20261031-worker Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.73kB 0.0s done
+#1 DONE 0.0s
+
+#2 [api internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.32kB 0.0s done
+#2 DONE 0.0s
+
+#3 [ai internal] load metadata for docker.io/library/python:3.11-slim
+#3 ...
+
+#4 [auth] library/python:pull token for registry-1.docker.io
+#4 DONE 0.0s
+
+#3 [ai internal] load metadata for docker.io/library/python:3.11-slim
+#3 DONE 1.7s
+
+#5 [api internal] load .dockerignore
+#5 transferring context: 598B done
+#5 DONE 0.0s
+
+#6 [api  1/13] FROM docker.io/library/python:3.11-slim@sha256:673719e071ecf27434fd2635bbd8d00f49f4fdd81f243143438a42ced8bedf60
+#6 resolve docker.io/library/python:3.11-slim@sha256:673719e071ecf27434fd2635bbd8d00f49f4fdd81f243143438a42ced8bedf60 0.0s done
+#6 DONE 0.0s
+
+#7 [worker internal] load build context
+#7 transferring context: 129.17kB 0.0s done
+#7 transferring context: 129.17kB 0.0s done
+#7 DONE 0.1s
+
+#8 [ai  4/13] RUN pip install --upgrade pip "setuptools>=80.0.0" wheel && pip install ".[dev,embeddings]" --extra-index-url https://download.pytorch.org/whl/cpu
+#8 CACHED
+
+#9 [ai  2/13] WORKDIR /app
+#9 CACHED
+
+#10 [ai  3/13] COPY pyproject.toml README.md /app/
+#10 CACHED
+
+#11 [ai  5/13] COPY services /app/services
+#11 CACHED
+
+#12 [api  6/13] COPY scripts /app/scripts
+#12 DONE 0.1s
+
+#13 [ai  7/13] COPY fixtures /app/fixtures
+#13 DONE 0.1s
+
+#14 [worker  8/13] COPY submissions/week07/gold-queries.json submissions/week07/gold-queries.freeze.json /app/submissions/week07/
+#14 DONE 0.0s
+
+#15 [ai  9/13] COPY submissions/week07/evidence/C/model-manifest.json /app/submissions/week07/evidence/C/model-manifest.json
+#15 DONE 0.0s
+
+#16 [worker 10/13] COPY alembic /app/alembic
+#16 DONE 0.0s
+
+#17 [api 11/13] COPY alembic.ini /app/alembic.ini
+#17 DONE 0.0s
+
+#18 [ai 12/13] COPY tests /app/tests
+#18 DONE 0.1s
+
+#19 [api 13/13] RUN pip install -e . --no-deps --no-build-isolation
+#19 1.137 Obtaining file:///app
+#19 1.140   Checking if build backend supports build_editable: started
+#19 1.584   Checking if build backend supports build_editable: finished with status 'done'
+#19 1.587   Preparing editable metadata (pyproject.toml): started
+#19 2.181   Preparing editable metadata (pyproject.toml): finished with status 'done'
+#19 2.184 Building wheels for collected packages: maie6000c-starter-template
+#19 2.187   Building editable for maie6000c-starter-template (pyproject.toml): started
+#19 2.721   Building editable for maie6000c-starter-template (pyproject.toml): finished with status 'done'
+#19 2.722   Created wheel for maie6000c-starter-template: filename=maie6000c_starter_template-0.1.0-0.editable-py3-none-any.whl size=5965 sha256=c3945e7a80faa70af0a503db723822702d37af48c3f21f773546d71aad46aff5
+#19 2.722   Stored in directory: /tmp/pip-ephem-wheel-cache-iysgzhd7/wheels/57/0f/98/bb57b2b57b95807699b822a35c022f139d38a02c27922f27ce
+#19 2.726 Successfully built maie6000c-starter-template
+#19 2.754 Installing collected packages: maie6000c-starter-template
+#19 2.754   Attempting uninstall: maie6000c-starter-template
+#19 2.755     Found existing installation: maie6000c-starter-template 0.1.0
+#19 2.758     Uninstalling maie6000c-starter-template-0.1.0:
+#19 2.763       Successfully uninstalled maie6000c-starter-template-0.1.0
+#19 2.775 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#19 2.775 Successfully installed maie6000c-starter-template-0.1.0
+#19 DONE 2.8s
+
+#20 [ai] exporting to image
+#20 exporting layers
+#20 exporting layers 0.3s done
+#20 exporting manifest sha256:37ceb0e4f518c5f0aa7670d29f8478281da27703fdfca823cea98168c75bbb6b 0.0s done
+#20 exporting config sha256:ca11cea586b9080c12f4525dc33cf69b1ad8f633c6189ae0e90b589782222e23 0.0s done
+#20 exporting attestation manifest sha256:0b2bc5fc25a634b1b34fd86a0469062ccebf865cf18bada38d5ab13054bf1055
+#20 exporting attestation manifest sha256:0b2bc5fc25a634b1b34fd86a0469062ccebf865cf18bada38d5ab13054bf1055 0.0s done
+#20 exporting manifest list sha256:2d18848f642f46344356637055e45f055ed8b619c85ace65c3cc64104734b349 0.0s done
+#20 naming to docker.io/library/team11-w7-audit-20261031-ai:latest done
+#20 unpacking to docker.io/library/team11-w7-audit-20261031-ai:latest
+#20 unpacking to docker.io/library/team11-w7-audit-20261031-ai:latest 0.2s done
+#20 DONE 0.8s
+
+#21 [worker] exporting to image
+#21 exporting layers 0.3s done
+#21 exporting manifest sha256:3899c9430ea64b377e89fe9fddb00cf915b5000501d79cfcaee22b30ceda0c8f 0.0s done
+#21 exporting config sha256:e4a2d44efc85d69bc8774df7657e9cd13b695efc2a56ae0e1e5d4fbce937e5d3 0.0s done
+#21 exporting attestation manifest sha256:81f69cf880771dba13e0a31eb8b50c252284dcf76dfc8ab394be6719633d902d 0.0s done
+#21 exporting manifest list sha256:776fc412c2bfd6b8e1c60f3797e058bf411ef71707be8eebb3363c129c79d6aa 0.0s done
+#21 naming to docker.io/library/team11-w7-audit-20261031-worker:latest done
+#21 unpacking to docker.io/library/team11-w7-audit-20261031-worker:latest 0.2s done
+#21 DONE 0.7s
+
+#22 [api] exporting to image
+#22 exporting layers 0.3s done
+#22 exporting manifest sha256:9d65dd743e9c6d803cc04f9200f27833eb3d8b55d84566a5e61c6f81fbe28c38 0.0s done
+#22 exporting config sha256:33a4a9d226beff7755faf35cda0f5f1ad8890413eb2bcbb3ab93e5389f58c028 0.0s done
+#22 exporting attestation manifest sha256:4e3e198a862c60875f1d449d0cdf5e08dbea2df92ed603e7f783b5f0283ff99f 0.0s done
+#22 exporting manifest list sha256:8c904b1a0900453d57e530fea344af540d27c4e379ae9a8caa43f3c385122c9c 0.0s done
+#22 naming to docker.io/library/team11-w7-audit-20261031-api:latest done
+#22 unpacking to docker.io/library/team11-w7-audit-20261031-api:latest 0.2s done
+#22 DONE 0.7s
+
+#23 [worker] resolving provenance for metadata file
+#23 DONE 0.1s
+
+#24 [api] resolving provenance for metadata file
+#24 DONE 0.1s
+
+#25 [ai] resolving provenance for metadata file
+#25 DONE 0.0s
+ Image team11-w7-audit-20261031-ai Built 
+ Image team11-w7-audit-20261031-api Built 
+ Image team11-w7-audit-20261031-worker Built 

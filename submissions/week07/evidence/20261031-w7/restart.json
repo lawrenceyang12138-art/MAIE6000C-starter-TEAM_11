@@ -1,0 +1,322 @@
+{
+  "before": {
+    "at": "2026-10-31T03:18:16.331592+00:00",
+    "checks": {
+      "queue_settled_and_three_recorded_sources_readable": true
+    },
+    "rows": {
+      "roots": 6,
+      "files": 43,
+      "versions": 44,
+      "chunks": 99,
+      "keyword": 99,
+      "token": 96,
+      "page": 40,
+      "entities": 3,
+      "relations": 9,
+      "relation_evidence": 9,
+      "reviews": 9,
+      "jobs": 141
+    },
+    "table_sha256": {
+      "roots": "db591c2b943e857df0d276628142975406cf5de6f97e816f6e44da60373bfe1e",
+      "files": "91e3c5249956ebd9f30801a76142a30026e6cd6e7d1c87846a793cc0513b8f2e",
+      "versions": "cff8228f079d6c429fc45e91b5c33364d6252221cc440de81263ed4ca216ce1e",
+      "chunks": "d322990034731039767b316ba4f41849f0830c5e19b08eef7a5bffe8c613e0be",
+      "keyword": "c42bd5011b741ed8bb2b3004e2adcb12b33dbcf8b64c15b67f8ffd5bdcea0b59",
+      "token": "933ab7878dcc15b414341a68cac7330b6b7309465f5f70dc3e276b5d5267f725",
+      "page": "73da78f57691748a1732653de1c4f69bea6201d90cdb7e2db24c76ec0ea730e4",
+      "entities": "db3016beefbc3eae98e77894526e94c45f5f70128bb4ceb54d11bed6a1bedd50",
+      "relations": "10bb8a8eec390617bcbba857b7064e7e951fe85fec2cb2282312656d4c9df36e",
+      "relation_evidence": "b1e2431d91322b653974787db35c8e2e951c3be6af1aedcb4e407414efa40604",
+      "reviews": "bf38952541c03e9c33e6b3fbe97f2dcf8d463058cc92e56ebd0700e26af27bce",
+      "jobs": "3b277d4525093401a370bab1159caa9b46a72e26498c6f3fb78f92af8246563e"
+    },
+    "reviews": [
+      {
+        "id": "00d15efd-d9b4-4e33-a5f6-9809d1e38cf4",
+        "relationship_id": "348bec89-3b99-45bc-bf57-be6b5424888e",
+        "decision_revision": 1,
+        "decision": "corrected",
+        "reason": "Synthetic acceptance check",
+        "actor": "w7-http-db-verifier",
+        "created_at": "2026-10-31 02:52:00.214997+00:00",
+        "corrected_entity_id": "f679cd54-ca57-4d05-b9b9-b15e907fa15b"
+      },
+      {
+        "id": "07b0a951-c0ca-4137-920e-c9363b0570c4",
+        "relationship_id": "3f33e8fd-13ef-4830-8fa5-83a940414fb4",
+        "decision_revision": 2,
+        "decision": "corrected",
+        "reason": "W7 live append-only review validation",
+        "actor": "w7-backend-live-audit",
+        "created_at": "2026-10-31 02:52:11.136304+00:00",
+        "corrected_entity_id": "787e0415-c47d-4278-a0ab-a0ae82672b25"
+      },
+      {
+        "id": "08804776-561c-4c77-be95-b1a76d9548f9",
+        "relationship_id": "9af0d3f9-6ab6-4a0f-8016-edd39b648367",
+        "decision_revision": 1,
+        "decision": "rejected",
+        "reason": "Synthetic acceptance check",
+        "actor": "w7-http-db-verifier",
+        "created_at": "2026-10-31 02:52:00.242894+00:00",
+        "corrected_entity_id": null
+      },
+      {
+        "id": "163e2f3a-4616-4ccc-b48e-d18b474176a8",
+        "relationship_id": "3f33e8fd-13ef-4830-8fa5-83a940414fb4",
+        "decision_revision": 3,
+        "decision": "rejected",
+        "reason": "W7 live append-only review validation",
+        "actor": "w7-backend-live-audit",
+        "created_at": "2026-10-31 02:52:11.172130+00:00",
+        "corrected_entity_id": null
+      },
+      {
+        "id": "39e1f5b6-fd9c-4dfa-877c-d23e4e030df0",
+        "relationship_id": "9af0d3f9-6ab6-4a0f-8016-edd39b648367",
+        "decision_revision": 2,
+        "decision": "rejected",
+        "reason": "W7 workflow verification on the synthetic relation fixture.",
+        "actor": "automated-w7-browser-check",
+        "created_at": "2026-10-31 03:01:32.579525+00:00",
+        "corrected_entity_id": null
+      },
+      {
+        "id": "992f3175-bebe-47be-9263-12b1aa2f7e76",
+        "relationship_id": "150e384e-0474-40f6-8c68-d5c0442a6db6",
+        "decision_revision": 2,
+        "decision": "confirmed",
+        "reason": "W7 workflow verification on the synthetic relation fixture.",
+        "actor": "automated-w7-browser-check",
+        "created_at": "2026-10-31 03:01:32.169576+00:00",
+        "corrected_entity_id": null
+      },
+      {
+        "id": "ca37800c-766c-4a0f-bb37-1009b08c30fc",
+        "relationship_id": "150e384e-0474-40f6-8c68-d5c0442a6db6",
+        "decision_revision": 1,
+        "decision": "confirmed",
+        "reason": "Synthetic acceptance check",
+        "actor": "w7-http-db-verifier",
+        "created_at": "2026-10-31 02:52:00.191082+00:00",
+        "corrected_entity_id": null
+      },
+      {
+        "id": "f36df248-53a8-45f8-80c9-3a3801836201",
+        "relationship_id": "348bec89-3b99-45bc-bf57-be6b5424888e",
+        "decision_revision": 2,
+        "decision": "corrected",
+        "reason": "W7 workflow verification on the synthetic relation fixture.",
+        "actor": "automated-w7-browser-check",
+        "created_at": "2026-10-31 03:01:32.389033+00:00",
+        "corrected_entity_id": "f679cd54-ca57-4d05-b9b9-b15e907fa15b"
+      },
+      {
+        "id": "fa539ea8-69b7-44af-846c-5065babf8859",
+        "relationship_id": "3f33e8fd-13ef-4830-8fa5-83a940414fb4",
+        "decision_revision": 1,
+        "decision": "confirmed",
+        "reason": "W7 live append-only review validation",
+        "actor": "w7-backend-live-audit",
+        "created_at": "2026-10-31 02:52:11.104568+00:00",
+        "corrected_entity_id": null
+      }
+    ],
+    "evidence": {
+      "45718fbe-cded-463f-8542-3ea22866d83b": {
+        "chunk_id": "45718fbe-cded-463f-8542-3ea22866d83b",
+        "file_id": "0dbb7310-e491-4730-b8a5-3af816ea0af0",
+        "version_id": "61952865-6e86-4ea8-bfbf-6861c4b643d3",
+        "relative_path": "regression/group-a/doc01.pdf",
+        "page_number": 1,
+        "ordinal": 1,
+        "text": "Document 01 - invoices and refunds\nPage 1 of 2\nMarker01P1 reference for invoices and refunds on page 1.\nThis synthetic page exists to rehearse the regression run.",
+        "content_sha256": "b3aecb9e83ba110c7f86294bd6c4ca9860aaec1dc335309a26eadc92b2537c23"
+      },
+      "877344b9-44f6-4988-a683-1e0dda590b7a": {
+        "chunk_id": "877344b9-44f6-4988-a683-1e0dda590b7a",
+        "file_id": "e26ece39-e589-4044-80c5-e7c0993900e3",
+        "version_id": "5d7ff60f-8017-479a-9a04-10ed0fa5dfba",
+        "relative_path": "document.pdf",
+        "page_number": 1,
+        "ordinal": 1,
+        "text": "Notes page 1\nThe File Management Assistant indexes documents.\nDr. Chen reviewed the first prototype.\nSchema Design appears throughout this document.\nThe File Management Assistant reads PDF files.",
+        "content_sha256": "a85ca2411a90c6c84055704898138eafc5d3da8a12b1b27f2a82381c2fa637ec"
+      },
+      "9d3f0668-0897-4712-8c65-1b27d5219d6b": {
+        "chunk_id": "9d3f0668-0897-4712-8c65-1b27d5219d6b",
+        "file_id": "44b682dc-8128-4100-aa28-56fa5c21954d",
+        "version_id": "98fb50f4-5d5f-4daa-821e-f8a8ef078a21",
+        "relative_path": "document.pdf",
+        "page_number": 1,
+        "ordinal": 1,
+        "text": "Notes page 1\nThe File Management Assistant indexes documents.\nDr. Chen reviewed the first prototype.\nSchema Design appears throughout this document.\nThe File Management Assistant reads PDF files.",
+        "content_sha256": "a85ca2411a90c6c84055704898138eafc5d3da8a12b1b27f2a82381c2fa637ec"
+      }
+    },
+    "passed": true
+  },
+  "passed": true,
+  "after": {
+    "at": "2026-10-31T03:19:00.822172+00:00",
+    "checks": {
+      "queue_settled_and_three_recorded_sources_readable": true,
+      "all_durable_tables_unchanged_after_container_recreation": true
+    },
+    "rows": {
+      "roots": 6,
+      "files": 43,
+      "versions": 44,
+      "chunks": 99,
+      "keyword": 99,
+      "token": 96,
+      "page": 40,
+      "entities": 3,
+      "relations": 9,
+      "relation_evidence": 9,
+      "reviews": 9,
+      "jobs": 141
+    },
+    "table_sha256": {
+      "roots": "db591c2b943e857df0d276628142975406cf5de6f97e816f6e44da60373bfe1e",
+      "files": "91e3c5249956ebd9f30801a76142a30026e6cd6e7d1c87846a793cc0513b8f2e",
+      "versions": "cff8228f079d6c429fc45e91b5c33364d6252221cc440de81263ed4ca216ce1e",
+      "chunks": "d322990034731039767b316ba4f41849f0830c5e19b08eef7a5bffe8c613e0be",
+      "keyword": "c42bd5011b741ed8bb2b3004e2adcb12b33dbcf8b64c15b67f8ffd5bdcea0b59",
+      "token": "933ab7878dcc15b414341a68cac7330b6b7309465f5f70dc3e276b5d5267f725",
+      "page": "73da78f57691748a1732653de1c4f69bea6201d90cdb7e2db24c76ec0ea730e4",
+      "entities": "db3016beefbc3eae98e77894526e94c45f5f70128bb4ceb54d11bed6a1bedd50",
+      "relations": "10bb8a8eec390617bcbba857b7064e7e951fe85fec2cb2282312656d4c9df36e",
+      "relation_evidence": "b1e2431d91322b653974787db35c8e2e951c3be6af1aedcb4e407414efa40604",
+      "reviews": "bf38952541c03e9c33e6b3fbe97f2dcf8d463058cc92e56ebd0700e26af27bce",
+      "jobs": "3b277d4525093401a370bab1159caa9b46a72e26498c6f3fb78f92af8246563e"
+    },
+    "reviews": [
+      {
+        "id": "00d15efd-d9b4-4e33-a5f6-9809d1e38cf4",
+        "relationship_id": "348bec89-3b99-45bc-bf57-be6b5424888e",
+        "decision_revision": 1,
+        "decision": "corrected",
+        "reason": "Synthetic acceptance check",
+        "actor": "w7-http-db-verifier",
+        "created_at": "2026-10-31 02:52:00.214997+00:00",
+        "corrected_entity_id": "f679cd54-ca57-4d05-b9b9-b15e907fa15b"
+      },
+      {
+        "id": "07b0a951-c0ca-4137-920e-c9363b0570c4",
+        "relationship_id": "3f33e8fd-13ef-4830-8fa5-83a940414fb4",
+        "decision_revision": 2,
+        "decision": "corrected",
+        "reason": "W7 live append-only review validation",
+        "actor": "w7-backend-live-audit",
+        "created_at": "2026-10-31 02:52:11.136304+00:00",
+        "corrected_entity_id": "787e0415-c47d-4278-a0ab-a0ae82672b25"
+      },
+      {
+        "id": "08804776-561c-4c77-be95-b1a76d9548f9",
+        "relationship_id": "9af0d3f9-6ab6-4a0f-8016-edd39b648367",
+        "decision_revision": 1,
+        "decision": "rejected",
+        "reason": "Synthetic acceptance check",
+        "actor": "w7-http-db-verifier",
+        "created_at": "2026-10-31 02:52:00.242894+00:00",
+        "corrected_entity_id": null
+      },
+      {
+        "id": "163e2f3a-4616-4ccc-b48e-d18b474176a8",
+        "relationship_id": "3f33e8fd-13ef-4830-8fa5-83a940414fb4",
+        "decision_revision": 3,
+        "decision": "rejected",
+        "reason": "W7 live append-only review validation",
+        "actor": "w7-backend-live-audit",
+        "created_at": "2026-10-31 02:52:11.172130+00:00",
+        "corrected_entity_id": null
+      },
+      {
+        "id": "39e1f5b6-fd9c-4dfa-877c-d23e4e030df0",
+        "relationship_id": "9af0d3f9-6ab6-4a0f-8016-edd39b648367",
+        "decision_revision": 2,
+        "decision": "rejected",
+        "reason": "W7 workflow verification on the synthetic relation fixture.",
+        "actor": "automated-w7-browser-check",
+        "created_at": "2026-10-31 03:01:32.579525+00:00",
+        "corrected_entity_id": null
+      },
+      {
+        "id": "992f3175-bebe-47be-9263-12b1aa2f7e76",
+        "relationship_id": "150e384e-0474-40f6-8c68-d5c0442a6db6",
+        "decision_revision": 2,
+        "decision": "confirmed",
+        "reason": "W7 workflow verification on the synthetic relation fixture.",
+        "actor": "automated-w7-browser-check",
+        "created_at": "2026-10-31 03:01:32.169576+00:00",
+        "corrected_entity_id": null
+      },
+      {
+        "id": "ca37800c-766c-4a0f-bb37-1009b08c30fc",
+        "relationship_id": "150e384e-0474-40f6-8c68-d5c0442a6db6",
+        "decision_revision": 1,
+        "decision": "confirmed",
+        "reason": "Synthetic acceptance check",
+        "actor": "w7-http-db-verifier",
+        "created_at": "2026-10-31 02:52:00.191082+00:00",
+        "corrected_entity_id": null
+      },
+      {
+        "id": "f36df248-53a8-45f8-80c9-3a3801836201",
+        "relationship_id": "348bec89-3b99-45bc-bf57-be6b5424888e",
+        "decision_revision": 2,
+        "decision": "corrected",
+        "reason": "W7 workflow verification on the synthetic relation fixture.",
+        "actor": "automated-w7-browser-check",
+        "created_at": "2026-10-31 03:01:32.389033+00:00",
+        "corrected_entity_id": "f679cd54-ca57-4d05-b9b9-b15e907fa15b"
+      },
+      {
+        "id": "fa539ea8-69b7-44af-846c-5065babf8859",
+        "relationship_id": "3f33e8fd-13ef-4830-8fa5-83a940414fb4",
+        "decision_revision": 1,
+        "decision": "confirmed",
+        "reason": "W7 live append-only review validation",
+        "actor": "w7-backend-live-audit",
+        "created_at": "2026-10-31 02:52:11.104568+00:00",
+        "corrected_entity_id": null
+      }
+    ],
+    "evidence": {
+      "45718fbe-cded-463f-8542-3ea22866d83b": {
+        "chunk_id": "45718fbe-cded-463f-8542-3ea22866d83b",
+        "file_id": "0dbb7310-e491-4730-b8a5-3af816ea0af0",
+        "version_id": "61952865-6e86-4ea8-bfbf-6861c4b643d3",
+        "relative_path": "regression/group-a/doc01.pdf",
+        "page_number": 1,
+        "ordinal": 1,
+        "text": "Document 01 - invoices and refunds\nPage 1 of 2\nMarker01P1 reference for invoices and refunds on page 1.\nThis synthetic page exists to rehearse the regression run.",
+        "content_sha256": "b3aecb9e83ba110c7f86294bd6c4ca9860aaec1dc335309a26eadc92b2537c23"
+      },
+      "877344b9-44f6-4988-a683-1e0dda590b7a": {
+        "chunk_id": "877344b9-44f6-4988-a683-1e0dda590b7a",
+        "file_id": "e26ece39-e589-4044-80c5-e7c0993900e3",
+        "version_id": "5d7ff60f-8017-479a-9a04-10ed0fa5dfba",
+        "relative_path": "document.pdf",
+        "page_number": 1,
+        "ordinal": 1,
+        "text": "Notes page 1\nThe File Management Assistant indexes documents.\nDr. Chen reviewed the first prototype.\nSchema Design appears throughout this document.\nThe File Management Assistant reads PDF files.",
+        "content_sha256": "a85ca2411a90c6c84055704898138eafc5d3da8a12b1b27f2a82381c2fa637ec"
+      },
+      "9d3f0668-0897-4712-8c65-1b27d5219d6b": {
+        "chunk_id": "9d3f0668-0897-4712-8c65-1b27d5219d6b",
+        "file_id": "44b682dc-8128-4100-aa28-56fa5c21954d",
+        "version_id": "98fb50f4-5d5f-4daa-821e-f8a8ef078a21",
+        "relative_path": "document.pdf",
+        "page_number": 1,
+        "ordinal": 1,
+        "text": "Notes page 1\nThe File Management Assistant indexes documents.\nDr. Chen reviewed the first prototype.\nSchema Design appears throughout this document.\nThe File Management Assistant reads PDF files.",
+        "content_sha256": "a85ca2411a90c6c84055704898138eafc5d3da8a12b1b27f2a82381c2fa637ec"
+      }
+    },
+    "passed": true
+  }
+}

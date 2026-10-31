@@ -1,0 +1,746 @@
+{
+  "status": "passed",
+  "observed_at": "2026-10-31T02:59:03.747Z",
+  "evidence_type": "live_browser_api_worker",
+  "http_interception": false,
+  "mock_data": false,
+  "request": {
+    "mount_id": "scenarios",
+    "relative_path": "normal12-fresh",
+    "expected_files": 12,
+    "expected_unsupported": 0,
+    "review_workflow": false
+  },
+  "ui_url": "http://127.0.0.1:13001",
+  "browser": "156.0.8078.79",
+  "cases": [
+    {
+      "name": "01-import-progress",
+      "status": "passed"
+    },
+    {
+      "name": "02-search-source-evidence",
+      "status": "passed"
+    },
+    {
+      "name": "03-rescan-reuses-file-versions",
+      "status": "passed"
+    }
+  ],
+  "page_errors": [],
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/mounts",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/mounts/corpus/directories",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/mounts/scenarios/directories",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/roots",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/74",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/74",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/setup",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/74",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/74",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/files",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/search",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/evidence/18b16efe-012f-4ad8-a90b-90c502355b8c",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61/scans",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/setup",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/setup",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/setup",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/setup",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/setup",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/setup",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/jobs/99",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/roots/ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "status": 200
+    }
+  ],
+  "setup": {
+    "state": "unavailable",
+    "ready": false,
+    "stage_progress": null,
+    "progress": null,
+    "downloaded_bytes": 0,
+    "total_bytes": null,
+    "completed_files": 0,
+    "total_files": 14,
+    "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+    "message": "Local AI service is unavailable. Keyword search remains available.",
+    "error_code": "ai_unavailable",
+    "retryable": true,
+    "updated_at": "2026-10-31T02:59:07.627752Z"
+  },
+  "import": {
+    "accepted": {
+      "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "job_id": 74,
+      "status": "pending"
+    },
+    "job": {
+      "job_id": 74,
+      "case_id": null,
+      "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "version_id": null,
+      "job_type": "scan_root",
+      "status": "completed",
+      "attempts": 1,
+      "error_code": null,
+      "created_at": "2026-10-31T02:59:08.403081Z",
+      "claimed_at": "2026-10-31T02:59:08.964418Z",
+      "completed_at": "2026-10-31T02:59:09.341471Z"
+    },
+    "root": {
+      "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "mount_id": "scenarios",
+      "relative_path": "normal12-fresh",
+      "status": "active",
+      "availability": "available",
+      "file_counts": {
+        "total": 12,
+        "discovered": 0,
+        "extracting": 0,
+        "basic_ready": 12,
+        "enriched": 0,
+        "failed": 0,
+        "unsupported": 0
+      },
+      "last_successful_scan_at": "2026-10-31T02:59:09.335741Z"
+    },
+    "files": [
+      {
+        "file_id": "31413129-bb71-44b8-acf5-6886fb648039",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "cb4b5997-941f-4472-af26-8839e15cc62a",
+        "display_name": "doc01.pdf",
+        "relative_path": "group-a/doc01.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T02:59:09.081105Z"
+      },
+      {
+        "file_id": "61dc10af-2c6c-4de2-9abf-a41103484be9",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "e61d7a27-69d5-4591-9858-5b7e4ab967b2",
+        "display_name": "doc02.pdf",
+        "relative_path": "group-a/doc02.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T02:59:09.103600Z"
+      },
+      {
+        "file_id": "bddcdefe-c50e-453d-99ae-6ec857408ae1",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "d3075330-6356-4d08-ab6e-ab65b9f1e0ff",
+        "display_name": "doc03.pdf",
+        "relative_path": "group-a/doc03.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T02:59:09.128141Z"
+      },
+      {
+        "file_id": "02b47cb0-df1f-431b-9bb1-ba202e24fc4a",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "5cc32164-4293-4c40-a779-9c2c96098ec1",
+        "display_name": "doc04.pdf",
+        "relative_path": "group-a/doc04.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T02:59:09.152577Z"
+      },
+      {
+        "file_id": "1aae8648-71c5-4167-ab62-c9a58c0839c7",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "5d572496-1114-4cd6-9a90-cdb9b2dc49d5",
+        "display_name": "doc05.pdf",
+        "relative_path": "group-a/doc05.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T02:59:09.177561Z"
+      },
+      {
+        "file_id": "81a98d85-c130-48bf-87a1-f5d690a52ee0",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "0974750b-c0fd-40eb-bd93-c9bef73c0d9e",
+        "display_name": "doc06.pdf",
+        "relative_path": "group-a/doc06.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T02:59:09.209122Z"
+      },
+      {
+        "file_id": "7c1988b5-1ab6-40bf-a5d5-923e536accef",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "583f619b-819d-44ed-9bbc-bce5fad7de22",
+        "display_name": "doc07.pdf",
+        "relative_path": "group-b/doc07.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T02:59:09.230168Z"
+      },
+      {
+        "file_id": "cc37d1c3-b3a0-4803-a5b0-312ca30f9fac",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "0d9f299a-5534-4cba-9ff0-b53e4a558264",
+        "display_name": "doc08.pdf",
+        "relative_path": "group-b/doc08.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T02:59:09.252512Z"
+      },
+      {
+        "file_id": "fb8ebf07-2d00-4b5a-89a6-34a5560e1e7f",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "c5d3654d-8d03-4e12-a5f3-a758be1a5c31",
+        "display_name": "doc09.pdf",
+        "relative_path": "group-b/doc09.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T02:59:09.274253Z"
+      },
+      {
+        "file_id": "c4ba7ff9-a9cc-4e6e-9c77-f3f5a42affec",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "fff0bffb-e86c-4912-a354-797811cf4564",
+        "display_name": "doc10.pdf",
+        "relative_path": "group-b/doc10.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T02:59:09.293639Z"
+      },
+      {
+        "file_id": "e27537eb-2ff4-4e97-8171-eac0615fa7bf",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "d9211c30-d7dc-402b-a0a7-05b127ba5a53",
+        "display_name": "doc11.pdf",
+        "relative_path": "group-b/doc11.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T02:59:09.331460Z"
+      },
+      {
+        "file_id": "e1591dd4-bbbe-44af-9441-202a497126f2",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "1ad4472e-3ed1-4c32-8234-541348adf16e",
+        "display_name": "doc12.pdf",
+        "relative_path": "group-b/doc12.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T02:59:09.337042Z"
+      }
+    ]
+  },
+  "search": {
+    "query": "invoices",
+    "mode": "keyword",
+    "effective_mode": "keyword",
+    "results": [
+      {
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "file_id": "31413129-bb71-44b8-acf5-6886fb648039",
+        "file_name": "doc01.pdf",
+        "file_path": "group-a/doc01.pdf",
+        "version_id": "cb4b5997-941f-4472-af26-8839e15cc62a",
+        "version_created_at": "2026-10-31T02:59:09.059287Z",
+        "chunk_id": "18b16efe-012f-4ad8-a90b-90c502355b8c",
+        "ordinal": 1,
+        "page": 1,
+        "text": "Document 01 - invoices and refunds\nPage 1 of 2\nMarker01P1 reference for invoices and refunds on page 1.\nThis synthetic page exists to rehearse the regression run.",
+        "reason": "keyword: invoices",
+        "score": 1,
+        "keyword_score": 1,
+        "semantic_score": 0
+      }
+    ],
+    "total": 1,
+    "degraded": false,
+    "degradation_reason": null,
+    "embedding_model": null,
+    "embedding_dimensions": null,
+    "candidate_count": 1,
+    "candidate_limit": 200
+  },
+  "evidence": {
+    "chunk_id": "18b16efe-012f-4ad8-a90b-90c502355b8c",
+    "file_id": "31413129-bb71-44b8-acf5-6886fb648039",
+    "version_id": "cb4b5997-941f-4472-af26-8839e15cc62a",
+    "relative_path": "group-a/doc01.pdf",
+    "page_number": 1,
+    "ordinal": 1,
+    "text": "Document 01 - invoices and refunds\nPage 1 of 2\nMarker01P1 reference for invoices and refunds on page 1.\nThis synthetic page exists to rehearse the regression run.",
+    "content_sha256": "b3aecb9e83ba110c7f86294bd6c4ca9860aaec1dc335309a26eadc92b2537c23"
+  },
+  "rescan": {
+    "accepted": {
+      "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "job_id": 99,
+      "status": "pending"
+    },
+    "job": {
+      "job_id": 99,
+      "case_id": null,
+      "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "version_id": null,
+      "job_type": "scan_root",
+      "status": "completed",
+      "attempts": 1,
+      "error_code": null,
+      "created_at": "2026-10-31T02:59:15.864758Z",
+      "claimed_at": "2026-10-31T03:00:24.457223Z",
+      "completed_at": "2026-10-31T03:00:24.771089Z"
+    },
+    "root": {
+      "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+      "mount_id": "scenarios",
+      "relative_path": "normal12-fresh",
+      "status": "active",
+      "availability": "available",
+      "file_counts": {
+        "total": 12,
+        "discovered": 0,
+        "extracting": 0,
+        "basic_ready": 12,
+        "enriched": 0,
+        "failed": 0,
+        "unsupported": 0
+      },
+      "last_successful_scan_at": "2026-10-31T03:00:24.766112Z"
+    },
+    "files": [
+      {
+        "file_id": "31413129-bb71-44b8-acf5-6886fb648039",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "cb4b5997-941f-4472-af26-8839e15cc62a",
+        "display_name": "doc01.pdf",
+        "relative_path": "group-a/doc01.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:00:24.767032Z"
+      },
+      {
+        "file_id": "61dc10af-2c6c-4de2-9abf-a41103484be9",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "e61d7a27-69d5-4591-9858-5b7e4ab967b2",
+        "display_name": "doc02.pdf",
+        "relative_path": "group-a/doc02.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:00:24.767032Z"
+      },
+      {
+        "file_id": "bddcdefe-c50e-453d-99ae-6ec857408ae1",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "d3075330-6356-4d08-ab6e-ab65b9f1e0ff",
+        "display_name": "doc03.pdf",
+        "relative_path": "group-a/doc03.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:00:24.767033Z"
+      },
+      {
+        "file_id": "02b47cb0-df1f-431b-9bb1-ba202e24fc4a",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "5cc32164-4293-4c40-a779-9c2c96098ec1",
+        "display_name": "doc04.pdf",
+        "relative_path": "group-a/doc04.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:00:24.767029Z"
+      },
+      {
+        "file_id": "1aae8648-71c5-4167-ab62-c9a58c0839c7",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "5d572496-1114-4cd6-9a90-cdb9b2dc49d5",
+        "display_name": "doc05.pdf",
+        "relative_path": "group-a/doc05.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:00:24.767031Z"
+      },
+      {
+        "file_id": "81a98d85-c130-48bf-87a1-f5d690a52ee0",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "0974750b-c0fd-40eb-bd93-c9bef73c0d9e",
+        "display_name": "doc06.pdf",
+        "relative_path": "group-a/doc06.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:00:24.767033Z"
+      },
+      {
+        "file_id": "7c1988b5-1ab6-40bf-a5d5-923e536accef",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "583f619b-819d-44ed-9bbc-bce5fad7de22",
+        "display_name": "doc07.pdf",
+        "relative_path": "group-b/doc07.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:00:24.767032Z"
+      },
+      {
+        "file_id": "cc37d1c3-b3a0-4803-a5b0-312ca30f9fac",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "0d9f299a-5534-4cba-9ff0-b53e4a558264",
+        "display_name": "doc08.pdf",
+        "relative_path": "group-b/doc08.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:00:24.767034Z"
+      },
+      {
+        "file_id": "fb8ebf07-2d00-4b5a-89a6-34a5560e1e7f",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "c5d3654d-8d03-4e12-a5f3-a758be1a5c31",
+        "display_name": "doc09.pdf",
+        "relative_path": "group-b/doc09.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:00:24.767035Z"
+      },
+      {
+        "file_id": "c4ba7ff9-a9cc-4e6e-9c77-f3f5a42affec",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "fff0bffb-e86c-4912-a354-797811cf4564",
+        "display_name": "doc10.pdf",
+        "relative_path": "group-b/doc10.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:00:24.767033Z"
+      },
+      {
+        "file_id": "e27537eb-2ff4-4e97-8171-eac0615fa7bf",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "d9211c30-d7dc-402b-a0a7-05b127ba5a53",
+        "display_name": "doc11.pdf",
+        "relative_path": "group-b/doc11.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:00:24.767034Z"
+      },
+      {
+        "file_id": "e1591dd4-bbbe-44af-9441-202a497126f2",
+        "root_id": "ca663bef-7d45-4f18-babe-81ed3bce5f61",
+        "version_id": "1ad4472e-3ed1-4c32-8234-541348adf16e",
+        "display_name": "doc12.pdf",
+        "relative_path": "group-b/doc12.pdf",
+        "presence_status": "present",
+        "presence_reason": null,
+        "status": "basic_ready",
+        "error_code": null,
+        "updated_at": "2026-10-31T03:00:24.767034Z"
+      }
+    ]
+  },
+  "finished_at": "2026-10-31T03:00:27.873Z",
+  "git_head": "0e3d715d75373f33ece45192fc3ae63cc4496de6",
+  "source_sha256": {
+    "frontend/src/app.jsx": "21b12a1c95f0be968fa981a257368562b70f8929da8add87d1cb26dac9987173",
+    "frontend/src/relations-page.jsx": "c372e72276d87b1162b28bf06ac87d52fa067ab90cbd3b1a7efd086d27e2c684",
+    "frontend/src/api/http-adapter.js": "086cf38a814580650a6ad1d0c9aad98f0349f971501d70e90bdb3b1471b1fa12"
+  }
+}

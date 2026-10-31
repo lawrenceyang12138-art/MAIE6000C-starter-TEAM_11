@@ -1,0 +1,561 @@
+{
+  "captured_at": "2026-10-31T03:38:00.767837+00:00",
+  "branch": "feat/c-team-pdf-evaluation",
+  "baseline_commit": "0e3d715d75373f33ece45192fc3ae63cc4496de6",
+  "uncommitted": true,
+  "working_tree_changes": [
+    "M .dockerignore",
+    " M .env.example",
+    " M Dockerfile",
+    " M README.md",
+    " M alembic/versions/20261030_0005_add_search_sidecars.py",
+    " M compose.yaml",
+    " M docs/architecture.md",
+    " M docs/frontend-integration-contract.md",
+    " M docs/team11-w7-shared-contract.md",
+    " M frontend/README.md",
+    " M frontend/package.json",
+    " M frontend/src/api/http-adapter.js",
+    " M frontend/src/api/mock-adapter.js",
+    " M frontend/src/mock/relations.json",
+    " M frontend/src/relations-page.jsx",
+    " M frontend/src/workflow.test.jsx",
+    " M scripts/capture_d_1019.mjs",
+    " M scripts/capture_d_relations_mock.mjs",
+    " M scripts/evaluate_team_pdf.py",
+    " M scripts/search_tools.py",
+    " M scripts/test_d_search_review.test.mjs",
+    " M scripts/verify_model_startup.py",
+    " M services/api/app/main.py",
+    " M services/api/app/parsing_routes.py",
+    " M services/common/config.py",
+    " M services/parsing/graph.py",
+    " M services/parsing/handler.py",
+    " M services/parsing/pdf.py",
+    " M services/search/indexing.py",
+    " M services/worker/app/main.py",
+    " M submissions/week07/README.md",
+    " M submissions/week07/m1-checklist.md",
+    " M submissions/week07/report.md",
+    " M submissions/week07/scope-decision.md",
+    " M tests/conftest.py",
+    " M tests/integration/test_parsing_api.py",
+    " M tests/integration/test_search_sidecar_migration.py",
+    " M tests/unit/test_evaluation_git_state.py",
+    " M tests/unit/test_parsing_graph.py",
+    " M tests/unit/test_parsing_pdf.py",
+    " M tests/unit/test_search_tools_evaluation.py",
+    " M tests/unit/test_worker_dispatch.py",
+    "?? docs/w7-acceptance.md",
+    "?? scripts/verify_w7.py",
+    "?? scripts/verify_w7_browser.mjs",
+    "?? services/api/app/local_access.py",
+    "?? services/search/keyword_index.py",
+    "?? submissions/week07/evidence/20261031-w7/",
+    "?? tests/integration/test_local_api_access.py",
+    "?? tests/unit/test_verify_w7.py"
+  ],
+  "note": "Baseline plus uncommitted implementation fixes; no commit, push, merge or tag made.",
+  "host": {
+    "os": "Windows-10-10.0.26100-SP0",
+    "python": "3.11.5",
+    "node": "v22.23.1"
+  },
+  "project": "team11-w7-audit-20261031",
+  "compose_files": [
+    "compose.yaml",
+    "work/w7-audit.compose.yaml"
+  ],
+  "ports": {
+    "frontend": 13001,
+    "api": 18081,
+    "ai": 18181,
+    "postgres": 15481
+  },
+  "build_command": "docker compose -p team11-w7-audit-20261031 -f compose.yaml -f work/w7-audit.compose.yaml build api worker ai",
+  "test_command": "docker run --name team11-w7-final-tests-20261031 --network team11-w7-audit-20261031_default -e SEARCH_TEST_DATABASE_URL=<isolated-test-db> team11-w7-audit-20261031-api /bin/sh -c \"ruff check . && python -m pytest -q tests/unit tests/integration --junitxml=/tmp/w7-linux.xml\"",
+  "containers": {
+    "db": {
+      "id": "b4ce7e8df640574c0575c6d26d8f81f62b48f91722e2e0516274732c6a9880bd",
+      "image_id": "sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a",
+      "image_tag": "pgvector/pgvector:pg16",
+      "created": "2026-10-31T03:18:30.656819153Z",
+      "status": "running",
+      "health": "healthy",
+      "mounts": [
+        {
+          "Type": "volume",
+          "Source": "/var/lib/docker/volumes/team11-w7-audit-20261031_postgres_data/_data",
+          "Destination": "/var/lib/postgresql/data",
+          "RW": true,
+          "Name": "team11-w7-audit-20261031_postgres_data"
+        }
+      ]
+    },
+    "api": {
+      "id": "28e3d59dfbc649392c8665c461aa095ff12465a92faa23708348abbc929ed1cc",
+      "image_id": "sha256:8c904b1a0900453d57e530fea344af540d27c4e379ae9a8caa43f3c385122c9c",
+      "image_tag": "team11-w7-audit-20261031-api",
+      "created": "2026-10-31T03:29:31.296460373Z",
+      "status": "running",
+      "health": "healthy",
+      "mounts": [
+        {
+          "Type": "bind",
+          "Source": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\work\\w7-audit-sources",
+          "Destination": "/source/scenarios",
+          "RW": false,
+          "Name": null
+        },
+        {
+          "Type": "bind",
+          "Source": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\tests\\fixtures\\regression",
+          "Destination": "/source/corpus/regression",
+          "RW": false,
+          "Name": null
+        },
+        {
+          "Type": "bind",
+          "Source": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\tests\\fixtures\\parsing\\corrupt.pdf",
+          "Destination": "/source/corpus/abnormal/corrupt.pdf",
+          "RW": false,
+          "Name": null
+        },
+        {
+          "Type": "bind",
+          "Source": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\tests\\fixtures\\parsing\\encrypted.pdf",
+          "Destination": "/source/corpus/abnormal/encrypted.pdf",
+          "RW": false,
+          "Name": null
+        },
+        {
+          "Type": "bind",
+          "Source": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\tests\\fixtures\\parsing\\no_text_layer.pdf",
+          "Destination": "/source/corpus/abnormal/no_text_layer.pdf",
+          "RW": false,
+          "Name": null
+        },
+        {
+          "Type": "bind",
+          "Source": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\tests\\fixtures\\relations",
+          "Destination": "/source/relations",
+          "RW": false,
+          "Name": null
+        }
+      ]
+    },
+    "worker": {
+      "id": "cb3770aba28ffb41534f1d8be2c274736b38dc36195bdcbfddb709b81b10dea5",
+      "image_id": "sha256:776fc412c2bfd6b8e1c60f3797e058bf411ef71707be8eebb3363c129c79d6aa",
+      "image_tag": "team11-w7-audit-20261031-worker",
+      "created": "2026-10-31T03:29:35.190888471Z",
+      "status": "running",
+      "health": null,
+      "mounts": [
+        {
+          "Type": "bind",
+          "Source": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\tests\\fixtures\\relations",
+          "Destination": "/source/relations",
+          "RW": false,
+          "Name": null
+        },
+        {
+          "Type": "bind",
+          "Source": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\work\\w7-audit-sources",
+          "Destination": "/source/scenarios",
+          "RW": false,
+          "Name": null
+        },
+        {
+          "Type": "bind",
+          "Source": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\tests\\fixtures\\regression",
+          "Destination": "/source/corpus/regression",
+          "RW": false,
+          "Name": null
+        },
+        {
+          "Type": "bind",
+          "Source": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\tests\\fixtures\\parsing\\corrupt.pdf",
+          "Destination": "/source/corpus/abnormal/corrupt.pdf",
+          "RW": false,
+          "Name": null
+        },
+        {
+          "Type": "bind",
+          "Source": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\tests\\fixtures\\parsing\\encrypted.pdf",
+          "Destination": "/source/corpus/abnormal/encrypted.pdf",
+          "RW": false,
+          "Name": null
+        },
+        {
+          "Type": "bind",
+          "Source": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\tests\\fixtures\\parsing\\no_text_layer.pdf",
+          "Destination": "/source/corpus/abnormal/no_text_layer.pdf",
+          "RW": false,
+          "Name": null
+        }
+      ]
+    },
+    "ai": {
+      "id": "1d74c38ba20728dfc85c836c15f0612fe101f014f6eca9033ec63963df38336b",
+      "image_id": "sha256:0767bd93b40d0ad05f30f029cc7b380d5db7159c7ebfda6cf9bb21421ca018e2",
+      "image_tag": "team11-w7-audit-20261031-ai",
+      "created": "2026-10-31T03:22:10.096148343Z",
+      "status": "running",
+      "health": "healthy",
+      "mounts": [
+        {
+          "Type": "bind",
+          "Source": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\models",
+          "Destination": "/models",
+          "RW": true,
+          "Name": null
+        }
+      ],
+      "model_configuration": {
+        "EMBEDDING_MODEL_PATH": "/models/pplx-embed-v2-late-0.6b",
+        "EMBEDDING_AUTO_PREPARE": "true"
+      }
+    },
+    "frontend": {
+      "id": "45b23cfdbbbdd8f9f3e947b7b3e3ecddf6987f5db20846c5e5014004bc33ae96",
+      "image_id": "sha256:79b9e00658dbfcc41cf00313c258dec3cb2900485e9ec2c4716f533821f0df69",
+      "image_tag": "team11-w7-audit-20261031-frontend",
+      "created": "2026-10-31T03:18:30.591268817Z",
+      "status": "running",
+      "health": "healthy",
+      "mounts": []
+    }
+  },
+  "images": {
+    "sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a": {
+      "Id": "sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a",
+      "Created": "2026-10-01T17:34:13.578662591Z",
+      "Os": "linux",
+      "Architecture": "amd64",
+      "RepoTags": [
+        "pgvector/pgvector:pg16"
+      ]
+    },
+    "sha256:8c904b1a0900453d57e530fea344af540d27c4e379ae9a8caa43f3c385122c9c": {
+      "Id": "sha256:8c904b1a0900453d57e530fea344af540d27c4e379ae9a8caa43f3c385122c9c",
+      "Created": "2026-10-31T03:28:37.303929284Z",
+      "Os": "linux",
+      "Architecture": "amd64",
+      "RepoTags": [
+        "team11-w7-audit-20261031-api:latest"
+      ]
+    },
+    "sha256:776fc412c2bfd6b8e1c60f3797e058bf411ef71707be8eebb3363c129c79d6aa": {
+      "Id": "sha256:776fc412c2bfd6b8e1c60f3797e058bf411ef71707be8eebb3363c129c79d6aa",
+      "Created": "2026-10-31T03:28:37.303929284Z",
+      "Os": "linux",
+      "Architecture": "amd64",
+      "RepoTags": [
+        "team11-w7-audit-20261031-worker:latest"
+      ]
+    },
+    "sha256:0767bd93b40d0ad05f30f029cc7b380d5db7159c7ebfda6cf9bb21421ca018e2": {
+      "Id": "sha256:0767bd93b40d0ad05f30f029cc7b380d5db7159c7ebfda6cf9bb21421ca018e2",
+      "image_inspect_available": false,
+      "note": "Docker no longer exposes this previous image metadata by ID; running container Image remains recorded verbatim."
+    },
+    "sha256:79b9e00658dbfcc41cf00313c258dec3cb2900485e9ec2c4716f533821f0df69": {
+      "Id": "sha256:79b9e00658dbfcc41cf00313c258dec3cb2900485e9ec2c4716f533821f0df69",
+      "Created": "2026-10-31T02:44:21.09023547Z",
+      "Os": "linux",
+      "Architecture": "amd64",
+      "RepoTags": [
+        "team11-w7-audit-20261031-frontend:latest"
+      ]
+    }
+  },
+  "final_test_container": {
+    "id": "e0435e8ce2b2505adb8246fd9b55e778807ed74f93f1efac19d0bdedb6b48677",
+    "image_id": "sha256:8c904b1a0900453d57e530fea344af540d27c4e379ae9a8caa43f3c385122c9c",
+    "mounts": [],
+    "exit_code": 0,
+    "command": [
+      "/bin/sh",
+      "-c",
+      "ruff check . && python -m pytest -q tests/unit tests/integration --junitxml=/tmp/w7-linux.xml"
+    ],
+    "same_image_as_runtime_api": true
+  },
+  "linux_runtime": {
+    "python": "3.11.18",
+    "os": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.41",
+    "packages": {
+      "fastapi": "0.116.1",
+      "sqlalchemy": "2.0.43",
+      "psycopg": "3.2.9",
+      "pgvector": "0.4.1",
+      "pypdf": "6.20.1",
+      "PyMuPDF": "1.28.2",
+      "pytest": "8.4.1",
+      "ruff": "0.12.4",
+      "torch": "2.8.0+cpu",
+      "transformers": "5.22.0"
+    }
+  },
+  "source_sha256": {
+    ".dockerignore": "03105c81b8fdf7707c8fe922b7f4238ecf5cec4f51b759d835439f4441755674",
+    "alembic/env.py": "6b03605af9d7171629cd03cf650bcf45a16d3645fe4438681c030627821486c7",
+    "alembic/versions/20260713_0001_create_initial_tables.py": "195e7fed18c3d2fdc3c98e103358b8361b80b7aee5fcc1c84b9d90c27eef22c6",
+    "alembic/versions/20261012_c2d1ac693a0e_add_root_file_version_chunk_tables_and_.py": "172740b5b584b6edd8df4657faa11128f20f87071d1f8ba06ed4b8319f2ec9c9",
+    "alembic/versions/20261015_0002_source_search.py": "9a219d9e18a2726fb335ecdb3071db305d97b4ef01fc0edb9b437f49ba64b1f0",
+    "alembic/versions/20261015_318ab5be35e0_add_entities_relationships_evidence_and_.py": "7ef18c63f8f1e0a9f8c81071d9ec412a42fdf0cf833dd6bd54367c4be5295970",
+    "alembic/versions/20261015_445f908b73b4_add_corrected_entity_to_reviews.py": "198f186f171dd0d3c5e26ea487b5af24cf7e3cbe6c0a4fe17ebf7418b51942a4",
+    "alembic/versions/20261029_0003_add_file_presence_reason.py": "83d32914bb0027461f82866c345edada88d71c4e3cdc194e76336fcdd1e14f7f",
+    "alembic/versions/20261029_0004_add_job_error_code.py": "c7fafb1d62023edad31371968c1f7ed3b3e0f7cc70e7518d00dd6eeda9eeb21f",
+    "alembic/versions/20261030_0005_add_search_sidecars.py": "a0c21ed2c4842081383bc017a56a634debfaab3e894f3453b6c62a2ccf10981d",
+    "alembic.ini": "b8e4bddadcdc73a59600734ec888bffef64ebeaa3347dd5a14f08d7ef50ed893",
+    "compose.yaml": "13fd764de3a9e516bc9a00fb7012c5eea5ac11c9aa197d5c75357eeacc80ac4f",
+    "Dockerfile": "c30b879320b05121af3bbf6b0d23cc99faf2ab729c988983c518b875356747f6",
+    "frontend/Dockerfile": "ca70ee4785b008c148e8460fbf10505efaac73313b8718d9a93aefb1391a632f",
+    "frontend/nginx.conf": "5d0086793bf3cbae33da91ec7a1ceed882737ac406cbd6b5eaa11b8cfa66a2ad",
+    "frontend/package-lock.json": "07a28a0dbc70c84fb49663c4a7a8a581ef7413d1a2d273cdcb77ea9888ad2b0d",
+    "frontend/package.json": "39d85a02f73653d50233a114eb8052d1f62750e22860afd7ad42ff16d0654433",
+    "frontend/src/api/adapter.js": "23dbd8f987c132a02171f0e9c6087adfbd82cd705771590376bf5ee7b3a14499",
+    "frontend/src/api/adapter.test.js": "103429e1654407c7e495625882d0e6f5cdb74304fb7945951e949e4e8b28db77",
+    "frontend/src/api/errors.js": "4536902671266304a8e7a6396e39a371109ba6c540c9cdd4db39b6f330a8a8dc",
+    "frontend/src/api/http-adapter.js": "086cf38a814580650a6ad1d0c9aad98f0349f971501d70e90bdb3b1471b1fa12",
+    "frontend/src/api/mock-adapter.js": "2cfc2cb507efe2bacc6ec34ab2dd7a48d9c6c2683db572b08c884223e9c6d6de",
+    "frontend/src/api/setup-adapter.test.js": "7a689f83272454fbaf062a809f044882f8390f1c5da8eedb6764586d1d93ec07",
+    "frontend/src/app.jsx": "21b12a1c95f0be968fa981a257368562b70f8929da8add87d1cb26dac9987173",
+    "frontend/src/error-boundary.jsx": "0aca5bb69347b9d0d9e16c7ff2e2ec3294b73dd9a1c071494e98f5782831ff61",
+    "frontend/src/lib/scan.js": "6ffc56bb83ba4c45b0ea9743557d075cef373cd1c5b87202974f8fe86cd0f1ba",
+    "frontend/src/lib/scan.test.js": "413dc6183b6daffb028e3984535225ed41713b31d741348259bfab8dad149498",
+    "frontend/src/lib/search.js": "2d91b5c84175aeedd7588abea778bce8afc5ad19d5d18926a7b6f9161e82f19f",
+    "frontend/src/lib/use-search.js": "3f5f0f1933b118a0162c7ddee0743e69a7a70a2f3e63145a6f575f9a259a2bd0",
+    "frontend/src/lib/use-setup.js": "d820fbd2232bcac12ae469bff50fbb682c628debf8141a87d653eaed4909cdff",
+    "frontend/src/main.jsx": "f776518cf0a0cce548deb7b2406089f4974bf85f2adfae7a916f01228c65386e",
+    "frontend/src/mock/data.json": "b85e95a8b2eb7e11e327f94a35329b4b01a0059362c9453c3fcd843458108855",
+    "frontend/src/mock/relations.json": "b8dff366a5a0ce6cb3c1c89eeafd33ecc2bb7ead92b1134e51440a7bff127835",
+    "frontend/src/relations-page.jsx": "c372e72276d87b1162b28bf06ac87d52fa067ab90cbd3b1a7efd086d27e2c684",
+    "frontend/src/rescan-control.jsx": "c9647645d8989b5ec91c5f404ca98a16106716af54ae505a1bc3c1422704d992",
+    "frontend/src/retry-job-control.jsx": "31875bfd04378fdeefd173ae271f8660a02dbca0891ea3338e1db32e06372cea",
+    "frontend/src/setup-progress.jsx": "09bd8d0d5a1ab2876de7d9b27ce49f6c8775b1e6207cb78242eee49a71493bce",
+    "frontend/src/setup-progress.test.jsx": "2e8aefe4a55e5b5c5e3b6880e929f5395831fa9591ff762b2caa6d9244d21218",
+    "frontend/src/styles.css": "09ed6332de6b236c0d063eb940a1fb7de4b4be70b9f9ebb60bca509184e935ba",
+    "frontend/src/test-setup.js": "9daf122cc2e4770234094dee3be6d065f84c330620358466cd03ecaa076a7123",
+    "frontend/src/workflow.test.jsx": "f36e75d6eda4e7d18f764fd546d60696b62e4abe2a617c2ad0ae310ffe851bb0",
+    "pyproject.toml": "abf3c0ce6b6e76dd16d0a21a65c6bc91e7625b3b1b003bd2041356ed6c2375f8",
+    "scripts/audit_b_corpus.py": "34ced2e7c38c826ce666fd141e52e81c20c748d1306f4016ea0d0578a8aad230",
+    "scripts/capture_d_1019.mjs": "f1ca5e4d69d6bd56eb14a19433ee43c1507112b4b1f219c8327a0ec77d803432",
+    "scripts/capture_d_relations_mock.mjs": "1975424a614ecce04b33d36b424cf89000e3417dab6954f8b5a2dafab15919dc",
+    "scripts/capture_d_ui.mjs": "c2827248eba5ac1bc44fba35bbddb0becbfa540f9c8aa60bdf57d046d338261b",
+    "scripts/check_parsing_quality.py": "5cccb5f833fd696e9cd2570397edff61754be48e46c8d27697fd264275eb2836",
+    "scripts/check_relation_candidates.py": "cce144f40849944e565af3d4cd53070d484fc896375d2c9952efb2041b593fe9",
+    "scripts/demo_relation_review.py": "bd6dca9ed6d951b4f43f352897e8abadd0b2518f576edda7fe0eef58a8e82410",
+    "scripts/evaluate_team_pdf.py": "51d639ab837f1142ae568a44e7e58969938e6d4f1309d90df5e89a51f534a52c",
+    "scripts/generate_d_fixtures.mjs": "5f1d9028b596e0413e5d6c53d051eca4cd4bf0cffa8354626c4aa93b6c3a5a1c",
+    "scripts/render_evidence_card.py": "8042e4ec83f8900be1c1cb6e61c9b9f7025fe7ed368e88a2dd3f84a1a1b5ffbf",
+    "scripts/restore_d_fixture_checkout.mjs": "b7c6672674a48169921685e5bf60e16aff203fd1fa15a5d57f342469da6078a1",
+    "scripts/search_tools.py": "51ea57d4f4be2aa9e8d5253d3daf7ed847c3006289dd25fab5b3ac0455df3887",
+    "scripts/seed_demo_data.py": "4434731992d86d48a6e87017e0a6206092edab65f9d6f4ad9d82b8eb0104b8f1",
+    "scripts/start.py": "27770fd3dba0c8360ebc30f0844f6077a6436c2a6bd3208574d7fd819fb1ac27",
+    "scripts/sweep_corpus.py": "08b2db1dd4bf4cfd9653bb4c6a181c12bd4d9b1133f49a897326eb6371f97757",
+    "scripts/test_d_integration.test.mjs": "02e9f3d60f9e6ebcdba95fb26fc596e2bd1cc81d5c1a7e4eb960efe155329311",
+    "scripts/test_d_mock.mjs": "beb92555a0b4caeabe9b971c26db9797690dcbf19d5f37522fc92a3c251c8c77",
+    "scripts/test_d_search_review.test.mjs": "29e3c6abcc99b2eda7135fd2fd73ad3e76565db922faee06b0d32a5dbe5061ce",
+    "scripts/validate_d_fixtures.mjs": "a6e9ff1ccd347b2bfd07782c2623036cdb5b046fa1fe46a709b6dc0da8912564",
+    "scripts/validate_d_gold.py": "de743ac659b10d9dc53219a16b6c4e8670bdfb37a2ea41984efe6847812897b7",
+    "scripts/verify_model_startup.py": "30660a9db494bd9fe838d5d0e91354c732445b5dcfd7b9a1f13e781d1e3cd281",
+    "scripts/verify_page_attribution.py": "d6136e7c86801788e9f7c3f2fd45e0d3aac9d3b4b37f571059de0cf154eeb9af",
+    "scripts/verify_page_navigation.py": "cfbf4ac3e57a46044fa445291a61469f810366844ced4c9de6e915ba4cdf45cc",
+    "scripts/verify_search_http.py": "3c430c3eda513bb5131a9a698b507fd52f75aec32a4b698be20a0121969db13e",
+    "scripts/verify_search_local.py": "21d1e26fd772e307effd376e7956a4ad040d674cea975de08c9eb4910ce66512",
+    "scripts/verify_startup_browser.mjs": "07e1dba0d47859e3e17379c2e0d127e6cfe850190b80ec7449b500225b75bd96",
+    "scripts/verify_team_search_runtime.py": "06e28b6eb1717e9c741eabe6ee2d5b1cd9b6c200c9b00b56b0ce5a87d4cf5b93",
+    "scripts/verify_w7.py": "05336ba55748f855f5db991cbe35889f057fa19030a9e695849f288ecb986ff5",
+    "scripts/verify_w7_browser.mjs": "28f4cc31e9ef2c5bd6ddabaed8090041a34287e76e0f07c3c8fb7424e0af3d8e",
+    "scripts/w7_evidence_probe.py": "97d1799c93ad37e020798a2b9af5bdd57da170822bd2d4489a74cd9da58674ba",
+    "services/__init__.py": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+    "services/ai/__init__.py": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+    "services/ai/app/__init__.py": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+    "services/ai/app/main.py": "889b22fffe79bf797f4abcd35d5c58ff8fbce110ec6e744c9f75c89e698ed579",
+    "services/api/__init__.py": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+    "services/api/app/__init__.py": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+    "services/api/app/errors.py": "29174660ddf5224b10bfa850c483a68adff4c85ba902bda045cfb7fcb9897020",
+    "services/api/app/local_access.py": "80a3927ecfc9e4bac3991ab43d08ed13314585de46f0c14bd2cc765e7486415f",
+    "services/api/app/main.py": "2cfc11fef116575c06567bfbb8f8c676783dd506ea274e59a89e0ddb038f723f",
+    "services/api/app/parsing_routes.py": "eebfd08ee6dfedb463b693cefeddcbcaf47d950209681c12bb708ddb53d4760e",
+    "services/api/app/setup_routes.py": "f0ad21b2f124db2c1a94d2190c7190b531c74939ac2c99898e955eb7c6f28a8d",
+    "services/common/__init__.py": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+    "services/common/config.py": "98975e89f6deb3675dbb9618d1eaeb9a8c841f52c68080f5116eb1904c11665b",
+    "services/common/db.py": "809eeb38bb9f39c647f30d92a73647a7c26f9beb60b85e0137ca250eae35e77c",
+    "services/common/models.py": "1aa1c17da592f92aa27fecbc8473e0ef235dfef74e185772ce6c70b718edc012",
+    "services/common/schemas.py": "b479c490ed0b49d49b7fc11e81b2181aaed7493531577ce14a9bb62d320cc7d5",
+    "services/parsing/__init__.py": "585f31f1ab9c0ddb8edb0158d424b257ce4ae51342de06fcb83871ed83aa0dab",
+    "services/parsing/chunking.py": "fa772883e762059bbbec00fbd386598cbcd1994127f440caf69563dcaa4265c1",
+    "services/parsing/evidence.py": "24924fa27e3609311739bf58a9c31a0e6bad3a168ae869878e488692a3db0cdc",
+    "services/parsing/graph.py": "99cbc74056ccff0d1b9a1153861a588383a2cc00eb87516e97071e5fd60216cb",
+    "services/parsing/handler.py": "d0d2652bc991d47527d469c1896e32b55b877358bf420db88da98faf71e9df36",
+    "services/parsing/pdf.py": "245f58a39e09a4a9dd8bb8bbd46ca91c7d91d593fb5381787bd70ac7cd883858",
+    "services/parsing/persist.py": "45204b602b996d195a60dc9844329d42041f15a6215a907ba0f15e7de6a2eab8",
+    "services/parsing/relations.py": "fa44ffa7aa5a69e3f1c9fc042fdb8c22cf4e5af441dfb1532f9a840558634d3d",
+    "services/scan/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "services/scan/handler.py": "863641ef48a291b2b37d51baea27148facee3773db370db5c0aede1aab5891a4",
+    "services/search/__init__.py": "bda5e68032cd868115b66539032f460543adb90b1f8c73e97abb98eebba7166e",
+    "services/search/embeddings.py": "2927329a0355047af89ad185ded75486de46df251488e862d12fc7599deb6087",
+    "services/search/evaluation.py": "1bcd7a24c94acd066f54b2b62d928fa1d01c527e373a1abf5e77563b44b79b1d",
+    "services/search/evaluation_sources.py": "9f374153de4c3dce81d40839ed743f7e3a5db2dc524ea3d40c015c83ba35017d",
+    "services/search/indexing.py": "8af19c4ffb09e513787681d18f51214760a7ee7a40830f32336b134052df2b29",
+    "services/search/keyword_index.py": "b5e84683a18fd1c560d2874516342e5ad9413c62f49f39881725b41470f1e8dd",
+    "services/search/model_preparation.py": "9a581b93e2afbf0b89cbf06e29391b2c04cc64a0d97ff4041b5b00a38c1ae72b",
+    "services/search/model_startup.py": "a35590c79d53e68b7b265f6482b880f8dd8f280f26b0b40c45c50aeee1fee237",
+    "services/search/navigation_runtime.py": "17257ffb8e61d7e8f10f5fb0749c160da06d7e9e09eec4e9165754fe298c9c3a",
+    "services/search/page_metadata.py": "7b9ffbb00caaa9965bedd703c1fef1129e31b26c4516da6cbbbe28899876e2e0",
+    "services/search/page_navigation.py": "272e860fd75500dc4fc07ef602ef650f630f1d4d4192a75b2e69bbb042e2d3ae",
+    "services/search/retrieval.py": "a2388f9f9c3e19f2308bd0be70beeac21eac04b85701e608573330c9441efe79",
+    "services/search/schemas.py": "0d6deaee34c9d21783cca8213284e4dba3a489ecd65d64e10f71a3a2317138c5",
+    "services/search/startup_recovery.py": "4fab1bc59131c289c69dcea3df4b1da06c4c2891ed608e78ff18150aa617b8d0",
+    "services/search/text.py": "4fc557814b862f9c80bd18e2b7f0537bb51d5e34a475b55f131714777a7e6da3",
+    "services/search/token_store.py": "6f70ed87f0f710476242fbd149cab1c4fed008a21026d4c5d807cd8e03d753dd",
+    "services/worker/__init__.py": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+    "services/worker/app/__init__.py": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+    "services/worker/app/main.py": "51796d344adb1749d55098999ad0def4be494d1d5727e0478a825396ac05489c",
+    "tests/conftest.py": "16b9d2918907dcfec29122ddae7f7ad304069efb249f8a26f3ac893ad652474c",
+    "tests/fixtures/parsing/corrupt.pdf": "d73aa579758adbcc253e3cb1a1898a43ed6f536fce2acec74cea80ce7384d7af",
+    "tests/fixtures/parsing/encrypted.pdf": "8545d244521f62f0705adf4d77088863e543647eef3f57877e539dc38194dda3",
+    "tests/fixtures/parsing/no_text_layer.pdf": "b5b8e14c9dc13ac9ace6a23d98685381be951a04cf9ddbe5cbe6be80b38736b6",
+    "tests/fixtures/parsing/normal.pdf": "3f9709304646802b548755c106c778d2755c82f7a470ba83ea2f62b1c43b2907",
+    "tests/fixtures/regression/group-a/doc01.pdf": "b3aecb9e83ba110c7f86294bd6c4ca9860aaec1dc335309a26eadc92b2537c23",
+    "tests/fixtures/regression/group-a/doc02.pdf": "6bece63ca8c96c3bb514df65338889c5027bee9b26ad1f9675aca195b7bf0ef2",
+    "tests/fixtures/regression/group-a/doc03.pdf": "0385f56fb99f193a4dcc18ec4466c3e539e6befdcec8ba291f528459e518ec5a",
+    "tests/fixtures/regression/group-a/doc04.pdf": "7c43a40883c7963513a508a1a86a977821916c619f74a9065d3f42c36d226acc",
+    "tests/fixtures/regression/group-a/doc05.pdf": "5729e4e231f0aa39edbb02ab3adddca9250ecaff1c17eec1b11727e87723d48b",
+    "tests/fixtures/regression/group-a/doc06.pdf": "41bb75ec0c661afcc7c3970fa60f15c811d3a009e04f50a36afe2442066d6be5",
+    "tests/fixtures/regression/group-b/doc07.pdf": "a37b9463d67f8ba068ce904feeb81e57ca89de4eea80943f1b49e50175443326",
+    "tests/fixtures/regression/group-b/doc08.pdf": "5f92782abba0cb42061b4def5f6917adbcffa4c5957c9f94a46bb27c27b6bef6",
+    "tests/fixtures/regression/group-b/doc09.pdf": "352ddffe379b3a67beef1571dd823290ee42959ff5e95a50650ab801ebda16f4",
+    "tests/fixtures/regression/group-b/doc10.pdf": "f2ee630cf53812bdc30c44ef7f5a94dcba2195f12b36c2c676300737a7e4774d",
+    "tests/fixtures/regression/group-b/doc11.pdf": "8285e7cf6340aec416e80036fd2973c71fa778957820c0b1065a4a087dce1c48",
+    "tests/fixtures/regression/group-b/doc12.pdf": "0baf086c0742ce6267fdd1423bcd0fd090bebf52c094a0ece8bf75e8dd14c3ce",
+    "tests/fixtures/regression/unsupported.txt": "629df33d8ae5c0fbc9a0b1619b5fac533ca4b98dd0de104539d2c0076903e4ec",
+    "tests/fixtures/relations/entities.pdf": "a85ca2411a90c6c84055704898138eafc5d3da8a12b1b27f2a82381c2fa637ec",
+    "tests/integration/test_api_case_flow.py": "dbae49f6426885229702b71e196841df231f6d3cef296279f71dc5b508f2f001",
+    "tests/integration/test_api_integration.py": "5768afd79c7a53c09d72e3c2e4a1617926c9ba2fefa7c18de12138e2fce1017f",
+    "tests/integration/test_api_queue_postgres.py": "2fb94bb6cd31ede08551f53275906c3ad0f2ac9f15eb8fc62b7fcef547e5b090",
+    "tests/integration/test_api_w7_routes.py": "e62fb80c1da4e6cd778e238c7f1b73d20f9bb0845333de70067f2af079324b4a",
+    "tests/integration/test_b_pipeline.py": "ad00db69280c6ac1c2cb94e21cdb3e5273f7d4963de824cfc87a8bc631e0958b",
+    "tests/integration/test_extraction_regression.py": "480665937165cfe9fac1d224c396638ed9316b522f2e50937d0358c29925fdce",
+    "tests/integration/test_local_api_access.py": "11f1f5c9a3572912df4a5e1c0817833c6c93d2b9c9c974b8cfcc542f1e46a70f",
+    "tests/integration/test_page_navigation_regression.py": "4238c8795288b26c391685cf3d58af16ddc6fce455f8493957fb6c0585499489",
+    "tests/integration/test_parsing_api.py": "c47b54441c636d511bbb91776df4fb43bb68ee3c3b7c0ee6a88642e140d442e3",
+    "tests/integration/test_scan_recovery.py": "8ef7b11f6a402deeef8e707b273754b521747463ee6629ecf2e59b9f4e5bda70",
+    "tests/integration/test_search_api.py": "9ffc457e4231b3c06552dea3df9c47ce41329496745ee608fee0afd6acc3cc4e",
+    "tests/integration/test_search_postgres.py": "6dd8d90fdcac28366881356f21cf434adba4fb98ec97c5fa9776b1d49c22cebc",
+    "tests/integration/test_search_sidecar_migration.py": "7c161c0621e1421e6f2f035fcf832358e843b11fc7f805742986fec0e9c4c819",
+    "tests/integration/test_startup_recovery_postgres.py": "fac2d75e0842c85f3b95665519c5eaa1d0ed6c678cfa86ab8e1407ae22e2bf8e",
+    "tests/integration/test_team_pdf_evaluation.py": "d10f0da553761510a315502931cb194c2664902f8d81de64e2aba9cb28cc4a33",
+    "tests/smoke/test_smoke_cases.py": "7249c1aa9dd0178873cb3e0f68f4e4d7198eb9603d16456966d5a656b9065b89",
+    "tests/support/__init__.py": "dc61ff2454a90145abe6ff4fffbe5ae9f7f067efceb6dc5a3d4bdd5ca7238edc",
+    "tests/support/search.py": "864cf25492fd269467eda15621b2c3e09c75e846a08368f2a0927ab10c814efd",
+    "tests/unit/test_ai_embeddings_endpoint.py": "2d392382753a67322ab45ae39c77ad12bb1165d659db8577b48af44e4b5bcc1e",
+    "tests/unit/test_ai_service.py": "d8f5bd63b8758b6f1535356cd44887e1301527bf84226ec2603dd66c41a5d0c2",
+    "tests/unit/test_check_parsing_quality.py": "b558d392b6855ebb322bdee740eb921e599e15a1a55c2b84e0c240098efa8a07",
+    "tests/unit/test_evaluation_git_state.py": "368b7bcb69af815a7fd67267247d7ad0eb50968c734d8b5cc6534dd4da8ee6c8",
+    "tests/unit/test_model_preparation_startup.py": "cb10f1971593bdf739cd6cd3efd0a48014350ad3e4a3d9e015a2112ebb16b7bd",
+    "tests/unit/test_model_startup.py": "f5efeb5a38bcad467520b1d32aa52936975c29f7299f1ac16904c35dd9a0a13c",
+    "tests/unit/test_parsing_chunking.py": "9f7104a227e512fce276d9f47727783b47ec4a697b2f5ee1da660b00cb24b380",
+    "tests/unit/test_parsing_evidence.py": "220e948a9c5133e008b9ff09d3abfd32aa3c645a23b3704eeb533869ea00729e",
+    "tests/unit/test_parsing_exports.py": "cc1d01deb84239f073a96066bfa32cf55bae5971dcf5c85e18070554128ff416",
+    "tests/unit/test_parsing_graph.py": "f9e284d7ee300a44bf544501a79139b08148c369484b46d992d2a6297cc285d6",
+    "tests/unit/test_parsing_handler.py": "0215ebccc356a227aac34763999b43bf4abc57b7f1ee5e381eb4d4ff6a068fe6",
+    "tests/unit/test_parsing_pdf.py": "1fbdb8c94126fab7a586ddce2f3a61390b12f91d6d118f334f1500a933dd9941",
+    "tests/unit/test_parsing_persist.py": "e788da93a964797eacba2bce2534b539f84ec1173d61759d1452857aa1b88732",
+    "tests/unit/test_parsing_relations.py": "c90421caee104deff86f9a1613b62f541bf2cb267441b720440b7602f485f298",
+    "tests/unit/test_pytest_entrypoint.py": "375abc50df2fd9e23b640195af839e7f00806b8c6fbe0c887a1fdfbccb279218",
+    "tests/unit/test_relation_candidate_counts.py": "ee652e174169a00db085af014a2d8b93370b77b459f21a8ac76ba5ead77daca2",
+    "tests/unit/test_render_evidence_card.py": "42ae8c5a042960d9fd322401064bdc11d22ae195bf5b85c61869ecb17d6411f2",
+    "tests/unit/test_scan_handler.py": "4c2c06e57d580bd65da8c180c2f1a54110990d0decf589d821e5796711d827ec",
+    "tests/unit/test_search_degradation.py": "cf784d5fbe5c8c1c3849da2e0df5b141cf056714b3c850f32b59ecd29295c00e",
+    "tests/unit/test_search_embeddings.py": "dfc5f3d77a2f2dc192dd2c56eb9a6f00caa50cde9ad773c2ab905b14fc8985e6",
+    "tests/unit/test_search_evaluation.py": "6334535bf8ddacc2f36bc0890e9eb70276b73d154b135cfb3e4f76de7435ec2b",
+    "tests/unit/test_search_model_preparation.py": "6f027c123737c877164ec70a328cd9f8f2aa1d151178ea690ce958f834319b20",
+    "tests/unit/test_search_navigation_retrieval.py": "b45b0292eedcaf9c9d081ef14ca49d1980d4e0a62a465af097a078c3d93ba3bb",
+    "tests/unit/test_search_page_metadata.py": "d35401950e76e474285cfc4281484f78417bff09221d70ea09ba5ab7ae0c1b07",
+    "tests/unit/test_search_page_metadata_cli.py": "caf37229018363081289b940e48cd49a5e3e15123d80fb52dc62ccafc37488ae",
+    "tests/unit/test_search_page_navigation.py": "1a4834bcdf2da7ead1d702d260d674238f8626492d35c3b9586f363e8f02cfd7",
+    "tests/unit/test_search_token_store.py": "c9b6c10c9077b9eadac3f1c96f022008164c0c34135e0a6a53fed633488571eb",
+    "tests/unit/test_search_tools_evaluation.py": "e5f347886069444782896343bf6c3159cfab70c2aa024298c90e9d94ed723e1d",
+    "tests/unit/test_setup_routes.py": "6610d06cd6a8ac7ecc26c7327e65918fc044ad06ddd00c21d90383edc12914ee",
+    "tests/unit/test_startup_launcher.py": "e63db744329b1f7f19ec23bd4f5c51afd0c017820f76cb3c7e881499dca8811f",
+    "tests/unit/test_startup_recovery.py": "df3166d342c12ddca8751bddf943ca71333c288a3fdb92ac263e176dc353513b",
+    "tests/unit/test_verify_page_attribution.py": "56add1fbe20e3ee1bd8c4b239ad52d6112f8a48f973f8843de92207154d4b42b",
+    "tests/unit/test_verify_w7.py": "f5c0c8cdee15489c1926fbae5b253d2f440bab18be1b9dfc107d799da33ea1df",
+    "tests/unit/test_worker_dispatch.py": "3cfb9e09419094deffeef3f927574df76774bab8b47fd2994edc5d7ed9d0527b",
+    "tests/unit/test_worker_startup_readiness.py": "8da1e7352dbb8c2099fe65b0475c8257bcd7750d32161a5d35bcc1547f6774e8"
+  },
+  "source_manifest_sha256": "2f1b5e98fe548029f0c035e3eeeae9cda10a37b2d88b1dadb66522acb36c1ba9",
+  "api_image_source_match": {
+    "checked_files": 156,
+    "passed": true
+  },
+  "ai_runtime_source_match": {
+    "checked_files": 8,
+    "passed": true,
+    "note": "AI stayed on its verified image while verifier-only script changes rebuilt API/Worker; exact AI/common sources match."
+  },
+  "frozen_inputs": {
+    "submissions/week07/gold-queries.json": {
+      "sha256": "d1d7b7daf285ed8ad596546dc1cacb28bca7b23cd26edc748e7636e1a23db053",
+      "unchanged_from_baseline": true
+    },
+    "submissions/week07/gold-queries.freeze.json": {
+      "sha256": "2a1ca7744c3176cb9e4df69adaf2f13d087f3fe88d73cb71604a82a3fe88114d",
+      "unchanged_from_baseline": true
+    },
+    "fixtures/manifest.json": {
+      "sha256": "3ad53b3f8ccdc7ac6b84457fcedf9a735fe0ddf7ceb8004eb97b46ab17e3280f",
+      "unchanged_from_baseline": true
+    }
+  },
+  "database_version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+  "pgvector_version": "0.8.7",
+  "model": {
+    "id": "perplexity-ai/pplx-embed-v2-late-0.6b",
+    "revision": "7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+    "token_dimensions": 128,
+    "new_download_this_run": false
+  },
+  "runtime_health": {
+    "api_ready": {
+      "status": 200
+    },
+    "ai_ready": {
+      "status": 200
+    },
+    "ui": {
+      "status": 200
+    },
+    "setup": {
+      "status": 200,
+      "body": {
+        "state": "ready",
+        "ready": true,
+        "stage_progress": 100.0,
+        "progress": 100.0,
+        "downloaded_bytes": 2397842839,
+        "total_bytes": 2397842839,
+        "completed_files": 14,
+        "total_files": 14,
+        "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+        "message": "Local AI is ready. Model integrity and warm-up checks passed.",
+        "error_code": null,
+        "retryable": false,
+        "updated_at": "2026-10-31T03:22:58.736703Z"
+      }
+    }
+  },
+  "verification": {
+    "backend_passed": 744,
+    "backend_skipped": 0,
+    "vitest_passed": 56,
+    "node_passed": 56,
+    "http_checks_passed": 202,
+    "safety_page_checks_passed": 102
+  }
+}
