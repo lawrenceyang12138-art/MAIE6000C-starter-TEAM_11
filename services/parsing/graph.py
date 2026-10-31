@@ -68,6 +68,7 @@ class RelationshipView:
     """One candidate relation, ready to display next to its evidence."""
 
     relationship_id: str
+    entity_id: str
     entity_type: str
     label: str
     relation_type: str
@@ -199,6 +200,7 @@ def read_relationships(
         views.append(
             RelationshipView(
                 relationship_id=relationship.id,
+                entity_id=entity.id,
                 entity_type=entity.entity_type,
                 label=entity.display_label,
                 relation_type=relationship.relation_type,

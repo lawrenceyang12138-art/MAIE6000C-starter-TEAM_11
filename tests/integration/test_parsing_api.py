@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 
 from services.common.models import (
     AuthorizedRoot,
-    Entity,
     FileRecord,
     FileVersion,
     Review,
@@ -277,10 +276,12 @@ def test_confirm_correct_and_reject_are_appended_to_review_history(
     persist_relations(db_session, version_id, candidate_relations(chunks))
 
     relations = client.get(f"/versions/{version_id}/relations").json()[:3]
-    replacement = db_session.execute(
-        select(Entity).where(Entity.display_label != relations[1]["label"])
-    ).scalars().first()
-    assert replacement is not None
+    # Every target is discoverable through HTTP; a reviewer does not need
+    # database access to find the UUID of an existing correction candidate.
+    replacement = next(
+        candidate for candidate in relations
+        if candidate["entity_id"] != relations[1]["entity_id"]
+    )
 
     payloads = [
         {"decision": "confirmed", "expected_revision": 0, "actor": "reviewer-a"},
@@ -289,7 +290,7 @@ def test_confirm_correct_and_reject_are_appended_to_review_history(
             "expected_revision": 0,
             "actor": "reviewer-a",
             "reason": "wrong entity",
-            "corrected_entity_id": replacement.id,
+            "corrected_entity_id": replacement["entity_id"],
         },
         {
             "decision": "rejected",
@@ -311,6 +312,9 @@ def test_confirm_correct_and_reject_are_appended_to_review_history(
         select(Review).order_by(Review.created_at, Review.decision_revision)
     ).scalars().all()
     assert {row.decision for row in history} == {"confirmed", "corrected", "rejected"}
+    updated = client.get(f"/versions/{version_id}/relations").json()
+    corrected = next(row for row in updated if row["decision"] == "corrected")
+    assert corrected["corrected_entity_id"] == replacement["entity_id"]
 
 
 def test_relation_read_and_review_refuse_a_modified_source(

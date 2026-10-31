@@ -78,6 +78,9 @@ def test_relations_are_read_back_with_their_evidence(
 
     assert views, "no relations were read back"
     for view in views:
+        entity = db_session.get(Entity, view.entity_id)
+        assert entity is not None
+        assert (entity.display_label, entity.entity_type) == (view.label, view.entity_type)
         assert view.quote, "a relation was served without its evidence"
         assert view.page_number is not None
         assert getattr(view, "chunk_id", None), "relation lacks its direct evidence chunk"
