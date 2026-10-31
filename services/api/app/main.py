@@ -47,6 +47,7 @@ from services.common.schemas import (
     SearchResponse,
 )
 from services.api.app.errors import reason
+from services.api.app.local_access import LocalAccessMiddleware
 from services.api.app.parsing_routes import router as parsing_router
 from services.api.app.setup_routes import router as setup_router
 from services.scan.handler import PathEscapesRoot, contained_path
@@ -57,6 +58,7 @@ configure_logging()
 logger = logging.getLogger("services.api.main")
 
 app = FastAPI(title="MAIE 6000C Starter API", version="0.1.0")
+app.add_middleware(LocalAccessMiddleware)
 app.include_router(parsing_router)
 app.include_router(setup_router)
 

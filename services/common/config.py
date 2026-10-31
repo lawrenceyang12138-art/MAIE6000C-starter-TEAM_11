@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     # rejected. Spec: week04 docs/architecture.md "Folder access and local
     # deployment boundary" (adding a mount requires config change + restart).
     source_mounts: dict[str, str] = {"corpus": "/source/corpus"}
+    api_allowed_hosts: list[str] = ["localhost", "127.0.0.1", "::1", "api"]
+    api_allowed_origins: list[str] = [
+        "http://localhost:3000", "http://127.0.0.1:3000",
+        "http://localhost:5173", "http://127.0.0.1:5173",
+    ]
     embedding_enabled: bool = True
     embedding_model: Literal[MODEL_ID] = MODEL_ID
     embedding_dimensions: Literal[TOKEN_DIMENSIONS] = TOKEN_DIMENSIONS

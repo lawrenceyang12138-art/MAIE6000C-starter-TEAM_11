@@ -46,6 +46,9 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/maie6000c
       AI_SERVICE_URL: http://ai:8100
+      # nginx preserves Host but removes its port; allow the browser's actual
+      # frontend origin explicitly, including a customized local port.
+      API_ALLOWED_ORIGINS: '["http://localhost:${FRONTEND_HOST_PORT:-3000}","http://127.0.0.1:${FRONTEND_HOST_PORT:-3000}","http://localhost:5173","http://127.0.0.1:5173"]'
     ports:
       - "127.0.0.1:${API_HOST_PORT:-8000}:8000"
     volumes:
