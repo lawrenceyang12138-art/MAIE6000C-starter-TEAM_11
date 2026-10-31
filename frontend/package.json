@@ -12,6 +12,7 @@
     "test:integration": "node --test ../scripts/test_d_integration.test.mjs ../scripts/test_d_search_review.test.mjs",
     "test:browser:contract": "node ../scripts/capture_d_1019.mjs",
     "test:browser:mock": "node ../scripts/capture_d_relations_mock.mjs",
+    "test:browser:live": "node ../scripts/verify_w7_browser.mjs",
     "gold:check": "python ../scripts/validate_d_gold.py",
     "fixtures:check": "node ../scripts/validate_d_fixtures.mjs"
   },
