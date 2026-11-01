@@ -17,6 +17,7 @@ import { RelationsPage } from "./relations-page.jsx";
 import { RescanControl } from "./rescan-control.jsx";
 import { RetryJobControl } from "./retry-job-control.jsx";
 import { SetupProgress } from "./setup-progress.jsx";
+import { LocalFolderAuthorization, hasUncertainScan, clearUncertainScan } from "./local-folder-authorization.jsx";
 
 const adapter = createAdapter();
 
@@ -244,9 +245,13 @@ function SelectPage() {
       <PageHeading
         eyebrow="DIRECTORIES & JOBS"
         title="Choose a local scope"
-        description="Authorize a configured read-only mount, then queue its scan."
+        description="Choose a folder on your computer and authorize read-only access."
         action={<StatusBadge status="completed" label={adapter.mode === "mock" ? "Demo environment" : "API mode"} />}
       />
+      {adapter.mode === "api" && <LocalFolderAuthorization adapter={adapter} onAccepted={(response) => navigate("/scan/" + response.job_id)} onOpenResults={(rootId) => navigate("/results/" + rootId)} />}
+      {adapter.mode === "mock" && <div className="notice notice-info" role="status">Local folder access is simulated in demo mode. Use the example directories below; no Windows folder dialog or disk access is performed.</div>}
+      <details className="configured-directories" open={adapter.mode === "mock" ? true : undefined}>
+      <summary>Example/configured directories</summary>
       <ErrorNotice error={error} />
       {error && <button className="secondary-button" onClick={() => setReload((value) => value + 1)}>Retry directory reads</button>}
       {!loading && !error && mounts.length === 0 && <div className="notice notice-info" role="status">No configured read-only mounts. Ask the service owner to configure an authorized source.</div>}
@@ -288,6 +293,7 @@ function SelectPage() {
         <div><span className="safeguard-mark">↻</span><span><strong>Server-owned progress</strong><small>Job state is read, never mutated</small></span></div>
         <div><span className="safeguard-mark">⌂</span><span><strong>Originals untouched</strong><small>Read-only source access</small></span></div>
       </div>
+      </details>
     </>
   );
 }
@@ -500,6 +506,7 @@ function Inspector({ data }) {
 }
 
 function ResultsPage({ rootId, onInspector }) {
+  const recoveringScan = hasUncertainScan(rootId);
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedKey, setSelectedKey] = useState(null);
@@ -624,7 +631,8 @@ function ResultsPage({ rootId, onInspector }) {
   return (
     <>
       <PageHeading eyebrow="SEARCH & DISCOVER" title="Find in your files" description={rootId + " · Current versions with traceable source evidence"} action={<button className="secondary-button" disabled={loading} onClick={() => setReload((value) => value + 1)}>Refresh current versions</button>} />
-      <RescanControl key={rootId} adapter={adapter} rootId={rootId} onAccepted={(accepted) => navigate("/scan/" + accepted.job_id)} />
+      {recoveringScan && <div className="notice notice-info" role="status"><div><strong>Folder authorization exists. Scan acceptance is unconfirmed.</strong><span>These are the current indexed files. Indexing may still be preparing; refresh to check for new content. A rescan below starts a new request.</span></div></div>}
+      <RescanControl key={rootId} adapter={adapter} rootId={rootId} onAccepted={(accepted) => { clearUncertainScan(rootId); navigate("/scan/" + accepted.job_id); }} />
       <form className="search-form" onSubmit={submitSearch} aria-label="Search authorized content">
         <div className="search-field spotlight-field"><span className="search-glyph" aria-hidden="true">⌕</span><input ref={searchInput} value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search keywords or describe what you need…" aria-label="Search query" maxLength={500} required /><kbd>Ctrl K</kbd></div>
         <label className="search-mode">Mode<select aria-label="Search mode" value={searchMode} onChange={(event) => setSearchMode(event.target.value)}><option value="keyword">Keyword</option><option value="hybrid">Hybrid</option><option value="semantic">Semantic</option></select></label>
@@ -657,7 +665,7 @@ function ResultsPage({ rootId, onInspector }) {
       </div>
       <section className="results-panel glass-card">
         <div className="results-header"><div><h2>{search.response ? "Search results" : "Files"}</h2><p>Matched passages and processing state</p></div><span className="results-count">{search.status === "loading" || (search.status === "idle" && loading) ? "Loading" : filteredFiles.length + " of " + (search.response?.total ?? files.length)}</span></div>
-        {search.status === "loading" || (search.status === "idle" && loading) ? <div className="results-loading" role="status"><span className="loading-bar" /><span>{search.status === "loading" ? "Searching authorized content…" : "Loading current file versions…"}</span></div> : search.status === "error" || (search.status === "idle" && error) ? <div className="empty-state"><FolderOpen size={30} /><h3>Results unavailable</h3><p>Check the request error above and retry.</p></div> : search.status === "idle" && files.length === 0 ? <div className="empty-state"><FolderOpen size={30} /><h3>No indexed files yet</h3><p>Authorize a configured directory and complete a scan to populate this workspace.</p><ActionButton className="secondary-button" onClick={() => navigate("/select")}>Authorize local directory</ActionButton></div> : filteredFiles.length === 0 ? <div className="empty-state"><h3>No matches found</h3><p>{search.status === "success" ? "The service returned no matches for this query and mode." : "Try a broader phrase or clear the current filters."}</p><button className="text-button" onClick={clearSearch}>Clear search and filters</button></div> : (
+        {search.status === "loading" || (search.status === "idle" && loading) ? <div className="results-loading" role="status"><span className="loading-bar" /><span>{search.status === "loading" ? "Searching authorized content…" : "Loading current file versions…"}</span></div> : search.status === "error" || (search.status === "idle" && error) ? <div className="empty-state"><FolderOpen size={30} /><h3>Results unavailable</h3><p>Check the request error above and retry.</p></div> : search.status === "idle" && files.length === 0 ? <div className="empty-state"><FolderOpen size={30} /><h3>No indexed files yet</h3><p>{recoveringScan ? "Indexing may still be preparing. Refresh current versions to check for content." : "Choose and authorize a local folder, then complete a scan to populate this workspace."}</p>{!recoveringScan && <ActionButton className="secondary-button" onClick={() => navigate("/select")}>Authorize local directory</ActionButton>}</div> : filteredFiles.length === 0 ? <div className="empty-state"><h3>No matches found</h3><p>{search.status === "success" ? "The service returned no matches for this query and mode." : "Try a broader phrase or clear the current filters."}</p><button className="text-button" onClick={clearSearch}>Clear search and filters</button></div> : (
           <div className="file-list">
             {filteredFiles.map((file, index) => {
               const key = fileKey(file);

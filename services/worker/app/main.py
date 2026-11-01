@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import signal
 import time
 
 import httpx
@@ -422,7 +423,17 @@ def process_job(job_id: int) -> None:
         raise RuntimeError(f"no handler for job type {job_type!r}")
 
 
-def run_worker() -> None:
+class DrainRequest:
+    """A signal only requests exit; committed claims must still finish."""
+
+    requested = False
+
+    def request(self, signum=None, frame=None) -> None:
+        self.requested = True
+
+
+def run_worker(*, drain: DrainRequest | None = None) -> None:
+    drain = drain or DrainRequest()
     session_factory = get_session_factory()
     logger.info(
         "worker_started",
@@ -435,7 +446,7 @@ def run_worker() -> None:
     next_recovery_check = 0.0
     was_model_ready = False
     recovery_until = 0.0
-    while True:
+    while not drain.requested:
         job = None
         try:
             now = time.monotonic()
@@ -450,11 +461,16 @@ def run_worker() -> None:
                     recovery_until = now + 60
                 was_model_ready = ready
                 next_recovery_check = now + 5
+            if drain.requested:
+                break
             with session_factory() as db:
                 job = claim_next_pending_job(db)
 
+            # A request arriving inside claim must not strand its committed
+            # claimed row. Process that job before checking the flag again.
             if job is None:
-                time.sleep(settings.worker_poll_seconds)
+                if not drain.requested:
+                    time.sleep(settings.worker_poll_seconds)
                 continue
 
             logger.info("job_claimed", extra={"job_id": job.id, "case_id": job.case_id})
@@ -468,8 +484,14 @@ def run_worker() -> None:
             logger.exception("job_processing_failed")
             if job is not None:
                 mark_job_failed(job.id, str(exc))
-            time.sleep(settings.worker_poll_seconds)
+            if not drain.requested:
+                time.sleep(settings.worker_poll_seconds)
+
+    logger.info("worker_drained")
 
 
 if __name__ == "__main__":
-    run_worker()
+    drain = DrainRequest()
+    if hasattr(signal, "SIGUSR1"):
+        signal.signal(signal.SIGUSR1, drain.request)
+    run_worker(drain=drain)

@@ -85,6 +85,7 @@ async function settled(accepted) {
 }
 async function authorize(mount, directory) {
   await page.goto(ui("/select"));
+  await page.getByText("Example/configured directories", { exact: true }).click();
   await page.getByLabel("Read-only mount", { exact: true }).selectOption(mount);
   await page.getByLabel("Configured directory", { exact: true }).selectOption(directory);
   const [response] = await Promise.all([

@@ -1,7 +1,7 @@
 # Team 11 File Trace frontend
 
 The React/Vite frontend uses the real local API by default. Its W7 workflow is:
-choose an allowlisted read-only directory, authorize and scan, inspect persisted
+choose a Windows local folder, authorize read-only access and scan, inspect persisted
 file progress, search current PDF text, open the matched source passage, and
 confirm/correct/reject evidence-backed relation candidates. It never switches
 to mock data after an API failure.
@@ -23,6 +23,12 @@ keyword search. Model readiness does not imply every document already has vector
 Nginx serves the production build and proxies `/api` to the API service. Direct
 refreshes on `/select`, `/scan/:jobId`, `/results/:rootId`, `/graph` and `/review`
 resolve to the SPA. `/health` checks static serving only.
+
+The main folder entry opens the Windows system dialog through the host component
+started by the launcher. Selection alone does not authorize access; confirmation
+prepares matching read-only mounts for API and Worker before submitting the scan.
+The existing configured directories remain in the explicit example section.
+See [local folder setup and recovery](../docs/local-folders.md).
 
 ## Run locally with Node
 
@@ -91,6 +97,12 @@ npm run gold:check
 npm test -- --run
 npm run build
 ```
+
+With a Vite API-mode frontend running, `npm run test:browser:folders` checks
+local folder selection, consent, preparation, refresh recovery and uncertain
+scan responses at phone and desktop widths. Its screenshots and report under
+`work/local-folders-browser/` are explicitly watermarked HTTP fixtures; they do
+not claim Windows native-dialog or Docker acceptance.
 
 The 31 October W7 verification passed 56 Vitest tests, 56 Node HTTP contract
 checks, mock/fixture checks and the production build. React regressions cover

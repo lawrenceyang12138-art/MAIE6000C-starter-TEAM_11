@@ -98,6 +98,15 @@ the model becomes ready, preserving keyword indexes throughout. See
 
 ### Folder flow
 
+On Windows, `scripts/start.py` also starts a loopback host component. The main
+UI opens its native folder dialog, then explicitly confirms read-only access.
+The host component persists a stable mount ID and adds only that selected
+directory to both API and Worker through a generated Compose overlay. Worker
+finishes its claimed task before reconnecting; pending jobs remain durable.
+The database, AI and frontend continue running. Once the mount is ready, the
+same `POST /roots` flow below starts scanning. The original configured-mount
+picker remains an explicit example entry. See [local folder setup and recovery](local-folders.md).
+
 1. `GET /mounts` lists the allowlisted read-only mounts; the browser picks a
    `mount_id` plus a relative path.
 2. `POST /roots` validates the path inside the mount, stores the authorized

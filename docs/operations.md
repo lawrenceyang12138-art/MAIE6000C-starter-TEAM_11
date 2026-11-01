@@ -15,7 +15,11 @@ the main path.
    See [the first-start guide](model-startup.md) for failure/retry and offline modes.
    Review `SOURCE_MOUNTS` (the allowlist the browser can choose from),
    `DATABASE_URL`, and host port overrides deliberately; do not replace `.env`.
-2. Put the corpus where `compose.yaml` mounts it. The default mount points at
+2. On Windows choose a local folder from the frontend, review its path, and
+   confirm read-only authorization. The launcher manages API/Worker mounts and
+   preserves their stable IDs across starts. See [local folder setup](local-folders.md).
+   For manually configured deployments, put the corpus where `compose.yaml` mounts it.
+   The default mount points at
    `tests/fixtures` and is **demo data only** - a real corpus is mounted from
    wherever the operator keeps it, read-only.
 3. Model preparation is automatic in the Docker startup flow. The explicit

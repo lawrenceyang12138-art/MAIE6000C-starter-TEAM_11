@@ -21,6 +21,11 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import ProxyHandler, build_opener
 
+if __package__:
+    from . import local_folders
+else:
+    import local_folders
+
 REPO = Path(__file__).resolve().parents[1]
 BUILD_INPUTS = (
     "Dockerfile", ".dockerignore", "compose.yaml", "pyproject.toml", "README.md",
@@ -111,7 +116,10 @@ def build_fingerprint(repo: Path, config: dict[str, str]) -> str:
                     digest.update(chunk)
     # These are build arguments. Ordinary runtime configuration must not force a
     # reinstall; credentials and other .env values are neither stored nor printed.
-    for key, default in (("FRONTEND_DATA_MODE", "api"), ("FRONTEND_API_BASE_URL", "/api")):
+    for key, default in (
+        ("FRONTEND_DATA_MODE", "api"), ("FRONTEND_API_BASE_URL", "/api"),
+        ("LOCAL_FOLDER_BRIDGE_PORT", "8765"),
+    ):
         digest.update(f"{key}={os.environ.get(key, config.get(key, default))}\n".encode())
     return digest.hexdigest()
 
@@ -121,7 +129,7 @@ def images_available(repo: Path) -> bool:
         # Unlike `compose images`, config image names exist even after `down`
         # removed all containers. A normal stop/start must not force a rebuild.
         images = sorted(set(run(
-            ["docker", "compose", "config", "--images"], repo, capture=True,
+            local_folders.compose_command(repo, "config", "--images"), repo, capture=True,
         ).splitlines()))
         if not images:
             return False
@@ -267,19 +275,26 @@ def main(argv: list[str] | None = None, *, repo: Path = REPO) -> int:
             )
         port = os.environ.get("API_HOST_PORT", config.get("API_HOST_PORT", "8000"))
         api_url = local_url(args.api_url or f"http://127.0.0.1:{port}")
-        fingerprint = build_fingerprint(repo, config)
-        rebuild = args.rebuild or needs_build(repo, fingerprint)
-        if rebuild:
-            print(
-                "[installing_dependencies] Building the runtime and UI. Docker installs "
-                "the pinned Python/AI and Node packages; cached layers are reused.", flush=True,
-            )
-            run(["docker", "compose", "--progress", "plain", "build"], repo)
-        else:
-            print("[installing_dependencies] Reusing installed images; build inputs are unchanged.")
-        run(["docker", "compose", "up", "-d", "--no-build"], repo)
-        if rebuild:
-            write_build_marker(repo, fingerprint)
+        # Serialize normal starts with the host bridge's mount changes. Neither
+        # process can overwrite the other's durable configuration mid-reconnect.
+        with local_folders.stack_lock(repo):
+            local_folders.prepare_sources(repo, config)
+            fingerprint = build_fingerprint(repo, config)
+            rebuild = args.rebuild or needs_build(repo, fingerprint)
+            if rebuild:
+                print(
+                    "[installing_dependencies] Building the runtime and UI. Docker installs "
+                    "the pinned Python/AI and Node packages; cached layers are reused.", flush=True,
+                )
+                run(local_folders.compose_command(repo, "--progress", "plain", "build"), repo)
+            else:
+                print("[installing_dependencies] Reusing installed images; build inputs unchanged.")
+            local_folders.quiesce_for_start(repo)
+            run(local_folders.compose_command(repo, "up", "-d", "--no-build"), repo)
+            if rebuild:
+                write_build_marker(repo, fingerprint)
+        if mode != "mock":
+            local_folders.ensure_bridge(repo, config)
         frontend_port = os.environ.get(
             "FRONTEND_HOST_PORT", config.get("FRONTEND_HOST_PORT", "3000"),
         )
@@ -291,7 +306,7 @@ def main(argv: list[str] | None = None, *, repo: Path = REPO) -> int:
             print("Services started; --no-wait does not assert model readiness. Check GET /setup.")
             return 0
         return wait_for_model(api_url, args.timeout)
-    except StartupError as exc:
+    except (StartupError, local_folders.FolderError) as exc:
         print(f"Startup failed: {exc}", file=sys.stderr)
         return 1
     except OSError:

@@ -9,6 +9,8 @@ File Management Assistant is a proposed local-first tool for people who accumula
 - [W7 implementation and acceptance](docs/w7-acceptance.md): current integration
   requirements, fixes and reproducible verification; [milestone report](submissions/week07/README.md).
 - [Detailed architecture](docs/architecture.md): workflow, service boundaries, persistence, state transitions, AI processing, failure behavior, and design evidence.
+- [Windows local folder authorization](docs/local-folders.md): system folder selection,
+  read-only access to original files, and recovery across Docker reconnects.
 - [Week 4 proposal and project plan](submissions/week04/README.md): milestone summary, scope priorities, risks, artifact index, and AI Use Statement.
 - [Starter operations notes](docs/operations.md): existing service health, metrics, and development commands. These describe the baseline, not the proposed product.
 
@@ -28,6 +30,10 @@ appears there and at [the frontend](http://127.0.0.1:3000/select). Verified weig
 and installed images are reused on later starts. Keyword search stays available
 while semantic capability is preparing or unavailable. See
 [first-start setup, retry and offline options](docs/model-startup.md).
+
+On Windows the launcher also starts the local folder component. Choose a system
+folder in the frontend, confirm read-only authorization, and scan its original
+files. Previously configured samples remain available as an explicit example.
 
 Existing `.env` choices, including explicitly simulated `mock` frontend mode,
 are preserved. No model weights or machine-wide environment are installed merely

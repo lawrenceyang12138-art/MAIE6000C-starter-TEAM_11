@@ -29,8 +29,11 @@ def docker(monkeypatch):
         return "image-sha" if capture else ""
 
     monkeypatch.setattr(start, "run", run)
+    monkeypatch.setattr(start.local_folders, "ensure_bridge", lambda repo, config: None)
+    monkeypatch.setattr(start.local_folders, "quiesce_for_start", lambda repo: None)
     for key in (
         "FRONTEND_DATA_MODE", "FRONTEND_API_BASE_URL", "API_HOST_PORT", "FRONTEND_HOST_PORT",
+        "LOCAL_FOLDER_BRIDGE_PORT",
     ):
         monkeypatch.delenv(key, raising=False)
     return calls
@@ -41,12 +44,16 @@ def test_first_start_builds_dependencies_then_starts_and_waits(launcher_repo, do
 
     def wait(url, timeout):
         observed.append((url, timeout))
-        assert docker[-1] == ["docker", "compose", "up", "-d", "--no-build"]
+        assert docker[-1] == start.local_folders.compose_command(
+            launcher_repo, "up", "-d", "--no-build",
+        )
         return 0
 
     monkeypatch.setattr(start, "wait_for_model", wait)
     assert start.main([], repo=launcher_repo) == 0
-    assert ["docker", "compose", "--progress", "plain", "build"] in docker
+    assert start.local_folders.compose_command(
+        launcher_repo, "--progress", "plain", "build",
+    ) in docker
     assert observed == [("http://127.0.0.1:8000", 1800)]
     assert start.read_env(launcher_repo / ".env")["FRONTEND_DATA_MODE"] == "api"
     assert json.loads((launcher_repo / "work/startup-build.json").read_text())["fingerprint"]
@@ -60,7 +67,9 @@ def test_restart_reuses_installed_images_but_source_changes_rebuild(launcher_rep
     (launcher_repo / "Dockerfile").write_text("FROM python:3.11-slim\nENV CHANGED=1\n")
     docker.clear()
     assert start.main(["--no-wait"], repo=launcher_repo) == 0
-    assert ["docker", "compose", "--progress", "plain", "build"] in docker
+    assert start.local_folders.compose_command(
+        launcher_repo, "--progress", "plain", "build",
+    ) in docker
 
 
 @pytest.mark.parametrize("changed_input", [
@@ -75,7 +84,7 @@ def test_changed_packaged_evaluation_input_rebuilds_cached_images(
     source.parent.mkdir(parents=True, exist_ok=True)
     source.write_text('{"revision": 1}\n', encoding="utf-8")
 
-    build = ["docker", "compose", "--progress", "plain", "build"]
+    build = start.local_folders.compose_command(launcher_repo, "--progress", "plain", "build")
     assert start.main(["--no-wait"], repo=launcher_repo) == 0
     original = start.build_fingerprint(launcher_repo, {})
     docker.clear()
@@ -89,7 +98,9 @@ def test_changed_packaged_evaluation_input_rebuilds_cached_images(
     docker.clear()
     assert start.main(["--no-wait"], repo=launcher_repo) == 0
     assert build in docker
-    assert docker.index(build) < docker.index(["docker", "compose", "up", "-d", "--no-build"])
+    assert docker.index(build) < docker.index(start.local_folders.compose_command(
+        launcher_repo, "up", "-d", "--no-build",
+    ))
     marker = launcher_repo / "work/startup-build.json"
     assert json.loads(marker.read_text(encoding="utf-8"))["fingerprint"] == updated
 
@@ -109,14 +120,18 @@ def test_new_evaluation_reports_do_not_rebuild_images(launcher_repo, docker):
     assert start.build_fingerprint(launcher_repo, {}) == original
     docker.clear()
     assert start.main(["--no-wait"], repo=launcher_repo) == 0
-    assert ["docker", "compose", "--progress", "plain", "build"] not in docker
+    assert start.local_folders.compose_command(
+        launcher_repo, "--progress", "plain", "build",
+    ) not in docker
 
 
 def test_rebuild_flag_and_missing_image_force_build(launcher_repo, docker, monkeypatch):
     start.main(["--no-wait"], repo=launcher_repo)
     docker.clear()
     assert start.main(["--no-wait", "--rebuild"], repo=launcher_repo) == 0
-    assert ["docker", "compose", "--progress", "plain", "build"] in docker
+    assert start.local_folders.compose_command(
+        launcher_repo, "--progress", "plain", "build",
+    ) in docker
     monkeypatch.setattr(start, "images_available", lambda repo: False)
     assert start.needs_build(launcher_repo, start.build_fingerprint(launcher_repo, {}))
 
@@ -126,7 +141,7 @@ def test_image_reuse_checks_image_store_not_created_containers(launcher_repo, mo
 
     def run(command, repo, *, capture=False):
         calls.append(command)
-        if command == ["docker", "compose", "config", "--images"]:
+        if command == start.local_folders.compose_command(launcher_repo, "config", "--images"):
             return "local-api\nlocal-frontend\nlocal-api"
         assert command == [
             "docker", "image", "inspect", "local-api", "local-frontend", "--format", "{{.Id}}",
@@ -252,6 +267,59 @@ def test_changed_frontend_build_mode_invalidates_image(launcher_repo, monkeypatc
     first = start.build_fingerprint(launcher_repo, {"FRONTEND_DATA_MODE": "api"})
     second = start.build_fingerprint(launcher_repo, {"FRONTEND_DATA_MODE": "mock"})
     assert first != second
+
+
+def test_bridge_port_changes_rebuild_ui_but_folder_registrations_do_not(
+    launcher_repo, docker, monkeypatch,
+):
+    first = start.build_fingerprint(launcher_repo, {})
+    monkeypatch.setenv("LOCAL_FOLDER_BRIDGE_PORT", "18765")
+    assert start.build_fingerprint(launcher_repo, {}) != first
+    monkeypatch.delenv("LOCAL_FOLDER_BRIDGE_PORT")
+    assert start.main(["--no-wait"], repo=launcher_repo) == 0
+    source = launcher_repo / "Personal documents"
+    source.mkdir()
+    registry = launcher_repo / "work/local-folders/registry.json"
+    registry.write_text(json.dumps({"mounts": {
+        "local-test": {"path": str(source), "folder_name": source.name},
+    }}), encoding="utf-8")
+    docker.clear()
+    assert start.main(["--no-wait"], repo=launcher_repo) == 0
+    assert not any("build" in command for command in docker)
+    overlay = json.loads((registry.parent / "compose.sources.json").read_text())
+    assert overlay["services"]["api"]["volumes"][0]["read_only"] is True
+    assert overlay["services"]["api"] == overlay["services"]["worker"]
+
+
+def test_no_wait_starts_bridge_after_stack_and_mock_never_starts_bridge(
+    launcher_repo, docker, monkeypatch,
+):
+    bridge_calls = []
+
+    def bridge(repo, config):
+        assert docker[-1] == start.local_folders.compose_command(
+            repo, "up", "-d", "--no-build",
+        )
+        bridge_calls.append(repo)
+
+    monkeypatch.setattr(start.local_folders, "ensure_bridge", bridge)
+    assert start.main(["--no-wait"], repo=launcher_repo) == 0
+    assert bridge_calls == [launcher_repo]
+    monkeypatch.setenv("FRONTEND_DATA_MODE", "mock")
+    assert start.main(["--no-wait"], repo=launcher_repo) == 0
+    assert bridge_calls == [launcher_repo]
+
+
+def test_local_component_failure_is_reported_without_discarding_images(
+    launcher_repo, docker, monkeypatch, capsys,
+):
+    def fail(repo, config):
+        raise start.local_folders.FolderError("local_folder_port_in_use")
+
+    monkeypatch.setattr(start.local_folders, "ensure_bridge", fail)
+    assert start.main(["--no-wait"], repo=launcher_repo) == 1
+    assert "local_folder_port_in_use" in capsys.readouterr().err
+    assert (launcher_repo / "work/startup-build.json").exists()
 
 
 def test_marker_publication_is_atomic_and_failed_replace_preserves_old_marker(

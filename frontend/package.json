@@ -13,6 +13,7 @@
     "test:browser:contract": "node ../scripts/capture_d_1019.mjs",
     "test:browser:mock": "node ../scripts/capture_d_relations_mock.mjs",
     "test:browser:live": "node ../scripts/verify_w7_browser.mjs",
+    "test:browser:folders": "node ../scripts/verify_local_folder_browser.mjs",
     "gold:check": "python ../scripts/validate_d_gold.py",
     "fixtures:check": "node ../scripts/validate_d_fixtures.mjs"
   },

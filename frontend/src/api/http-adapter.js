@@ -130,6 +130,9 @@ export function createApiAdapter({ baseUrl = "/api", fetchImpl = globalThis.fetc
       // Missing counters stay unknown; do not substitute scan-job counters or zeros.
       return root;
     },
+    async listRoots({ signal } = {}) {
+      return array(await request("/roots", { signal }), (item) => isId(item?.root_id) && isId(item.mount_id) && isRelativePath(item.relative_path) && isId(item.status));
+    },
     async listFiles(rootId) {
       const files = array(await request(`/files?root_id=${encodeURIComponent(rootId)}`), (item) =>
         isId(item?.file_id) && (item.version_id == null || isId(item.version_id)) && isId(item.display_name) &&
