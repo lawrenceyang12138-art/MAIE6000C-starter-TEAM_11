@@ -154,7 +154,9 @@ def test_windows_folder_dialog_uses_the_shell_picker(monkeypatch):
     assert folders.choose_folder() == r"C:\中文 folder"
 
 
-@pytest.mark.skipif(os.name != "nt", reason="Windows Shell COM interfaces are only available on Windows")
+@pytest.mark.skipif(
+    os.name != "nt", reason="Windows Shell COM interfaces are only available on Windows",
+)
 def test_windows_shell_picker_uses_visible_owner_and_returns_unicode_path(monkeypatch):
     from ctypes import wintypes
 
@@ -223,7 +225,9 @@ def test_windows_shell_picker_uses_visible_owner_and_returns_unicode_path(monkey
 
     class Ole32:
         CoInitializeEx = NativeFunction(lambda *args: 0)
-        CoCreateInstance = NativeFunction(lambda *args: setattr(args[-1]._obj, "value", dialog_address.value) or 0)
+        CoCreateInstance = NativeFunction(
+            lambda *args: setattr(args[-1]._obj, "value", dialog_address.value) or 0,
+        )
         CoTaskMemFree = NativeFunction(lambda value: events.append(("free", value.value)))
         CoUninitialize = NativeFunction(lambda: events.append(("uninitialize",)))
 
@@ -245,7 +249,9 @@ def test_windows_shell_picker_uses_visible_owner_and_returns_unicode_path(monkey
     assert ("title", "Choose a folder for FileTrace (read-only)") in events
 
 
-@pytest.mark.skipif(os.name != "nt", reason="Windows native libraries are only available on Windows")
+@pytest.mark.skipif(
+    os.name != "nt", reason="Windows native libraries are only available on Windows",
+)
 def test_windows_shell_picker_loads_real_libraries_before_com_initialization(monkeypatch):
     class StopBeforeDialog(Exception):
         pass
@@ -665,7 +671,9 @@ def test_bridge_cannot_shutdown_while_it_owns_a_background_preparation(bridge_ht
     assert not bridge_http.stopping
 
 
-@pytest.mark.skipif(os.name != "nt", reason="Windows bridge console inheritance is platform-specific")
+@pytest.mark.skipif(
+    os.name != "nt", reason="Windows bridge console inheritance is platform-specific",
+)
 def test_changed_port_retires_this_worktrees_old_helper_before_spawning(repo, monkeypatch):
     folders._write_json(folders.state_dir(repo) / "bridge.instance.json", {"port": 8764})
     events = []
