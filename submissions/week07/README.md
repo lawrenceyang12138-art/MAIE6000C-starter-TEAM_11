@@ -7,8 +7,7 @@ The W7 workflow is implemented and its **18 automated acceptance gates pass**
 across the API, Worker, parser, search and frontend. This audit fixed defects and
 tested the resulting working tree before committing it, using real PostgreSQL,
 built Linux images, the pinned local model and an independent browser. The
-verified changes were subsequently committed by topic; the repository owner
-will handle the remote push. See the
+verified changes were subsequently committed by topic. See the
 [acceptance matrix](../../docs/w7-acceptance.md) and
 [current evidence index](evidence/20261031-w7/README.md).
 Human gold review and team signatures remain separate; none are supplied here.
@@ -92,7 +91,7 @@ routes and future queue architecture are distinguished in the acceptance matrix.
 | Evidence | Scope |
 | --- | --- |
 | [Current acceptance matrix](../../docs/w7-acceptance.md) | Requirement sources, test entries and current-run results |
-| [2026-10-31 evidence](evidence/20261031-w7/README.md) | Final commands, 18-gate results, image/tree identities, real browser/API/DB/model/restart reports and preserved failure-to-fix records |
+| [2026-10-31 verification summary](evidence/20261031-w7/README.md) | Commands, 18-gate results, tested-tree identity, browser/API/DB/model/restart outcomes and failure-to-fix summary; raw reports and machine logs stay local |
 | [B pipeline and relation evidence](evidence/B/README.md) | Historical real Compose/API/Worker and direct relation/review checks |
 | [C navigation evidence](evidence/C/20261030-page-navigation/README.md) | Historical local-model SQLite/PostgreSQL evaluation and HTTP recovery |
 | [C startup evidence](evidence/C/20261030-startup/README.md) | Historical first-start verification; retain its stated limits |
@@ -104,9 +103,9 @@ routes and future queue architecture are distinguished in the acceptance matrix.
 Original integrated run's rebuilt Linux image: **744 Python tests passed, 0 skipped; Ruff clean**,
 including real PostgreSQL/pgvector and five migration tests. Frontend: **56 Vitest
 and 56 Node contract tests passed** in that snapshot, production build passed. The
-[current CI Node follow-up at `2b975a0`](evidence/20261031-w7/node-review-followup.json)
-passed **62/62 tests** (56 contracts plus 6 browser-launcher regressions;
-[output](evidence/20261031-w7/node-review-followup.tap)). Fixture and mock
+[CI Node follow-up at `2b975a0`](evidence/20261031-w7/README.md)
+passed **62/62 tests** (56 contracts plus 6 browser-launcher regressions).
+Raw output and execution metadata remain in the local archive. Fixture and mock
 adapter validation passed. Frozen source-location checks verified 10/10 locations
 and 16 file hashes; these are source checks, not a retrieval-quality result.
 
@@ -125,6 +124,11 @@ skips (symlink privilege/FIFO) both execute successfully in Linux. Historical
 `scripts/w7_evidence_probe.py` is a scan probe. Its older output only compares
 file totals/stages; use persisted IDs and DB counts to prove version/chunk/job
 idempotency rather than inferring it from unchanged UI counters.
+
+The repository retains concise acceptance summaries. Raw logs, database-response
+snapshots, screenshots and temporary scripts from these runs stay local. Reproduce
+the checks with `scripts/verify_w7.py`, `scripts/verify_w7_browser.mjs` and
+`scripts/verify_model_startup.py`, writing new raw reports under ignored `work/`.
 
 ## 7. Risks and revised scope
 

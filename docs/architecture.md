@@ -161,8 +161,8 @@ served as `running` so the client sees one vocabulary.
 
 ### Verification of the W7 implementation
 
-The [31 October evidence set](../submissions/week07/evidence/20261031-w7/)
-records real Compose HTTP/Worker/PostgreSQL workflows, browser acceptance,
+The [31 October acceptance summary](../submissions/week07/evidence/20261031-w7/README.md)
+summarizes real Compose HTTP/Worker/PostgreSQL workflows, browser acceptance,
 model readiness and degradation, source/version refusals, explicit failed-job
 retry, append-only review and restart persistence. Linux tests run from the
 rebuilt application image without a source bind mount. Symlink containment and
@@ -170,7 +170,9 @@ FIFO handling have passed there: escaped links are refused, linked directories
 are not traversed, and FIFOs are recorded without opening them. The earlier
 Windows-only inability to exercise these cases is no longer an unverified W7
 boundary. PostgreSQL migration and queue checks complement the faster SQLite
-route tests; SQLite alone does not establish PostgreSQL behavior.
+route tests; SQLite alone does not establish PostgreSQL behavior. Raw logs,
+response snapshots and machine-specific validation scripts stay local under
+ignored `work/`; reusable verification tools remain under `scripts/`.
 
 ### Known limits of this build
 

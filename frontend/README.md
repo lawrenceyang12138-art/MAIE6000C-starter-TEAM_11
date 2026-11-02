@@ -118,7 +118,7 @@ With an API-mode Vite server running:
 
 ```powershell
 $env:D_UI_URL = "http://127.0.0.1:5173"
-$env:D_UI_OUTPUT = "submissions/week07/evidence/20261031-w7/frontend-contract"
+$env:D_UI_OUTPUT = "work/w7-browser-contract"
 npm run test:browser:contract
 ```
 
@@ -128,7 +128,8 @@ job retry, and 375/768/1024/1440 viewport checks, with zero page runtime errors.
 Its screenshots carry an explicit fixture watermark. `test:browser:mock`
 requires the separate explicit `relations` mock server and performs no HTTP
 interception. `D_UI_OUTPUT` prevents either script from overwriting historical
-reports. See the W7 acceptance evidence for live-service results.
+reports. Keep generated reports under ignored `work/`; commit a concise acceptance
+summary when needed. See the W7 acceptance summary for live-service results.
 
 For the real W7 stack with the synthetic `corpus` and `relations` mounts:
 

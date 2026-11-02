@@ -11,18 +11,19 @@ closed in code and in the shared contract. Human milestone sign-off is separate.
 
 Current-run implementation and automated acceptance are **complete: 18/18 gates
 pass** in [the acceptance matrix](../../docs/w7-acceptance.md). The
-[evidence index](evidence/20261031-w7/README.md) records the tree as tested before
-committing, exact commands, source hashes, PostgreSQL/extension and image versions,
-preserved failures and subsequent repairs. Historical counts below belong to
+[acceptance summary](evidence/20261031-w7/README.md) records the tested snapshot,
+reproduction commands, results, failure findings and subsequent repairs. Raw
+source identities, logs and response snapshots remain in the local ignored
+archive. Historical counts below belong to
 their dated snapshots and are not totals for this working tree. The verified
 changes were subsequently committed by topic; the repository owner will handle
 the remote push.
 
 Original integrated Linux/Python/PostgreSQL suite: **744 passed, 0 skipped**, Ruff clean.
 Frontend in that snapshot: **56 Vitest and 56 Node tests passed**, production build passed.
-The [current CI Node follow-up at `2b975a0`](evidence/20261031-w7/node-review-followup.json)
-passed **62/62 tests** (56 contracts plus 6 browser-launcher regressions;
-[output](evidence/20261031-w7/node-review-followup.tap)). This Node check did not
+The [CI Node follow-up at `2b975a0`](evidence/20261031-w7/README.md#results)
+passed **62/62 tests** (56 contracts plus 6 browser-launcher regressions).
+Raw output stays local. This Node check did not
 rerun the original runtime/image workflow below.
 Real HTTP/DB: **202 checks/0 failures**; safety and independent physical pages:
 **102 checks/0 failures**, 30/30 chunks. Empty-database browser first import,

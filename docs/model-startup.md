@@ -147,5 +147,6 @@ downloading again, but requires network access and time. Do not delete the
 whole `models` parent, a Hugging Face-wide cache, the repository, source PDFs,
 or the database volume. Then rerun `python scripts/start.py` and record
 `GET /setup` through downloading, verifying, warming up and ready. Restart once
-more to verify local reuse. The actual execution evidence belongs in the dated
-C startup report; unit tests alone do not establish a real download/build.
+more to verify local reuse. Keep raw execution reports under ignored `work/` and
+record only the concise result in the dated C startup summary; unit tests alone
+do not establish a real download/build.

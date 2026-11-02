@@ -106,5 +106,7 @@
   "summary": {
     "passed": 22,
     "failed": 0
-  }
+  },
+  "report_kind": "historical_w7_acceptance_summary",
+  "artifact_policy": "This is a summary of the 31 October execution, not raw evidence or a new test run. Raw reports/logs remain local; reproduce with scripts/verify_w7.py and scripts/verify_w7_browser.mjs."
 }
