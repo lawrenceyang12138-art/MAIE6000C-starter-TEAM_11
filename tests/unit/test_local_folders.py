@@ -18,6 +18,13 @@ from scripts import local_folders as folders
 
 
 @pytest.fixture
+def windows_host(monkeypatch):
+    # Keep pathlib and pytest on the real host while simulating the bridge's OS.
+    monkeypatch.setattr(folders, "os", SimpleNamespace(**{**vars(os), "name": "nt"}))
+    monkeypatch.setattr(subprocess, "CREATE_NO_WINDOW", 0x08000000, raising=False)
+
+
+@pytest.fixture
 def repo(tmp_path, monkeypatch):
     monkeypatch.delenv("SOURCE_MOUNTS", raising=False)
     monkeypatch.delenv("LOCAL_FOLDER_BRIDGE_PORT", raising=False)
@@ -67,7 +74,7 @@ def test_overlay_preserves_configured_sources_and_binds_only_existing_authorized
     assert str(folders.state_dir(repo) / "compose.sources.json") in command
 
 
-def test_docker_commands_do_not_open_a_console_window_on_windows(repo, monkeypatch):
+def test_docker_commands_do_not_open_a_console_window_on_windows(repo, monkeypatch, windows_host):
     calls = []
 
     def run(command, **kwargs):
@@ -75,20 +82,18 @@ def test_docker_commands_do_not_open_a_console_window_on_windows(repo, monkeypat
         return SimpleNamespace(returncode=0, stdout="ok")
 
     monkeypatch.setattr(folders.subprocess, "run", run)
-    monkeypatch.setattr(folders.os, "name", "nt")
 
     assert folders._run(["docker", "version"], repo) == "ok"
     assert calls[0][1]["creationflags"] == subprocess.CREATE_NO_WINDOW
 
 
-def test_native_picker_reuses_the_interactive_python_session(repo, monkeypatch):
+def test_native_picker_reuses_the_interactive_python_session(repo, monkeypatch, windows_host):
     scripts = repo / "Scripts"
     scripts.mkdir()
     python = scripts / "python.exe"
     python.touch()
     (scripts / "pythonw.exe").touch()
     monkeypatch.setattr(folders.sys, "executable", str(python))
-    monkeypatch.setattr(folders.os, "name", "nt")
     calls = []
 
     def run(command, **kwargs):
@@ -148,8 +153,7 @@ def test_picker_owner_keeps_a_visible_foreground_window():
     assert folders._picker_owner(User32(), Kernel32()) == 0x1234
 
 
-def test_windows_folder_dialog_uses_the_shell_picker(monkeypatch):
-    monkeypatch.setattr(folders.os, "name", "nt")
+def test_windows_folder_dialog_uses_the_shell_picker(monkeypatch, windows_host):
     monkeypatch.setattr(folders, "_windows_shell_choose_folder", lambda: r"C:\中文 folder")
     assert folders.choose_folder() == r"C:\中文 folder"
 
@@ -273,13 +277,12 @@ def test_windows_shell_picker_loads_real_libraries_before_com_initialization(mon
         folders._windows_shell_choose_folder()
 
 
-def test_picker_timeout_fails_the_saved_selection(repo, monkeypatch):
+def test_picker_timeout_fails_the_saved_selection(repo, monkeypatch, windows_host):
     scripts = repo / "Scripts"
     scripts.mkdir()
     python = scripts / "python.exe"
     python.touch()
     monkeypatch.setattr(folders.sys, "executable", str(python))
-    monkeypatch.setattr(folders.os, "name", "nt")
     calls = []
 
     def run(command, **kwargs):
