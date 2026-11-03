@@ -87,6 +87,7 @@ class ReviewResponse(BaseModel):
 
 class RelationshipResponse(BaseModel):
     relationship_id: str
+    entity_id: str
     entity_type: str
     label: str
     relation_type: str
@@ -262,6 +263,7 @@ def get_relations(
     return [
         {
             "relationship_id": view.relationship_id,
+            "entity_id": view.entity_id,
             "entity_type": view.entity_type,
             "label": view.label,
             "relation_type": view.relation_type,

@@ -50,6 +50,17 @@ export function createMockAdapter(data, { latency = 80 } = {}) {
 
   return {
     mode: "mock",
+    async getSetup() {
+      return {
+        state: "ready", ready: true, progress: 100, stage_progress: 100,
+        downloaded_bytes: 0, total_bytes: null, completed_files: 0, total_files: 0,
+        model: "simulated-local-model", message: "Simulated preparation only; no model was downloaded or loaded.",
+        error_code: null, retryable: false, updated_at: new Date().toISOString(), simulated: true,
+      };
+    },
+    async retrySetup() {
+      return this.getSetup();
+    },
     async listMounts() {
       await delay(latency);
       return clone(data.mounts);
@@ -246,7 +257,7 @@ export function createMockAdapter(data, { latency = 80 } = {}) {
       relation.decision = decision;
       relation.corrected_entity_id = correctedEntityId;
       relation.decision_revision += 1;
-      return { decision_revision: relation.decision_revision };
+      return { relationship_id: relationshipId, decision, decision_revision: relation.decision_revision };
     },
   };
 }

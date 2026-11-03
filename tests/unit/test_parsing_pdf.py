@@ -6,6 +6,7 @@ README in that directory. They are deliberately tiny so they can live in git.
 
 from __future__ import annotations
 
+import io
 from pathlib import Path
 
 import pytest
@@ -16,6 +17,7 @@ from services.parsing.pdf import (
     REASON_FILE_MISSING,
     REASON_NO_TEXT_LAYER,
     REASON_SOURCE_CHANGED,
+    REASON_UNREADABLE,
     SourceChanged,
     SourceMissing,
     UnsupportedDocument,
@@ -99,6 +101,45 @@ def test_identifying_a_missing_file_says_so():
         file_identity(FIXTURES / "definitely-not-here.pdf")
 
     assert excinfo.value.reason_code == REASON_FILE_MISSING
+
+
+@pytest.mark.parametrize("phase", ["open", "read"])
+def test_source_io_failure_during_hashing_is_reported_as_unreadable(monkeypatch, phase):
+    class UnreadableStream(io.BytesIO):
+        def read(self, size=-1):
+            raise OSError("external drive disconnected")
+
+    def open_source(*args, **kwargs):
+        if phase == "open":
+            raise OSError("external drive disconnected")
+        return UnreadableStream()
+
+    monkeypatch.setattr(Path, "open", open_source)
+
+    with pytest.raises(SourceMissing) as excinfo:
+        file_identity("disconnected.pdf")
+
+    assert excinfo.value.reason_code == REASON_UNREADABLE
+
+
+@pytest.mark.parametrize("phase", ["header", "reader"])
+def test_losing_source_access_after_hashing_stays_retryable(monkeypatch, phase):
+    from services.parsing import pdf as pdf_module
+
+    monkeypatch.setattr(pdf_module, "file_identity", lambda path: ("a" * 64, 10))
+
+    def fail(*args, **kwargs):
+        raise PermissionError("source access revoked")
+
+    if phase == "header":
+        monkeypatch.setattr(Path, "open", fail)
+    else:
+        monkeypatch.setattr(pdf_module, "PdfReader", fail)
+
+    with pytest.raises(SourceMissing) as excinfo:
+        extract_document(FIXTURES / "normal.pdf")
+
+    assert excinfo.value.reason_code == REASON_UNREADABLE
 
 
 def test_a_file_written_while_it_is_read_is_refused(tmp_path, monkeypatch):

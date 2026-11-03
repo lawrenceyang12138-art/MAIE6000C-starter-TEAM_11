@@ -12,7 +12,7 @@ const require = createRequire(path.join(repo, "frontend/package.json"));
 const { chromium } = require(process.env.D_PLAYWRIGHT_MODULE || "playwright-core");
 const baseUrl = process.env.D_UI_URL || "http://127.0.0.1:5190";
 assert.ok(["localhost", "127.0.0.1", "[::1]"].includes(new URL(baseUrl).hostname));
-const output = path.join(repo, "submissions/week07/evidence/1019-D");
+const output = process.env.D_UI_OUTPUT ? path.resolve(repo, process.env.D_UI_OUTPUT) : path.join(repo, "submissions/week07/evidence/1019-D");
 fs.mkdirSync(output, { recursive: true });
 const browser = await chromium.launch({ headless: true, ...(process.env.D_BROWSER_EXECUTABLE ? { executablePath: process.env.D_BROWSER_EXECUTABLE } : { channel: "chrome" }) });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, reducedMotion: "reduce" });
@@ -63,7 +63,7 @@ try {
     await card.getByText("Source verified", { exact: false }).waitFor();
     await card.getByLabel("Reviewer", { exact: true }).fill("synthetic-reviewer");
     await card.getByLabel("Decision for " + label, { exact: true }).selectOption(decision);
-    if (decision === "corrected") await card.getByLabel("Existing replacement entity ID").fill("entity-replacement");
+    if (decision === "corrected") await card.getByLabel("Replacement entity for " + label, { exact: true }).selectOption("entity-chen");
     await card.getByRole("button", { name: "Save decision", exact: true }).click();
     await card.getByText("Decision saved by service", { exact: false }).waitFor();
     assert.equal(await card.locator(".relation-state").innerText(), { confirmed: "Confirmed", corrected: "Corrected", rejected: "Rejected" }[decision]);

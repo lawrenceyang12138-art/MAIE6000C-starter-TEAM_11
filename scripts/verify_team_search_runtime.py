@@ -65,7 +65,7 @@ def stop(process: subprocess.Popen) -> None:
 
 
 def await_ready(client: httpx.Client, url: str, process: subprocess.Popen) -> None:
-    deadline = time.monotonic() + 45
+    deadline = time.monotonic() + 180
     while time.monotonic() < deadline:
         if process.poll() is not None:
             raise RuntimeError("service_exited_before_ready")

@@ -137,6 +137,11 @@ class LocalPplxEmbeddingBackend:
                 AttributeError) as exc:
             raise EmbeddingUnavailable("local_model_unusable") from exc
 
+    def load(self) -> None:
+        """Explicit startup load; inference continues to use local files only."""
+        with self._lock:
+            self._load()
+
     def embed(self, texts: list[str], kind: EmbeddingKind = "passage") -> list[TokenVectors]:
         if not 1 <= len(texts) <= MAX_BATCH_SIZE:
             raise ValueError(f"batch size must be between 1 and {MAX_BATCH_SIZE}")

@@ -15,7 +15,7 @@ const response = { query: "backup", mode: "hybrid", effective_mode: "keyword", d
   degradation_reason: "ai_disabled", total: 1, results: [hit] };
 const evidence = { chunk_id: "chunk", file_id: "file", version_id: "version", relative_path: hit.file_path,
   page_number: 3, ordinal: 2, text: "Database backup", content_sha256: "a".repeat(64) };
-const relation = { relationship_id: "rel", entity_type: "topic", label: "Database", relation_type: "mentions",
+const relation = { entity_id: "entity-database", relationship_id: "rel", chunk_id: "chunk", entity_type: "topic", label: "Database", relation_type: "mentions",
   page_number: 3, quote: "Database backup", evidence_missing: false, decision: null, decision_revision: 0, corrected_entity_id: null };
 const apiWith = (payload, status = 200) => createApiAdapter({ fetchImpl: async () => new Response(JSON.stringify(payload), { status }) });
 
@@ -59,7 +59,7 @@ test("chunk evidence uses canonical route and matches file/version/page/ordinal/
 });
 
 test("lowercase source refusals suppress cached source text", async () => {
-  for (const code of ["version_superseded", "file_missing", "root_revoked", "chunk_not_found", "no_current_version"]) {
+  for (const code of ["version_superseded", "source_changed", "file_missing", "root_revoked", "chunk_not_found", "no_current_version"]) {
     await assert.rejects(apiWith({ detail: { code, message: "C:\\private traceback" } }, 409).getEvidenceByChunk("chunk"), (error) =>
       error.code === code && !error.message.includes("private") && isSourceUnavailable({}, error));
   }
@@ -118,19 +118,32 @@ test("unprocessed files can have a null version", async () => {
 test("relation collection stays bounded and preserves unreviewed candidates", async () => {
   assert.equal((await apiWith([relation]).listRelations("version"))[0].decision, null);
   await assert.rejects(apiWith(Array.from({ length: 21 }, (_, index) => ({ ...relation, relationship_id: String(index) }))).listRelations("version"));
+  assert.equal((await apiWith([{ ...relation, chunk_id: null, evidence_missing: true }]).listRelations("version"))[0].chunk_id, null);
+  for (const changed of [{ entity_id: undefined }, { entity_id: "" }, { chunk_id: null }, { chunk_id: "" }, { chunk_id: undefined }, { evidence_missing: true }]) {
+    await assert.rejects(apiWith([{ ...relation, ...changed }]).listRelations("version"), { code: "CONTRACT_MISMATCH" });
+  }
 });
 
 test("reviews post expected revision, correction target and reviewer without replay", async () => {
   const calls = [];
   const api = createApiAdapter({ fetchImpl: async (url, options) => {
     calls.push({ url, body: JSON.parse(options.body) });
-    return new Response(JSON.stringify({ decision_revision: 3 }));
+    return new Response(JSON.stringify({ relationship_id: "rel/a", decision: "corrected", decision_revision: 3 }));
   } });
   await api.recordReview("rel/a", { decision: "corrected", expectedRevision: 2, actor: "D", reason: "wrong name", correctedEntityId: "entity" });
   assert.deepEqual(calls, [{ url: "/api/relations/rel%2Fa/reviews", body: { decision: "corrected", expected_revision: 2, actor: "D", reason: "wrong name", corrected_entity_id: "entity" } }]);
   await assert.rejects(api.recordReview("rel", { decision: "corrected", expectedRevision: 2, actor: "D" }));
   await assert.rejects(api.recordReview("rel", { decision: "confirmed", expectedRevision: 2, actor: "D", correctedEntityId: "entity" }));
   assert.equal(calls.length, 1);
+});
+
+test("review receipts must match the submitted relation, decision and next revision", async () => {
+  const receipt = { relationship_id: "rel", decision: "confirmed", decision_revision: 1 };
+  for (const changed of [{ relationship_id: "other" }, { decision: "rejected" }, { decision_revision: 2 }, { relationship_id: undefined }]) {
+    await assert.rejects(apiWith({ ...receipt, ...changed }).recordReview("rel", {
+      decision: "confirmed", expectedRevision: 0, actor: "D",
+    }), { code: "CONTRACT_MISMATCH" });
+  }
 });
 
 test("revision conflict is distinct and no review is retried automatically", async () => {

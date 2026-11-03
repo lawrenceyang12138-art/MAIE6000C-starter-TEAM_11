@@ -164,6 +164,15 @@ h1 { margin: 0; color: var(--ink); font-size: clamp(25px, 2.2vw, 31px); font-wei
 .method-label { color: var(--faint); font-family: "JetBrains Mono", Consolas, monospace; font-size: 9px; font-weight: 450; letter-spacing: 0; }
 .method-label code { color: var(--indigo); }
 .select-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(220px, .8fr); gap: 14px; }
+.local-folder-panel { margin-bottom: 20px; }
+.local-folder-panel > [role="status"] { margin: 16px 0; font-size: 12px; line-height: 1.6; }
+.local-folder-selection { display: grid; gap: 8px; margin: 18px 0; padding: 16px; background: var(--canvas); border: 1px solid var(--line-strong); }
+.local-folder-selection strong { color: var(--ink); font-size: 14px; }
+.local-folder-selection code { overflow-wrap: anywhere; color: var(--ink-soft); font-size: 12px; }
+.local-folder-panel .notice { margin-top: 16px; }
+.local-folder-panel > .text-button { display: block; margin-top: 16px; }
+.configured-directories { margin-top: 20px; }
+.configured-directories > summary { cursor: pointer; padding: 16px 0; color: var(--ink-soft); font-size: 12px; font-weight: 650; }
 .authorization-panel, .contract-panel { padding: 22px; }
 .authorization-panel h2, .contract-panel h2, .progress-panel h2, .timeline-panel h2 { margin: 17px 0 0; color: var(--ink); font-size: 18px; font-weight: 620; letter-spacing: -.035em; }
 .panel-intro { max-width: 520px; margin: 8px 0 19px; color: var(--muted); font-size: 11px; line-height: 1.6; }
@@ -205,6 +214,11 @@ h1 { margin: 0; color: var(--ink); font-size: clamp(25px, 2.2vw, 31px); font-wei
 .notice-danger { color: var(--rose-text); border-color: #fecdd3; background: var(--rose-soft); }
 .notice-success { color: var(--green-text); border-color: #bbf7d0; background: var(--green-soft); }
 .notice-info { color: #3730a3; border-color: #c7d2fe; background: #f5f7ff; }
+.setup-progress { flex-wrap: wrap; }
+.setup-progress .setup-progress-content { flex-basis: 220px; }
+.setup-progress progress { display: block; width: 100%; height: 8px; margin: 5px 0; accent-color: var(--indigo); }
+.setup-progress .setup-progress-detail { font-variant-numeric: tabular-nums; }
+.setup-progress .secondary-button { margin-left: auto; }
 
 .progress-panel, .timeline-panel { padding: 21px 22px; }
 .progress-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; }

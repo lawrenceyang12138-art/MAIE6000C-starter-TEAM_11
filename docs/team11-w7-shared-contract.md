@@ -655,6 +655,7 @@ Returns at most 20 candidates. Each candidate must include:
 ```json
 {
   "relationship_id": "uuid",
+  "entity_id": "uuid",
   "entity_type": "person",
   "label": "Chen",
   "relation_type": "mentions",
@@ -673,6 +674,11 @@ version, entity, offsets and quote. It can be passed directly to
 `GET /evidence/{chunk_id}`. For malformed or missing evidence,
 `evidence_missing=true`, `quote=""`, and `chunk_id=null`; review writes for that
 relation return `409 evidence_missing`.
+
+`entity_id` identifies the candidate's current object entity. The review UI uses
+the returned entities as labelled correction choices and submits their IDs as
+`corrected_entity_id`; relationship IDs are not entity IDs. Users may also supply
+another known existing entity ID, subject to the same server-side checks.
 
 #### `POST /relations/{relationship_id}/reviews`
 
@@ -757,7 +763,7 @@ The integrated `compose.yaml` must retain:
 - A's read-only source mount;
 - A's PostgreSQL host-port policy;
 - C's `pgvector/pgvector:pg16` image;
-- the read-only AI model directory mount;
+- the AI-only writable model-cache mount for startup preparation (section 13);
 - C's `pgvector` and embedding dependencies.
 
 Combine these requirements when resolving Compose changes. Rebuild after changes
@@ -1001,6 +1007,11 @@ Consequences:
   index job: re-parsing would replace chunk rows and detach the reviews and
   search indexes that reference their ids, and the embeddings are either already
   built or owned by the `embed_file` job.
+  If a `basic_ready` version has **never** had an `embed_file` job, retry repairs
+  the failure between text publication and initial dispatch by enqueueing its
+  first index job in the same transaction as job completion. Any existing index
+  job, including a failed one, retains its own retry responsibility. This repair
+  rechecks active authorization and never replaces published chunks.
 - A **scan is not an implicit retry**. Scanning re-dispatches only `discovered`
   versions that have no live job. Recovering a `failed` version is an explicit
   `POST /jobs/{job_id}/retry`, so a permanently broken file cannot generate one
@@ -1028,4 +1039,65 @@ A refused request leaves no `authorized_roots` row and no job. The worker repeat
 the same check before extraction, so a path cannot become valid by being recorded
 first. Directory junctions are treated as links by the scan walk as well, because
 `is_symlink()` reports a junction as an ordinary directory.
+
+## 13. Revision 2026-10-30: first-start local AI preparation
+
+The C branch adds an explicit startup boundary without changing file/version/
+chunk identities, search fields, frozen answers or the shared migration chain.
+The first-start entry point is `python scripts/start.py`; Docker/Compose must
+already be installed. Its build installs application/AI dependencies, with actual
+terminal logs. Once the frontend exists it displays backend preparation progress.
+
+- AI alone receives a writable model-cache mount, replacing the old read-only
+  model mount in section 7.3. This is **not** permission to write original sources:
+  all API/Worker corpus mounts and source/evidence authorization remain read-only.
+- Startup prepares only the public pinned PPLX revision, checks fixed file sizes
+  and SHA-256 identities, atomically publishes the manifest, loads locally and
+  warms up both native query/document paths. Inference/search cannot download.
+- `GET /setup` returns safe stage, byte/file counters, nullable measured progress,
+  model identity, readiness and error state. `POST /setup/retry` returns 202 and
+  coalesces concurrent retries. API proxies only its configured local AI service.
+- AI `/health/live` remains process liveness. AI `/health/ready` returns 503 until
+  verified loading and warmup finish. API/database readiness is independent;
+  keyword search/evidence do not wait for the download. Model readiness does not
+  mean every document already has vectors.
+- On a transition to ready, Worker queues normal idempotent `embed_file` jobs
+  for current, present, readable parsed versions in **active** roots whose vectors
+  are missing/incompatible. A short settling window catches early-scan completion
+  races. Paused/revoked roots, old/missing/changed sources and live jobs are not
+  requeued. The ordinary dispatcher and recovery use the same version-row lock.
+  This is not an implicit retry of failed extraction or a search-time database write.
+- Disabled AI, offline download policy, failed download/checksum, service loss
+  and timeout remain explicit. No hosted inference, cloud fallback, user query,
+  PDF content or gold is sent to the model host. Existing verified files work
+  offline; missing/corrupt files never count as ready.
+
+See [first-start operations](model-startup.md) for configuration and verification.
+
+## 14. Revision 2026-10-31: local access and complete migration rollback
+
+The integrated API validates Host against `API_ALLOWED_HOSTS` (loopback names
+and the internal `api` name by default). Browser requests must have an allowed
+Origin or the API's own origin; cross-site fetches and simple form writes are
+refused before accessing sources or writing state. Errors use HTTP 403 with
+`invalid_host` or `origin_not_allowed`. CLI and internal clients may omit Origin.
+Compose derives allowed frontend origins from `FRONTEND_HOST_PORT`; custom
+non-Compose browser origins require explicit `API_ALLOWED_ORIGINS` configuration.
+
+API and Worker depend on database readiness, independently of AI startup. Missing
+or unhealthy AI keeps setup/semantic degradation visible while scanning,
+keyword indexing, evidence and review remain available.
+
+Successful parsing commits keyword fields with source chunks, relation candidates
+and `basic_ready`. A first search must not return an artificial empty result
+while the asynchronous embedding job waits for AI. The embed job still builds
+page metadata and optional vectors; `EMBEDDING_ENABLED=false` skips every AI
+request while preserving keyword indexes.
+
+Downgrading revision `20261030_0005` removes its derived token/page sidecars so
+older migrations can remove the canonical foreign-key targets. Source records,
+chunks and review history remain intact at `20261029_0004`; upgrading recreates
+empty derived tables for ordinary indexing to rebuild. Deeper downgrades remove
+the features/data their target schema cannot represent, and must be tested only
+on disposable databases or with an operator-managed backup.
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 from pathlib import Path
 
 from sqlalchemy import select
@@ -9,7 +10,6 @@ from sqlalchemy.orm import Session
 
 from services.common.models import (
     AuthorizedRoot,
-    Entity,
     FileRecord,
     FileVersion,
     Review,
@@ -277,10 +277,12 @@ def test_confirm_correct_and_reject_are_appended_to_review_history(
     persist_relations(db_session, version_id, candidate_relations(chunks))
 
     relations = client.get(f"/versions/{version_id}/relations").json()[:3]
-    replacement = db_session.execute(
-        select(Entity).where(Entity.display_label != relations[1]["label"])
-    ).scalars().first()
-    assert replacement is not None
+    # Every target is discoverable through HTTP; a reviewer does not need
+    # database access to find the UUID of an existing correction candidate.
+    replacement = next(
+        candidate for candidate in relations
+        if candidate["entity_id"] != relations[1]["entity_id"]
+    )
 
     payloads = [
         {"decision": "confirmed", "expected_revision": 0, "actor": "reviewer-a"},
@@ -289,7 +291,7 @@ def test_confirm_correct_and_reject_are_appended_to_review_history(
             "expected_revision": 0,
             "actor": "reviewer-a",
             "reason": "wrong entity",
-            "corrected_entity_id": replacement.id,
+            "corrected_entity_id": replacement["entity_id"],
         },
         {
             "decision": "rejected",
@@ -311,6 +313,9 @@ def test_confirm_correct_and_reject_are_appended_to_review_history(
         select(Review).order_by(Review.created_at, Review.decision_revision)
     ).scalars().all()
     assert {row.decision for row in history} == {"confirmed", "corrected", "rejected"}
+    updated = client.get(f"/versions/{version_id}/relations").json()
+    corrected = next(row for row in updated if row["decision"] == "corrected")
+    assert corrected["corrected_entity_id"] == replacement["entity_id"]
 
 
 def test_relation_read_and_review_refuse_a_modified_source(
@@ -336,6 +341,42 @@ def test_relation_read_and_review_refuse_a_modified_source(
     assert relations.json()["detail"]["code"] == "source_changed"
     assert review.status_code == 409
     assert review.json()["detail"]["code"] == "source_changed"
+
+
+def test_source_read_io_failure_refuses_evidence_relations_and_reviews(
+    client, db_session: Session, make_file_version, monkeypatch
+):
+    path = FIXTURES / "relations" / "entities.pdf"
+    version_id, _, _ = _current_version(db_session, make_file_version)
+    chunks = chunk_document(extract_document(path))
+    persist_chunks(db_session, version_id, chunks)
+    persist_relations(db_session, version_id, candidate_relations(chunks))
+    relation = client.get(f"/versions/{version_id}/relations").json()[0]
+    source_path = resolve_source_path(db_session, version_id, for_write=False)
+    real_open = Path.open
+
+    class DisconnectedStream(io.BytesIO):
+        def read(self, size=-1):
+            raise OSError("external drive disconnected during read")
+
+    def open_source(path, *args, **kwargs):
+        if path == source_path:
+            return DisconnectedStream()
+        return real_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", open_source)
+    responses = [
+        client.get(f"/evidence/{relation['chunk_id']}"),
+        client.get(f"/versions/{version_id}/relations"),
+        client.post(
+            f"/relations/{relation['relationship_id']}/reviews",
+            json={"decision": "confirmed", "expected_revision": 0},
+        ),
+    ]
+    for response in responses:
+        assert response.status_code == 404, response.text
+        assert response.json()["detail"]["code"] == "file_missing"
+    assert db_session.scalars(select(Review)).all() == []
 
 
 def test_relation_read_and_review_refuse_a_revoked_root(

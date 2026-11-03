@@ -11,7 +11,7 @@ import { RetryJobControl } from "./retry-job-control.jsx";
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const file = { root_id: "root", file_id: "file", version_id: "version", relative_path: "manual.pdf", display_name: "manual.pdf", presence_status: "present", status: "basic_ready" };
 const hit = { root_id: "root", file_id: "file", version_id: "version", file_path: "manual.pdf", chunk_id: "chunk", page: 1, ordinal: 1 };
-const relation = { relationship_id: "rel", label: "Chen", entity_type: "person", relation_type: "mentions", origin: "rule", producer_revision: "rules-v1", quote: "Chen builds the assistant.", page_number: 1, evidence_missing: false, decision: null, corrected_entity_id: null, decision_revision: 0 };
+const relation = { entity_id: "entity-chen", relationship_id: "rel", chunk_id: "chunk", label: "Chen", entity_type: "person", relation_type: "mentions", origin: "rule", producer_revision: "rules-v1", quote: "Chen builds the assistant.", page_number: 1, evidence_missing: false, decision: null, corrected_entity_id: null, decision_revision: 0 };
 const evidence = { ...hit, relative_path: "manual.pdf", page_number: 1, text: relation.quote, content_sha256: "a".repeat(64) };
 const deferred = () => { let resolve; const promise = new Promise((done) => { resolve = done; }); return { promise, resolve }; };
 let container, root;
@@ -71,6 +71,7 @@ describe("relation review workflow", () => {
     expect(container.querySelector("fieldset").disabled).toBe(true);
     await click("Open source passage");
     expect(adapter.getEvidenceByChunk).toHaveBeenCalledWith("chunk");
+    expect(adapter.search).not.toHaveBeenCalled();
     expect(container.querySelector("fieldset").disabled).toBe(false);
     await fill(container.querySelector("input"), "reviewer-D");
     const form = container.querySelector("form");
@@ -99,6 +100,23 @@ describe("relation review workflow", () => {
     expect(container.querySelector("fieldset").disabled).toBe(true);
     expect(adapter.recordReview).toHaveBeenCalledTimes(1);
   });
+  it("corrects to an existing candidate entity selected by label", async () => {
+    const adapter = mockAdapter();
+    adapter.listRelations.mockResolvedValue([relation, { ...relation, relationship_id: "rel-atlas", entity_id: "entity-atlas", label: "Atlas", entity_type: "project" }]);
+    await render(<RelationsPage adapter={adapter} review />); await click("Open source passage");
+    const card = container.querySelector(".relation-card");
+    await fill(card.querySelector('select[aria-label="Decision for Chen"]'), "corrected");
+    const choices = card.querySelector('select[aria-label="Replacement entity for Chen"]');
+    expect([...choices.options].map((option) => option.value)).toEqual(["", "entity-atlas"]);
+    await fill(choices, "entity-atlas");
+    expect(card.querySelector("input").value).toBe("entity-atlas");
+    await fill(card.querySelector('input[autocomplete="off"]'), "reviewer-D");
+    await act(async () => card.querySelector("form").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })));
+    expect(adapter.recordReview).toHaveBeenCalledWith("rel", expect.objectContaining({
+      decision: "corrected", correctedEntityId: "entity-atlas", actor: "reviewer-D",
+    }));
+    expect(card.querySelector(".relation-state").textContent).toBe("Corrected");
+  });
   it("cannot review a quote that does not match its version-bound source", async () => {
     const adapter = mockAdapter(); adapter.getEvidenceByChunk.mockResolvedValue({ ...evidence, version_id: "old" });
     await render(<RelationsPage adapter={adapter} review />); await click("Open source passage");
@@ -106,6 +124,26 @@ describe("relation review workflow", () => {
     expect(container.textContent).toContain("version_superseded");
     expect(container.querySelector("blockquote").textContent).not.toContain(relation.quote);
     expect(adapter.recordReview).not.toHaveBeenCalled();
+  });
+  it.each([
+    ["chunk", { chunk_id: "other" }], ["file", { file_id: "other" }],
+    ["page", { page_number: 2 }], ["path", { relative_path: "other.pdf" }],
+    ["quote", { text: "Unrelated text on the same page." }],
+  ])("cannot review evidence from a different %s", async (_label, changed) => {
+    const adapter = mockAdapter(); adapter.getEvidenceByChunk.mockResolvedValue({ ...evidence, ...changed });
+    await render(<RelationsPage adapter={adapter} review />); await click("Open source passage");
+    expect(container.querySelector("fieldset").disabled).toBe(true);
+    expect(container.textContent).toContain("version_superseded");
+    expect(container.querySelector("blockquote").textContent).not.toContain(relation.quote);
+  });
+  it.each([null, undefined])("keeps a relation without a chunk locator disabled (%s)", async (chunkId) => {
+    const adapter = mockAdapter(); adapter.listRelations.mockResolvedValue([{ ...relation, chunk_id: chunkId }]);
+    await render(<RelationsPage adapter={adapter} review />);
+    expect([...container.querySelectorAll("button")].find((button) => button.textContent === "Open source passage").disabled).toBe(true);
+    expect(container.querySelector("fieldset").disabled).toBe(true);
+    expect(container.querySelector("blockquote").textContent).not.toContain(relation.quote);
+    expect(adapter.getEvidenceByChunk).not.toHaveBeenCalled();
+    expect(adapter.search).not.toHaveBeenCalled();
   });
   it("hides the stored quote when a source check fails for a non-source error", async () => {
     const adapter = mockAdapter();

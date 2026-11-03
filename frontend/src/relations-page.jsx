@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { AdapterError } from "./api/errors.js";
-import { evidenceMatchesHit } from "./lib/search.js";
 import { isSourceUnavailable } from "./lib/scan.js";
 
 const labels = { candidate: "Candidate", confirmed: "Confirmed", corrected: "Corrected", rejected: "Rejected" };
@@ -9,7 +8,7 @@ function Notice({ error }) {
   return error ? <div className="notice notice-danger" role="alert"><div><strong>{error.message}</strong><span>{error.code || "request_failed"}</span></div></div> : null;
 }
 
-function RelationCard({ relation, file, adapter, review, onReload, onSaved }) {
+function RelationCard({ relation, file, adapter, review, replacementEntities, onReload, onSaved }) {
   const [source, setSource] = useState(null);
   const [error, setError] = useState(null);
   const [sourceLoading, setSourceLoading] = useState(false);
@@ -26,20 +25,19 @@ function RelationCard({ relation, file, adapter, review, onReload, onSaved }) {
   const state = receipt?.decision || relation.decision || "candidate";
   const revision = receipt?.decision_revision ?? relation.decision_revision;
   const invalidSource = isSourceUnavailable(file, error);
+  const missingEvidence = relation.evidence_missing || !relation.chunk_id;
+  const targets = replacementEntities.filter((entity) => entity.entity_id !== relation.entity_id);
 
   async function openSource() {
+    if (missingEvidence || sourceLoading || saving || uncertain) return;
     setSource(null); setError(null); setSourceLoading(true);
     try {
-      // The frozen relation contract provides a quote/page, not a chunk ID.
-      // Resolve through scoped search and verify the full quote against evidence.
-      const result = await adapter.search({ query: relation.quote.slice(0, 60), rootId: file.root_id,
-        fileId: file.file_id, mode: "keyword", topK: 50 });
-      const hit = result.results.find((item) => item.file_id === file.file_id &&
-        item.version_id === file.version_id && item.page === relation.page_number);
-      if (!hit) throw new AdapterError("The candidate could not be resolved to its current source page. Reload or ask the parser owner to check its evidence.", { code: "source_unavailable", status: 409 });
-      const evidence = await adapter.getEvidenceByChunk(hit.chunk_id);
+      const evidence = await adapter.getEvidenceByChunk(relation.chunk_id);
       const compact = (value) => value.replace(/\s+/gu, " ").trim();
-      if (!evidenceMatchesHit(evidence, hit) || !compact(evidence.text).includes(compact(relation.quote))) {
+      if (evidence.chunk_id !== relation.chunk_id || evidence.file_id !== file.file_id ||
+        evidence.version_id !== file.version_id || evidence.page_number !== relation.page_number ||
+        evidence.relative_path.replaceAll("\\", "/") !== file.relative_path.replaceAll("\\", "/") ||
+        !compact(evidence.text).includes(compact(relation.quote))) {
         throw new AdapterError("The current source does not contain this candidate quote. Reload before reviewing.", { code: "version_superseded", status: 409 });
       }
       if (alive.current) setSource(evidence);
@@ -75,7 +73,7 @@ function RelationCard({ relation, file, adapter, review, onReload, onSaved }) {
   return <article className="relation-card">
     <div className="relation-title"><div><span className="meta-label">{relation.entity_type} · {relation.relation_type}</span><h2>{relation.label}</h2></div><span className={"relation-state relation-" + state}>{labels[state]}</span></div>
     <p className="relation-provenance">{relation.origin === "rule" ? "Rule-derived candidate" : relation.origin ? "Origin: " + relation.origin : "Provenance not supplied by service"}{relation.producer_revision ? " · " + relation.producer_revision : ""} · Revision {revision}</p>
-    <blockquote>{relation.evidence_missing
+    <blockquote>{missingEvidence
       ? "Supporting evidence is missing. This candidate cannot be reviewed."
       : invalidSource || (!source && error)
         ? "Stored quote hidden because the current source could not be verified."
@@ -83,17 +81,21 @@ function RelationCard({ relation, file, adapter, review, onReload, onSaved }) {
           ? "Verified candidate quote: " + (relation.quote || "No supporting quote.")
           : "Unverified candidate quote: " + (relation.quote || "No supporting quote.")}</blockquote>
     <p className="relation-locator">{file.relative_path} · {relation.page_number == null ? "Page unknown" : "Page " + relation.page_number}<br /><code>Version {file.version_id}</code></p>
-    <button className="secondary-button" onClick={openSource} disabled={sourceLoading || relation.evidence_missing || !relation.quote || uncertain || saving}>{sourceLoading ? "Reading source…" : source ? "Recheck source passage" : "Open source passage"}</button>
+    <button className="secondary-button" onClick={openSource} disabled={sourceLoading || missingEvidence || !relation.quote || uncertain || saving}>{sourceLoading ? "Reading source…" : source ? "Recheck source passage" : "Open source passage"}</button>
     <Notice error={error} />
     {source && !invalidSource && <div className="verified-passage" role="status"><strong>Source verified · {source.page_number == null ? "Page unknown" : "Page " + source.page_number}</strong><p>{source.text}</p><code>Chunk {source.chunk_id}</code><code>SHA-256 {source.content_sha256}</code></div>}
     {receipt && <div className="notice notice-success" role="status">Decision saved by service: {labels[receipt.decision]} · Revision {receipt.decision_revision}. <button className="text-button" onClick={onReload}>Reload latest candidates</button></div>}
     {uncertain && <div className="notice notice-info" role="status">Submission is locked until the latest server revision is read. <button className="text-button" onClick={onReload}>Reload latest candidates</button></div>}
     {review && !receipt && <form className="review-form" onSubmit={save} aria-label={"Review " + relation.label}>
-      <fieldset disabled={!source || saving || uncertain || relation.evidence_missing || invalidSource}>
+      <fieldset disabled={!source || saving || uncertain || missingEvidence || invalidSource}>
         <legend>Human decision</legend>
         <p>Check the source before recording a decision. The original file stays read-only.</p>
         <label>Decision<select aria-label={"Decision for " + relation.label} value={decision} onChange={(event) => { setDecision(event.target.value); setTarget(""); }}><option value="confirmed">Confirm</option><option value="corrected">Correct</option><option value="rejected">Reject</option></select></label>
-        {decision === "corrected" && <label>Existing replacement entity ID<input value={target} onChange={(event) => setTarget(event.target.value)} required maxLength={36} /></label>}
+        {decision === "corrected" && <>
+          <label>Replacement entity from this document<select aria-label={"Replacement entity for " + relation.label} value={targets.some((entity) => entity.entity_id === target) ? target : ""} onChange={(event) => setTarget(event.target.value)} disabled={!targets.length}><option value="">{targets.length ? "Choose an existing entity" : "No other candidate entities in this document"}</option>{targets.map((entity) => <option key={entity.entity_id} value={entity.entity_id}>{entity.label} ({entity.entity_type})</option>)}</select></label>
+          <label>Existing replacement entity ID<input value={target} onChange={(event) => setTarget(event.target.value)} required maxLength={36} /></label>
+          <p className="muted-copy">Choose a listed entity, or enter the ID of another existing entity.</p>
+        </>}
         <label>Reviewer<input value={actor} onChange={(event) => setActor(event.target.value)} required maxLength={120} autoComplete="off" /></label>
         <label>Reason<textarea value={reason} onChange={(event) => setReason(event.target.value)} maxLength={1000} rows={2} /></label>
         <button className="primary-button" type="submit" disabled={!actor.trim() || (decision === "corrected" && !target.trim())}>{saving ? "Saving decision…" : "Save decision"}</button>
@@ -143,6 +145,7 @@ export function RelationsPage({ adapter, review = false }) {
   }, [adapter, versionId, reload]);
   const file = files.find((item) => item.version_id === versionId);
   const shown = relations.filter((item) => filter === "all" || (item.decision || "candidate") === filter);
+  const replacementEntities = [...new Map(relations.filter((item) => item.entity_id).map((item) => [item.entity_id, item])).values()];
   return <>
     <div className="page-heading"><div className="heading-copy"><p className="meta-label">EVIDENCE & HUMAN JUDGMENT</p><h1>{review ? "Review candidate relations" : "Explore source relations"}</h1><p className="lede">Up to 20 candidates per version. A mention is a candidate until a human decision is saved.</p></div></div>
     <div className="notice notice-info" role="note">Relations are suggestions. Verify the source passage before recording a human decision.</div>
@@ -154,7 +157,7 @@ export function RelationsPage({ adapter, review = false }) {
       {!catalogLoading && !catalogError && !files.length && <div className="empty-state"><h2>No searchable versions</h2><p>Complete parsing before loading relation candidates.</p></div>}
       {catalogLoading || loading ? <div className="results-loading" role="status">Loading current candidates…</div> : !catalogError && !error && file && <>
         <div className="filter-row" aria-label="Relation status filters">{["all", "candidate", "confirmed", "corrected", "rejected"].map((key) => <button key={key} className={"filter-chip " + (filter === key ? "selected" : "")} aria-pressed={filter === key} onClick={() => setFilter(key)}>{key === "all" ? "All" : labels[key]}</button>)}</div>
-        {!shown.length ? <div className="empty-state"><h2>No {filter === "all" ? "relation" : filter} candidates</h2><p>{relations.length ? "Choose another status filter." : "The service returned an empty candidate list for this version."}</p></div> : <div className="relation-list">{shown.map((item) => <RelationCard key={[versionId, reload, item.relationship_id].join(":")} relation={item} file={file} adapter={adapter} review={review} onReload={() => setReload((value) => value + 1)} onSaved={(saved) => setRelations((current) => current.map((candidate) => candidate.relationship_id === item.relationship_id ? { ...candidate, ...saved } : candidate))} />)}</div>}
+        {!shown.length ? <div className="empty-state"><h2>No {filter === "all" ? "relation" : filter} candidates</h2><p>{relations.length ? "Choose another status filter." : "The service returned an empty candidate list for this version."}</p></div> : <div className="relation-list">{shown.map((item) => <RelationCard key={[versionId, reload, item.relationship_id].join(":")} relation={item} file={file} adapter={adapter} review={review} replacementEntities={replacementEntities} onReload={() => setReload((value) => value + 1)} onSaved={(saved) => setRelations((current) => current.map((candidate) => candidate.relationship_id === item.relationship_id ? { ...candidate, ...saved } : candidate))} />)}</div>}
       </>}
     </>}
   </>;

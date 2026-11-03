@@ -36,7 +36,7 @@ def stop(process: subprocess.Popen) -> None:
 
 
 def await_ready(client: httpx.Client, url: str, process: subprocess.Popen) -> None:
-    deadline = time.monotonic() + 40
+    deadline = time.monotonic() + 180
     while time.monotonic() < deadline:
         if process.poll() is not None:
             raise RuntimeError("Verification service exited; inspect work/search-http logs")

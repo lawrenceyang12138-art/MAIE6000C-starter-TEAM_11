@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -34,7 +35,8 @@ def test_prepare_token_index_cli_adds_only_derived_storage_without_loading_ai(db
     assert set(inspect(engine).get_table_names()) - before == {ChunkTokenIndex.__tablename__}
 
 
-def test_seed_then_evaluate_uses_real_fixture_sources(db_session, tmp_path):
+@pytest.mark.parametrize("git_available", [True, False])
+def test_seed_then_evaluate_uses_real_fixture_sources(db_session, tmp_path, git_available):
     fixture_root = tmp_path / "search-fixture-sources"
     gold = json.loads((REPO / "fixtures/search/gold-queries.json").read_text(encoding="utf-8"))
     gold["queries"] = [
@@ -54,19 +56,25 @@ def test_seed_then_evaluate_uses_real_fixture_sources(db_session, tmp_path):
     ], cwd=REPO, capture_output=True, text=True, encoding="utf-8", check=False, timeout=60)
     assert seeded.returncode == 0, seeded.stderr
 
+    environment = None if git_available else {**os.environ, "PATH": str(tmp_path / "no-git")}
     evaluated = subprocess.run([
         sys.executable, "-m", "scripts.search_tools", "evaluate",
         "--database-url", database_url,
         "--fixture", str(REPO / "fixtures/search/mock-chunks.json"),
         "--fixture-root", str(fixture_root),
         "--gold", str(gold_path), "--backend", "off", "--output", str(output),
-    ], cwd=REPO, capture_output=True, text=True, encoding="utf-8", check=False, timeout=60)
+    ], cwd=REPO, env=environment, capture_output=True, text=True,
+        encoding="utf-8", check=False, timeout=60)
     assert evaluated.returncode == 0, evaluated.stderr
     report = json.loads(output.read_text(encoding="utf-8"))
     assert report["summary"]["keyword_top1"] == "5/5"
     assert report["summary"]["evidence_failures"] == 0
     assert report["summary"]["source_diagnostics"] == 0
     assert report["evaluation_valid"]
+    assert report["git"]["source_sha256"]
+    if not git_available:
+        assert report["git_sha"] is None
+        assert report["git"]["sha"] == "unavailable"
 
 
 @pytest.mark.parametrize(

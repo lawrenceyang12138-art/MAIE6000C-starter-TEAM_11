@@ -23,6 +23,13 @@ from services.common.models import (
 )
 
 
+@pytest.fixture(autouse=True)
+def local_test_host(monkeypatch):
+    """Starlette's in-process client uses testserver instead of a local socket."""
+    settings = get_settings()
+    monkeypatch.setattr(settings, "api_allowed_hosts", settings.api_allowed_hosts + ["testserver"])
+
+
 @pytest.fixture()
 def make_directory_link():
     """Create a directory link that leaves a tree, or skip if the OS refuses.

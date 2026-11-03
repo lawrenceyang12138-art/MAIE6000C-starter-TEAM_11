@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import signal
 import time
 
 import httpx
@@ -25,6 +26,8 @@ from services.parsing.handler import handle_extract_file
 from services.scan.handler import handle_scan_root, resolve_source_path
 from services.search.embeddings import HTTPEmbeddingBackend
 from services.search.indexing import embed_version
+from services.search.model_startup import SetupStatus
+from services.search.startup_recovery import queue_startup_embeddings
 
 configure_logging()
 logger = logging.getLogger("services.worker.main")
@@ -103,24 +106,37 @@ def _complete_job(db: Session, job: Job) -> None:
     db.commit()
 
 
-def _enqueue_embed_job(db: Session, version_id: str) -> None:
+def _enqueue_embed_job(
+    db: Session, version_id: str, *, first_dispatch_only: bool = False
+) -> None:
     """Dispatch the search-index job for one successfully parsed version.
 
     Shared contract 3.4.3: index jobs are created only after source text is
     stored. Idempotent - a version keeps at most one live embed job, so a
-    re-run never queues a duplicate. The caller commits.
+    re-run never queues a duplicate. ``first_dispatch_only`` repairs a parse
+    whose first dispatch failed, without retrying an existing finished job.
+    The caller commits.
     """
-    existing = db.execute(
+    # Share this per-version lock with the model-ready recovery sweep.
+    db.execute(select(FileVersion.id).where(FileVersion.id == version_id).with_for_update())
+    existing_query = (
         select(Job)
         .where(
             Job.version_id == version_id,
             Job.job_type == RootJobType.EMBED_FILE.value,
-            Job.status.in_([JobStatus.PENDING.value, JobStatus.CLAIMED.value]),
         )
-        .limit(1)
-    ).scalars().first()
+    )
+    if not first_dispatch_only:
+        existing_query = existing_query.where(
+            Job.status.in_([JobStatus.PENDING.value, JobStatus.CLAIMED.value])
+        )
+    existing = db.execute(existing_query.limit(1)).scalars().first()
     if existing is not None:
         return
+    if first_dispatch_only:
+        # This retry can close an existing parse without reading it again,
+        # but creating new work still requires an active, contained root.
+        resolve_source_path(db, version_id)
     db.add(
         Job(
             version_id=version_id,
@@ -130,10 +146,12 @@ def _enqueue_embed_job(db: Session, version_id: str) -> None:
     )
 
 
-def _embedding_backend() -> HTTPEmbeddingBackend:
+def _embedding_backend() -> HTTPEmbeddingBackend | None:
     """The ai service owns the model. A missing or disabled model degrades
     search to keyword mode instead of failing the index job (contract 3.4.5).
     """
+    if not settings.embedding_enabled:
+        return None
     return HTTPEmbeddingBackend(
         settings.ai_service_url, settings.search_request_timeout_seconds
     )
@@ -283,15 +301,16 @@ def _process_extract_job(job_id: int) -> None:
         # published the text. Re-reading is harmless for the text itself, but
         # ``persist_chunks`` replaces rows, and replacing chunks for nothing
         # would detach reviews and search indexes that hang off their stable
-        # ids. The job is closed instead, and no index job is queued: the
-        # embeddings were either already built or are the business of the
-        # ``embed_file`` job that owns them, so enqueueing here would only buy
-        # another embedding call.
+        # ids. Existing embed jobs keep their own completion/retry policy.
+        # If the first dispatch failed after parsing committed, repair that
+        # missing job in the same transaction that closes this retry.
         version = db.get(FileVersion, version_id)
         if version is not None and version.status in (
             VersionStatus.BASIC_READY.value,
             VersionStatus.ENRICHED.value,
         ):
+            if version.status == VersionStatus.BASIC_READY.value:
+                _enqueue_embed_job(db, version_id, first_dispatch_only=True)
             job.status = JobStatus.COMPLETED.value
             job.error = None
             job.error_code = None
@@ -352,6 +371,31 @@ def _process_embed_job(job_id: int) -> None:
     )
 
 
+def recover_after_model_ready(*, reconcile: bool = True) -> bool:
+    """Repair early-scan keyword-only jobs once local inference becomes ready."""
+    if not settings.embedding_enabled:
+        return False
+    try:
+        response = httpx.get(
+            settings.ai_service_url.rstrip("/") + "/setup", timeout=2,
+            follow_redirects=False, trust_env=False,
+        )
+        response.raise_for_status()
+        status = SetupStatus.model_validate(response.json())
+    except (httpx.HTTPError, ValueError):
+        return False
+    if not status.ready or status.state != "ready":
+        return False
+    if not reconcile:
+        return True
+    with get_session_factory()() as db:
+        count = queue_startup_embeddings(db)
+        db.commit()
+    if count:
+        logger.info("startup_embeddings_queued", extra={"version_count": count})
+    return True
+
+
 def process_job(job_id: int) -> None:
     """Route one claimed job to its handler.
 
@@ -379,7 +423,17 @@ def process_job(job_id: int) -> None:
         raise RuntimeError(f"no handler for job type {job_type!r}")
 
 
-def run_worker() -> None:
+class DrainRequest:
+    """A signal only requests exit; committed claims must still finish."""
+
+    requested = False
+
+    def request(self, signum=None, frame=None) -> None:
+        self.requested = True
+
+
+def run_worker(*, drain: DrainRequest | None = None) -> None:
+    drain = drain or DrainRequest()
     session_factory = get_session_factory()
     logger.info(
         "worker_started",
@@ -389,14 +443,34 @@ def run_worker() -> None:
         },
     )
 
-    while True:
+    next_recovery_check = 0.0
+    was_model_ready = False
+    recovery_until = 0.0
+    while not drain.requested:
         job = None
         try:
+            now = time.monotonic()
+            if now >= next_recovery_check:
+                # A short settling window also catches a pre-ready request that
+                # was still completing while the first sweep ran. Afterwards
+                # the normal extract->embed dispatcher owns newly parsed files.
+                ready = recover_after_model_ready(
+                    reconcile=not was_model_ready or now < recovery_until,
+                )
+                if ready and not was_model_ready:
+                    recovery_until = now + 60
+                was_model_ready = ready
+                next_recovery_check = now + 5
+            if drain.requested:
+                break
             with session_factory() as db:
                 job = claim_next_pending_job(db)
 
+            # A request arriving inside claim must not strand its committed
+            # claimed row. Process that job before checking the flag again.
             if job is None:
-                time.sleep(settings.worker_poll_seconds)
+                if not drain.requested:
+                    time.sleep(settings.worker_poll_seconds)
                 continue
 
             logger.info("job_claimed", extra={"job_id": job.id, "case_id": job.case_id})
@@ -410,8 +484,14 @@ def run_worker() -> None:
             logger.exception("job_processing_failed")
             if job is not None:
                 mark_job_failed(job.id, str(exc))
-            time.sleep(settings.worker_poll_seconds)
+            if not drain.requested:
+                time.sleep(settings.worker_poll_seconds)
+
+    logger.info("worker_drained")
 
 
 if __name__ == "__main__":
-    run_worker()
+    drain = DrainRequest()
+    if hasattr(signal, "SIGUSR1"):
+        signal.signal(signal.SIGUSR1, drain.request)
+    run_worker(drain=drain)

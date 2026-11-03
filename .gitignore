@@ -210,6 +210,8 @@ cython_debug/
 tempCodeRunnerFile.py
 models/
 work/
+# Local Chrome debugging endpoint; never a project input.
+/.cdp-active-port
 
 # Frontend source is not a Python build library.
 !frontend/src/lib/
@@ -229,6 +231,13 @@ submissions/week07/*
 !submissions/week07/evidence/
 # Evidence screenshots stay local (5.9 MB); scripts/capture_*.mjs regenerates them.
 submissions/week07/evidence/**/*.png
+# Dated verification runs keep only reviewable summaries in Git.
+/submissions/week07/evidence/20261031-w7/**
+!/submissions/week07/evidence/20261031-w7/README.md
+!/submissions/week07/evidence/20261031-w7/final-validation.json
+/submissions/week07/evidence/C/20261030-startup/**
+!/submissions/week07/evidence/C/20261030-startup/README.md
+!/submissions/week07/evidence/C/20261030-startup/validation-summary.json
 
 # Ruff stuff:
 .ruff_cache/

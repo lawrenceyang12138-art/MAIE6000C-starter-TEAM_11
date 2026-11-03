@@ -39,6 +39,7 @@ from services.parsing.pdf import (
 )
 from services.parsing.persist import persist_chunks, persist_relations
 from services.parsing.relations import candidate_relations
+from services.search.keyword_index import prepare_keyword_indexes
 
 # Stamped onto every version this handler processes, so chunks can be traced
 # back to the parser that produced them. Bump it when the parsing behaviour
@@ -93,6 +94,10 @@ def handle_extract_file(db: Session, version_id: str, source_path: str | Path) -
         # transaction. A relation persistence failure must not publish a
         # half-built parse that looks complete to the worker or API.
         persist_chunks(db, version_id, chunks, commit=False)
+        # A basic_ready document must already be keyword-searchable. Publishing
+        # this with the parse avoids an empty first search while a later embed
+        # job is waiting for an unavailable or warming local model.
+        prepare_keyword_indexes(db, version_id)
         persist_relations(
             db,
             version_id,
