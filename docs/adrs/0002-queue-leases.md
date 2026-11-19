@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (2026-11-19); backoff deferred. Implemented the same day; the PostgreSQL two-worker case and the live kill-recovery drill are still pending (Docker was unavailable during implementation).
+Accepted (2026-11-19); backoff deferred. Verified against the Compose stack the same day: two concurrent claimers produced exactly one winner, and a lease left behind by a dead owner was reclaimed by the worker with attempts=2 and released on completion.
 
 ## Context
 

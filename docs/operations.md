@@ -48,6 +48,8 @@ the main path.
 ```bash
 python scripts/start.py          # installs/builds as needed; displays model preparation
 docker compose ps                # wait for api/ai healthy, db healthy
+# Code changes need an explicit rebuild; `up -d` reuses the existing image.
+docker compose up -d --build
 docker compose logs -f worker    # watch job processing
 docker compose down              # stop, keep data (postgres_data volume)
 docker compose down -v           # stop and DELETE the database volume
