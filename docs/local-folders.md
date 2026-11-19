@@ -81,6 +81,31 @@ search, source previews and manual rescans. Folder selection and mount
 preparation are asynchronous; they do not share the ordinary API request's
 15-second lifetime.
 
+## When the bridge cannot bind its port
+
+Windows reserves blocks of TCP ports for Hyper-V and WSL, and the blocks move
+between boots: a port that worked yesterday can be refused today with
+`WSAEACCES (10013)`. Symptom in the UI: "Cannot reach the local folder service"
+even though the launcher ran.
+
+The launcher now refuses to start the bridge on an unbindable port and records
+the reason in `work/local-folders/bridge.log`, naming the port and the fix.
+
+```bash
+python scripts/local_folders.py --pick-port     # prints the first usable port
+```
+
+Put that value in `.env` as `LOCAL_FOLDER_BRIDGE_PORT`, then rebuild the UI image
+- the bridge URL is a build argument, not a runtime setting:
+
+```bash
+docker compose build frontend
+python scripts/start.py
+```
+
+`LOCAL_FOLDER_BRIDGE_PORT` and the baked `VITE_LOCAL_FOLDER_BRIDGE_URL` must
+agree; changing only one leaves the browser pointing at a port nothing listens on.
+
 ## Upgrading an existing running stack
 
 If the launcher reports `worker_drain_upgrade_required`, the running Worker
