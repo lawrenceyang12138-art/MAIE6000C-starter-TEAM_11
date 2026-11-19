@@ -279,7 +279,10 @@ discovered -> extracting -> basic_ready -> enriched
 
 - `basic_ready`: source text and chunks are stored; keyword search is available.
 - `enriched`: additional analysis or vectors are complete; this state must not be
-  a prerequisite for keyword search.
+  a prerequisite for keyword search. The embed job moves the version here only when
+  every chunk carries a vector. A keyword-only pass - AI disabled, a model mismatch,
+  a failed batch - leaves the version in `basic_ready` so the model-ready recovery
+  sweep can pick it up again; it must not be reported as enriched.
 - `failed`: processing failed with an `error_code`; retries follow the job policy.
 - `unsupported`: content or format cannot be processed; this is a handled outcome.
 

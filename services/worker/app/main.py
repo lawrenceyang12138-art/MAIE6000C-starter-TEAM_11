@@ -354,6 +354,18 @@ def _process_embed_job(job_id: int) -> None:
         # embedding error instead of raising, so a missing model completes
         # the job with keyword-only search.
         result = embed_version(db, version_id, _embedding_backend())
+        # ``enriched`` means the text is indexed *and* every chunk carries a
+        # vector (contract 8). A keyword-only pass - AI disabled, a model
+        # mismatch, a failed batch - stays ``basic_ready`` on purpose, so the
+        # model-ready recovery sweep can pick the version up again.
+        if (
+            result.embedding_error is None
+            and result.chunk_count
+            and result.embedded_count == result.chunk_count
+        ):
+            version = db.get(FileVersion, version_id)
+            if version is not None and version.status == VersionStatus.BASIC_READY.value:
+                version.status = VersionStatus.ENRICHED.value
         job.status = JobStatus.COMPLETED.value
         job.error = None
         job.completed_at = utcnow()

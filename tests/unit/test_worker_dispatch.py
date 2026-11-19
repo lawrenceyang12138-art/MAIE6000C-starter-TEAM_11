@@ -18,6 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from services.common.db import make_session_factory
+from services.search.text import MODEL_ID, TOKEN_DIMENSIONS
 from services.common.models import (
     AuthorizedRoot,
     Case,
@@ -563,3 +564,55 @@ def test_mark_job_failed_works_for_jobs_without_a_case(worker_db):
     job = _job(worker_db, job_id)
     assert job.status == JobStatus.FAILED.value
     assert job.error == "mount directory not found"
+
+
+class _TokenBackend:
+    """A model-identity-compatible backend that returns one token per chunk."""
+
+    model_id = MODEL_ID
+    dimensions = TOKEN_DIMENSIONS
+
+    def embed(self, texts, kind="passage"):
+        return [[[1.0] + [0.0] * (TOKEN_DIMENSIONS - 1)] for _ in texts]
+
+
+def _parsed_version(worker_db, make_file_version):
+    source = Path(__file__).resolve().parents[1] / "fixtures/parsing/normal.pdf"
+    version_id = make_file_version(source_path=source)
+    version = worker_db.get(FileVersion, version_id)
+    worker_db.get(FileRecord, version.file_id).current_version_id = version_id
+    worker_db.commit()
+    return version_id
+
+
+def test_a_completed_embed_job_marks_the_version_enriched(
+    worker_db, make_file_version, monkeypatch
+):
+    """Contract 8: enriched means the vectors are published, not just queued."""
+    version_id = _parsed_version(worker_db, make_file_version)
+    extract_job = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
+    worker_main.process_job(extract_job)
+    embed_job = _index_jobs(worker_db, version_id)[0]
+    assert worker_db.get(FileVersion, version_id).status == VersionStatus.BASIC_READY.value
+
+    monkeypatch.setattr(worker_main, "_embedding_backend", lambda: _TokenBackend())
+    worker_main.process_job(embed_job.id)
+
+    worker_db.expire_all()
+    assert worker_db.get(FileVersion, version_id).status == VersionStatus.ENRICHED.value
+
+
+def test_a_keyword_only_embed_job_leaves_the_version_basic_ready(
+    worker_db, make_file_version, monkeypatch
+):
+    """Without a model the text is still indexable; the state must say so."""
+    version_id = _parsed_version(worker_db, make_file_version)
+    extract_job = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
+    worker_main.process_job(extract_job)
+    embed_job = _index_jobs(worker_db, version_id)[0]
+
+    monkeypatch.setattr(worker_main, "_embedding_backend", lambda: None)
+    worker_main.process_job(embed_job.id)
+
+    worker_db.expire_all()
+    assert worker_db.get(FileVersion, version_id).status == VersionStatus.BASIC_READY.value
