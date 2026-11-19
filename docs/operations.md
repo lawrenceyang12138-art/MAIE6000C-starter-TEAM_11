@@ -133,6 +133,17 @@ Only `failed` jobs are retryable, `attempts` is kept across retries, and a live
 job on the same target is refused with `409 active_job_exists`. A scan is not an
 implicit retry: a permanently broken file does not generate one new job per scan.
 
+A `claimed` job owns a lease that the worker renews every 20 seconds (60-second
+expiry). If the worker is killed, the lease lapses and the next poll claims the
+same row again — no operator action and no manual SQL. `attempts` counts the
+recovery, so a job that keeps dying is visible in `GET /jobs/{job_id}`. To watch
+for it:
+
+```bash
+docker compose exec -T db psql -U postgres -d maie6000c -c   "select id, job_type, attempts, lease_owner, lease_expires_at
+     from jobs where status='claimed' order by lease_expires_at;"
+```
+
 Inspect with `GET /jobs/{job_id}`: `status` plus `error_code` (the handler's
 reason, e.g. `file_missing`, or `job_failed` when there is no recorded reason).
 Diagnostic text stays in the database and is never returned.

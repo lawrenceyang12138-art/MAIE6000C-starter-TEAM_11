@@ -309,6 +309,12 @@ The public API exposes:
 `retry_wait` and `canceled` are future extensions. The API must not expose them as
 supported states before their behavior is implemented.
 
+A `claimed` row carries a cooperative lease (`lease_owner`, `lease_expires_at`). The
+worker renews it while the job runs and releases it when the attempt ends. A claim whose
+lease expired is claimable again, so a worker that dies mid-job does not strand work; the
+lease is internal and never appears in the public job vocabulary. The lease does not add
+backoff or automatic retries: a `failed` job still waits for `POST /jobs/{id}/retry`.
+
 ### 3.3 Job types
 
 | `job_type` | Required target | Owner |

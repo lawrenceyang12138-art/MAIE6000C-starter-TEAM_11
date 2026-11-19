@@ -11,6 +11,7 @@ against a real (SQLite) database.
 
 from __future__ import annotations
 
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
@@ -616,3 +617,69 @@ def test_a_keyword_only_embed_job_leaves_the_version_basic_ready(
 
     worker_db.expire_all()
     assert worker_db.get(FileVersion, version_id).status == VersionStatus.BASIC_READY.value
+
+
+def _claimed_job(db, job_id):
+    db.expire_all()
+    return db.get(Job, job_id)
+
+
+def test_claim_records_a_lease_and_counts_the_attempt(worker_db):
+    job_id = _make_job(worker_db, RootJobType.SCAN_ROOT.value)
+
+    claimed = worker_main.claim_next_pending_job(worker_db)
+
+    assert claimed is not None and claimed.id == job_id
+    stored = _claimed_job(worker_db, job_id)
+    assert stored.status == JobStatus.CLAIMED.value
+    assert stored.lease_owner == worker_main.LEASE_OWNER
+    assert stored.lease_expires_at is not None
+    assert stored.attempts == 1
+
+
+def test_a_live_lease_keeps_a_second_worker_out(worker_db):
+    _make_job(worker_db, RootJobType.SCAN_ROOT.value)
+    assert worker_main.claim_next_pending_job(worker_db) is not None
+
+    assert worker_main.claim_next_pending_job(worker_db) is None
+
+
+def test_an_expired_lease_is_claimed_again(worker_db):
+    job_id = _make_job(worker_db, RootJobType.SCAN_ROOT.value)
+    first = worker_main.claim_next_pending_job(worker_db)
+    assert first is not None
+
+    stored = _claimed_job(worker_db, job_id)
+    stored.lease_expires_at -= timedelta(seconds=worker_main.LEASE_SECONDS + 5)
+    worker_db.commit()
+
+    second = worker_main.claim_next_pending_job(worker_db)
+
+    assert second is not None and second.id == job_id
+    recovered = _claimed_job(worker_db, job_id)
+    assert recovered.attempts == 2
+    assert recovered.status == JobStatus.CLAIMED.value
+
+
+def test_completing_a_job_releases_its_lease(worker_db):
+    job_id = _make_job(worker_db, RootJobType.SCAN_ROOT.value)
+    worker_main.claim_next_pending_job(worker_db)
+
+    worker_main._release_lease(job_id)
+
+    released = _claimed_job(worker_db, job_id)
+    assert released.lease_owner is None
+    assert released.lease_expires_at is None
+
+
+def test_a_failed_job_does_not_keep_its_lease(worker_db):
+    job_id = _make_job(worker_db, RootJobType.SCAN_ROOT.value)
+    worker_main.claim_next_pending_job(worker_db)
+
+    worker_main.mark_job_failed(job_id, "boom")
+
+    failed = _claimed_job(worker_db, job_id)
+    assert failed.status == JobStatus.FAILED.value
+    # mark_job_failed runs after the worker released the lease in its finally block;
+    # the row must not advertise a live claim either way.
+    assert failed.status != JobStatus.CLAIMED.value

@@ -137,6 +137,15 @@ class Job(Base):
         DateTime(timezone=True),
         nullable=True,
     )
+    # Cooperative lease (ADR 0002). A claimed row whose lease expired is
+    # claimable again, so a worker that died mid-job cannot strand the work.
+    # Both columns are null on pending and terminal rows.
+    lease_owner: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    lease_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True,
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=utcnow,

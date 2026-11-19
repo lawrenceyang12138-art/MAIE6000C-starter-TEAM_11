@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (2026-11-19)
+Accepted (2026-11-19); backoff deferred. Implemented the same day; the PostgreSQL two-worker case and the live kill-recovery drill are still pending (Docker was unavailable during implementation).
 
 ## Context
 
@@ -27,8 +27,8 @@ soon as a human asks, with `attempts` as the only record.
 Add a lease to `jobs` and make the claim condition cover both `pending` work and expired
 `claimed` work.
 
-- New nullable columns on `jobs`: `lease_owner` (text), `lease_expires_at` (timestamptz),
-  `not_before` (timestamptz, default null). Additive migration, no backfill.
+- Two nullable columns on `jobs`: `lease_owner` (text) and `lease_expires_at`
+  (timestamptz, indexed). Additive migration, no backfill.
 - Claim becomes one conditional update:
 
   ```sql
@@ -49,8 +49,9 @@ Add a lease to `jobs` and make the claim condition cover both `pending` work and
 - An expired lease is claimed by the same statement, so recovery needs no sweeper process.
   `attempts` already counts recoveries, and `POST /jobs/{id}/retry` keeps its conditional
   `status='failed'` update from PR #6.
-- Failure scheduling uses `not_before = now() + backoff(attempts)` with capped exponential
-  growth; the retry route may still force an immediate retry.
+- ~~Failure scheduling uses `not_before = now() + backoff(attempts)`.~~ Deferred: nothing
+  requeues a failed job automatically, so a `not_before` column would have no writer. The
+  explicit retry route stays the only path back to `pending`, and it clears the lease.
 - `/metrics` gains queue depth, claimed-but-expired count, job duration histogram and
   attempts distribution.
 

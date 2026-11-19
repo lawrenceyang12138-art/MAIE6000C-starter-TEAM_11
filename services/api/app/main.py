@@ -572,6 +572,8 @@ def retry_job(job_id: int, db: Session = Depends(get_db)) -> JobRetryAccepted:
             error_code=None,
             claimed_at=None,
             completed_at=None,
+            lease_owner=None,
+            lease_expires_at=None,
         )
         .execution_options(synchronize_session=False)
     )

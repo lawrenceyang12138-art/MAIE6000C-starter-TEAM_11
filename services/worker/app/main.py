@@ -1,11 +1,17 @@
 from __future__ import annotations
 
 import logging
+import os
 import signal
+import socket
+import threading
 import time
+import uuid
+from contextlib import contextmanager
+from datetime import timedelta
 
 import httpx
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select, update
 from sqlalchemy.orm import Session
 
 from services.common.config import configure_logging, get_settings
@@ -50,24 +56,105 @@ HANDLED_JOB_TYPES = {
 }
 
 
+LEASE_SECONDS = 60
+LEASE_OWNER = f"{socket.gethostname()}:{os.getpid()}:{uuid.uuid4().hex[:8]}"
+
+
+def _claimable(now):
+    """Pending work, plus claimed work whose worker stopped renewing."""
+    return or_(
+        Job.status == JobStatus.PENDING.value,
+        and_(
+            Job.status == JobStatus.CLAIMED.value,
+            Job.lease_expires_at.is_not(None),
+            Job.lease_expires_at < now,
+        ),
+    )
+
+
 def claim_next_pending_job(db: Session) -> Job | None:
+    """Claim one job and take its lease (ADR 0002).
+
+    Selection and transition share one predicate, so a racing claimer cannot
+    double-claim; PostgreSQL additionally skips rows another transaction holds.
+    An expired lease makes the row claimable again, which is the whole point:
+    a worker that dies mid-job stops stranding the work.
+    """
+    now = utcnow()
     stmt = (
-        select(Job)
-        .where(Job.status == JobStatus.PENDING.value)
-        .where(Job.job_type.in_(HANDLED_JOB_TYPES))
+        select(Job.id)
+        .where(Job.job_type.in_(HANDLED_JOB_TYPES), _claimable(now))
         .order_by(Job.created_at.asc())
         .limit(1)
     )
-    job = db.execute(stmt).scalars().first()
-    if job is None:
+    if db.get_bind().dialect.name == "postgresql":
+        stmt = stmt.with_for_update(skip_locked=True)
+    job_id = db.execute(stmt).scalar_one_or_none()
+    if job_id is None:
         return None
-
-    job.status = JobStatus.CLAIMED.value
-    job.claimed_at = utcnow()
-    job.attempts += 1
+    moved = db.execute(
+        update(Job)
+        .where(Job.id == job_id, _claimable(now))
+        .values(
+            status=JobStatus.CLAIMED.value,
+            claimed_at=now,
+            attempts=Job.attempts + 1,
+            lease_owner=LEASE_OWNER,
+            lease_expires_at=now + timedelta(seconds=LEASE_SECONDS),
+        )
+        .execution_options(synchronize_session=False)
+    )
+    if moved.rowcount != 1:
+        db.rollback()
+        return None
     db.commit()
-    db.refresh(job)
-    return job
+    return db.get(Job, job_id)
+
+
+def _renew_lease(job_id: int) -> None:
+    session_factory = get_session_factory()
+    with session_factory() as db:
+        db.execute(
+            update(Job)
+            .where(Job.id == job_id, Job.lease_owner == LEASE_OWNER,
+                   Job.status == JobStatus.CLAIMED.value)
+            .values(lease_expires_at=utcnow() + timedelta(seconds=LEASE_SECONDS))
+            .execution_options(synchronize_session=False)
+        )
+        db.commit()
+
+
+def _release_lease(job_id: int) -> None:
+    session_factory = get_session_factory()
+    with session_factory() as db:
+        db.execute(
+            update(Job)
+            .where(Job.id == job_id, Job.lease_owner == LEASE_OWNER)
+            .values(lease_owner=None, lease_expires_at=None)
+            .execution_options(synchronize_session=False)
+        )
+        db.commit()
+
+
+@contextmanager
+def _keep_lease(job_id: int):
+    """Renew while the job runs; a long embed must not lose its claim."""
+    stop = threading.Event()
+
+    def renew() -> None:
+        while not stop.wait(LEASE_SECONDS / 3):
+            try:
+                _renew_lease(job_id)
+            except Exception:  # noqa: BLE001 - a lost renewal is not fatal here
+                logger.warning("lease_renewal_failed", extra={"job_id": job_id})
+
+    thread = threading.Thread(target=renew, name=f"lease-{job_id}", daemon=True)
+    thread.start()
+    try:
+        yield
+    finally:
+        stop.set()
+        thread.join(timeout=5)
 
 
 def mark_job_failed(job_id: int, error_message: str, error_code: str = "job_failed") -> None:
@@ -83,6 +170,9 @@ def mark_job_failed(job_id: int, error_message: str, error_code: str = "job_fail
         job.error = error_message[:1000]
         job.error_code = error_code
         job.completed_at = utcnow()
+        # A failed job holds no lease, whoever marked it failed.
+        job.lease_owner = None
+        job.lease_expires_at = None
 
         if case is not None:
             case.status = CaseStatus.FAILED.value
@@ -486,7 +576,11 @@ def run_worker(*, drain: DrainRequest | None = None) -> None:
                 continue
 
             logger.info("job_claimed", extra={"job_id": job.id, "case_id": job.case_id})
-            process_job(job.id)
+            try:
+                with _keep_lease(job.id):
+                    process_job(job.id)
+            finally:
+                _release_lease(job.id)
 
         except KeyboardInterrupt:
             logger.info("worker_stopped")
