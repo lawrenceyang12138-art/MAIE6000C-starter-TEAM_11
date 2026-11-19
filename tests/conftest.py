@@ -7,6 +7,14 @@ import subprocess
 from pathlib import Path
 from uuid import uuid4
 
+# The suite is written against a model-capable deployment. A developer following
+# docs/operations.md puts EMBEDDING_ENABLED=false in .env to run without the
+# model, and that choice would otherwise fail every semantic/hybrid assertion
+# with "ai_disabled". The environment takes precedence over .env, so pin it
+# before any Settings object is constructed. Tests that exercise the disabled
+# path pass Settings(embedding_enabled=False, _env_file=None) explicitly.
+os.environ["EMBEDDING_ENABLED"] = "true"
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -28,6 +36,7 @@ def local_test_host(monkeypatch):
     """Starlette's in-process client uses testserver instead of a local socket."""
     settings = get_settings()
     monkeypatch.setattr(settings, "api_allowed_hosts", settings.api_allowed_hosts + ["testserver"])
+
 
 
 @pytest.fixture()
