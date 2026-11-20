@@ -34,6 +34,7 @@ from services.common.models import (
     RootStatus,
     SourceChunk,
     VersionStatus,
+    utcnow,
 )
 from services.parsing.pdf import REASON_ENCRYPTED, REASON_FILE_MISSING
 from services.search.embeddings import EmbeddingUnavailable, HTTPEmbeddingBackend
@@ -683,3 +684,64 @@ def test_a_failed_job_does_not_keep_its_lease(worker_db):
     # mark_job_failed runs after the worker released the lease in its finally block;
     # the row must not advertise a live claim either way.
     assert failed.status != JobStatus.CLAIMED.value
+
+
+def test_a_stale_attempt_cannot_fail_the_new_owner(worker_db):
+    """A suspended worker must not fail a job another attempt has taken."""
+    job_id = _make_job(worker_db, RootJobType.SCAN_ROOT.value)
+    first = worker_main.claim_next_pending_job(worker_db)
+    stale = worker_main.Claim(first.id, first.attempts, first.lease_owner)
+
+    stored = _claimed_job(worker_db, job_id)
+    stored.lease_expires_at -= timedelta(seconds=worker_main.LEASE_SECONDS + 5)
+    worker_db.commit()
+    second = worker_main.claim_next_pending_job(worker_db)
+    assert second is not None and second.attempts == 2
+
+    worker_main.mark_job_failed(job_id, "stale worker woke up", claim=stale)
+
+    worker_db.expire_all()
+    row = worker_db.get(Job, job_id)
+    assert row.status == JobStatus.CLAIMED.value
+    assert row.attempts == 2
+    assert row.lease_owner == worker_main.LEASE_OWNER
+    assert row.lease_expires_at is not None
+
+
+def test_a_stale_attempt_cannot_rewrite_the_terminal_state(worker_db):
+    """The guarded finish is the ownership check every handler goes through."""
+    job_id = _make_job(worker_db, RootJobType.SCAN_ROOT.value)
+    first = worker_main.claim_next_pending_job(worker_db)
+    stale = worker_main.Claim(first.id, first.attempts, first.lease_owner)
+    stored = _claimed_job(worker_db, job_id)
+    stored.lease_expires_at -= timedelta(seconds=worker_main.LEASE_SECONDS + 5)
+    worker_db.commit()
+    worker_main.claim_next_pending_job(worker_db)
+
+    written = worker_main._finish(worker_db, stale, status=JobStatus.COMPLETED.value)
+    worker_db.rollback()
+
+    assert written is False
+    worker_db.expire_all()
+    assert worker_db.get(Job, job_id).status == JobStatus.CLAIMED.value
+
+
+def test_a_stale_triage_claim_cannot_touch_the_case(worker_db):
+    """Case data and job state belong to the attempt that still owns the row."""
+    case = Case(title="Stale triage", description="Owned by attempt two.")
+    worker_db.add(case)
+    worker_db.flush()
+    job = Job(case_id=case.id, job_type=JobType.TRIAGE_CASE.value,
+              status=JobStatus.CLAIMED.value, attempts=2,
+              lease_owner=worker_main.LEASE_OWNER, lease_expires_at=utcnow())
+    worker_db.add(job)
+    worker_db.commit()
+
+    stale = worker_main.Claim(job.id, 1, "worker-that-died")
+
+    with pytest.raises(worker_main.StaleClaim):
+        worker_main._process_triage_job(stale)
+
+    worker_db.expire_all()
+    assert worker_db.get(Case, case.id).ai_label is None
+    assert worker_db.get(Job, job.id).status == JobStatus.CLAIMED.value
