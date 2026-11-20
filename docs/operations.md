@@ -137,7 +137,15 @@ implicit retry: a permanently broken file does not generate one new job per scan
 
 A `claimed` job owns a lease that the worker renews every 20 seconds (60-second
 expiry). If the worker is killed, the lease lapses and the next poll claims the
-same row again — no operator action and no manual SQL. `attempts` counts the
+same row again — no operator action and no manual SQL. Every terminal write is
+guarded by the attempt number, so a worker that wakes up after losing its claim
+cannot fail the job, publish case data, or clear the new owner's lease.
+
+Upgrading from a build without leases: stop or drain the old worker first
+(`docker compose stop worker`), then start the stack. Migration `20261119_0006`
+gives any row still `claimed` an expired deadline so the new worker picks it up;
+running both versions against one database would let the new worker reclaim a
+job the old one is still executing. `attempts` counts the
 recovery, so a job that keeps dying is visible in `GET /jobs/{job_id}`. To watch
 for it:
 

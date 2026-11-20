@@ -397,3 +397,50 @@ def test_two_workers_claim_the_same_job_once(queue_factory):
         assert stored.attempts == 1
         assert stored.lease_owner == worker_main.LEASE_OWNER
         assert stored.lease_expires_at is not None
+
+
+def test_a_legacy_claim_needs_the_backfill_to_become_recoverable(queue_factory):
+    """Migration 0006 recovers pre-lease claims; the predicate alone must not."""
+    from datetime import timedelta
+
+    from sqlalchemy import text
+
+    from services.common.models import utcnow
+    from services.worker.app import main as worker_main
+
+    with queue_factory() as db:
+        root = AuthorizedRoot(
+            mount_id="legacy-" + uuid.uuid4().hex[:8],
+            relative_path=".",
+            status=RootStatus.ACTIVE.value,
+        )
+        db.add(root)
+        db.flush()
+        job = Job(
+            root_id=root.id,
+            job_type=RootJobType.SCAN_ROOT.value,
+            status=JobStatus.CLAIMED.value,
+            attempts=1,
+            claimed_at=utcnow() - timedelta(hours=1),
+            lease_owner=None,
+            lease_expires_at=None,
+        )
+        db.add(job)
+        db.commit()
+        job_id = job.id
+
+    with queue_factory() as db:
+        assert worker_main.claim_next_pending_job(db) is None, \
+            "a NULL lease must not be treated as expired while an old worker may run"
+
+    with queue_factory() as db:
+        db.execute(text(
+            "UPDATE jobs SET lease_expires_at = now() "
+            "WHERE status = 'claimed' AND lease_expires_at IS NULL"
+        ))
+        db.commit()
+
+    with queue_factory() as db:
+        recovered = worker_main.claim_next_pending_job(db)
+        assert recovered is not None and recovered.id == job_id
+        assert recovered.attempts == 2
