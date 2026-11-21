@@ -39,6 +39,54 @@ class FolderError(RuntimeError):
     """A stable, path-free folder setup failure."""
 
 
+BRIDGE_PORT_CANDIDATES = (8765, 8788, 8899, 9010, 9123)
+
+
+def bridge_log_path(repo: Path) -> Path:
+    return state_dir(repo) / "bridge.log"
+
+
+def _log_bridge(repo: Path, message: str) -> None:
+    """Record why the host bridge could not start.
+
+    The process is normally spawned with its streams discarded, so a silent
+    ``return 1`` leaves the operator with "the service is unreachable" and no
+    cause. This file is the only place the reason survives.
+    """
+    try:
+        path = bridge_log_path(repo)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        stamp = time.strftime("%Y-%m-%dT%H:%M:%S")
+        with path.open("a", encoding="utf-8") as stream:
+            stream.write(f"{stamp} {message}\n")
+    except OSError:
+        pass
+
+
+def port_is_bindable(port: int) -> bool:
+    import socket
+
+    probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        if os.name == "nt":
+            # Windows reserves port blocks for Hyper-V/WSL; a plain bind is the
+            # only reliable way to tell, and it fails with WSAEACCES (10013).
+            probe.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        probe.bind(("127.0.0.1", port))
+        return True
+    except OSError:
+        return False
+    finally:
+        probe.close()
+
+
+def pick_bridge_port(candidates: tuple[int, ...] = BRIDGE_PORT_CANDIDATES) -> int | None:
+    for port in candidates:
+        if port_is_bindable(port):
+            return port
+    return None
+
+
 def state_dir(repo: Path) -> Path:
     return repo / "work" / "local-folders"
 
@@ -485,6 +533,32 @@ def ensure_bridge(repo: Path, config: dict) -> None:
         if status.get("configuration_id") == _configuration_id(config):
             return
         _retire_bridge(repo, config, status)
+    port = _port(config)
+    if not port_is_bindable(port):
+        # Windows hands Hyper-V/WSL blocks of ports that shift between boots; the
+        # previous failure mode was a child process that bound nothing, printed
+        # nothing, and left the UI saying "start the launcher".
+        message = (
+            f"cannot bind 127.0.0.1:{port}: the port is reserved or already in use. "
+            "Run `python scripts/local_folders.py --pick-port`, set that value as "
+            "LOCAL_FOLDER_BRIDGE_PORT in .env, then rebuild the frontend image."
+        )
+        _log_bridge(repo, message)
+        print(message, file=sys.stderr)
+        raise FolderError("local_folder_bridge_unavailable")
+    port = _port(config)
+    if not port_is_bindable(port):
+        # Windows hands Hyper-V/WSL blocks of ports that shift between boots; the
+        # previous failure mode was a child process that bound nothing, printed
+        # nothing, and left the UI saying "start the launcher".
+        message = (
+            f"cannot bind 127.0.0.1:{port}: the port is reserved or already in use. "
+            "Run `python scripts/local_folders.py --pick-port`, set that value as "
+            "LOCAL_FOLDER_BRIDGE_PORT in .env, then rebuild the frontend image."
+        )
+        _log_bridge(repo, message)
+        print(message, file=sys.stderr)
+        raise FolderError("local_folder_bridge_unavailable")
     command = [
         sys.executable, str(repo / "scripts" / "local_folders.py"), "--serve",
         "--repo", str(repo), "--port", str(_port(config)),
@@ -501,6 +575,13 @@ def ensure_bridge(repo: Path, config: dict) -> None:
         if _probe(repo, config):
             return
         time.sleep(0.1)
+    print(
+        f"Local folder bridge did not answer on port {_port(config)}. "
+        f"Reason: {bridge_log_path(repo)}. "
+        "Pick a free port with `python scripts/local_folders.py --pick-port`, "
+        "set LOCAL_FOLDER_BRIDGE_PORT in .env, then rebuild the frontend image.",
+        file=sys.stderr,
+    )
     raise FolderError("local_folder_bridge_unavailable")
 
 
@@ -1046,12 +1127,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--choose-folder", action="store_true")
     parser.add_argument("--check-quiescent", action="store_true")
     parser.add_argument("--check-source")
+    parser.add_argument("--pick-port", action="store_true")
     parser.add_argument("--repo", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--port")
     parser.add_argument("--frontend-port")
     args = parser.parse_args(argv)
     if args.check_quiescent or args.check_source:
         return _container_check(mount_id=args.check_source)
+    if args.pick_port:
+        port = pick_bridge_port()
+        if port is None:
+            print("No bindable port among " + ", ".join(str(p) for p in BRIDGE_PORT_CANDIDATES),
+                  file=sys.stderr)
+            return 1
+        print(port)
+        return 0
     if args.choose_folder:
         try:
             print(json.dumps(choose_folder(), ensure_ascii=True))
@@ -1068,7 +1158,20 @@ def main(argv: list[str] | None = None) -> int:
     try:
         with _instance_lock(args.repo):
             bridge = Bridge(args.repo, config)
-            server = ThreadingHTTPServer(("127.0.0.1", bridge.port), handler_for(bridge))
+            try:
+                server = ThreadingHTTPServer(("127.0.0.1", bridge.port), handler_for(bridge))
+            except OSError as exc:
+                code = getattr(exc, "winerror", None) or exc.errno
+                message = (
+                    f"cannot bind 127.0.0.1:{bridge.port} ({code}: {exc.strerror or exc}). "
+                    "A reserved or occupied port looks like this; Windows reserves ranges "
+                    "such as 8685-8784 for Hyper-V/WSL. Run "
+                    "`python scripts/local_folders.py --pick-port`, set that value as "
+                    "LOCAL_FOLDER_BRIDGE_PORT in .env and rebuild the frontend image."
+                )
+                _log_bridge(args.repo, message)
+                print(message, file=sys.stderr)
+                return 1
             server.daemon_threads = True
             _write_json(state_dir(args.repo) / "bridge.instance.json", {"port": bridge.port})
             try:

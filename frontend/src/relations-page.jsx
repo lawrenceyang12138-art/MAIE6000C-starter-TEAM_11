@@ -30,7 +30,9 @@ function RelationCard({ relation, file, adapter, review, replacementEntities, on
 
   async function openSource() {
     if (missingEvidence || sourceLoading || saving || uncertain) return;
-    setSource(null); setError(null); setSourceLoading(true);
+    // Keep the passage visible while it is re-read: blanking it first made the
+    // card flash and left an identical result looking like a no-op.
+    setError(null); setSourceLoading(true);
     try {
       const evidence = await adapter.getEvidenceByChunk(relation.chunk_id);
       const compact = (value) => value.replace(/\s+/gu, " ").trim();
@@ -41,7 +43,10 @@ function RelationCard({ relation, file, adapter, review, replacementEntities, on
         throw new AdapterError("The current source does not contain this candidate quote. Reload before reviewing.", { code: "version_superseded", status: 409 });
       }
       if (alive.current) setSource(evidence);
-    } catch (caught) { if (alive.current) setError(caught); }
+    } catch (caught) {
+      // A passage that no longer matches the stored quote must not stay visible.
+      if (alive.current) { setSource(null); setError(caught); }
+    }
     finally { if (alive.current) setSourceLoading(false); }
   }
 
@@ -79,7 +84,9 @@ function RelationCard({ relation, file, adapter, review, replacementEntities, on
         ? "Stored quote hidden because the current source could not be verified."
         : source
           ? "Verified candidate quote: " + (relation.quote || "No supporting quote.")
-          : "Unverified candidate quote: " + (relation.quote || "No supporting quote.")}</blockquote>
+          : state !== "candidate"
+            ? "Decision recorded: " + labels[state] + " · quote not re-verified in this session: " + (relation.quote || "No supporting quote.")
+            : "Unverified candidate quote: " + (relation.quote || "No supporting quote.")}</blockquote>
     <p className="relation-locator">{file.relative_path} · {relation.page_number == null ? "Page unknown" : "Page " + relation.page_number}<br /><code>Version {file.version_id}</code></p>
     <button className="secondary-button" onClick={openSource} disabled={sourceLoading || missingEvidence || !relation.quote || uncertain || saving}>{sourceLoading ? "Reading source…" : source ? "Recheck source passage" : "Open source passage"}</button>
     <Notice error={error} />

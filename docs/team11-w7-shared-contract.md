@@ -279,7 +279,10 @@ discovered -> extracting -> basic_ready -> enriched
 
 - `basic_ready`: source text and chunks are stored; keyword search is available.
 - `enriched`: additional analysis or vectors are complete; this state must not be
-  a prerequisite for keyword search.
+  a prerequisite for keyword search. The embed job moves the version here only when
+  every chunk carries a vector. A keyword-only pass - AI disabled, a model mismatch,
+  a failed batch - leaves the version in `basic_ready` so the model-ready recovery
+  sweep can pick it up again; it must not be reported as enriched.
 - `failed`: processing failed with an `error_code`; retries follow the job policy.
 - `unsupported`: content or format cannot be processed; this is a handled outcome.
 
@@ -305,6 +308,12 @@ The public API exposes:
 
 `retry_wait` and `canceled` are future extensions. The API must not expose them as
 supported states before their behavior is implemented.
+
+A `claimed` row carries a cooperative lease (`lease_owner`, `lease_expires_at`). The
+worker renews it while the job runs and releases it when the attempt ends. A claim whose
+lease expired is claimable again, so a worker that dies mid-job does not strand work; the
+lease is internal and never appears in the public job vocabulary. The lease does not add
+backoff or automatic retries: a `failed` job still waits for `POST /jobs/{id}/retry`.
 
 ### 3.3 Job types
 

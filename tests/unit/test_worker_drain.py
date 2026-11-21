@@ -1,5 +1,8 @@
 """Mount reconnects must never strand a committed claim or lose queued work."""
 
+from datetime import timedelta
+
+import pytest
 from sqlalchemy import select
 
 from services.common.db import make_session_factory
@@ -52,7 +55,7 @@ def test_signal_during_claim_finishes_claim_and_restart_continues_queue(db_sessi
         drain.request()  # Exactly after the claim has committed.
         return job
 
-    def process(job_id):
+    def process(job_id, claim=None):
         with factory() as db:
             job = db.get(Job, job_id)
             assert job.status == "claimed"
@@ -78,7 +81,7 @@ def test_drain_inside_handler_preserves_follow_up_jobs(db_session, monkeypatch):
     factory = configure(db_session, monkeypatch)
     drain = worker.DrainRequest()
 
-    def process(job_id):
+    def process(job_id, claim=None):
         drain.request()
         with factory() as db:
             job = db.get(Job, job_id)
@@ -97,7 +100,7 @@ def test_handler_failure_during_drain_is_committed_before_exit(db_session, monke
     configure(db_session, monkeypatch)
     drain = worker.DrainRequest()
 
-    def fail(job_id):
+    def fail(job_id, claim=None):
         drain.request()
         raise RuntimeError("processing failed during a requested drain")
 
@@ -118,3 +121,29 @@ def test_drain_during_readiness_check_does_not_claim(db_session, monkeypatch):
     monkeypatch.setattr(worker, "recover_after_model_ready", recover)
     worker.run_worker(drain=drain)
     assert statuses(db_session) == ["pending", "pending"]
+
+
+def test_an_interrupted_job_keeps_its_deadline(db_session, monkeypatch):
+    """Ctrl-C must leave recoverable work, not a claim nobody can take over."""
+    ids = queue(db_session, 1)
+    configure(db_session, monkeypatch)
+
+    def interrupt(job_id, claim=None):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(worker, "process_job", interrupt)
+
+    with pytest.raises(KeyboardInterrupt):
+        worker.run_worker()
+
+    db_session.expire_all()
+    job = db_session.get(Job, ids[0])
+    assert job.status == "claimed"
+    assert job.lease_expires_at is not None, "an interrupted claim lost its deadline"
+
+    # The deadline survives, so normal expiry recovers the job for a new worker.
+    job.lease_expires_at -= timedelta(seconds=worker.LEASE_SECONDS + 5)
+    db_session.commit()
+    recovered = worker.claim_next_pending_job(db_session)
+    assert recovered is not None and recovered.job_id == ids[0]
+    assert recovered.attempts == 2

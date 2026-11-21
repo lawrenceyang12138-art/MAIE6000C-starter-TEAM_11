@@ -710,3 +710,26 @@ def test_container_checks_are_not_imported_by_the_host_module():
     # Importing the helper is deliberately possible without host FastAPI,
     # SQLAlchemy, psycopg or any package from the Docker application runtime.
     assert "sqlalchemy" not in folders.__dict__
+
+
+def test_pick_port_returns_the_first_bindable_candidate(monkeypatch):
+    monkeypatch.setattr(folders, "port_is_bindable", lambda port: port == 8899)
+    assert folders.pick_bridge_port() == 8899
+
+
+def test_pick_port_reports_none_when_every_candidate_is_taken(monkeypatch):
+    monkeypatch.setattr(folders, "port_is_bindable", lambda port: False)
+    assert folders.pick_bridge_port() is None
+
+
+def test_ensure_bridge_refuses_an_unbindable_port(repo, monkeypatch, windows_host, capsys):
+    """The failure must name the port and the fix instead of dying silently."""
+    monkeypatch.setattr(folders, "_probe", lambda *args, **kwargs: None)
+    monkeypatch.setattr(folders, "port_is_bindable", lambda port: False)
+
+    with pytest.raises(folders.FolderError) as caught:
+        folders.ensure_bridge(repo, {})
+
+    assert str(caught.value) == "local_folder_bridge_unavailable"
+    assert "LOCAL_FOLDER_BRIDGE_PORT" in capsys.readouterr().err
+    assert "cannot bind 127.0.0.1:8765" in folders.bridge_log_path(repo).read_text(encoding="utf-8")

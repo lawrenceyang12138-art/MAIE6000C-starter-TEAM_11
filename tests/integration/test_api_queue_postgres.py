@@ -316,7 +316,7 @@ def test_a_stale_retry_cannot_reset_work_already_taken(
     with queue_factory() as db:
         if winner_state == "claimed":
             claimed = worker_main.claim_next_pending_job(db)
-            assert claimed is not None and claimed.id == job_id
+            assert claimed is not None and claimed.job_id == job_id
         else:
             finished = db.get(Job, job_id)
             worker_main._complete_job(db, finished)
@@ -345,3 +345,102 @@ def test_a_stale_retry_cannot_reset_work_already_taken(
         assert after.attempts == attempts_before
         # Nothing was requeued, so the worker finds no claimable work.
         assert worker_main.claim_next_pending_job(db) is None
+
+
+def test_two_workers_claim_the_same_job_once(queue_factory):
+    """SKIP LOCKED plus a conditional update: one row, one winner (ADR 0002)."""
+    import threading
+
+    from services.worker.app import main as worker_main
+
+    with queue_factory() as db:
+        root = AuthorizedRoot(
+            mount_id="lease-" + uuid.uuid4().hex[:8],
+            relative_path=".",
+            status=RootStatus.ACTIVE.value,
+        )
+        db.add(root)
+        db.flush()
+        job = Job(
+            root_id=root.id,
+            job_type=RootJobType.SCAN_ROOT.value,
+            status=JobStatus.PENDING.value,
+        )
+        db.add(job)
+        db.commit()
+        job_id = job.id
+
+    barrier = threading.Barrier(2, timeout=10)
+    outcomes: list[int | None] = []
+    lock = threading.Lock()
+
+    def attempt() -> None:
+        with queue_factory() as db:
+            barrier.wait()
+            claimed = worker_main.claim_next_pending_job(db)
+            with lock:
+                outcomes.append(claimed.job_id if claimed else None)
+
+    threads = [threading.Thread(target=attempt) for _ in range(2)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=30)
+
+    assert len(outcomes) == 2, f"a claimer never returned: {outcomes}"
+    assert outcomes.count(job_id) == 1, f"the job was claimed twice: {outcomes}"
+    assert outcomes.count(None) == 1, f"the loser did not stand down: {outcomes}"
+
+    with queue_factory() as db:
+        stored = db.get(Job, job_id)
+        assert stored.status == JobStatus.CLAIMED.value
+        assert stored.attempts == 1
+        assert stored.lease_owner == worker_main.LEASE_OWNER
+        assert stored.lease_expires_at is not None
+
+
+def test_a_legacy_claim_needs_the_backfill_to_become_recoverable(queue_factory):
+    """Migration 0006 recovers pre-lease claims; the predicate alone must not."""
+    from datetime import timedelta
+
+    from sqlalchemy import text
+
+    from services.common.models import utcnow
+    from services.worker.app import main as worker_main
+
+    with queue_factory() as db:
+        root = AuthorizedRoot(
+            mount_id="legacy-" + uuid.uuid4().hex[:8],
+            relative_path=".",
+            status=RootStatus.ACTIVE.value,
+        )
+        db.add(root)
+        db.flush()
+        job = Job(
+            root_id=root.id,
+            job_type=RootJobType.SCAN_ROOT.value,
+            status=JobStatus.CLAIMED.value,
+            attempts=1,
+            claimed_at=utcnow() - timedelta(hours=1),
+            lease_owner=None,
+            lease_expires_at=None,
+        )
+        db.add(job)
+        db.commit()
+        job_id = job.id
+
+    with queue_factory() as db:
+        assert worker_main.claim_next_pending_job(db) is None, \
+            "a NULL lease must not be treated as expired while an old worker may run"
+
+    with queue_factory() as db:
+        db.execute(text(
+            "UPDATE jobs SET lease_expires_at = now() "
+            "WHERE status = 'claimed' AND lease_expires_at IS NULL"
+        ))
+        db.commit()
+
+    with queue_factory() as db:
+        recovered = worker_main.claim_next_pending_job(db)
+        assert recovered is not None and recovered.job_id == job_id
+        assert recovered.attempts == 2

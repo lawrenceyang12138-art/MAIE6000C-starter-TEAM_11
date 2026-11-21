@@ -48,6 +48,8 @@ the main path.
 ```bash
 python scripts/start.py          # installs/builds as needed; displays model preparation
 docker compose ps                # wait for api/ai healthy, db healthy
+# Code changes need an explicit rebuild; `up -d` reuses the existing image.
+docker compose up -d --build
 docker compose logs -f worker    # watch job processing
 docker compose down              # stop, keep data (postgres_data volume)
 docker compose down -v           # stop and DELETE the database volume
@@ -132,6 +134,25 @@ curl -s -X POST localhost:8000/jobs/{job_id}/retry
 Only `failed` jobs are retryable, `attempts` is kept across retries, and a live
 job on the same target is refused with `409 active_job_exists`. A scan is not an
 implicit retry: a permanently broken file does not generate one new job per scan.
+
+A `claimed` job owns a lease that the worker renews every 20 seconds (60-second
+expiry). If the worker is killed, the lease lapses and the next poll claims the
+same row again — no operator action and no manual SQL. Every terminal write is
+guarded by the attempt number, so a worker that wakes up after losing its claim
+cannot fail the job, publish case data, or clear the new owner's lease.
+
+Upgrading from a build without leases: stop or drain the old worker first
+(`docker compose stop worker`), then start the stack. Migration `20261119_0007`
+gives any row still `claimed` an expired deadline so the new worker picks it up;
+running both versions against one database would let the new worker reclaim a
+job the old one is still executing. `attempts` counts the
+recovery, so a job that keeps dying is visible in `GET /jobs/{job_id}`. To watch
+for it:
+
+```bash
+docker compose exec -T db psql -U postgres -d maie6000c -c   "select id, job_type, attempts, lease_owner, lease_expires_at
+     from jobs where status='claimed' order by lease_expires_at;"
+```
 
 Inspect with `GET /jobs/{job_id}`: `status` plus `error_code` (the handler's
 reason, e.g. `file_missing`, or `job_failed` when there is no recorded reason).

@@ -11,13 +11,17 @@ against a real (SQLite) database.
 
 from __future__ import annotations
 
+from datetime import timedelta
 from pathlib import Path
+
+import time
 
 import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from services.common.db import make_session_factory
+from services.search.text import MODEL_ID, TOKEN_DIMENSIONS
 from services.common.models import (
     AuthorizedRoot,
     Case,
@@ -32,6 +36,7 @@ from services.common.models import (
     RootStatus,
     SourceChunk,
     VersionStatus,
+    utcnow,
 )
 from services.parsing.pdf import REASON_ENCRYPTED, REASON_FILE_MISSING
 from services.search.embeddings import EmbeddingUnavailable, HTTPEmbeddingBackend
@@ -129,7 +134,7 @@ def test_a_scan_job_runs_the_handler_and_completes(worker_db, monkeypatch):
 
     seen: list[tuple] = []
 
-    def fake_scan(db, root_id, job_id=None):
+    def fake_scan(db, root_id, job_id=None, **kwargs):
         seen.append((root_id, job_id))
         return {"outcome": "scanned", "files_seen": 3}
 
@@ -151,7 +156,7 @@ def test_a_scan_error_propagates_for_the_loop_to_fail_the_job(worker_db, monkeyp
     worker_db.refresh(root)
     job_id = _make_job(worker_db, RootJobType.SCAN_ROOT.value, root_id=root.id)
 
-    def boom(db, root_id, job_id=None):
+    def boom(db, root_id, job_id=None, **kwargs):
         raise LookupError("unknown root")
 
     monkeypatch.setattr(worker_main, "handle_scan_root", boom)
@@ -173,7 +178,7 @@ def test_a_successful_extract_completes_the_job_and_dispatches_one_index_job(
         seen.append(("resolve", vid))
         return expected_path
 
-    def fake_extract(db, vid, source_path):
+    def fake_extract(db, vid, source_path, **kwargs):
         seen.append(("extract", vid, str(source_path)))
         return VersionStatus.BASIC_READY.value
 
@@ -206,7 +211,7 @@ def test_index_dispatch_is_idempotent_per_version(worker_db, make_file_version, 
     monkeypatch.setattr(
         worker_main,
         "handle_extract_file",
-        lambda db, vid, source_path: VersionStatus.BASIC_READY.value,
+        lambda db, vid, source_path, **kwargs: VersionStatus.BASIC_READY.value,
     )
 
     worker_main.process_job(job_id)
@@ -227,7 +232,7 @@ def test_an_unsupported_document_completes_the_job_without_indexing(
     version_id = make_file_version(sha256="e" * 64)
     job_id = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
 
-    def fake_extract(db, vid, source_path):
+    def fake_extract(db, vid, source_path, **kwargs):
         version = db.get(FileVersion, vid)
         version.status = VersionStatus.UNSUPPORTED.value
         version.error_code = REASON_ENCRYPTED
@@ -261,7 +266,7 @@ def test_a_failed_version_fails_the_job_so_it_can_be_retried(
     version_id = make_file_version(sha256="f" * 64)
     job_id = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
 
-    def fake_extract(db, vid, source_path):
+    def fake_extract(db, vid, source_path, **kwargs):
         version = db.get(FileVersion, vid)
         version.status = VersionStatus.FAILED.value
         version.error_code = REASON_FILE_MISSING
@@ -295,7 +300,7 @@ def test_an_unfinished_status_from_the_handler_is_a_bug(worker_db, make_file_ver
     monkeypatch.setattr(
         worker_main,
         "handle_extract_file",
-        lambda db, vid, source_path: VersionStatus.EXTRACTING.value,
+        lambda db, vid, source_path, **kwargs: VersionStatus.EXTRACTING.value,
     )
 
     with pytest.raises(RuntimeError):
@@ -326,7 +331,7 @@ def test_a_retry_of_an_already_parsed_version_keeps_its_existing_index_job(
     monkeypatch.setattr(
         worker_main,
         "handle_extract_file",
-        lambda db, vid, source_path: calls.append("extract"),
+        lambda db, vid, source_path, **kwargs: calls.append("extract"),
     )
 
     worker_main.process_job(job_id)
@@ -348,7 +353,7 @@ def test_retry_repairs_failed_first_index_dispatch_without_replacing_parsed_text
     worker_db.get(FileRecord, version.file_id).current_version_id = version_id
     worker_db.commit()
     job_id = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
-    assert worker_main.claim_next_pending_job(worker_db).id == job_id
+    assert worker_main.claim_next_pending_job(worker_db).job_id == job_id
     real_enqueue = worker_main._enqueue_embed_job
 
     def fail_dispatch(*args, **kwargs):
@@ -374,7 +379,7 @@ def test_retry_repairs_failed_first_index_dispatch_without_replacing_parsed_text
 
     monkeypatch.setattr(worker_main, "handle_extract_file", no_reparse)
     assert client.post(f"/jobs/{job_id}/retry").status_code == 202
-    assert worker_main.claim_next_pending_job(worker_db).id == job_id
+    assert worker_main.claim_next_pending_job(worker_db).job_id == job_id
     worker_main.process_job(job_id)
     worker_db.expire_all()
 
@@ -388,8 +393,8 @@ def test_retry_repairs_failed_first_index_dispatch_without_replacing_parsed_text
 
     monkeypatch.setattr(HTTPEmbeddingBackend, "embed", unavailable)
     index_job = worker_main.claim_next_pending_job(worker_db)
-    assert index_job.job_type == RootJobType.EMBED_FILE.value
-    worker_main.process_job(index_job.id)
+    assert worker_db.get(Job, index_job.job_id).job_type == RootJobType.EMBED_FILE.value
+    worker_main.process_job(index_job.job_id, index_job)
     worker_db.expire_all()
     assert {index.chunk_id for index in worker_db.scalars(select(ChunkSearchIndex))} == chunk_ids
     result = client.post("/search", json={"query": "ALPHA", "mode": "keyword"})
@@ -405,7 +410,7 @@ def test_a_retry_of_an_enriched_version_queues_no_index_job(
     job_id = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
 
     monkeypatch.setattr(
-        worker_main, "handle_extract_file", lambda db, vid, source_path: "unreachable"
+        worker_main, "handle_extract_file", lambda db, vid, source_path, **kwargs: "unreachable"
     )
 
     worker_main.process_job(job_id)
@@ -424,7 +429,7 @@ def test_a_processing_error_propagates_for_the_loop_to_fail_the_job(
         worker_main, "resolve_source_path", lambda db, vid: Path("/corpus/x.pdf")
     )
 
-    def boom(db, vid, source_path):
+    def boom(db, vid, source_path, **kwargs):
         raise RuntimeError("database went away")
 
     monkeypatch.setattr(worker_main, "handle_extract_file", boom)
@@ -532,8 +537,8 @@ def test_claiming_skips_job_types_the_worker_does_not_handle(worker_db, make_fil
     claimed = worker_main.claim_next_pending_job(worker_db)
 
     assert claimed is not None
-    assert claimed.id == extract_id
-    assert claimed.status == JobStatus.CLAIMED.value
+    assert claimed.job_id == extract_id
+    assert worker_db.get(Job, claimed.job_id).status == JobStatus.CLAIMED.value
 
 
 def test_mark_job_failed_records_the_error_and_fails_the_case(worker_db):
@@ -563,3 +568,301 @@ def test_mark_job_failed_works_for_jobs_without_a_case(worker_db):
     job = _job(worker_db, job_id)
     assert job.status == JobStatus.FAILED.value
     assert job.error == "mount directory not found"
+
+
+class _TokenBackend:
+    """A model-identity-compatible backend that returns one token per chunk."""
+
+    model_id = MODEL_ID
+    dimensions = TOKEN_DIMENSIONS
+
+    def embed(self, texts, kind="passage"):
+        return [[[1.0] + [0.0] * (TOKEN_DIMENSIONS - 1)] for _ in texts]
+
+
+def _parsed_version(worker_db, make_file_version):
+    source = Path(__file__).resolve().parents[1] / "fixtures/parsing/normal.pdf"
+    version_id = make_file_version(source_path=source)
+    version = worker_db.get(FileVersion, version_id)
+    worker_db.get(FileRecord, version.file_id).current_version_id = version_id
+    worker_db.commit()
+    return version_id
+
+
+def test_a_completed_embed_job_marks_the_version_enriched(
+    worker_db, make_file_version, monkeypatch
+):
+    """Contract 8: enriched means the vectors are published, not just queued."""
+    version_id = _parsed_version(worker_db, make_file_version)
+    extract_job = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
+    worker_main.process_job(extract_job)
+    embed_job = _index_jobs(worker_db, version_id)[0]
+    assert worker_db.get(FileVersion, version_id).status == VersionStatus.BASIC_READY.value
+
+    monkeypatch.setattr(worker_main, "_embedding_backend", lambda: _TokenBackend())
+    worker_main.process_job(embed_job.id)
+
+    worker_db.expire_all()
+    assert worker_db.get(FileVersion, version_id).status == VersionStatus.ENRICHED.value
+
+
+def test_a_keyword_only_embed_job_leaves_the_version_basic_ready(
+    worker_db, make_file_version, monkeypatch
+):
+    """Without a model the text is still indexable; the state must say so."""
+    version_id = _parsed_version(worker_db, make_file_version)
+    extract_job = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
+    worker_main.process_job(extract_job)
+    embed_job = _index_jobs(worker_db, version_id)[0]
+
+    monkeypatch.setattr(worker_main, "_embedding_backend", lambda: None)
+    worker_main.process_job(embed_job.id)
+
+    worker_db.expire_all()
+    assert worker_db.get(FileVersion, version_id).status == VersionStatus.BASIC_READY.value
+
+
+def _claimed_job(db, job_id):
+    db.expire_all()
+    return db.get(Job, job_id)
+
+
+def test_claim_records_a_lease_and_counts_the_attempt(worker_db):
+    job_id = _make_job(worker_db, RootJobType.SCAN_ROOT.value)
+
+    claimed = worker_main.claim_next_pending_job(worker_db)
+
+    assert claimed is not None and claimed.job_id == job_id
+    stored = _claimed_job(worker_db, job_id)
+    assert stored.status == JobStatus.CLAIMED.value
+    assert stored.lease_owner == worker_main.LEASE_OWNER
+    assert stored.lease_expires_at is not None
+    assert stored.attempts == 1
+
+
+def test_a_live_lease_keeps_a_second_worker_out(worker_db):
+    _make_job(worker_db, RootJobType.SCAN_ROOT.value)
+    assert worker_main.claim_next_pending_job(worker_db) is not None
+
+    assert worker_main.claim_next_pending_job(worker_db) is None
+
+
+def test_an_expired_lease_is_claimed_again(worker_db):
+    job_id = _make_job(worker_db, RootJobType.SCAN_ROOT.value)
+    first = worker_main.claim_next_pending_job(worker_db)
+    assert first is not None
+
+    stored = _claimed_job(worker_db, job_id)
+    stored.lease_expires_at -= timedelta(seconds=worker_main.LEASE_SECONDS + 5)
+    worker_db.commit()
+
+    second = worker_main.claim_next_pending_job(worker_db)
+
+    assert second is not None and second.job_id == job_id
+    recovered = _claimed_job(worker_db, job_id)
+    assert recovered.attempts == 2
+    assert recovered.status == JobStatus.CLAIMED.value
+
+
+def test_completing_a_job_releases_its_lease(worker_db):
+    job_id = _make_job(worker_db, RootJobType.SCAN_ROOT.value)
+    worker_main.claim_next_pending_job(worker_db)
+
+    worker_main._release_lease(job_id)
+
+    released = _claimed_job(worker_db, job_id)
+    assert released.lease_owner is None
+    assert released.lease_expires_at is None
+
+
+def test_a_failed_job_does_not_keep_its_lease(worker_db):
+    job_id = _make_job(worker_db, RootJobType.SCAN_ROOT.value)
+    worker_main.claim_next_pending_job(worker_db)
+
+    worker_main.mark_job_failed(job_id, "boom")
+
+    failed = _claimed_job(worker_db, job_id)
+    assert failed.status == JobStatus.FAILED.value
+    # mark_job_failed runs after the worker released the lease in its finally block;
+    # the row must not advertise a live claim either way.
+    assert failed.status != JobStatus.CLAIMED.value
+
+
+def test_a_stale_attempt_cannot_fail_the_new_owner(worker_db):
+    """A suspended worker must not fail a job another attempt has taken."""
+    job_id = _make_job(worker_db, RootJobType.SCAN_ROOT.value)
+    first = worker_main.claim_next_pending_job(worker_db)
+    stale = worker_main.Claim(first.job_id, first.attempts, first.owner)
+
+    stored = _claimed_job(worker_db, job_id)
+    stored.lease_expires_at -= timedelta(seconds=worker_main.LEASE_SECONDS + 5)
+    worker_db.commit()
+    second = worker_main.claim_next_pending_job(worker_db)
+    assert second is not None and second.attempts == 2
+
+    worker_main.mark_job_failed(job_id, "stale worker woke up", claim=stale)
+
+    worker_db.expire_all()
+    row = worker_db.get(Job, job_id)
+    assert row.status == JobStatus.CLAIMED.value
+    assert row.attempts == 2
+    assert row.lease_owner == worker_main.LEASE_OWNER
+    assert row.lease_expires_at is not None
+
+
+def test_a_stale_attempt_cannot_rewrite_the_terminal_state(worker_db):
+    """The guarded finish is the ownership check every handler goes through."""
+    job_id = _make_job(worker_db, RootJobType.SCAN_ROOT.value)
+    first = worker_main.claim_next_pending_job(worker_db)
+    stale = worker_main.Claim(first.job_id, first.attempts, first.owner)
+    stored = _claimed_job(worker_db, job_id)
+    stored.lease_expires_at -= timedelta(seconds=worker_main.LEASE_SECONDS + 5)
+    worker_db.commit()
+    worker_main.claim_next_pending_job(worker_db)
+
+    written = worker_main._finish(worker_db, stale, status=JobStatus.COMPLETED.value)
+    worker_db.rollback()
+
+    assert written is False
+    worker_db.expire_all()
+    assert worker_db.get(Job, job_id).status == JobStatus.CLAIMED.value
+
+
+def test_a_stale_triage_claim_cannot_touch_the_case(worker_db):
+    """Case data and job state belong to the attempt that still owns the row."""
+    case = Case(title="Stale triage", description="Owned by attempt two.")
+    worker_db.add(case)
+    worker_db.flush()
+    job = Job(case_id=case.id, job_type=JobType.TRIAGE_CASE.value,
+              status=JobStatus.CLAIMED.value, attempts=2,
+              lease_owner=worker_main.LEASE_OWNER, lease_expires_at=utcnow())
+    worker_db.add(job)
+    worker_db.commit()
+
+    stale = worker_main.Claim(job.id, 1, "worker-that-died")
+
+    with pytest.raises(worker_main.StaleClaim):
+        worker_main._process_triage_job(stale)
+
+    worker_db.expire_all()
+    assert worker_db.get(Case, case.id).ai_label is None
+    assert worker_db.get(Job, job.id).status == JobStatus.CLAIMED.value
+
+
+def _expire(worker_db, job_id):
+    row = worker_db.get(Job, job_id)
+    row.lease_expires_at -= timedelta(seconds=worker_main.LEASE_SECONDS + 5)
+    worker_db.commit()
+
+
+def test_a_claim_identity_never_comes_from_a_reread(worker_db):
+    """A reclaim between commit and re-read must not lend its number to the loser."""
+    job_id = _make_job(worker_db, RootJobType.SCAN_ROOT.value)
+    first = worker_main.claim_next_pending_job(worker_db)
+    assert first is not None and first.attempts == 1
+
+    _expire(worker_db, job_id)
+    second = worker_main.claim_next_pending_job(worker_db)
+    assert second is not None and second.attempts == 2
+
+    # The first worker's identity is whatever its own update produced.
+    assert first.attempts == 1 and first.job_id == job_id
+    assert worker_main._renew_lease(first) is False
+    assert worker_main._renew_lease(second) is True
+
+
+@pytest.mark.parametrize("status", [VersionStatus.BASIC_READY.value, VersionStatus.ENRICHED.value])
+def test_the_extract_fast_path_is_guarded(worker_db, make_file_version, status):
+    """Both ready states: a stale attempt leaves the row and the queue alone."""
+    fixture = Path(__file__).resolve().parents[1] / "fixtures" / "parsing" / "normal.pdf"
+    version_id = make_file_version(source_path=fixture, status=status)
+    file_id = worker_db.get(FileVersion, version_id).file_id
+    worker_db.get(FileRecord, file_id).current_version_id = version_id
+    worker_db.commit()
+    job_id = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
+
+    first = worker_main.claim_next_pending_job(worker_db)
+    _expire(worker_db, job_id)
+    second = worker_main.claim_next_pending_job(worker_db)
+    assert second is not None and second.attempts == 2
+
+    with pytest.raises(worker_main.StaleClaim):
+        worker_main._process_extract_job(worker_main.Claim(job_id, first.attempts, first.owner))
+
+    worker_db.expire_all()
+    row = worker_db.get(Job, job_id)
+    assert row.status == JobStatus.CLAIMED.value
+    assert row.attempts == 2
+    assert row.lease_owner == worker_main.LEASE_OWNER
+    assert row.lease_expires_at is not None
+    assert not worker_db.scalars(
+        select(Job).where(Job.version_id == version_id,
+                          Job.job_type == RootJobType.EMBED_FILE.value)
+    ).all(), "a stale attempt must not repair or queue index work"
+
+
+def test_the_extract_fast_path_clears_the_lease_for_the_current_attempt(
+    worker_db, make_file_version
+):
+    fixture = Path(__file__).resolve().parents[1] / "fixtures" / "parsing" / "normal.pdf"
+    version_id = make_file_version(source_path=fixture, status=VersionStatus.ENRICHED.value)
+    job_id = _make_job(worker_db, RootJobType.EXTRACT_FILE.value, version_id=version_id)
+    claim = worker_main.claim_next_pending_job(worker_db)
+
+    worker_main._process_extract_job(claim)
+
+    worker_db.expire_all()
+    row = worker_db.get(Job, job_id)
+    assert row.status == JobStatus.COMPLETED.value
+    assert row.lease_owner is None
+    assert row.lease_expires_at is None
+
+
+def test_a_parse_publish_is_refused_when_the_claim_is_gone(worker_db, make_file_version):
+    """The guard runs inside the transaction that writes chunks and relations."""
+    from services.parsing.handler import handle_extract_file
+
+    fixture = Path(__file__).resolve().parents[1] / "fixtures" / "parsing" / "normal.pdf"
+    version_id = make_file_version(source_path=fixture, status=VersionStatus.DISCOVERED.value)
+    version = worker_db.get(FileVersion, version_id)
+    source = Path(fixture)
+
+    with pytest.raises(worker_main.StaleClaim):
+        handle_extract_file(worker_db, version_id, source, guard=lambda: False)
+
+    worker_db.expire_all()
+    assert not worker_db.scalars(
+        select(SourceChunk).where(SourceChunk.version_id == version_id)
+    ).all(), "a refused publish must not leave chunks behind"
+    assert worker_db.get(FileVersion, version_id).status != VersionStatus.BASIC_READY.value
+    assert version is not None
+
+
+def test_a_renewal_never_revives_a_terminal_row(worker_db):
+    job_id = _make_job(worker_db, RootJobType.SCAN_ROOT.value)
+    claim = worker_main.claim_next_pending_job(worker_db)
+
+    with worker_db.begin_nested():
+        worker_main._finish(worker_db, claim, status=JobStatus.COMPLETED.value)
+    worker_db.commit()
+
+    assert worker_main._renew_lease(claim) is False
+    worker_db.expire_all()
+    row = worker_db.get(Job, job_id)
+    assert row.status == JobStatus.COMPLETED.value
+    assert row.lease_expires_at is None
+
+
+def test_a_lost_claim_stops_the_heartbeat(worker_db, monkeypatch):
+    _make_job(worker_db, RootJobType.SCAN_ROOT.value)
+    claim = worker_main.claim_next_pending_job(worker_db)
+    monkeypatch.setattr(worker_main, "LEASE_SECONDS", 0.05)
+    monkeypatch.setattr(worker_main, "_renew_lease", lambda claim: False)
+
+    with worker_main._keep_lease(claim):
+        for _ in range(40):
+            if claim.lost:
+                break
+            time.sleep(0.02)
+
+    assert claim.lost is True

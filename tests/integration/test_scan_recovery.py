@@ -90,7 +90,7 @@ def _run_next_job(db: Session) -> Job:
     """
     job = worker_main.claim_next_pending_job(db)
     assert job is not None, "expected a pending job to claim"
-    worker_main.process_job(job.id)
+    worker_main.process_job(job.job_id, job)
     return job
 
 
@@ -309,7 +309,7 @@ def test_a_directory_that_cannot_be_listed_keeps_its_files_unavailable(
     root_id, scan_job_id = _authorize(client)
     worker_main.process_job(scan_job_id)
     while (job := worker_main.claim_next_pending_job(db_session)) is not None:
-        worker_main.process_job(job.id)
+        worker_main.process_job(job.job_id, job)
 
     db_session.expire_all()
     rows = {item["relative_path"]: item for item in client.get(
