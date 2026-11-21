@@ -28,6 +28,7 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
+from services.common.claim import StaleClaim
 from services.common.models import FileVersion, VersionStatus
 from services.parsing.chunking import chunk_document
 from services.parsing.pdf import (
@@ -52,18 +53,34 @@ PARSER_REVISION = "parsing-v1"
 REASON_PROCESSING_FAILED = "processing_failed"
 
 
-def _finish(db: Session, version_id: str, status: str, error_code: str | None) -> str:
+def _finish(
+    db: Session,
+    version_id: str,
+    status: str,
+    error_code: str | None,
+    *,
+    guard=None,
+) -> str:
     version = db.get(FileVersion, version_id)
     if version is None:
         raise LookupError(f"file version {version_id} disappeared mid-processing")
     version.parser_revision = PARSER_REVISION
     version.status = status
     version.error_code = error_code
+    if guard is not None and not guard():
+        db.rollback()
+        raise StaleClaim(f"version {version_id} is no longer owned by this attempt")
     db.commit()
     return status
 
 
-def handle_extract_file(db: Session, version_id: str, source_path: str | Path) -> str:
+def handle_extract_file(
+    db: Session,
+    version_id: str,
+    source_path: str | Path,
+    *,
+    guard=None,
+) -> str:
     """Extract, chunk and store one file version.
 
     Returns the resulting version status. Raises only for conditions that are
@@ -86,7 +103,8 @@ def handle_extract_file(db: Session, version_id: str, source_path: str | Path) -
             # The file changed underneath us. Publishing now would attach text
             # from one set of bytes to a version row that claims different ones.
             return _finish(
-                db, version_id, VersionStatus.FAILED.value, REASON_SOURCE_CHANGED
+                db, version_id, VersionStatus.FAILED.value, REASON_SOURCE_CHANGED,
+                guard=guard,
             )
 
         chunks = chunk_document(document)
@@ -111,10 +129,17 @@ def handle_extract_file(db: Session, version_id: str, source_path: str | Path) -
         version.parser_revision = PARSER_REVISION
         version.status = VersionStatus.BASIC_READY.value
         version.error_code = None
+        # Chunks, relation candidates and the ready status publish only while
+        # this attempt still owns the job: a stale parse would replace rows that
+        # a newer attempt already published.
+        if guard is not None and not guard():
+            db.rollback()
+            raise StaleClaim(f"version {version_id} is no longer owned by this attempt")
         db.commit()
     except UnsupportedDocument as exc:
         return _finish(
-            db, version_id, VersionStatus.UNSUPPORTED.value, exc.reason_code
+            db, version_id, VersionStatus.UNSUPPORTED.value, exc.reason_code,
+            guard=guard,
         )
     except SourceMissing as exc:
         # The file was there when it was scanned and has gone since. That is a

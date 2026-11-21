@@ -39,6 +39,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from services.common.config import get_settings
+from services.common.claim import StaleClaim
 from services.common.models import (
     AuthorizedRoot,
     FilePresence,
@@ -359,12 +360,23 @@ def _note_unreadable(
         summary["files_unavailable"] += 1
 
 
-def handle_scan_root(db: Session, root_id: str, job_id: int | None = None) -> dict:
+def handle_scan_root(
+    db: Session,
+    root_id: str,
+    job_id: int | None = None,
+    *,
+    guard=None,
+) -> dict:
     """Scan one authorized root: observe, version, point, dispatch.
 
     The whole run is one transaction: observation, the current-version pointer
     and extraction dispatch land together or not at all (the publication
     transaction the spec requires). Returns a summary dict for logging.
+
+    ``guard`` runs immediately before the commit and must return False when the
+    job no longer belongs to the calling attempt. The whole run is one
+    transaction, so refusing there discards these file-presence changes instead
+    of letting a stale worker publish them.
 
     Files that cannot be read do not abort the run. They are recorded with a
     ``presence_status`` and reason, so the file list explains itself instead of
@@ -610,5 +622,8 @@ def handle_scan_root(db: Session, root_id: str, job_id: int | None = None) -> di
     # be listed leaves a gap, and claiming success would hide it.
     if not report.unreadable_dirs:
         root.last_successful_scan_at = utcnow()
+    if guard is not None and not guard():
+        db.rollback()
+        raise StaleClaim(f"scan job {job_id} moved to another attempt")
     db.commit()
     return summary

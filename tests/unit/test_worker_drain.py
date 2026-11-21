@@ -145,5 +145,5 @@ def test_an_interrupted_job_keeps_its_deadline(db_session, monkeypatch):
     job.lease_expires_at -= timedelta(seconds=worker.LEASE_SECONDS + 5)
     db_session.commit()
     recovered = worker.claim_next_pending_job(db_session)
-    assert recovered is not None and recovered.id == ids[0]
+    assert recovered is not None and recovered.job_id == ids[0]
     assert recovered.attempts == 2

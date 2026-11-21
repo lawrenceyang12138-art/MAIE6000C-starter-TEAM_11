@@ -316,7 +316,7 @@ def test_a_stale_retry_cannot_reset_work_already_taken(
     with queue_factory() as db:
         if winner_state == "claimed":
             claimed = worker_main.claim_next_pending_job(db)
-            assert claimed is not None and claimed.id == job_id
+            assert claimed is not None and claimed.job_id == job_id
         else:
             finished = db.get(Job, job_id)
             worker_main._complete_job(db, finished)
@@ -379,7 +379,7 @@ def test_two_workers_claim_the_same_job_once(queue_factory):
             barrier.wait()
             claimed = worker_main.claim_next_pending_job(db)
             with lock:
-                outcomes.append(claimed.id if claimed else None)
+                outcomes.append(claimed.job_id if claimed else None)
 
     threads = [threading.Thread(target=attempt) for _ in range(2)]
     for thread in threads:
@@ -442,5 +442,5 @@ def test_a_legacy_claim_needs_the_backfill_to_become_recoverable(queue_factory):
 
     with queue_factory() as db:
         recovered = worker_main.claim_next_pending_job(db)
-        assert recovered is not None and recovered.id == job_id
+        assert recovered is not None and recovered.job_id == job_id
         assert recovered.attempts == 2

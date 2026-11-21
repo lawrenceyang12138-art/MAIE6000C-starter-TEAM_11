@@ -16,6 +16,7 @@ from sqlalchemy import and_, or_, select, update
 from sqlalchemy.orm import Session
 
 from services.common.config import configure_logging, get_settings
+from services.common.claim import StaleClaim
 from services.common.db import get_session_factory
 from services.common.models import (
     Case,
@@ -61,7 +62,7 @@ LEASE_SECONDS = 60
 LEASE_OWNER = f"{socket.gethostname()}:{os.getpid()}:{uuid.uuid4().hex[:8]}"
 
 
-@dataclass(frozen=True)
+@dataclass
 class Claim:
     """The identity of one attempt, carried to every write it authorizes.
 
@@ -74,10 +75,6 @@ class Claim:
     attempts: int
     owner: str = LEASE_OWNER
     lost: bool = False
-
-
-class StaleClaim(RuntimeError):
-    """The job moved to another attempt; this worker must not write."""
 
 
 def _current_claim(db: Session, job_id: int) -> Claim | None:
@@ -139,7 +136,7 @@ def _claimable(now):
     )
 
 
-def claim_next_pending_job(db: Session) -> Job | None:
+def claim_next_pending_job(db: Session) -> Claim | None:
     """Claim one job and take its lease (ADR 0002).
 
     Selection and transition share one predicate, so a racing claimer cannot
@@ -159,6 +156,9 @@ def claim_next_pending_job(db: Session) -> Job | None:
     job_id = db.execute(stmt).scalar_one_or_none()
     if job_id is None:
         return None
+    # RETURNING, not a re-read: another worker can reclaim this row the moment
+    # the transaction commits, and a re-read would then hand this worker the new
+    # owner's attempt number. The identity must come from our own update.
     moved = db.execute(
         update(Job)
         .where(Job.id == job_id, _claimable(now))
@@ -169,15 +169,15 @@ def claim_next_pending_job(db: Session) -> Job | None:
             lease_owner=LEASE_OWNER,
             lease_expires_at=now + timedelta(seconds=LEASE_SECONDS),
         )
+        .returning(Job.id, Job.attempts, Job.lease_owner)
         .execution_options(synchronize_session=False)
     )
-    if moved.rowcount != 1:
+    row = moved.first()
+    if row is None:
         db.rollback()
         return None
     db.commit()
-    # The UPDATE ran in SQL; any cached row still shows the previous attempts.
-    db.expire_all()
-    return db.get(Job, job_id)
+    return Claim(row.id, row.attempts, row.lease_owner)
 
 
 def _renew_lease(claim: Claim) -> bool:
@@ -186,7 +186,7 @@ def _renew_lease(claim: Claim) -> bool:
     with session_factory() as db:
         renewed = db.execute(
             update(Job)
-            .where(_guard(claim))
+            .where(_guard(claim, require_claimed=True))
             .values(lease_expires_at=utcnow() + timedelta(seconds=LEASE_SECONDS))
             .execution_options(synchronize_session=False)
         )
@@ -204,6 +204,23 @@ def _release_lease(job_id: int) -> None:
             .execution_options(synchronize_session=False)
         )
         db.commit()
+
+
+def _claim_guard(db: Session, claim: Claim):
+    """Check-and-lock the job row inside the transaction that publishes data.
+
+    Handlers do slow file I/O outside any lock; this runs immediately before
+    their commit, takes the row lock for the duration of that transaction and
+    refuses the publish when another attempt has taken over.
+    """
+
+    def check() -> bool:
+        row = db.execute(
+            select(Job.attempts).where(Job.id == claim.job_id).with_for_update()
+        ).first()
+        return row is not None and row.attempts == claim.attempts
+
+    return check
 
 
 @contextmanager
@@ -433,7 +450,7 @@ def _process_scan_job(claim: Claim) -> None:
 
         # Passing job.id lets the handler skip the run when another scan for
         # this root is already live, keeping repeated dispatch idempotent.
-        summary = handle_scan_root(db, job.root_id, job.id)
+        summary = handle_scan_root(db, job.root_id, job.id, guard=_claim_guard(db, claim))
         if not _finish(db, claim, status=JobStatus.COMPLETED.value):
             db.rollback()
             raise StaleClaim(f"scan job {claim.job_id} moved to another attempt")
@@ -527,16 +544,19 @@ def _process_extract_job(claim: Claim) -> None:
         ):
             if version.status == VersionStatus.BASIC_READY.value:
                 _enqueue_embed_job(db, version_id, first_dispatch_only=True)
-            job.status = JobStatus.COMPLETED.value
-            job.error = None
-            job.error_code = None
-            job.completed_at = utcnow()
+            if not _finish(db, claim, status=JobStatus.COMPLETED.value):
+                # Roll back the repaired index job too: a stale attempt must not
+                # leave work behind that the new owner's transaction does not own.
+                db.rollback()
+                raise StaleClaim(f"extract job {claim.job_id} moved to another attempt")
             db.commit()
         else:
             source_path = resolve_source_path(db, version_id)
             # B's handler records the document outcome on the version and
             # returns the resulting status; only non-document errors raise.
-            status = handle_extract_file(db, version_id, source_path)
+            status = handle_extract_file(
+                db, version_id, source_path, guard=_claim_guard(db, claim)
+            )
             # Closing the extract job and dispatching the index job happen in
             # the same transaction, so a crash cannot leave a parsed version
             # unindexed.
@@ -683,7 +703,7 @@ def run_worker(*, drain: DrainRequest | None = None) -> None:
     was_model_ready = False
     recovery_until = 0.0
     while not drain.requested:
-        job = None
+        claim: Claim | None = None
         try:
             now = time.monotonic()
             if now >= next_recovery_check:
@@ -700,26 +720,25 @@ def run_worker(*, drain: DrainRequest | None = None) -> None:
             if drain.requested:
                 break
             with session_factory() as db:
-                job = claim_next_pending_job(db)
+                claim = claim_next_pending_job(db)
 
             # A request arriving inside claim must not strand its committed
             # claimed row. Process that job before checking the flag again.
-            if job is None:
+            if claim is None:
                 if not drain.requested:
                     time.sleep(settings.worker_poll_seconds)
                 continue
 
-            claim = Claim(job.id, job.attempts, job.lease_owner or LEASE_OWNER)
-            logger.info("job_claimed", extra={"job_id": job.id, "case_id": job.case_id})
+            logger.info("job_claimed", extra={"job_id": claim.job_id})
             # No unconditional release here: a worker that exits before writing
             # a terminal state must leave its deadline intact so the row expires
             # and another worker can recover it. Terminal writes clear the lease
             # in the same guarded statement.
             try:
                 with _keep_lease(claim):
-                    process_job(job.id, claim)
+                    process_job(claim.job_id, claim)
             except StaleClaim:
-                logger.warning("stale_claim_discarded", extra={"job_id": job.id})
+                logger.warning("stale_claim_discarded", extra={"job_id": claim.job_id})
 
         except KeyboardInterrupt:
             logger.info("worker_stopped")
@@ -727,8 +746,8 @@ def run_worker(*, drain: DrainRequest | None = None) -> None:
 
         except Exception as exc:
             logger.exception("job_processing_failed")
-            if job is not None:
-                mark_job_failed(job.id, str(exc), claim=claim if job else None)
+            if claim is not None:
+                mark_job_failed(claim.job_id, str(exc), claim=claim)
             if not drain.requested:
                 time.sleep(settings.worker_poll_seconds)
 
