@@ -53,13 +53,26 @@ PARSER_REVISION = "parsing-v1"
 REASON_PROCESSING_FAILED = "processing_failed"
 
 
+def _commit_if_owned(db: Session, version_id: str, *, guard) -> None:
+    """Commit a version write only while this attempt still owns the job.
+
+    The guard locks the job row in the caller's transaction, so the check and
+    the write it protects cannot be separated. ``guard`` is required: an omitted
+    argument must not silently disable the check.
+    """
+    if guard is not None and not guard():
+        db.rollback()
+        raise StaleClaim(f"version {version_id} is no longer owned by this attempt")
+    db.commit()
+
+
 def _finish(
     db: Session,
     version_id: str,
     status: str,
     error_code: str | None,
     *,
-    guard=None,
+    guard,
 ) -> str:
     version = db.get(FileVersion, version_id)
     if version is None:
@@ -67,10 +80,7 @@ def _finish(
     version.parser_revision = PARSER_REVISION
     version.status = status
     version.error_code = error_code
-    if guard is not None and not guard():
-        db.rollback()
-        raise StaleClaim(f"version {version_id} is no longer owned by this attempt")
-    db.commit()
+    _commit_if_owned(db, version_id, guard=guard)
     return status
 
 
@@ -92,9 +102,12 @@ def handle_extract_file(
 
     expected_sha256 = version.content_sha256
 
+    # A worker can lose its claim between selecting this path and entering the
+    # parser. Check before the first write and commit before the file read, so
+    # the job-row lock never spans the slow part.
     version.status = VersionStatus.EXTRACTING.value
     version.error_code = None
-    db.commit()
+    _commit_if_owned(db, version_id, guard=guard)
 
     try:
         document = extract_document(source_path)
@@ -132,10 +145,7 @@ def handle_extract_file(
         # Chunks, relation candidates and the ready status publish only while
         # this attempt still owns the job: a stale parse would replace rows that
         # a newer attempt already published.
-        if guard is not None and not guard():
-            db.rollback()
-            raise StaleClaim(f"version {version_id} is no longer owned by this attempt")
-        db.commit()
+        _commit_if_owned(db, version_id, guard=guard)
     except UnsupportedDocument as exc:
         return _finish(
             db, version_id, VersionStatus.UNSUPPORTED.value, exc.reason_code,
@@ -146,21 +156,33 @@ def handle_extract_file(
         # property of the folder, not of the document, and it is retryable, so
         # it is failed rather than unsupported.
         return _finish(
-            db, version_id, VersionStatus.FAILED.value, exc.reason_code
+            db, version_id, VersionStatus.FAILED.value, exc.reason_code,
+            guard=guard,
         )
     except SourceChanged as exc:
         # The file was written while it was being read.
         return _finish(
-            db, version_id, VersionStatus.FAILED.value, exc.reason_code
+            db, version_id, VersionStatus.FAILED.value, exc.reason_code,
+            guard=guard,
         )
+    except StaleClaim:
+        # The publish was refused because another attempt owns the job. Its
+        # result stands; writing a failure here would overwrite it.
+        raise
     except Exception:
         # Everything from here on runs after the row was committed as
         # "extracting". If any step fails - the reader, the chunker or the
         # store - leaving the row mid-extraction makes it indistinguishable
         # from one that is still running, so the outcome is recorded before the
-        # error goes up for the worker to decide whether to retry.
+        # error goes up for the worker to decide whether to retry. The rollback
+        # ends the previous transaction, so the failure write checks ownership
+        # again: a worker that lost the job must not report its own failure onto
+        # the new owner's version.
         db.rollback()
-        _finish(db, version_id, VersionStatus.FAILED.value, REASON_PROCESSING_FAILED)
+        _finish(
+            db, version_id, VersionStatus.FAILED.value, REASON_PROCESSING_FAILED,
+            guard=guard,
+        )
         raise
 
     return VersionStatus.BASIC_READY.value
