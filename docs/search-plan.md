@@ -1,5 +1,9 @@
 # Search, local embeddings, and evaluation
 
+For current Role C regression, topical quality and performance checks, see the
+[W13 validation runbook](search-validation.md). It is separate from the dated
+W7 evidence below.
+
 First-start deployment now uses [automatic model preparation](model-startup.md).
 `python scripts/start.py` installs image dependencies and starts background
 download/verification/warmup with progress and explicit retry. The manual commands
