@@ -1,0 +1,285 @@
+{
+  "schema": "team11-search-corpus-v1",
+  "files": [
+    {
+      "relative_path": "regression/group-a/doc01.pdf",
+      "fixture_path": "tests/fixtures/regression/group-a/doc01.pdf",
+      "group": "w7-compose",
+      "sha256": "cf136f2dca47a4f8d3dc00bf4061f4ef746287ee7a92e8eea4bc391ba8e48483",
+      "byte_size": 2062,
+      "page_count": 2,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "regression/group-a/doc02.pdf",
+      "fixture_path": "tests/fixtures/regression/group-a/doc02.pdf",
+      "group": "w7-compose",
+      "sha256": "09e6b2ce75c2bab407ae4011efa3ca85b40e2aa889cfc52020a81502daed5402",
+      "byte_size": 2633,
+      "page_count": 3,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "regression/group-a/doc03.pdf",
+      "fixture_path": "tests/fixtures/regression/group-a/doc03.pdf",
+      "group": "w7-compose",
+      "sha256": "6623eabbe6e407170744cebfe0268384a8a728382456099ebd547cdd4733b341",
+      "byte_size": 2064,
+      "page_count": 2,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "regression/group-a/doc04.pdf",
+      "fixture_path": "tests/fixtures/regression/group-a/doc04.pdf",
+      "group": "w7-compose",
+      "sha256": "278228037413c6a5c45f75688e3364f5721eec57d6bb66c296eb14b408b267ab",
+      "byte_size": 2631,
+      "page_count": 3,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "regression/group-a/doc05.pdf",
+      "fixture_path": "tests/fixtures/regression/group-a/doc05.pdf",
+      "group": "w7-compose",
+      "sha256": "bf086a179bc4672a89961d21833905087e1cade634df934dd5c9cc703c9390d5",
+      "byte_size": 2062,
+      "page_count": 2,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "regression/group-a/doc06.pdf",
+      "fixture_path": "tests/fixtures/regression/group-a/doc06.pdf",
+      "group": "w7-compose",
+      "sha256": "7d61e9b1ad09598fa2ca65e71e27a3ddcb57222ebec6b979b823ad63342e398e",
+      "byte_size": 2637,
+      "page_count": 3,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "regression/group-b/doc07.pdf",
+      "fixture_path": "tests/fixtures/regression/group-b/doc07.pdf",
+      "group": "w7-compose",
+      "sha256": "b484abc876f77e8fa364747868543d8fb7441befb1a59df2a6df7c71e922bae1",
+      "byte_size": 2056,
+      "page_count": 2,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "regression/group-b/doc08.pdf",
+      "fixture_path": "tests/fixtures/regression/group-b/doc08.pdf",
+      "group": "w7-compose",
+      "sha256": "05e88e1656c3e1a71528ec9c1af802df028f3b1ac57f4d5600c0e93877ae1392",
+      "byte_size": 2630,
+      "page_count": 3,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "regression/group-b/doc09.pdf",
+      "fixture_path": "tests/fixtures/regression/group-b/doc09.pdf",
+      "group": "w7-compose",
+      "sha256": "79d9c7b6d07b6b186e10c5d893d42c4aa557abf692cf1a0fce4c0a5694ea948d",
+      "byte_size": 2056,
+      "page_count": 2,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "regression/group-b/doc10.pdf",
+      "fixture_path": "tests/fixtures/regression/group-b/doc10.pdf",
+      "group": "w7-compose",
+      "sha256": "46c11d8a3268a8e8a7f2ff0398eb13f66e5d752ccfd6c596cbe80ce4ababbae2",
+      "byte_size": 2635,
+      "page_count": 3,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "regression/group-b/doc11.pdf",
+      "fixture_path": "tests/fixtures/regression/group-b/doc11.pdf",
+      "group": "w7-compose",
+      "sha256": "d5623754f1bc8925dc9b8d789a446f15d721708cd519d91f90cdb1eb5bd5aec1",
+      "byte_size": 2060,
+      "page_count": 2,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "regression/group-b/doc12.pdf",
+      "fixture_path": "tests/fixtures/regression/group-b/doc12.pdf",
+      "group": "w7-compose",
+      "sha256": "fd5ad752e487291b385a7d5589d0f75f8272b07f04ea64f66e1862ab11edc27f",
+      "byte_size": 2625,
+      "page_count": 3,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "regression/unsupported.txt",
+      "fixture_path": "tests/fixtures/regression/unsupported.txt",
+      "group": "w7-compose",
+      "sha256": "800b9c910e8bee15126fd03d97dd896de9cdae3165e62c1358ab8aef72a5bc37",
+      "byte_size": 89,
+      "page_count": null,
+      "status": "unsupported",
+      "error_code": "unsupported_format"
+    },
+    {
+      "relative_path": "abnormal/corrupt.pdf",
+      "fixture_path": "tests/fixtures/parsing/corrupt.pdf",
+      "group": "w7-compose",
+      "sha256": "d73aa579758adbcc253e3cb1a1898a43ed6f536fce2acec74cea80ce7384d7af",
+      "byte_size": 2057,
+      "page_count": null,
+      "status": "unsupported",
+      "error_code": "corrupt"
+    },
+    {
+      "relative_path": "abnormal/encrypted.pdf",
+      "fixture_path": "tests/fixtures/parsing/encrypted.pdf",
+      "group": "w7-compose",
+      "sha256": "8545d244521f62f0705adf4d77088863e543647eef3f57877e539dc38194dda3",
+      "byte_size": 1702,
+      "page_count": null,
+      "status": "unsupported",
+      "error_code": "encrypted"
+    },
+    {
+      "relative_path": "abnormal/no_text_layer.pdf",
+      "fixture_path": "tests/fixtures/parsing/no_text_layer.pdf",
+      "group": "w7-compose",
+      "sha256": "b9c11583843cb52b4e502579748cc35ef91d2cda7a7e41a8a480019118f89e95",
+      "byte_size": 1344,
+      "page_count": null,
+      "status": "unsupported",
+      "error_code": "no_text_layer"
+    },
+    {
+      "relative_path": "topics/east/flint.pdf",
+      "fixture_path": "fixtures/search/w13-v1/topics/east/flint.pdf",
+      "group": "topical",
+      "sha256": "f197b50276e3580ea01c98286ad61b6ade04c32e9844d0b679775205c4351ad2",
+      "byte_size": 1950,
+      "page_count": 2,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "topics/east/river.pdf",
+      "fixture_path": "fixtures/search/w13-v1/topics/east/river.pdf",
+      "group": "topical",
+      "sha256": "fdff15b3ec71fe3e13c1534fbff124c5b342ebd1364dd920f9718220ac7af5bd",
+      "byte_size": 1933,
+      "page_count": 2,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "topics/east/umber.pdf",
+      "fixture_path": "fixtures/search/w13-v1/topics/east/umber.pdf",
+      "group": "topical",
+      "sha256": "d8658974be4cae77bea52f129c2c42e2b750a04d50d9b0e1d597e2ab817b769f",
+      "byte_size": 1803,
+      "page_count": 2,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "topics/east/zephyr.pdf",
+      "fixture_path": "fixtures/search/w13-v1/topics/east/zephyr.pdf",
+      "group": "topical",
+      "sha256": "574b00ad7019d2849a0b75cf7a9fa1293dd9a42b70585f7d442c2e229c398606",
+      "byte_size": 1800,
+      "page_count": 2,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "topics/north/atlas.pdf",
+      "fixture_path": "fixtures/search/w13-v1/topics/north/atlas.pdf",
+      "group": "topical",
+      "sha256": "170f303b5d645145b9846b5e9daf22fe4b068fe70f7ccc0c8b2d3c2e67bb1fd3",
+      "byte_size": 2012,
+      "page_count": 2,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "topics/north/moss.pdf",
+      "fixture_path": "fixtures/search/w13-v1/topics/north/moss.pdf",
+      "group": "topical",
+      "sha256": "8beb0570b674e1ea6a8ff0900795c011af61314594e0f3a85233095ed3eed697",
+      "byte_size": 1961,
+      "page_count": 2,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "topics/north/sable.pdf",
+      "fixture_path": "fixtures/search/w13-v1/topics/north/sable.pdf",
+      "group": "topical",
+      "sha256": "6f9c0239aa4bf434773e2c1852d4a7e5a308c88a7b2164a2145e25ed1e31980e",
+      "byte_size": 1822,
+      "page_count": 2,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "topics/north/vale.pdf",
+      "fixture_path": "fixtures/search/w13-v1/topics/north/vale.pdf",
+      "group": "topical",
+      "sha256": "68eaee86ad67832e50c41a68ac5b09ab926f220e565fecfe96f1ac40cf6926be",
+      "byte_size": 1792,
+      "page_count": 2,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "topics/west/cedar.pdf",
+      "fixture_path": "fixtures/search/w13-v1/topics/west/cedar.pdf",
+      "group": "topical",
+      "sha256": "26d09e53489ad9cc912a6fd9b30eddf955747b98da3c5cd64aa678cd10221185",
+      "byte_size": 1991,
+      "page_count": 2,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "topics/west/opal.pdf",
+      "fixture_path": "fixtures/search/w13-v1/topics/west/opal.pdf",
+      "group": "topical",
+      "sha256": "7f81d6fac46aeba8c12618f96c1b47f010fd26d318a47c1bd844af671e4a6fc7",
+      "byte_size": 1953,
+      "page_count": 2,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "topics/west/topaz.pdf",
+      "fixture_path": "fixtures/search/w13-v1/topics/west/topaz.pdf",
+      "group": "topical",
+      "sha256": "a7385724868b04478a4d486c490d5b7ae7ac85f3a0fe7a4e6aeb0cee94c6714d",
+      "byte_size": 1816,
+      "page_count": 2,
+      "status": "ready",
+      "error_code": null
+    },
+    {
+      "relative_path": "topics/west/wren.pdf",
+      "fixture_path": "fixtures/search/w13-v1/topics/west/wren.pdf",
+      "group": "topical",
+      "sha256": "92c0c9835859513b57a0b8a48a3326ce5b8e323273217306a5a787042040e7cd",
+      "byte_size": 1710,
+      "page_count": 2,
+      "status": "ready",
+      "error_code": null
+    }
+  ]
+}
