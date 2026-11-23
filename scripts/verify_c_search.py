@@ -16,6 +16,7 @@ import sys
 import time
 from collections import Counter
 from datetime import UTC, datetime
+from pathlib import Path
 from statistics import median
 
 import httpx
@@ -29,6 +30,7 @@ from scripts.c_search_suite import (
     check_originals,
     clean_text,
     corpus_plan,
+    digest,
     load_suite,
     require,
     validate_stage,
@@ -515,6 +517,11 @@ def main(argv: list[str] | None = None) -> int:
         "phase": args.phase,
         "started_at": datetime.now(UTC).isoformat(),
         "harness_git": git_state(),
+        "harness_sha256": {
+            "verify_c_search.py": digest(Path(__file__)),
+            "c_search_suite.py": digest(REPO / "scripts/c_search_suite.py"),
+        },
+        "parameters": vars(args),
         "load_copies": args.load_copies,
         "rounds": args.rounds,
         "passed": False,
