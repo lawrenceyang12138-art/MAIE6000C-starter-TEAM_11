@@ -1,0 +1,67 @@
+# Dedicated, synthetic-corpus validation only. Do not point it at user files.
+name: team11-c-search-validation
+
+x-runtime: &runtime
+  image: team11-c-search-validation:local
+x-data: &data
+  <<: *runtime
+  depends_on:
+    db:
+      condition: service_healthy
+  environment:
+    DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/c_search_validation
+    AI_SERVICE_URL: http://ai:8100
+    EMBEDDING_ENABLED: 'true'
+    SEARCH_PAGE_NAVIGATION_ENABLED: 'false'
+    SOURCE_MOUNTS: '{"c-validation":"/source/c-validation"}'
+    WORKER_POLL_SECONDS: '0.15'
+  volumes:
+    - type: bind
+      source: ./work/c-search-validation
+      target: /source/c-validation
+      read_only: true
+      bind:
+        create_host_path: false
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: c_search_validation
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '127.0.0.1:${C_VALIDATION_DB_PORT:-15485}:5432'
+    volumes:
+      - search_validation_db:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U postgres -d c_search_validation']
+      interval: 2s
+      timeout: 2s
+      retries: 20
+  api:
+    <<: *data
+    build: .
+    command: ['/bin/sh', '-c', 'alembic upgrade head && exec uvicorn services.api.app.main:app --host 0.0.0.0 --port 8000']
+    ports:
+      - '127.0.0.1:${C_VALIDATION_API_PORT:-18085}:8000'
+  worker:
+    <<: *data
+    command: [python, -m, services.worker.app.main]
+  ai:
+    <<: *runtime
+    command: [uvicorn, 'services.ai.app.main:app', --host, 0.0.0.0, --port, '8100']
+    environment:
+      EMBEDDING_ENABLED: 'true'
+      EMBEDDING_AUTO_PREPARE: 'false'
+      EMBEDDING_CPU_THREADS: '4'
+      EMBEDDING_MODEL_PATH: /models/pplx-embed-v2-late-0.6b
+      HF_HUB_OFFLINE: '1'
+      TRANSFORMERS_OFFLINE: '1'
+    ports:
+      - '127.0.0.1:${C_VALIDATION_AI_PORT:-18185}:8100'
+    volumes:
+      - ./models:/models
+
+volumes:
+  search_validation_db:

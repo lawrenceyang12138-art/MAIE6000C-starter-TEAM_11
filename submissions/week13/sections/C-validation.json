@@ -1,0 +1,301 @@
+{
+  "date": "2026-11-23",
+  "review_status": {
+    "human_b_review": "pending",
+    "team_threshold": null,
+    "team_approval": "not_recorded"
+  },
+  "runtime": {
+    "develop_sha": "5eb12cff3f0eaac0b5b0f4ca1b75524e052de06f",
+    "app_image_id": "sha256:a730e62ca2a61b69d75428ed703c5509cbe4c5246633b55b3b325ddad6573437",
+    "postgres": "16.15",
+    "pgvector": "0.8.7",
+    "alembic_head": "20261119_0007",
+    "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+    "cpu_threads": 4,
+    "page_navigation": false
+  },
+  "identity": {
+    "fixture_commit": "badda4f6794193320ea2c27966feb2229432dcbe",
+    "freeze_sha256": "eb22e9e83ca3138290d60d8f2c33115cc3fe6133e80974a89c63a449527c8b48",
+    "model_recovery_harness": "pre-commit equivalent of the verification harness in 8cf2b15",
+    "load_and_python_suite_harness_commit": "8cf2b15"
+  },
+  "verify_commands": [
+    "python -m scripts.verify_w7 --base-url http://127.0.0.1:18081 --out work/c-final-w7-ai-off-baseline.json --timeout 240",
+    "python -m scripts.c_search_suite stage --corpus quality",
+    "python -m scripts.c_search_suite stage --corpus load --load-copies 7",
+    "python -m scripts.verify_c_search prepare --run-id baseline-5eb12cf --timeout 240",
+    "python -m scripts.verify_c_search finish --run-id baseline-5eb12cf --timeout 480",
+    "python -m scripts.verify_c_search load --run-id baseline-5eb12cf --load-copies 7 --timeout 480",
+    "python -m alembic upgrade head",
+    "python -m ruff check .",
+    "python -m pytest -q -rs tests/unit tests/integration",
+    "python scripts/validate_d_gold.py"
+  ],
+  "verification": {
+    "w7_http_db_ai_off": {
+      "passed": 202,
+      "failed": 0
+    },
+    "python_passed": 835,
+    "linux_skipped_windows_only": 3,
+    "windows_focused_passed": 10,
+    "ruff_passed": true,
+    "old_d_gold_location_checks_passed": 10,
+    "old_d_fixture_hash_checks_passed": 16
+  },
+  "recovery": {
+    "ai_off": {
+      "files": 28,
+      "versions": 28,
+      "chunks": 54,
+      "jobs": 53,
+      "keyword_indexes": 54,
+      "token_indexes": 0,
+      "page_metadata": 24,
+      "token_vectors": 0
+    },
+    "model_ready": {
+      "files": 28,
+      "versions": 28,
+      "chunks": 54,
+      "jobs": 77,
+      "keyword_indexes": 54,
+      "token_indexes": 54,
+      "page_metadata": 24,
+      "token_vectors": 2397
+    },
+    "identical_canonical_ids": true,
+    "hashes_unchanged": true,
+    "recreated_services": [
+      "db",
+      "api",
+      "worker"
+    ],
+    "disconnect_recreate_and_restore_probe_passed": true
+  },
+  "quality": [
+    {
+      "kind": "source_smoke",
+      "mode": "keyword",
+      "language": "all",
+      "cutoff": 1,
+      "queries": 5,
+      "file_hits": 5,
+      "page_hits": 5,
+      "quote_hits": 5
+    },
+    {
+      "kind": "topical",
+      "mode": "keyword",
+      "language": "all",
+      "cutoff": 3,
+      "queries": 12,
+      "file_hits": 5,
+      "page_hits": 2,
+      "quote_hits": 2
+    },
+    {
+      "kind": "topical",
+      "mode": "keyword",
+      "language": "en",
+      "cutoff": 3,
+      "queries": 6,
+      "file_hits": 5,
+      "page_hits": 2,
+      "quote_hits": 2
+    },
+    {
+      "kind": "topical",
+      "mode": "keyword",
+      "language": "zh",
+      "cutoff": 3,
+      "queries": 6,
+      "file_hits": 0,
+      "page_hits": 0,
+      "quote_hits": 0
+    },
+    {
+      "kind": "topical",
+      "mode": "semantic",
+      "language": "all",
+      "cutoff": 3,
+      "queries": 12,
+      "file_hits": 12,
+      "page_hits": 11,
+      "quote_hits": 11
+    },
+    {
+      "kind": "topical",
+      "mode": "semantic",
+      "language": "en",
+      "cutoff": 3,
+      "queries": 6,
+      "file_hits": 6,
+      "page_hits": 5,
+      "quote_hits": 5
+    },
+    {
+      "kind": "topical",
+      "mode": "semantic",
+      "language": "zh",
+      "cutoff": 3,
+      "queries": 6,
+      "file_hits": 6,
+      "page_hits": 6,
+      "quote_hits": 6
+    },
+    {
+      "kind": "topical",
+      "mode": "hybrid",
+      "language": "all",
+      "cutoff": 3,
+      "queries": 12,
+      "file_hits": 12,
+      "page_hits": 11,
+      "quote_hits": 11
+    },
+    {
+      "kind": "topical",
+      "mode": "hybrid",
+      "language": "en",
+      "cutoff": 3,
+      "queries": 6,
+      "file_hits": 6,
+      "page_hits": 5,
+      "quote_hits": 5
+    },
+    {
+      "kind": "topical",
+      "mode": "hybrid",
+      "language": "zh",
+      "cutoff": 3,
+      "queries": 6,
+      "file_hits": 6,
+      "page_hits": 6,
+      "quote_hits": 6
+    }
+  ],
+  "recorded_model_misses": [
+    {
+      "query_id": "T01",
+      "mode": "semantic",
+      "first_rank": {
+        "file": 1,
+        "page": null,
+        "quote": null
+      },
+      "returned": [
+        {
+          "path": "topics/north/atlas.pdf",
+          "page": 1
+        },
+        {
+          "path": "topics/north/sable.pdf",
+          "page": 1
+        },
+        {
+          "path": "regression/group-b/doc08.pdf",
+          "page": 1
+        }
+      ]
+    },
+    {
+      "query_id": "T01",
+      "mode": "hybrid",
+      "first_rank": {
+        "file": 2,
+        "page": null,
+        "quote": null
+      },
+      "returned": [
+        {
+          "path": "topics/east/river.pdf",
+          "page": 1
+        },
+        {
+          "path": "topics/north/atlas.pdf",
+          "page": 1
+        },
+        {
+          "path": "topics/north/sable.pdf",
+          "page": 1
+        }
+      ]
+    }
+  ],
+  "performance": {
+    "quality_root": {
+      "files": 28,
+      "chunks": 54,
+      "http": {
+        "keyword": {
+          "first_measured_ms": 9.53,
+          "samples": 24,
+          "median_ms": 9.32,
+          "p95_ms": 10.54,
+          "max_ms": 10.62
+        },
+        "semantic": {
+          "first_measured_ms": 181.38,
+          "samples": 24,
+          "median_ms": 177.01,
+          "p95_ms": 215.61,
+          "max_ms": 222.43
+        },
+        "hybrid": {
+          "first_measured_ms": 177.76,
+          "samples": 24,
+          "median_ms": 176.3,
+          "p95_ms": 187.97,
+          "max_ms": 232.34
+        }
+      }
+    },
+    "load_root": {
+      "counts": {
+        "files": 112,
+        "versions": 112,
+        "chunks": 222,
+        "jobs": 221,
+        "keyword_indexes": 222,
+        "token_indexes": 222,
+        "page_metadata": 108,
+        "token_vectors": 13072
+      },
+      "fresh_import_wall_seconds": 88.579,
+      "http": {
+        "keyword": {
+          "first_measured_ms": 42.84,
+          "samples": 24,
+          "median_ms": 18.03,
+          "p95_ms": 23.87,
+          "max_ms": 24.48
+        },
+        "semantic": {
+          "first_measured_ms": 1062.79,
+          "samples": 24,
+          "median_ms": 788.05,
+          "p95_ms": 890.05,
+          "max_ms": 905.43
+        },
+        "hybrid": {
+          "first_measured_ms": 759.24,
+          "samples": 24,
+          "median_ms": 762.34,
+          "p95_ms": 836.33,
+          "max_ms": 885.12
+        }
+      },
+      "isolated_database_total_bytes": 35314711,
+      "docker_memory_samples": 34,
+      "docker_sampled_peak_mib": {
+        "api": 198.9,
+        "worker": 92.65,
+        "ai": 707.6,
+        "db": 70.36
+      }
+    }
+  }
+}
