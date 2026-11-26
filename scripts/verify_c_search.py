@@ -231,6 +231,26 @@ class Run:
                 and version["byte_size"] == source["byte_size"],
                 f"source outcome differs: {path}",
             )
+        searchable = {
+            files[path]["current_version_id"]: (path, source)
+            for path, source in self.plan.items()
+            if source["status"] == "ready"
+        }
+        # Every physical page of a ready fixture should yield at least one chunk.
+        expected_pages = {
+            (version_id, page)
+            for version_id, (_, source) in searchable.items()
+            for page in range(1, source["page_count"] + 1)
+        }
+        chunk_pages = {(row["version_id"], row["page_number"]) for row in state["chunks"]}
+        if missing := expected_pages - chunk_pages:
+            version_id, page = min(missing)
+            path, _ = searchable[version_id]
+            raise SuiteError(
+                f"missing chunk for {path} physical page {page} ({len(missing)} missing)"
+            )
+        require(chunk_pages == expected_pages, "chunk references an unexpected version or page")
+
         identities = identity_sets(state)
         chunks = identities["chunks"]
         require(
@@ -279,14 +299,9 @@ class Run:
             ),
             "incompatible token matrix",
         )
-        by_version = {
-            files[path]["current_version_id"]: row
-            for path, row in self.plan.items()
-            if row["status"] == "ready"
-        }
-        require({row["version_id"] for row in metadata} == set(by_version), "PDF metadata coverage")
+        require({row["version_id"] for row in metadata} == set(searchable), "PDF metadata coverage")
         for row in metadata:
-            source = by_version[row["version_id"]]
+            _, source = searchable[row["version_id"]]
             require(
                 row["content_sha256"] == source["sha256"]
                 and row["byte_size"] == source["byte_size"]
