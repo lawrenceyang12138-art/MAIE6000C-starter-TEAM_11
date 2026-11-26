@@ -46,6 +46,7 @@ MOUNT = "c-validation"
 DATABASE = "c_search_validation"
 REPORTS = REPO / "work/c-search-validation-reports"
 MODES = ("keyword", "semantic", "hybrid")
+BASELINE_PHASES = {"finish": "prepare", "probe": "finish"}
 
 
 def timings(samples: list[float]) -> dict:
@@ -387,6 +388,7 @@ class Run:
                     {
                         "path": hit.file_path,
                         "page": hit.page,
+                        "chunk_id": hit.chunk_id,
                         "text": evidence["text"],
                         "verified": True,
                     }
@@ -420,23 +422,28 @@ class Run:
             "exact source-location smoke misses",
         )
 
-    def execute(self, prepared: dict | None) -> None:
+    def execute(self, baseline: dict | None, before_restart: dict | None = None) -> None:
         setup = self.preflight()
-        phase = self.args.phase
-        if phase == "prepare":
+        phase, stage = self.args.phase, self.args.probe_stage
+        baseline_phase = BASELINE_PHASES.get(phase)
+        if baseline_phase:
+            require(
+                baseline is not None
+                and baseline["phase"] == baseline_phase
+                and baseline["passed"] is True
+                and baseline["freeze_sha256"] == self.suite["freeze_sha256"]
+                and baseline["root_id"] is not None
+                and baseline["root_id"] == self.root_id(),
+                f"successful {baseline_phase} report must match the active root and freeze",
+            )
+        offline = phase == "prepare" or stage in {"before", "after"}
+        if offline:
             require(
                 setup["state"] == "unavailable" and not setup["ready"],
-                "stop the AI service before the offline import",
+                "stop the AI service before the offline check",
             )
-        elif phase == "finish":
+        elif baseline_phase:
             started = time.monotonic()
-            require(
-                prepared is not None
-                and prepared["passed"]
-                and prepared["freeze_sha256"] == self.suite["freeze_sha256"]
-                and prepared["root_id"] == self.root_id(),
-                "offline report is missing or outdated",
-            )
             while not setup["ready"] and time.monotonic() < started + self.args.timeout:
                 require(setup["state"] != "error", "local model setup reported an error")
                 time.sleep(0.5)
@@ -447,26 +454,51 @@ class Run:
             require(setup["ready"] and setup["model"] == MODEL_ID, "prewarm the pinned model first")
         self.report["setup_state"] = setup["state"]
         started = time.monotonic()
-        root_id = prepared["root_id"] if phase == "finish" else self.start_import()
+        root_id = baseline["root_id"] if baseline_phase else self.start_import()
         self.report["root_id"] = root_id
         state = self.wait_for_indexes(root_id, enriched=phase != "prepare", started=started)
         files = self.validate_state(root_id, state, enriched=phase != "prepare")
         if phase != "load":
             marker = next(row for row in self.suite["queries"] if row["kind"] == "source_smoke")
-            fallback = phase == "prepare"
             self.report["recovery_probe"] = {}
             for mode in MODES:
                 ranked, _ = self.search(
-                    root_id, marker, mode, files, fallback=fallback and mode != "keyword"
+                    root_id, marker, mode, files, fallback=offline and mode != "keyword"
                 )
                 metrics = score_rows(marker["expected"], ranked, 1 if mode == "keyword" else 3)
-                self.report["recovery_probe"][mode] = metrics
+                self.report["recovery_probe"][mode] = {
+                    **self.report["last_search"],
+                    **metrics,
+                    "returned": [
+                        {key: hit[key] for key in ("path", "page", "chunk_id")} for hit in ranked
+                    ],
+                }
                 require(metrics["quote_hit"], f"{mode} did not return the verified probe evidence")
-        if phase == "finish":
+        if baseline_phase:
             require(
-                prepared["source_identities"] == self.report["source_identities"],
-                "recovery changed canonical source IDs",
+                baseline["source_identities"] == self.report["source_identities"],
+                "canonical source IDs differ from the baseline",
             )
+        if phase == "probe":
+            require(baseline["counts"] == self.report["counts"], "index or job counts changed")
+            if stage == "after":
+                require(
+                    before_restart is not None
+                    and before_restart["passed"] is True
+                    and before_restart["root_id"] == root_id
+                    and before_restart["freeze_sha256"] == self.suite["freeze_sha256"],
+                    "before-restart report is missing or outdated",
+                )
+                require(
+                    before_restart["recovery_probe"] == self.report["recovery_probe"],
+                    "offline marker search results changed after recreation",
+                )
+            elif stage == "restored":
+                require(
+                    baseline["recovery_probe"] == self.report["recovery_probe"],
+                    "restored marker search results differ from finish",
+                )
+        if phase == "finish":
             self.check_quality(root_id, files)
         if phase in {"finish", "load"}:
             self.measure(root_id, files)
@@ -496,8 +528,13 @@ class Run:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("phase", choices=["prepare", "finish", "load"])
+    parser.add_argument("phase", choices=["prepare", "finish", "load", "probe"])
     parser.add_argument("--run-id", default="w13-local")
+    parser.add_argument(
+        "--probe-stage",
+        choices=("before", "after", "restored"),
+        help="read-only restart check for the same root as finish",
+    )
     parser.add_argument(
         "--api-port", type=int, default=int(os.getenv("C_VALIDATION_API_PORT", 18085))
     )
@@ -516,7 +553,10 @@ def main(argv: list[str] | None = None) -> int:
         or (args.phase == "load") != (args.load_copies > 0)
     ):
         parser.error("invalid run ID, ports, timeout, rounds, or load copy count")
-    out = REPORTS / args.run_id / f"{args.phase}.json"
+    if (args.phase == "probe") != (args.probe_stage is not None):
+        parser.error("probe requires --probe-stage; other phases do not accept it")
+    report_name = f"probe-{args.probe_stage}" if args.phase == "probe" else args.phase
+    out = REPORTS / args.run_id / f"{report_name}.json"
     if REPORTS.resolve() != REPORTS or not out.resolve().is_relative_to(REPORTS) or out.exists():
         parser.error(
             "report exists or is outside the validation reports directory; use a new run ID"
@@ -555,15 +595,21 @@ def main(argv: list[str] | None = None) -> int:
             human_b_review=suite["freeze"]["human_b_review"],
             team_threshold=suite["freeze"]["team_threshold"],
         )
-        prepared = (
-            json.loads(out.with_name("prepare.json").read_bytes())
-            if args.phase == "finish"
+        baseline_phase = BASELINE_PHASES.get(args.phase)
+        baseline = (
+            json.loads(out.with_name(f"{baseline_phase}.json").read_bytes())
+            if baseline_phase
+            else None
+        )
+        before_restart = (
+            json.loads(out.with_name("probe-before.json").read_bytes())
+            if args.probe_stage == "after"
             else None
         )
         with httpx.Client(
             base_url=base, headers={"Origin": base}, timeout=20, trust_env=False
         ) as client:
-            Run(args, client, engine, suite, report).execute(prepared)
+            Run(args, client, engine, suite, report).execute(baseline, before_restart)
         report["passed"] = True
     except SuiteError as exc:
         report["error"] = str(exc)

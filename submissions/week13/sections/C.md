@@ -37,7 +37,8 @@ available. Search evidence resolves to the same source identity and passage.
   Worker with the same volume preserved source identities, index counts and
   keyword access. When AI returned, semantic/hybrid returned the verified
   passage without a manual re-index. This was on the same machine, not backup
-  machine or browser acceptance.
+  machine or browser acceptance. See the [restart procedure](../../../docs/search-validation.md#verify-persistence-across-container-recreation)
+  to repeat the persistence checks.
 - On Linux/Python 3.11 and real PostgreSQL with Alembic applied, Ruff passed
   and the Python suite recorded **835 passed, 3 skipped**. The skips were
   Windows-only shell/bridge checks; the new 10 focused tests also passed on
