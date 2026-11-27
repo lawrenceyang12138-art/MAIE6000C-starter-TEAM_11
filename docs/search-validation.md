@@ -216,7 +216,10 @@ latency on a large, diverse corpus. Retrieval uses exact token MaxSim, not ANN.
 
 ## Role C development record
 
-The results above come from executed checks and measurements. Development
-assistance is documented separately in the
-[Week 7 team statement](../submissions/week07/ai-use-statement.md) and the
-[Week 13 Role C statement](../submissions/week13/ai-use-statement.md).
+For W7, Codex assisted with requirements review, Python/SQLAlchemy/FastAPI
+code design and implementation, tests, documentation, and SQLite,
+PostgreSQL/pgvector, local-model, and HTTP checks. For W13, Codex assisted with
+implementation, fixture drafting, verification runs, and documenting results.
+The results are from executed checks and measurements. This assistance is
+separate from the application's local embedding feature. These notes do not
+replace the team's final AI Use Statement or attest on behalf of other members.

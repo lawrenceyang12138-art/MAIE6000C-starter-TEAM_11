@@ -222,7 +222,6 @@ work/
 submissions/*
 !submissions/week13/
 submissions/week13/*
-!submissions/week13/ai-use-statement.md
 !submissions/week13/sections/
 submissions/week13/sections/*
 !submissions/week13/sections/C-validation.json
