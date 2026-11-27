@@ -1,6 +1,39 @@
 import { createMockAdapter } from "./mock-adapter.js";
+import { createApiAdapter } from "./http-adapter.js";
 import { AdapterError } from "./errors.js";
 import mockData from "../mock/data.json" with { type: "json" };
+
+describe("HTTP file-management adapter", () => {
+  it.each([
+    ["empty.txt", "empty_text", "empty_text"],
+    ["encoding.txt", "invalid_encoding", "invalid_encoding"],
+    ["binary.txt", "binary_file", "binary_file"],
+    ["large.md", "text_too_large", "text_too_large"],
+    ["damaged.docx", "docx_corrupt", "docx_corrupt"],
+    ["structure.docx", "docx_structure", "docx_structure"],
+    ["large.docx", "docx_too_large", "docx_too_large"],
+    ["expanded.docx", "docx_unpacked_too_large", "docx_unpacked_too_large"],
+    ["scanned.pdf", "no_text_layer", "no_text_layer"],
+    ["legacy.pdf", "CORRUPT_PDF", "CORRUPT_PDF"],
+    ["unknown.txt", "unknown_parser_error", "JOB_FAILED"],
+    ["unreadable.docx", "/private/failure.log", "JOB_FAILED"],
+    ["ready.txt", null, null],
+  ])("uses safe file-list reasons for %s", async (name, errorCode, expected) => {
+    const file = {
+      file_id: "file", root_id: "root", version_id: "version",
+      display_name: name, relative_path: name,
+      status: errorCode == null ? "basic_ready" : "unsupported",
+      error_code: errorCode, expected_error_code: errorCode,
+    };
+    const adapter = createApiAdapter({
+      fetchImpl: async () => ({ ok: true, status: 200, json: async () => [file] }),
+    });
+
+    expect(await adapter.listFiles("root")).toEqual([
+      { ...file, error_code: expected, expected_error_code: expected },
+    ]);
+  });
+});
 
 describe("mock file-management adapter", () => {
   it("returns the 202 root/job contract and advances progress", async () => {

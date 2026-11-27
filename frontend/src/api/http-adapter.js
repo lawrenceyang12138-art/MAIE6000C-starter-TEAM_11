@@ -48,6 +48,11 @@ function setupStatus(payload) {
 const safeErrorCode = (value) => value == null ? null : (
   [...Object.keys(messages), "encrypted", "corrupt", "no_text_layer", "unreadable", "unsupported_format", "source_changed", "processing_failed", "scan_failed", "job_failed", "SCAN_FAILED", "EMPTY_FILE", "CORRUPT_PDF", "TRUNCATED_PDF", "ENCRYPTED_PDF", "NO_TEXT_LAYER", "UNSUPPORTED_FORMAT", "JOB_FAILED"].includes(value) ? value : "JOB_FAILED"
 );
+const fileParserErrorCodes = new Set([
+  "empty_text", "invalid_encoding", "binary_file", "text_too_large",
+  "docx_corrupt", "docx_structure", "docx_too_large", "docx_unpacked_too_large",
+]);
+const safeFileErrorCode = (value) => fileParserErrorCodes.has(value) ? value : safeErrorCode(value);
 
 export function createApiAdapter({ baseUrl = "/api", fetchImpl = globalThis.fetch, timeoutMs = 15000 } = {}) {
   async function request(path, { method = "GET", body, expectedStatus = 200, signal } = {}) {
@@ -137,7 +142,7 @@ export function createApiAdapter({ baseUrl = "/api", fetchImpl = globalThis.fetc
       const files = array(await request(`/files?root_id=${encodeURIComponent(rootId)}`), (item) =>
         isId(item?.file_id) && (item.version_id == null || isId(item.version_id)) && isId(item.display_name) &&
         isRelativePath(item.relative_path) && isId(item.status) && item.root_id === rootId);
-      return files.map((file) => ({ ...file, error_code: safeErrorCode(file.error_code), expected_error_code: safeErrorCode(file.expected_error_code) }));
+      return files.map((file) => ({ ...file, error_code: safeFileErrorCode(file.error_code), expected_error_code: safeFileErrorCode(file.expected_error_code) }));
     },
     async search({ query, rootId = null, fileId = null, mode = "hybrid", topK = 10 }) {
       requireValue(typeof query === "string" && query.trim().length > 0 && query.trim().length <= 500);

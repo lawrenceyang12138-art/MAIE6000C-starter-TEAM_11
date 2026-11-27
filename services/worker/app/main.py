@@ -549,7 +549,6 @@ def _process_extract_job(claim: Claim) -> None:
                 # leave work behind that the new owner's transaction does not own.
                 db.rollback()
                 raise StaleClaim(f"extract job {claim.job_id} moved to another attempt")
-            db.commit()
         else:
             source_path = resolve_source_path(db, version_id)
             # B's handler records the document outcome on the version and
@@ -561,7 +560,11 @@ def _process_extract_job(claim: Claim) -> None:
             # the same transaction, so a crash cannot leave a parsed version
             # unindexed.
             _extract_outcome(db, claim, job, version_id, status)
-            db.commit()
+
+        # The guarded update is not synchronized to the ORM row, and a parser
+        # rollback may have expired it. Load the final outcome while attached.
+        db.refresh(job, attribute_names=["status", "error_code"])
+        db.commit()
 
     logger.info(
         "extract_finished",

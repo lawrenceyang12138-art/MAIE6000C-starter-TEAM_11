@@ -210,7 +210,7 @@ def test_relation_persistence_failure_does_not_publish_a_partial_parse(
 def test_a_bad_document_is_recorded_rather_than_raised(
     db_session: Session, make_file_version, filename: str, expected_reason: str
 ):
-    version_id = make_file_version(sha256="c" * 64)
+    version_id = make_file_version(source_path=FIXTURES / filename)
 
     # The whole point: this must return, not raise, so the worker loop survives.
     status = handle_extract_file(db_session, version_id, FIXTURES / filename)
@@ -394,7 +394,7 @@ def test_one_bad_file_does_not_stop_the_next_one(
     """The behaviour the schedule requires: a failure is isolated to its file."""
     real_hash, _ = file_identity(FIXTURES / "normal.pdf")
 
-    bad_version = make_file_version(sha256="e" * 64)
+    bad_version = make_file_version(source_path=FIXTURES / "corrupt.pdf")
     good_version = make_file_version(
         sha256=real_hash, source_path=FIXTURES / "normal.pdf"
     )
