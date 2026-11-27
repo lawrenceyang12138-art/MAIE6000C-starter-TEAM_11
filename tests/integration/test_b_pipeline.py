@@ -6,6 +6,7 @@ import shutil
 import zipfile
 from pathlib import Path
 
+import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -132,15 +133,29 @@ def test_clean_scan_automatically_persists_direct_relation_evidence(
         assert relation.quote.split()[0].casefold() in evidence.text.casefold()
 
 
+@pytest.mark.parametrize(
+    ("word_namespace", "office_namespace"),
+    [
+        (
+            "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
+            "http://schemas.openxmlformats.org/officeDocument/2006",
+        ),
+        (
+            "http://purl.oclc.org/ooxml/wordprocessingml/main",
+            "http://purl.oclc.org/ooxml/officeDocument",
+        ),
+    ],
+    ids=["transitional-docx", "strict-docx"],
+)
 def test_fresh_text_formats_flow_from_scan_to_search_and_evidence(
-    db_session: Session, monkeypatch, tmp_path: Path
+    client, db_session: Session, monkeypatch, tmp_path: Path, word_namespace, office_namespace
 ):
     source_root = _mount_source(db_session, monkeypatch, tmp_path)
     corpus = source_root / "text-corpus"
     corpus.mkdir()
     txt_text = "database-\nready\n    indented note\n"
     markdown_text = "# Markdown\n\n    publish example\n"
-    docx_text = "Quarterly planning passage"
+    docx_text = "Quarterly\nplanning\tpassage Margin Ruby Compatible Ratio: 1/2"
     (corpus / "notes.txt").write_text(txt_text, encoding="utf-8")
     (corpus / "notes.md").write_text(markdown_text, encoding="utf-8")
     docx = corpus / "notes.docx"
@@ -155,15 +170,28 @@ def test_fresh_text_formats_flow_from_scan_to_search_and_evidence(
         archive.writestr(
             "_rels/.rels",
             '<Relationships xmlns="http://schemas.openxmlformats.org/package/'
-            '2006/relationships"><Relationship Id="rId1" Type="http://schemas.'
-            'openxmlformats.org/officeDocument/2006/relationships/officeDocument" '
+            '2006/relationships"><Relationship Id="rId1" '
+            f'Type="{office_namespace}/relationships/officeDocument" '
             'Target="word/document.xml"/></Relationships>',
         )
         archive.writestr(
             "word/document.xml",
-            '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/'
-            '2006/main"><w:body><w:p><w:r>'
-            f"<w:t>{docx_text}</w:t></w:r></w:p></w:body></w:document>",
+            f'<w:document xmlns:w="{word_namespace}" xmlns:m="{office_namespace}/math" '
+            'xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" '
+            'xmlns:future="urn:unsupported-extension"><w:body><w:p>'
+            '<w:pPr><w:tabs><w:tab w:val="left" w:pos="720"/></w:tabs></w:pPr>'
+            "<w:r><w:t>Quarterly</w:t><w:cr/><w:t>planning</w:t>"
+            '<w:tab/><w:t xml:space="preserve">passage </w:t></w:r>'
+            '<m:oMath><m:r><w:t xml:space="preserve">Margin </w:t></m:r></m:oMath>'
+            "<w:r><w:ruby><w:rt><w:r><w:t>Annotation</w:t></w:r></w:rt>"
+            '<w:rubyBase><w:r><w:t xml:space="preserve">Ruby </w:t></w:r></w:rubyBase>'
+            "</w:ruby></w:r>"
+            '<mc:AlternateContent><mc:Choice Requires="future">'
+            "<w:r><w:t>Unsupported</w:t></w:r></mc:Choice>"
+            "<mc:Fallback><w:r><w:t>Compatible</w:t></w:r></mc:Fallback>"
+            "</mc:AlternateContent><w:r><w:t> Ratio: </w:t></w:r><m:oMath><m:f>"
+            "<m:num><m:r><m:t>1</m:t></m:r></m:num><m:den><m:r><m:t>2</m:t></m:r></m:den>"
+            "</m:f></m:oMath></w:p></w:body></w:document>",
         )
 
     root = AuthorizedRoot(
@@ -195,10 +223,26 @@ def test_fresh_text_formats_flow_from_scan_to_search_and_evidence(
         )
 
     settings = get_settings()
+
+    def keyword(query):
+        response = client.post("/search", json={"query": query, "mode": "keyword"})
+        assert response.status_code == 200
+        return response.json()["results"]
+
+    assert not keyword("12")
+    (ratio,) = keyword("1/2")
+    assert ratio["text"] == docx_text
+    evidence_response = client.get(f"/evidence/{ratio['chunk_id']}")
+    assert evidence_response.status_code == 200
+    assert evidence_response.json()["text"] == docx_text
+
     for query, file_name, passage in (
         ("ready", "notes.txt", txt_text),
         ("publish", "notes.md", markdown_text),
-        ("quarterly", "notes.docx", docx_text),
+        ("planning", "notes.docx", docx_text),
+        ("margin", "notes.docx", docx_text),
+        ("ruby", "notes.docx", docx_text),
+        ("compatible", "notes.docx", docx_text),
     ):
         result = search_chunks(
             db_session,
@@ -219,3 +263,12 @@ def test_fresh_text_formats_flow_from_scan_to_search_and_evidence(
         assert evidence.page_number is None
         assert evidence.ordinal == hit.ordinal == 1
         assert evidence.text == passage
+
+    for query in ("quarterlyplanning", "annotation", "unsupported"):
+        result = search_chunks(
+            db_session,
+            SearchRequest(query=query, mode="keyword", root_id=root.id),
+            settings,
+            None,
+        )
+        assert not result.results, query

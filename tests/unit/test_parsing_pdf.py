@@ -78,6 +78,30 @@ def test_abnormal_documents_are_rejected_with_a_specific_reason(
 
     assert excinfo.value.reason_code == expected_reason
     assert excinfo.value.message
+    assert excinfo.value.content_sha256 == file_identity(FIXTURES / filename)[0]
+
+
+def test_a_transient_replacement_cannot_supply_another_pdfs_rejection(tmp_path, monkeypatch):
+    from services.parsing import pdf as pdf_module
+
+    source = tmp_path / "notes.txt"
+    original = (FIXTURES / "normal.pdf").read_bytes()
+    replacement = (FIXTURES / "encrypted.pdf").read_bytes()
+    source.write_bytes(original)
+    expected_identity = file_identity(source)
+    real_reader = pdf_module.PdfReader
+
+    def read_while_replaced(stream):
+        source.write_bytes(replacement)
+        try:
+            return real_reader(stream)
+        finally:
+            source.write_bytes(original)
+
+    monkeypatch.setattr(pdf_module, "PdfReader", read_while_replaced)
+    doc = extract_document(source)
+    assert (doc.content_sha256, doc.byte_size) == expected_identity
+    assert "ALPHA" in doc.pages[0].text
 
 
 def test_a_missing_file_is_not_reported_as_a_bad_document():
@@ -123,10 +147,8 @@ def test_source_io_failure_during_hashing_is_reported_as_unreadable(monkeypatch,
 
 
 @pytest.mark.parametrize("phase", ["header", "reader"])
-def test_losing_source_access_after_hashing_stays_retryable(monkeypatch, phase):
+def test_source_access_failure_during_pdf_extraction_stays_retryable(monkeypatch, phase):
     from services.parsing import pdf as pdf_module
-
-    monkeypatch.setattr(pdf_module, "file_identity", lambda path: ("a" * 64, 10))
 
     def fail(*args, **kwargs):
         raise PermissionError("source access revoked")
@@ -143,12 +165,7 @@ def test_losing_source_access_after_hashing_stays_retryable(monkeypatch, phase):
 
 
 def test_a_file_written_while_it_is_read_is_refused(tmp_path, monkeypatch):
-    """Hashing the bytes and parsing them are two reads of the file.
-
-    A write landing between them used to be invisible: the text of the new
-    bytes was published under the hash of the old ones. An independent reviewer
-    reproduced that window and this test pins it shut.
-    """
+    """A snapshot can be parsed successfully after the named source changes."""
     import shutil
 
     from services.parsing import pdf as pdf_module

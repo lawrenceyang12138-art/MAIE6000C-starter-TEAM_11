@@ -19,14 +19,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from services.parsing.pdf import (
-    REASON_FILE_MISSING,
-    REASON_UNREADABLE,
     ExtractedDocument,
     PageText,
-    SourceChanged,
-    SourceMissing,
+    SourceSnapshot,
     UnsupportedDocument,
-    file_identity,
+    read_source_snapshot,
 )
 
 REASON_TEXT_EMPTY = "empty_text"
@@ -75,55 +72,7 @@ def is_text_path(path: str | Path) -> bool:
     return Path(path).suffix.casefold() in TEXT_EXTENSIONS
 
 
-def extract_text_document(
-    path: str | Path,
-    policy: TextParsingPolicy,
-) -> ExtractedDocument:
-    """Read one TXT/MD file as strict UTF-8 plain text."""
-    source_path = Path(path)
-    try:
-        stat_size = source_path.stat().st_size
-    except (FileNotFoundError, IsADirectoryError) as exc:
-        raise SourceMissing(REASON_FILE_MISSING, f"No such file: {source_path}") from exc
-    except OSError as exc:
-        raise SourceMissing(REASON_UNREADABLE, f"Cannot read text file: {source_path}") from exc
-    limit = min(policy.max_bytes, TEXT_MAX_BYTES)
-    if stat_size > limit:
-        raise UnsupportedDocument(
-            REASON_TEXT_TOO_LARGE,
-            f"Text file exceeds the {limit} byte limit",
-        )
-    content_sha256, byte_size = file_identity(source_path)
-
-    # Hash the bytes before decoding. The second identity check below closes
-    # the same write-during-read window as the PDF extractor.
-    if byte_size > limit:
-        raise UnsupportedDocument(
-            REASON_TEXT_TOO_LARGE,
-            f"Text file exceeds the {limit} byte limit",
-        )
-    try:
-        with source_path.open("rb") as stream:
-            raw = stream.read(limit + 1)
-    except OSError as exc:
-        if isinstance(exc, (FileNotFoundError, IsADirectoryError)):
-            raise SourceMissing(
-                "file_missing", f"Text file disappeared while being read: {source_path}"
-            ) from exc
-        raise SourceMissing(REASON_UNREADABLE, f"Cannot read text file: {source_path}") from exc
-
-    after_sha256, after_size = file_identity(source_path)
-    if after_sha256 != content_sha256 or after_size != byte_size:
-        raise SourceChanged(
-            "source_changed",
-            "The text file was written while it was being read",
-        )
-    if len(raw) > limit:
-        raise UnsupportedDocument(
-            REASON_TEXT_TOO_LARGE,
-            f"Text file exceeds the {limit} byte limit",
-        )
-
+def _decode_text(raw: bytes) -> str:
     try:
         # utf-8-sig accepts a leading BOM and is strict for every other byte.
         decoded = raw.decode("utf-8-sig", errors="strict")
@@ -143,11 +92,33 @@ def extract_text_document(
     normalized = decoded.replace("\r\n", "\n").replace("\r", "\n")
     if not normalized.strip():
         raise UnsupportedDocument(REASON_TEXT_EMPTY, "Text file is empty")
+    return normalized
 
+
+def extract_text_document(
+    path: str | Path,
+    policy: TextParsingPolicy,
+    *,
+    snapshot: SourceSnapshot | None = None,
+) -> ExtractedDocument:
+    """Read one TXT/MD file as strict UTF-8 plain text."""
+    source_path = Path(path)
+    limit = min(policy.max_bytes, TEXT_MAX_BYTES)
+    if snapshot is None:
+        snapshot = read_source_snapshot(source_path, native_limit=limit, keep_pdf=False)
+    content_sha256 = snapshot.content_sha256
+    raw = snapshot.native_bytes(
+        limit, REASON_TEXT_TOO_LARGE, f"Text file exceeds the {limit} byte limit",
+    )
+    try:
+        normalized = _decode_text(raw)
+    except UnsupportedDocument as exc:
+        exc.content_sha256 = content_sha256
+        raise
     source_kind = "markdown" if source_path.suffix.casefold() == ".md" else "text"
     return ExtractedDocument(
         content_sha256=content_sha256,
-        byte_size=byte_size,
+        byte_size=len(raw),
         page_count=1,
         pages=(PageText(page_number=None, text=normalized),),
         source_kind=source_kind,
