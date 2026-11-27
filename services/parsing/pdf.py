@@ -218,6 +218,16 @@ def _extract_pdf_document(path: str | Path) -> ExtractedDocument:
     )
 
 
+def _has_pdf_magic(path: str | Path) -> bool:
+    try:
+        with Path(path).open("rb") as handle:
+            return handle.read(len(_PDF_MAGIC)).startswith(_PDF_MAGIC)
+    except OSError:
+        # The selected extractor will return the appropriate missing/unreadable
+        # error. Do not let a suffix win over a missing file.
+        return False
+
+
 def extract_document(
     path: str | Path,
     *,
@@ -229,10 +239,20 @@ def extract_document(
     this module and all text-specific rules in ``services.parsing.text``.
     """
     from services.parsing.text import TextParsingPolicy, is_text_path
+    from services.parsing.docx import is_docx_path
+
+    # A PDF is identified by its bytes, not by a possibly misleading suffix.
+    # Keep the existing PDF behavior when a PDF-like file is named .txt/.md.
+    if _has_pdf_magic(path):
+        return _extract_pdf_document(path)
 
     policy = text_policy or TextParsingPolicy.from_environment()
     if policy.enabled and is_text_path(path):
         from services.parsing.text import extract_text_document
 
         return extract_text_document(path, policy)
+    if policy.docx_enabled and is_docx_path(path):
+        from services.parsing.docx import extract_docx_document
+
+        return extract_docx_document(path, policy)
     return _extract_pdf_document(path)
