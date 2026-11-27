@@ -45,7 +45,7 @@ from services.search.keyword_index import prepare_keyword_indexes
 # Stamped onto every version this handler processes, so chunks can be traced
 # back to the parser that produced them. Bump it when the parsing behaviour
 # changes, otherwise a re-parse is indistinguishable from the first parse.
-PARSER_REVISION = "parsing-v1"
+PARSER_REVISION = "parsing-v2"
 
 # Recorded when the work itself fails rather than the document: a database
 # error while storing, for instance. The version must not be left saying it is
@@ -90,6 +90,7 @@ def handle_extract_file(
     source_path: str | Path,
     *,
     guard=None,
+    text_policy=None,
 ) -> str:
     """Extract, chunk and store one file version.
 
@@ -110,7 +111,12 @@ def handle_extract_file(
     _commit_if_owned(db, version_id, guard=guard)
 
     try:
-        document = extract_document(source_path)
+        # Keep the zero-argument call shape used by existing ownership tests and
+        # by deployments whose parser wrapper does not know about text policy.
+        if text_policy is None:
+            document = extract_document(source_path)
+        else:
+            document = extract_document(source_path, text_policy=text_policy)
 
         if document.content_sha256 != expected_sha256:
             # The file changed underneath us. Publishing now would attach text
@@ -129,12 +135,15 @@ def handle_extract_file(
         # this with the parse avoids an empty first search while a later embed
         # job is waiting for an unavailable or warming local model.
         prepare_keyword_indexes(db, version_id)
-        persist_relations(
-            db,
-            version_id,
-            candidate_relations(chunks),
-            commit=False,
-        )
+        # TXT/Markdown is intentionally a text-only slice. Relation candidates
+        # remain a PDF feature until a separate text relation policy is approved.
+        if document.source_kind == "pdf":
+            persist_relations(
+                db,
+                version_id,
+                candidate_relations(chunks),
+                commit=False,
+            )
 
         version = db.get(FileVersion, version_id)
         if version is None:

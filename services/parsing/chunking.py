@@ -48,7 +48,7 @@ class Chunk:
     """One searchable piece of text, located by page."""
 
     ordinal: int
-    page_number: int
+    page_number: int | None
     text: str
 
 
