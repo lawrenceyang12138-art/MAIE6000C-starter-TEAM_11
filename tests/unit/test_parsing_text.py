@@ -20,7 +20,6 @@ from services.parsing.text import (
     REASON_TEXT_TOO_LARGE,
     TEXT_MAX_BYTES,
     TextParsingPolicy,
-    verify_native_source,
 )
 from services.parsing.pdf import (
     REASON_SOURCE_CHANGED,
@@ -28,6 +27,7 @@ from services.parsing.pdf import (
     SourceChanged,
     UnsupportedDocument,
     extract_document,
+    verify_source,
 )
 
 POLICY = TextParsingPolicy(enabled=True)
@@ -146,7 +146,7 @@ def test_native_source_replaced_during_final_recheck_is_not_accepted(tmp_path, m
 
     monkeypatch.setattr(Path, "stat", stat_after_replacement)
     with pytest.raises(SourceChanged) as excinfo:
-        verify_native_source(
+        verify_source(
             path, content_sha256=hashlib.sha256(original).hexdigest(), byte_size=len(original)
         )
 

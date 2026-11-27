@@ -10,7 +10,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from services.common.models import FileVersion, Relationship, SourceChunk, VersionStatus
+from services.common.models import FileRecord, FileVersion, Relationship, SourceChunk, VersionStatus
 from services.parsing.handler import handle_extract_file
 from services.parsing.docx import (
     REASON_DOCX_CORRUPT,
@@ -23,6 +23,12 @@ from services.parsing.text import TextParsingPolicy
 POLICY = TextParsingPolicy(enabled=True, docx_enabled=True)
 TRANSITIONAL_WORD_NAMESPACE = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 STRICT_WORD_NAMESPACE = "http://purl.oclc.org/ooxml/wordprocessingml/main"
+MATH = "http://schemas.openxmlformats.org/officeDocument/2006/math"
+MC = "http://schemas.openxmlformats.org/markup-compatibility/2006"
+TEN_SQUARED = (
+    "<m:sSup><m:e><m:r><m:t>10</m:t></m:r></m:e>"
+    "<m:sup><m:r><m:t>2</m:t></m:r></m:sup></m:sSup>"
+)
 
 CONTENT_TYPES = b"""\
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -149,6 +155,101 @@ def test_fraction_operands_preserve_grouping(tmp_path, numerator, denominator, k
     )
     path = _write_docx(tmp_path / "fraction.docx", body)
     assert extract_document(path, text_policy=POLICY).pages[0].text == expected
+
+
+def _fraction(num, den):
+    return (
+        f"<m:f><m:num><m:r><m:t>{num}</m:t></m:r></m:num>"
+        f"<m:den><m:r><m:t>{den}</m:t></m:r></m:den></m:f>"
+    )
+
+
+@pytest.mark.parametrize("wrapped", [False, True], ids=["same-equation", "separate-equations"])
+def test_adjacent_fraction_boundaries_survive_without_a_fallback(tmp_path, wrapped):
+    boundary = "</m:oMath><m:oMath>" if wrapped else ""
+    body = (
+        f'<w:p xmlns:m="{MATH}"><m:oMath>'
+        f'{_fraction(1, 2)}{boundary}{_fraction(3, 4)}{boundary}{_fraction(5, 6)}</m:oMath></w:p>'
+    )
+    path = _write_docx(tmp_path / "adjacent.docx", body)
+    assert extract_document(path, text_policy=POLICY).pages[0].text == "(1/2)(3/4)(5/6)"
+
+
+def test_fraction_grouping_is_local_to_each_visible_operand(tmp_path):
+    pair = _fraction(1, 2) + _fraction(3, 4)
+    nested = f"<m:f><m:num>{pair}</m:num><m:den><m:r><m:t>5</m:t></m:r></m:den></m:f>"
+    body = f'<w:p xmlns:m="{MATH}"><m:oMath>{nested}<m:r><m:t> + </m:t></m:r>'
+    body += f'{_fraction(6, 7)}</m:oMath></w:p>'
+    path = _write_docx(tmp_path / "nested-pair.docx", body)
+    assert extract_document(path, text_policy=POLICY).pages[0].text == "((1/2)(3/4))/5 + 6/7"
+
+
+@pytest.mark.parametrize(
+    ("fallback", "expected"),
+    [(None, "10^2"), ("<w:drawing/>", "10^2"),
+     ("<w:r><w:t>ten squared</w:t></w:r>", "ten squared")],
+    ids=["bare", "picture-only", "authored-text"],
+)
+def test_superscript_prefers_readable_authored_fallback(tmp_path, fallback, expected):
+    formula = f"<m:oMath>{TEN_SQUARED}</m:oMath>"
+    if fallback is not None:
+        formula = (
+            f'<mc:AlternateContent><mc:Choice Requires="m">{formula}</mc:Choice>'
+            f'<mc:Fallback>{fallback}</mc:Fallback></mc:AlternateContent>'
+        )
+    body = f'<w:p xmlns:m="{MATH}" xmlns:mc="{MC}">{formula}</w:p>'
+    path = _write_docx(tmp_path / "power.docx", body)
+    assert extract_document(path, text_policy=POLICY).pages[0].text == expected
+
+
+def test_unselected_nested_math_does_not_disqualify_outer_choice(tmp_path):
+    body = (
+        f'<w:p xmlns:m="{MATH}" xmlns:mc="{MC}"><mc:AlternateContent><mc:Choice Requires="w">'
+        '<mc:AlternateContent><mc:Choice Requires="m"><m:oMath><m:r><m:t>chosen</m:t></m:r>'
+        f'</m:oMath></mc:Choice><mc:Fallback><m:oMath>{TEN_SQUARED}</m:oMath></mc:Fallback>'
+        '</mc:AlternateContent></mc:Choice><mc:Fallback><w:r><w:t>outer fallback</w:t></w:r>'
+        '</mc:Fallback></mc:AlternateContent></w:p>'
+    )
+    path = _write_docx(tmp_path / "nested-choice.docx", body)
+    assert extract_document(path, text_policy=POLICY).pages[0].text == "chosen"
+
+
+@pytest.mark.parametrize(
+    ("formula", "fallback", "invented"),
+    [
+        (_fraction(1, 2) + _fraction(3, 4), "(1/2)(3/4)", "23"),
+        (TEN_SQUARED, "10^2", "102"),
+    ],
+    ids=["adjacent-fractions", "superscript"],
+)
+def test_math_search_and_evidence_do_not_invent_numbers(
+    client, db_session, make_file_version, tmp_path, formula, fallback, invented
+):
+    body = (
+        f'<w:p xmlns:mc="{MC}" xmlns:m="{MATH}">'
+        '<w:r><w:t>Formula: </w:t></w:r><mc:AlternateContent><mc:Choice Requires="m">'
+        f'<m:oMath>{formula}</m:oMath></mc:Choice><mc:Fallback><w:r><w:t>{fallback}</w:t>'
+        '</w:r></mc:Fallback></mc:AlternateContent></w:p>'
+    )
+    path = _write_docx(tmp_path / "math.docx", body)
+    version_id = make_file_version(source_path=path)
+    # The file-version fixture does not promote a current version; search
+    # serves only the current version, as it would after a real scan.
+    version = db_session.get(FileVersion, version_id)
+    db_session.get(FileRecord, version.file_id).current_version_id = version_id
+    assert handle_extract_file(db_session, version_id, path, text_policy=POLICY) == "basic_ready"
+
+    def search(query):
+        response = client.post("/search", json={"query": query, "mode": "keyword"})
+        assert response.status_code == 200
+        return response.json()["results"]
+
+    assert not search(invented)
+    (hit,) = search("Formula")
+    assert hit["text"] == "Formula: " + fallback
+    evidence = client.get(f"/evidence/{hit['chunk_id']}")
+    assert evidence.status_code == 200
+    assert evidence.json()["text"] == hit["text"]
 
 
 def test_docx_alternate_content_chooses_one_supported_branch(tmp_path):

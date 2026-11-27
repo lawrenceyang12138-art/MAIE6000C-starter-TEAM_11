@@ -36,7 +36,14 @@ _MATH_NAMESPACES = frozenset({
     "http://schemas.openxmlformats.org/officeDocument/2006/math",
     "http://purl.oclc.org/ooxml/officeDocument/math",
 })
-_FRACTIONS = {f"{{{ns}}}f" for ns in _MATH_NAMESPACES}
+_FRACTIONS = frozenset(f"{{{ns}}}f" for ns in _MATH_NAMESPACES)
+_SUPERSCRIPTS = frozenset(f"{{{ns}}}sSup" for ns in _MATH_NAMESPACES)
+# Only these math elements have a faithful plain-text representation here.
+# For other structures prefer the document author's compatibility text.
+_SUPPORTED_MATH = frozenset(
+    f"{{{ns}}}{name}" for ns in _MATH_NAMESPACES
+    for name in ("oMath", "oMathPara", "r", "t", "f", "fPr", "type", "num", "den")
+)
 _MARKUP_COMPATIBILITY = "{http://schemas.openxmlformats.org/markup-compatibility/2006}"
 _ALTERNATE_CONTENT = f"{_MARKUP_COMPATIBILITY}AlternateContent"
 _ALTERNATE_CHOICE = f"{_MARKUP_COMPATIBILITY}Choice"
@@ -56,6 +63,10 @@ _SKIP_SUBTREES = {
     f"{{{namespace}}}{name}"
     for namespace in _WORDPROCESSING_NAMESPACES
     for name in ("txbxContent", "pPr", "rPr", "rt", "del")
+} | {
+    f"{{{namespace}}}{name}"
+    for namespace in _MATH_NAMESPACES
+    for name in ("rPr", "ctrlPr", "oMathParaPr", "fPr")
 }
 
 
@@ -111,13 +122,12 @@ def _validate_package_relationships(data: bytes) -> None:
     )
 
 
-def _iter_selected_elements(
+def _visible_elements(
     node: ElementTree.Element,
-    supported_choices: set[ElementTree.Element],
     *,
     stop_at: frozenset[str] = frozenset(),
 ) -> Iterator[ElementTree.Element]:
-    """Walk a document-order view, selecting at most one MC alternate branch."""
+    """Walk visible descendants in document order, without Python recursion."""
     levels = [iter(node)]
     while levels:
         child = next(levels[-1], None)
@@ -125,11 +135,6 @@ def _iter_selected_elements(
             levels.pop()
             continue
         if child.tag in _SKIP_SUBTREES:
-            continue
-        if child.tag == _ALTERNATE_CONTENT:
-            branch = _select_alternate_branch(child, supported_choices)
-            if branch is not None:
-                levels.append(iter(branch))
             continue
         yield child
         if child.tag not in stop_at:
@@ -139,15 +144,61 @@ def _iter_selected_elements(
 def _select_alternate_branch(
     node: ElementTree.Element,
     supported_choices: set[ElementTree.Element],
+    needs_fallback: set[ElementTree.Element],
+    readable: set[ElementTree.Element],
 ) -> ElementTree.Element | None:
-    """Use the first supported choice, or exactly one fallback branch."""
+    """Prefer a fully rendered choice, then the authored fallback if provided."""
     fallback = None
+    first_compatible = None
     for child in node:
         if child in supported_choices:
-            return child
+            if child not in needs_fallback:
+                return child
+            if first_compatible is None:
+                first_compatible = child
         if child.tag == _ALTERNATE_FALLBACK:
             fallback = child
+    # A picture-only fallback has no searchable text. Preserve a readable
+    # namespace-compatible choice if it is the only available representation.
+    if first_compatible is not None and fallback not in readable:
+        return first_compatible
     return fallback
+
+
+def _math_text(ns: str, text: str) -> ElementTree.Element:
+    token = ElementTree.Element(ns + "t")
+    token.text = text
+    return token
+
+
+def _parenthesize(node: ElementTree.Element, ns: str) -> None:
+    node.insert(0, _math_text(ns, "("))
+    node.append(_math_text(ns, ")"))
+
+
+def _group_adjacent_fractions(container: ElementTree.Element) -> None:
+    """Treat whole fractions as atoms, even across run or equation wrappers."""
+    previous = None
+    previous_grouped = False
+    for node in _visible_elements(container, stop_at=_FRACTIONS):
+        if node.tag in _FRACTIONS:
+            if previous is not None:
+                if not previous_grouped:
+                    _parenthesize(previous, previous.tag.removesuffix("f"))
+                _parenthesize(node, node.tag.removesuffix("f"))
+            previous_grouped = previous is not None
+            previous = node
+        elif (node.tag in _TEXT and node.text) or node.tag in _RUN_LAYOUT:
+            previous = None
+
+
+def _group_operand(operand: ElementTree.Element, ns: str) -> None:
+    simple = (
+        len(operand) == 1 and operand[0].tag == ns + "r"
+        and "".join(t.text or "" for t in operand[0] if t.tag in _TEXT).isalnum()
+    )
+    if not simple:
+        _parenthesize(operand, ns)
 
 
 def _mark_fraction_boundaries(fraction: ElementTree.Element) -> None:
@@ -161,31 +212,32 @@ def _mark_fraction_boundaries(fraction: ElementTree.Element) -> None:
     if numerator is None or denominator is None:
         return
 
-    def marker(text: str) -> ElementTree.Element:
-        token = ElementTree.Element(ns + "t")
-        token.text = text
-        return token
-
     for operand in (numerator, denominator):
-        simple = (
-            len(operand) == 1 and operand[0].tag == ns + "r"
-            and "".join(t.text or "" for t in operand[0] if t.tag in _TEXT).isalnum()
-        )
-        if not simple:
-            operand.insert(0, marker("("))
-            operand.append(marker(")"))
+        _group_adjacent_fractions(operand)
+        _group_operand(operand, ns)
     kind = fraction.find(f"{ns}fPr/{ns}type")
     # A barless stack (e.g. a binomial) is not a division.
     barless = kind is not None and kind.get(ns + "val") == "noBar"
-    denominator.insert(0, marker(" " if barless else "/"))
+    denominator.insert(0, _math_text(ns, " " if barless else "/"))
 
 
-def _parse_document_xml(
-    data: bytes,
-) -> tuple[ElementTree.Element, set[ElementTree.Element]]:
-    """Resolve MC Requires prefixes in scope, retaining only supported choices."""
+def _mark_superscript(script: ElementTree.Element) -> None:
+    """Keep the exponent distinct even in bare math with no alternate text."""
+    ns = script.tag.removesuffix("sSup")
+    base, exponent = script.find(ns + "e"), script.find(ns + "sup")
+    if base is not None and exponent is not None:
+        _group_operand(base, ns)
+        _group_operand(exponent, ns)
+        exponent.insert(0, _math_text(ns, "^"))
+
+
+def _parse_document_xml(data: bytes) -> ElementTree.Element:
+    """Resolve prefixes in scope and choose branches bottom-up by rendering capability."""
     namespaces: dict[str, str] = {}
     supported_choices: set[ElementTree.Element] = set()
+    needs_fallback: set[ElementTree.Element] = set()
+    readable: set[ElementTree.Element] = set()
+    alternate_depth = 0
     pending: list[tuple[str, str | None]] = []
     scope_stack: list[list[tuple[str, str | None]]] = []
     events = ElementTree.iterparse(
@@ -199,7 +251,9 @@ def _parse_document_xml(
         elif event == "start":
             scope_stack.append(pending)
             pending = []
-            if value.tag == _ALTERNATE_CHOICE:
+            if value.tag == _ALTERNATE_CONTENT:
+                alternate_depth += 1
+            elif value.tag == _ALTERNATE_CHOICE:
                 requirements = value.get("Requires", "").split()
                 if requirements and all(
                     namespaces.get(prefix) in _SUPPORTED_ALTERNATE_NAMESPACES
@@ -207,8 +261,33 @@ def _parse_document_xml(
                 ):
                     supported_choices.add(value)
         else:
+            if value.tag == _ALTERNATE_CONTENT:
+                # Only the selected branch participates in outer choices and
+                # paragraph text; do not let an unused nested branch veto either.
+                branch = _select_alternate_branch(
+                    value, supported_choices, needs_fallback, readable
+                )
+                value[:] = [] if branch is None else [branch]
+                alternate_depth -= 1
+                if not alternate_depth:
+                    supported_choices.clear()
+                    needs_fallback.clear()
+                    readable.clear()
+            if alternate_depth and value.tag not in _SKIP_SUBTREES:
+                namespace = value.tag.partition("}")[0].removeprefix("{")
+                if (
+                    (namespace in _MATH_NAMESPACES and value.tag not in _SUPPORTED_MATH)
+                    or any(child in needs_fallback for child in value)
+                ):
+                    needs_fallback.add(value)
+                if (value.tag in _TEXT and value.text and value.text.strip()) or any(
+                    child in readable for child in value
+                ):
+                    readable.add(value)
             if value.tag in _FRACTIONS:
                 _mark_fraction_boundaries(value)
+            elif value.tag in _SUPERSCRIPTS:
+                _mark_superscript(value)
             # Undo only the declarations introduced on this element. This
             # also restores prefixes shadowed by a different local binding.
             for prefix, previous in reversed(scope_stack.pop()):
@@ -216,15 +295,13 @@ def _parse_document_xml(
                     namespaces.pop(prefix)
                 else:
                     namespaces[prefix] = previous
-    return events.root, supported_choices
+    return events.root
 
 
-def _paragraph_text(
-    paragraph: ElementTree.Element,
-    supported_choices: set[ElementTree.Element],
-) -> str:
+def _paragraph_text(paragraph: ElementTree.Element) -> str:
+    _group_adjacent_fractions(paragraph)
     pieces: list[str] = []
-    for node in _iter_selected_elements(paragraph, supported_choices):
+    for node in _visible_elements(paragraph):
         if node.tag in _TEXT and node.text:
             pieces.append(node.text)
         elif node.tag in _RUN_LAYOUT:
@@ -234,7 +311,7 @@ def _paragraph_text(
 
 def _body_text(document_xml: bytes) -> str:
     try:
-        root, supported_choices = _parse_document_xml(document_xml)
+        root = _parse_document_xml(document_xml)
     except ElementTree.ParseError as exc:
         raise UnsupportedDocument(
             REASON_DOCX_CORRUPT, "DOCX document XML is malformed"
@@ -252,8 +329,8 @@ def _body_text(document_xml: bytes) -> str:
         )
 
     paragraphs = (
-        _paragraph_text(paragraph, supported_choices)
-        for paragraph in _iter_selected_elements(body, supported_choices, stop_at=_PARAGRAPHS)
+        _paragraph_text(paragraph)
+        for paragraph in _visible_elements(body, stop_at=_PARAGRAPHS)
         if paragraph.tag in _PARAGRAPHS
     )
     return "\n".join(paragraphs)

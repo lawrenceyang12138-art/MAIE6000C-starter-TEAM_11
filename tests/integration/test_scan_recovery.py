@@ -42,7 +42,7 @@ from services.parsing.pdf import (
     REASON_SOURCE_CHANGED,
     REASON_UNREADABLE,
 )
-from services.parsing.text import REASON_TEXT_EMPTY, REASON_TEXT_TOO_LARGE
+from services.parsing.text import REASON_TEXT_EMPTY, REASON_TEXT_TOO_LARGE, TEXT_MAX_BYTES
 from services.scan import handler as scan_handler
 from services.worker.app import main as worker_main
 
@@ -336,7 +336,7 @@ def test_a_changed_text_rejection_can_retry_the_original_version(
 @pytest.mark.parametrize(
     ("content", "reason_code"),
     [
-        (b"", REASON_TEXT_EMPTY), (b"x" * 1024, REASON_TEXT_TOO_LARGE),
+        (b"", REASON_TEXT_EMPTY), (b"x" * (TEXT_MAX_BYTES + 1), REASON_TEXT_TOO_LARGE),
         (FIXTURE_PDF.with_name("no_text_layer.pdf"), REASON_NO_TEXT_LAYER),
         (FIXTURE_PDF.with_name("encrypted.pdf"), REASON_ENCRYPTED),
     ],
@@ -360,6 +360,55 @@ def test_unchanged_rejected_text_remains_unsupported(
     assert row["error_code"] == reason_code
     assert client.get(f"/jobs/{extract_job_id}").json()["status"] == JobStatus.COMPLETED.value
     assert client.post(f"/jobs/{extract_job_id}/retry").status_code == 409
+
+
+@pytest.mark.parametrize("action", ["replace", "remove"])
+def test_source_changed_after_parser_rejection_is_retryable(
+    client, text_source, db_session, monkeypatch, tmp_path, action
+):
+    from services.parsing import handler
+    from services.parsing.pdf import UnsupportedDocument
+
+    original = b" " * len(b"valid text")
+    text_source.write_bytes(original)
+    _, scan_job_id = _authorize(client)
+    worker_main.process_job(scan_job_id)
+    version_id = _version_of(db_session, _only_file(db_session)).id
+    (job,) = _extract_jobs(db_session, version_id)
+    job_id = job.id
+    real_extract = handler.extract_document
+
+    def reject_then_change(*args, **kwargs):
+        try:
+            return real_extract(*args, **kwargs)
+        except UnsupportedDocument as exc:
+            assert exc.reason_code == REASON_TEXT_EMPTY
+            if action == "replace":
+                replacement = tmp_path / "replacement.txt"
+                replacement.write_bytes(b"valid text")
+                replacement.replace(text_source)
+            else:
+                text_source.unlink()
+            raise
+
+    with monkeypatch.context() as patch:
+        patch.setattr(handler, "extract_document", reject_then_change)
+        _run_next_job(db_session)
+    db_session.expire_all()
+    version = db_session.get(FileVersion, version_id)
+    job = client.get(f"/jobs/{job_id}").json()
+    expected = REASON_SOURCE_CHANGED if action == "replace" else REASON_FILE_MISSING
+    assert (version.status, version.error_code) == (VersionStatus.FAILED.value, expected)
+    assert (job["status"], job["error_code"]) == (JobStatus.FAILED.value, expected)
+    assert not db_session.query(SourceChunk).filter_by(version_id=version_id).count()
+    text_source.write_bytes(original)
+    assert client.post(f"/jobs/{job_id}/retry").status_code == 202
+    _run_next_job(db_session)
+    db_session.expire_all()
+    version = db_session.get(FileVersion, version_id)
+    assert (version.status, version.error_code) == (
+        VersionStatus.UNSUPPORTED.value, REASON_TEXT_EMPTY
+    )
 
 
 @pytest.mark.parametrize("original_is_pdf", [False, True], ids=["txt", "pdf-named-txt"])

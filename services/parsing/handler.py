@@ -16,7 +16,7 @@ Four things matter here:
    were asked to process, so the chunks are discarded rather than stored
    against the wrong content. A parser rejection is tied to that same
    identity so a newer file cannot leave the original version unsupported.
-   Before publishing native text, also recheck the path in case it was
+   Before publishing native text or a terminal rejection, recheck the path in case it was
    replaced after the snapshot was taken.
 3. **Relations are part of a successful parse.** Chunks, rule-based entity
    candidates, their source evidence and the `basic_ready` result commit
@@ -40,16 +40,16 @@ from services.parsing.pdf import (
     SourceMissing,
     UnsupportedDocument,
     extract_document,
+    verify_source,
 )
 from services.parsing.persist import persist_chunks, persist_relations
 from services.parsing.relations import candidate_relations
-from services.parsing.text import verify_native_source
 from services.search.keyword_index import prepare_keyword_indexes
 
 # Stamped onto every version this handler processes, so chunks can be traced
 # back to the parser that produced them. Bump it when the parsing behaviour
 # changes, otherwise a re-parse is indistinguishable from the first parse.
-PARSER_REVISION = "parsing-v5"
+PARSER_REVISION = "parsing-v6"
 
 # Recorded when the work itself fails rather than the document: a database
 # error while storing, for instance. The version must not be left saying it is
@@ -118,10 +118,20 @@ def handle_extract_file(
     try:
         # Keep the zero-argument call shape used by existing ownership tests and
         # by deployments whose parser wrapper does not know about text policy.
-        if text_policy is None:
-            document = extract_document(source_path)
-        else:
-            document = extract_document(source_path, text_policy=text_policy)
+        try:
+            if text_policy is None:
+                document = extract_document(source_path)
+            else:
+                document = extract_document(source_path, text_policy=text_policy)
+        except UnsupportedDocument as exc:
+            if exc.content_sha256 is None or exc.content_sha256 != expected_sha256:
+                raise SourceChanged(REASON_SOURCE_CHANGED, "Rejected a different version") from exc
+            # Matching the scanned bytes alone says nothing about the path now.
+            # Source errors here follow the same retry path as extraction errors.
+            verify_source(source_path, content_sha256=expected_sha256, byte_size=expected_byte_size)
+            return _finish(
+                db, version_id, VersionStatus.UNSUPPORTED.value, exc.reason_code, guard=guard
+            )
 
         if document.content_sha256 != expected_sha256:
             # The file changed underneath us. Publishing now would attach text
@@ -161,23 +171,13 @@ def handle_extract_file(
             # atomically replaced while that snapshot is being read or decoded.
             # Recheck after staging rows but just before commit; on mismatch,
             # the failure handler rolls back all staged chunks and indexes.
-            verify_native_source(
+            verify_source(
                 source_path, content_sha256=expected_sha256, byte_size=expected_byte_size
             )
         # Chunks, relation candidates and the ready status publish only while
         # this attempt still owns the job: a stale parse would replace rows that
         # a newer attempt already published.
         _commit_if_owned(db, version_id, guard=guard)
-    except UnsupportedDocument as exc:
-        if exc.content_sha256 is None or exc.content_sha256 != expected_sha256:
-            return _finish(
-                db, version_id, VersionStatus.FAILED.value, REASON_SOURCE_CHANGED,
-                guard=guard,
-            )
-        return _finish(
-            db, version_id, VersionStatus.UNSUPPORTED.value, exc.reason_code,
-            guard=guard,
-        )
     except (SourceMissing, SourceChanged) as exc:
         # Source access/change failures are retryable. Discard any staged
         # parse and indexes before committing the failure status.

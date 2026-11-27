@@ -14,6 +14,7 @@ outcome here, not a crash.
 from __future__ import annotations
 
 import hashlib
+import os
 from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
@@ -188,9 +189,36 @@ def _read_pages(snapshot: BytesIO) -> list[str]:
     return pages
 
 
-def _verify_pdf_source(path: Path, expected_sha256: str) -> None:
-    if file_identity(path)[0] != expected_sha256:
-        raise SourceChanged(REASON_SOURCE_CHANGED, "The file was written while it was being read")
+def _source_stamp(stat: os.stat_result) -> tuple[int, int, int, int, int]:
+    return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+
+
+def verify_source(path: str | Path, *, content_sha256: str, byte_size: int) -> None:
+    """Verify the named file, including rejected sources above the native size cap."""
+    path = Path(path)
+    digest = hashlib.sha256()
+    remaining = byte_size
+    try:
+        with path.open("rb") as stream:
+            before = os.fstat(stream.fileno())
+            if before.st_size != byte_size:
+                raise SourceChanged(REASON_SOURCE_CHANGED, "The source size changed")
+            while remaining:
+                block = stream.read(min(remaining, _CHUNK_SIZE))
+                if not block:
+                    break
+                digest.update(block)
+                remaining -= len(block)
+            after = _source_stamp(os.fstat(stream.fileno()))
+        at_path = _source_stamp(path.stat())
+    except OSError as exc:
+        raise _source_read_failure(path, exc) from exc
+
+    if (
+        remaining or digest.hexdigest() != content_sha256
+        or _source_stamp(before) != after or after != at_path
+    ):
+        raise SourceChanged(REASON_SOURCE_CHANGED, "The source changed during extraction")
 
 
 def _extract_pdf_document(pdf_path: Path, source: SourceSnapshot) -> ExtractedDocument:
@@ -206,13 +234,13 @@ def _extract_pdf_document(pdf_path: Path, source: SourceSnapshot) -> ExtractedDo
         try:
             raw_pages = _read_pages(snapshot)
         except UnsupportedDocument as exc:
-            _verify_pdf_source(pdf_path, content_sha256)
+            verify_source(pdf_path, content_sha256=content_sha256, byte_size=byte_size)
             exc.content_sha256 = content_sha256
             raise
         except OSError as exc:
             raise _source_read_failure(pdf_path, exc) from exc
 
-    _verify_pdf_source(pdf_path, content_sha256)
+    verify_source(pdf_path, content_sha256=content_sha256, byte_size=byte_size)
 
     pages = tuple(
         PageText(page_number=index, text=text)
