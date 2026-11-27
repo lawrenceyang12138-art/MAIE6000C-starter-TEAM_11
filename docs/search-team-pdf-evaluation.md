@@ -7,11 +7,15 @@ requeues missing current-source vectors when the model becomes ready. Manual
 recovery commands and the historical observations below retain their original scope.
 
 Prepared by C on 2026-10-29; model replacement updated 2026-10-30.
-Work branch: `codex/c-team-pdf-evaluation`.
-Integration baseline: `7522287126061da8977c253256e8f807143ab8b5`.
-The HTTPS fetch observed remote develop at
-`047b2ac8b6c584b366c3db8f211125a6b9febe4f`, already included in that local baseline.
-The original C checkout and its untracked frontend/tmp files remain untouched.
+The [E5](../submissions/week07/evidence/C/team-pdf-20261029/README.md),
+[PPLX](../submissions/week07/evidence/C/20261030-pplx/README.md), and
+[page navigation](../submissions/week07/evidence/C/20261030-page-navigation/README.md)
+reports record the exact snapshots used for those runs. Those commits are
+reachable from `feat/c-team-pdf-evaluation`; use the recorded commit for
+reproduction, not the tip of that branch.
+The integration baseline was `7522287126061da8977c253256e8f807143ab8b5`,
+which included the observed remote `develop` at
+`047b2ac8b6c584b366c3db8f211125a6b9febe4f`.
 
 The active model is now `perplexity-ai/pplx-embed-v2-late-0.6b` at fixed revision
 `7bba8e7cf2075dec747fa8557f41eb90e70361ed`. This is ColBERT late interaction:
@@ -94,17 +98,17 @@ files and their manifest when preparing another computer. The active path is
 fall back to E5 or a hosted model.
 
 Create an isolated PostgreSQL/pgvector instance, or supply a disposable database
-URL. Do not point the runner at a shared production database. The historical
-2026-10-29 E5 run used:
+URL. Do not point the runner at a shared production database. For a new run,
+choose an unused container name and port. For example:
 
 ```powershell
-docker run --detach --name team11-c-pdf-eval-20261029 --label owner=codex-role-c --publish 127.0.0.1:55432:5432 --env POSTGRES_DB=team11_c_pdf --env POSTGRES_USER=postgres --env POSTGRES_PASSWORD=postgres pgvector/pgvector:pg16
+docker run --detach --name team11-c-pdf-eval --label owner=team11-role-c-pdf-eval --publish 127.0.0.1:55432:5432 --env POSTGRES_DB=team11_c_pdf --env POSTGRES_USER=postgres --env POSTGRES_PASSWORD=postgres pgvector/pgvector:pg16
 ```
 
-The pulled image identity was
-`sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a`.
-The actual server reported PostgreSQL **16.15** and pgvector **0.8.7**. Existing
-team containers/databases were not used for evaluation.
+The historical 2026-10-29 E5 run pulled image
+`sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a`
+and the server reported PostgreSQL **16.15** and pgvector **0.8.7**. Existing
+team containers/databases were not used for that run.
 
 ```powershell
 .\.venv\Scripts\python.exe -m scripts.evaluate_team_pdf --database-url postgresql+psycopg://postgres:postgres@127.0.0.1:55432/team11_c_pdf --backend local --output work/team-pdf-postgres.json

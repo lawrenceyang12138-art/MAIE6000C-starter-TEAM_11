@@ -5,6 +5,8 @@ actual Worker and PostgreSQL. It does not alter ranking, run a mock AI backend,
 change the default Compose deployment, or approve the benchmark. These tools
 use a dedicated Compose project, synthetic input and a separate database. Do
 not use the suite against an existing application database or user files.
+See the [dated results](#2026-11-23-validation-results) for the recorded run
+and its limits.
 
 ## Inputs and quality protocol
 
@@ -135,5 +137,89 @@ compose.search-validation.yaml down` stops only the default validation project
 and preserves its volume. If you used `-p`, use the same project name when
 stopping it. The model cache and local reports are reusable and are not tracked.
 
-See the [C technical brief](../submissions/week13/sections/C.md) for the dated
-run, gaps, and interpretation.
+## 2026-11-23 validation results
+
+These results are Role C evidence, not team acceptance or a release tag. The
+application snapshot was `develop` at `5eb12cff3f0eaac0b5b0f4ca1b75524e052de06f`,
+with the pinned PPLX model described in the [search guide](search-plan.md). The
+[machine-readable record](../submissions/week13/sections/C-validation.json)
+retains runtime identifiers, commands, and denominators. Raw reports remain
+local under `work/c-search-validation-reports/baseline-5eb12cf/`.
+
+### Functionality and recovery
+
+- With the AI service stopped, the W7 fixture workflow passed **202/202 HTTP/DB
+  checks** for scan, keyword search, evidence, rescan, and review. This was not
+  a rerun of the W7 browser acceptance checks.
+- On the separate 28-file W13 root, the Worker created 54 keyword indexes and
+  24 PDF metadata rows with no token matrices. Keyword and fallback evidence
+  matched the frozen source. Semantic and hybrid requests reported
+  `ai_unavailable`; these were not model successes.
+- After AI started, the normal Worker recovered **54/54 compatible token
+  matrices** (2,397 token vectors) and enriched 24 readable versions without
+  changing file, version, or chunk IDs. The four unsupported outcomes and
+  source hashes were unchanged. The marker probe found the verified passage
+  at rank 1 in all three modes.
+- Recreating PostgreSQL, API, and Worker with the same volume while AI was off
+  preserved identities, index counts, and keyword access. With AI restored,
+  semantic and hybrid found the verified passage without manual re-indexing.
+  This was a [same-machine restart check](#verify-persistence-across-container-recreation),
+  not backup-device or browser acceptance.
+- With Alembic applied on Linux/Python 3.11 and real PostgreSQL, Ruff passed and
+  the Python suite recorded **835 passed, 3 skipped** (Windows-only checks).
+  Ten focused tests passed on Windows. The historical D freeze matched 16 file
+  hashes and 10 source locations. An initial run without migrations had eight
+  setup errors due to the missing `vector` extension; the migrated rerun had none.
+
+### Topical retrieval and limits
+
+Navigation was disabled. The [candidate corpus](../fixtures/search/w13-v1/README.md)
+uses synthetic English sources with both English and Chinese queries. It does
+not measure coverage of Chinese-language sources.
+
+| Mode | Relevant file Top-3 | Correct physical page Top-3 | Verified passage Top-3 |
+| --- | ---: | ---: | ---: |
+| Keyword | 5/12 | 2/12 | 2/12 |
+| Semantic (PPLX) | 12/12 | 11/12 | 11/12 |
+| Hybrid | 12/12 | 11/12 | 11/12 |
+
+The five exact-marker keyword controls were **5/5 Top-1** for file, page, and
+passage. Semantic and hybrid each had passage hits for 5/6 English and 6/6
+Chinese queries. For `T01`, both chose page 1 (routine retention) of
+`topics/north/atlas.pdf` instead of page 2 (offsite restoration drill). That file
+ranked first for semantic and second for hybrid; it remains a page and passage
+miss. These results are not pooled with W7 model-only or navigation-assisted runs.
+
+B's source-label review and team agreement on the candidate and threshold are
+pending. Independent query authorship, coverage of a broader corpus,
+backup-device reproduction, and final team sign-off remain unverified.
+
+### Performance
+
+The run used Windows 11 on an Intel Core Ultra 9 275HX, Docker Desktop Linux
+containers, Torch 2.8.0 CPU, and four embedding threads. Timings are in
+milliseconds from one serial loopback client with a warm model: 24 timed
+requests per mode, excluding the first measured probe and evidence reads.
+
+| Files / chunks | Keyword median / p95 | Semantic median / p95 | Hybrid median / p95 |
+| --- | ---: | ---: | ---: |
+| 28 / 54 | 9.32 / 10.54 | 177.01 / 215.61 | 176.30 / 187.97 |
+| 112 / 222 | 18.03 / 23.87 | 788.05 / 890.05 | 762.34 / 836.33 |
+
+The warm-model 112-file import, parse, and index took **88.58 s** and produced
+222 matrices (13,072 token vectors). Across 34 `docker stats` samples, the
+sampled peaks were about 199 MiB API, 93 MiB Worker, 708 MiB AI, and 70 MiB
+PostgreSQL. These are cache-adjusted container samples, not peak process RSS.
+The larger root repeats files for load testing; it is not a second quality
+corpus. This run does not establish throughput for concurrent clients or
+latency on a large, diverse corpus. Retrieval uses exact token MaxSim, not ANN.
+
+## Role C development record
+
+For W7, Codex assisted with requirements review, Python/SQLAlchemy/FastAPI
+code design and implementation, tests, documentation, and SQLite,
+PostgreSQL/pgvector, local-model, and HTTP checks. For W13, Codex assisted with
+implementation, fixture drafting, verification runs, and documenting results.
+The results are from executed checks and measurements. This assistance is
+separate from the application's local embedding feature. These notes do not
+replace the team's final AI Use Statement or attest on behalf of other members.

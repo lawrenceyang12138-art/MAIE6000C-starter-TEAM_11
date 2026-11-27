@@ -3,8 +3,7 @@
 Updated: 2026-10-18. This handoff describes the canonical models currently used by
 `feat/c-search-model-evaluation`. The differences originally recorded on
 2026-10-16 explain the adaptation; they are not a claim that the old duplicate
-schema is still in use. See the [implementation guide](search-plan.md),
-[integration handoff](search-integration-handoff.md), and
+schema is still in use. See the [implementation guide](search-plan.md) and
 [shared integration contract](team11-w7-shared-contract.md).
 
 The 2026-10-30 PPLX replacement adds C-owned `ChunkTokenIndex` storage for
