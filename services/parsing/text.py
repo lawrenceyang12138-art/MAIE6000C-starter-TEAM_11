@@ -21,9 +21,11 @@ from pathlib import Path
 
 from services.parsing.pdf import (
     REASON_FILE_MISSING,
+    REASON_SOURCE_CHANGED,
     REASON_UNREADABLE,
     ExtractedDocument,
     PageText,
+    SourceChanged,
     SourceMissing,
     UnsupportedDocument,
 )
@@ -99,6 +101,43 @@ def read_native_source(
     except OSError as exc:
         raise SourceMissing(REASON_UNREADABLE, f"Cannot read file: {path}") from exc
     return raw, digest.hexdigest()
+
+
+def _source_stamp(stat: os.stat_result) -> tuple[int, int, int, int, int]:
+    return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+
+
+def verify_native_source(
+    path: str | Path, *, content_sha256: str, byte_size: int
+) -> None:
+    """Recheck the named path against the parsed snapshot before publication."""
+    path = Path(path)
+    try:
+        with path.open("rb") as stream:
+            opened = _source_stamp(os.fstat(stream.fileno()))
+            # The original parsed document fits the native cap. Do not read
+            # an entire replacement file if it exceeds that cap.
+            raw = stream.read(min(max(0, byte_size), TEXT_MAX_BYTES) + 1)
+            after_read = _source_stamp(os.fstat(stream.fileno()))
+        actual_sha256 = hashlib.sha256(raw).hexdigest()
+        at_path = _source_stamp(path.stat())
+    except (FileNotFoundError, IsADirectoryError) as exc:
+        raise SourceMissing(REASON_FILE_MISSING, f"No such file: {path}") from exc
+    except OSError as exc:
+        raise SourceMissing(REASON_UNREADABLE, f"Cannot read file: {path}") from exc
+
+    # The bytes catch same-size edits. The path stamp also catches a rename
+    # over the path during this recheck, whose open handle can still read the
+    # previous file on platforms that allow replacing it.
+    if (
+        len(raw) != byte_size
+        or actual_sha256 != content_sha256
+        or opened != after_read
+        or after_read != at_path
+    ):
+        raise SourceChanged(
+            REASON_SOURCE_CHANGED, "The native source changed while it was being extracted"
+        )
 
 
 def _decode_text(raw: bytes) -> str:

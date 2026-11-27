@@ -30,6 +30,30 @@ _WORDPROCESSING_NAMESPACES = frozenset({
     "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
     "http://purl.oclc.org/ooxml/wordprocessingml/main",
 })
+_MATH_NAMESPACES = frozenset({
+    "http://schemas.openxmlformats.org/officeDocument/2006/math",
+    "http://purl.oclc.org/ooxml/officeDocument/math",
+})
+_MARKUP_COMPATIBILITY = "{http://schemas.openxmlformats.org/markup-compatibility/2006}"
+_ALTERNATE_CONTENT = f"{_MARKUP_COMPATIBILITY}AlternateContent"
+_ALTERNATE_CHOICE = f"{_MARKUP_COMPATIBILITY}Choice"
+_ALTERNATE_FALLBACK = f"{_MARKUP_COMPATIBILITY}Fallback"
+_SUPPORTED_ALTERNATE_NAMESPACES = _WORDPROCESSING_NAMESPACES | _MATH_NAMESPACES
+_PARAGRAPHS = frozenset(f"{{{namespace}}}p" for namespace in _WORDPROCESSING_NAMESPACES)
+_TEXT = {
+    f"{{{namespace}}}t"
+    for namespace in _WORDPROCESSING_NAMESPACES | _MATH_NAMESPACES
+}
+_RUN_LAYOUT = {
+    f"{{{namespace}}}{name}": separator
+    for namespace in _WORDPROCESSING_NAMESPACES
+    for name, separator in (("tab", "\t"), ("br", "\n"), ("cr", "\n"))
+}
+_SKIP_SUBTREES = {
+    f"{{{namespace}}}{name}"
+    for namespace in _WORDPROCESSING_NAMESPACES
+    for name in ("txbxContent", "pPr", "rPr", "rt", "del")
+}
 
 
 def is_docx_path(path: str | Path) -> bool:
@@ -84,44 +108,98 @@ def _validate_package_relationships(data: bytes) -> None:
     )
 
 
-def _iter_word_elements(
-    node: ElementTree.Element, tag: str, *, skip: str
+def _iter_selected_elements(
+    node: ElementTree.Element,
+    supported_choices: set[ElementTree.Element],
+    *,
+    stop_at: frozenset[str] = frozenset(),
 ) -> Iterator[ElementTree.Element]:
-    """Yield matches in document order without descending into them or text boxes."""
+    """Walk a document-order view, selecting at most one MC alternate branch."""
     levels = [iter(node)]
     while levels:
         child = next(levels[-1], None)
         if child is None:
             levels.pop()
-        elif child.tag == skip:
             continue
-        elif child.tag == tag:
-            yield child
-        else:
+        if child.tag in _SKIP_SUBTREES:
+            continue
+        if child.tag == _ALTERNATE_CONTENT:
+            branch = _select_alternate_branch(child, supported_choices)
+            if branch is not None:
+                levels.append(iter(branch))
+            continue
+        yield child
+        if child.tag not in stop_at:
             levels.append(iter(child))
 
 
-def _paragraph_text(paragraph: ElementTree.Element, prefix: str) -> str:
+def _select_alternate_branch(
+    node: ElementTree.Element,
+    supported_choices: set[ElementTree.Element],
+) -> ElementTree.Element | None:
+    """Use the first supported choice, or exactly one fallback branch."""
+    fallback = None
+    for child in node:
+        if child in supported_choices:
+            return child
+        if child.tag == _ALTERNATE_FALLBACK:
+            fallback = child
+    return fallback
+
+
+def _parse_document_xml(
+    data: bytes,
+) -> tuple[ElementTree.Element, set[ElementTree.Element]]:
+    """Resolve MC Requires prefixes in scope, retaining only supported choices."""
+    namespaces: dict[str, str] = {}
+    supported_choices: set[ElementTree.Element] = set()
+    pending: list[tuple[str, str | None]] = []
+    scope_stack: list[list[tuple[str, str | None]]] = []
+    events = ElementTree.iterparse(
+        io.BytesIO(data), events=("start", "end", "start-ns")
+    )
+    for event, value in events:
+        if event == "start-ns":
+            prefix, uri = value
+            pending.append((prefix, namespaces.get(prefix)))
+            namespaces[prefix] = uri
+        elif event == "start":
+            scope_stack.append(pending)
+            pending = []
+            if value.tag == _ALTERNATE_CHOICE:
+                requirements = value.get("Requires", "").split()
+                if requirements and all(
+                    namespaces.get(prefix) in _SUPPORTED_ALTERNATE_NAMESPACES
+                    for prefix in requirements
+                ):
+                    supported_choices.add(value)
+        else:
+            # Undo only the declarations introduced on this element. This
+            # also restores prefixes shadowed by a different local binding.
+            for prefix, previous in reversed(scope_stack.pop()):
+                if previous is None:
+                    namespaces.pop(prefix)
+                else:
+                    namespaces[prefix] = previous
+    return events.root, supported_choices
+
+
+def _paragraph_text(
+    paragraph: ElementTree.Element,
+    supported_choices: set[ElementTree.Element],
+) -> str:
     pieces: list[str] = []
-    text_tag = f"{prefix}t"
-    tab_tag = f"{prefix}tab"
-    breaks = {f"{prefix}br", f"{prefix}cr"}
-    for run in _iter_word_elements(paragraph, f"{prefix}r", skip=f"{prefix}txbxContent"):
-        # Only direct run content is visible: w:pPr/w:tabs/w:tab is a
-        # paragraph tab stop, not a character in the passage.
-        for child in run:
-            if child.tag == text_tag and child.text:
-                pieces.append(child.text)
-            elif child.tag == tab_tag:
-                pieces.append("\t")
-            elif child.tag in breaks:
-                pieces.append("\n")
+    for node in _iter_selected_elements(paragraph, supported_choices):
+        if node.tag in _TEXT and node.text:
+            pieces.append(node.text)
+        elif node.tag in _RUN_LAYOUT:
+            pieces.append(_RUN_LAYOUT[node.tag])
     return "".join(pieces)
 
 
 def _body_text(document_xml: bytes) -> str:
     try:
-        root = ElementTree.fromstring(document_xml)
+        root, supported_choices = _parse_document_xml(document_xml)
     except ElementTree.ParseError as exc:
         raise UnsupportedDocument(
             REASON_DOCX_CORRUPT, "DOCX document XML is malformed"
@@ -139,8 +217,9 @@ def _body_text(document_xml: bytes) -> str:
         )
 
     paragraphs = (
-        _paragraph_text(paragraph, prefix)
-        for paragraph in _iter_word_elements(body, f"{prefix}p", skip=f"{prefix}txbxContent")
+        _paragraph_text(paragraph, supported_choices)
+        for paragraph in _iter_selected_elements(body, supported_choices, stop_at=_PARAGRAPHS)
+        if paragraph.tag in _PARAGRAPHS
     )
     return "\n".join(paragraphs)
 

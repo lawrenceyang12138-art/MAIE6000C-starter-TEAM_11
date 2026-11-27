@@ -113,6 +113,59 @@ def test_docx_preserves_run_layout_but_ignores_paragraph_tab_stops(tmp_path, nam
     assert document.pages[0].text == "Before\nMiddle\n\tAfter link"
 
 
+def test_docx_extracts_office_math_and_ruby_base_not_annotation(tmp_path):
+    body = (
+        "<w:p><w:r><w:t>Operating </w:t></w:r>"
+        '<m:oMath xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math">'
+        "<m:r><w:t>Margin</w:t><m:t> + 1</m:t></m:r></m:oMath>"
+        "<w:r><w:t>; ruby: </w:t></w:r>"
+        "<w:r><w:ruby><w:rt><w:r><w:t>kanji</w:t></w:r></w:rt>"
+        "<w:rubyBase><w:r><w:t>漢字</w:t></w:r></w:rubyBase></w:ruby></w:r></w:p>"
+    )
+    path = _write_docx(tmp_path / "math-and-ruby.docx", body)
+
+    document = extract_document(path, text_policy=POLICY)
+
+    assert document.pages[0].text == "Operating Margin + 1; ruby: 漢字"
+
+
+def test_docx_alternate_content_chooses_one_supported_branch(tmp_path):
+    body = (
+        '<mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/'
+        'markup-compatibility/2006" '
+        f'xmlns:alias="{TRANSITIONAL_WORD_NAMESPACE}">'
+        '<mc:Choice Requires="alias" xmlns:alias="urn:unsupported-feature">'
+        "<w:p><w:r><w:t>Wrong choice</w:t></w:r></w:p></mc:Choice>"
+        '<mc:Choice Requires="alias"><w:p><w:r><w:t>Chosen</w:t></w:r></w:p>'
+        "</mc:Choice>"
+        "<mc:Fallback><w:p><w:r><w:t>Fallback</w:t></w:r></w:p></mc:Fallback>"
+        "</mc:AlternateContent>"
+    )
+    path = _write_docx(tmp_path / "alternate-supported.docx", body)
+
+    document = extract_document(path, text_policy=POLICY)
+
+    assert document.pages[0].text == "Chosen"
+    assert "Fallback" not in document.pages[0].text
+
+
+def test_docx_alternate_content_falls_back_for_unsupported_requirement(tmp_path):
+    body = (
+        '<w:p><w:r><mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/'
+        'markup-compatibility/2006" xmlns:future="urn:unsupported-feature">'
+        '<mc:Choice Requires="future"><w:t>Future only</w:t>'
+        "</mc:Choice>"
+        "<mc:Fallback><w:t>Compatible text</w:t></mc:Fallback>"
+        "</mc:AlternateContent></w:r></w:p>"
+    )
+    path = _write_docx(tmp_path / "alternate-fallback.docx", body)
+
+    document = extract_document(path, text_policy=POLICY)
+
+    assert document.pages[0].text == "Compatible text"
+    assert "Future only" not in document.pages[0].text
+
+
 def test_docx_rejects_unrecognized_word_namespace(tmp_path):
     path = _write_docx(
         tmp_path / "foreign-namespace.docx",

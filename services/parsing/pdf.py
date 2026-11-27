@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
+from io import BytesIO
 from pathlib import Path
 
 from pypdf import PdfReader
@@ -59,7 +60,7 @@ _PDF_MAGIC = b"%PDF-"
 class UnsupportedDocument(Exception):
     """A document we cannot turn into text, with a reason we can show.
 
-    Native readers also report the hash of the snapshot they rejected, so a
+    Readers also report the hash of the snapshot they rejected, so a
     rejection can be recorded only against the matching file version.
     """
 
@@ -105,7 +106,11 @@ def file_identity(path: str | Path) -> tuple[str, int]:
     The hash is what lets us say "this text came from these exact bytes" and
     detect that a file changed underneath us.
     """
-    path = Path(path)
+    return _read_source_identity(Path(path))
+
+
+def _read_source_identity(path: Path, *, pdf_snapshot: BytesIO | None = None) -> tuple[str, int]:
+    """Hash the source and, only for PDF bytes, keep the same stream for pypdf."""
     digest = hashlib.sha256()
     size = 0
     try:
@@ -114,6 +119,13 @@ def file_identity(path: str | Path) -> tuple[str, int]:
                 block = handle.read(_CHUNK_SIZE)
                 if not block:
                     break
+                if pdf_snapshot is not None:
+                    if size == 0 and not block.startswith(_PDF_MAGIC):
+                        # A disabled or unknown format still needs a full hash,
+                        # but should never be buffered as a PDF.
+                        pdf_snapshot = None
+                    else:
+                        pdf_snapshot.write(block)
                 size += len(block)
                 digest.update(block)
     except OSError as exc:
@@ -124,12 +136,12 @@ def file_identity(path: str | Path) -> tuple[str, int]:
     return digest.hexdigest(), size
 
 
-def _read_pages(path: Path) -> list[str]:
+def _read_pages(snapshot: BytesIO) -> list[str]:
     """Return the raw extracted text of each page in document order."""
     try:
-        reader = PdfReader(str(path))
-    except OSError as exc:
-        raise _source_read_failure(path, exc) from exc
+        reader = PdfReader(snapshot)
+    except OSError:
+        raise
     except FileNotDecryptedError as exc:
         raise UnsupportedDocument(REASON_ENCRYPTED, "PDF is encrypted") from exc
     except PdfReadError as exc:
@@ -152,11 +164,16 @@ def _read_pages(path: Path) -> list[str]:
     try:
         for page in reader.pages:
             pages.append(page.extract_text() or "")
-    except OSError as exc:
-        raise _source_read_failure(path, exc) from exc
+    except OSError:
+        raise
     except Exception as exc:  # noqa: BLE001 - damaged page objects
         raise UnsupportedDocument(REASON_CORRUPT, f"Cannot read page: {exc}") from exc
     return pages
+
+
+def _verify_pdf_source(path: Path, expected_sha256: str) -> None:
+    if file_identity(path)[0] != expected_sha256:
+        raise SourceChanged(REASON_SOURCE_CHANGED, "The file was written while it was being read")
 
 
 def _extract_pdf_document(path: str | Path) -> ExtractedDocument:
@@ -168,36 +185,26 @@ def _extract_pdf_document(path: str | Path) -> ExtractedDocument:
     document rather than a missing text layer.
     """
     pdf_path = Path(path)
-    content_sha256, byte_size = file_identity(pdf_path)
+    # Parse the very bytes we hash: reading the path again in PdfReader
+    # would allow a transient replacement to supply another version's error.
+    with BytesIO() as snapshot:
+        content_sha256, byte_size = _read_source_identity(pdf_path, pdf_snapshot=snapshot)
+        if not snapshot.tell():
+            raise UnsupportedDocument(
+                REASON_UNSUPPORTED_FORMAT, "Not a PDF file; only PDF documents are supported",
+                content_sha256=content_sha256,
+            )
+        snapshot.seek(0)
+        try:
+            raw_pages = _read_pages(snapshot)
+        except UnsupportedDocument as exc:
+            _verify_pdf_source(pdf_path, content_sha256)
+            exc.content_sha256 = content_sha256
+            raise
+        except OSError as exc:
+            raise _source_read_failure(pdf_path, exc) from exc
 
-    # Distinguish "we do not handle this kind of file" from "this PDF is
-    # broken". Both stop processing, but only one of them is a bug report about
-    # the document.
-    try:
-        with pdf_path.open("rb") as handle:
-            if not handle.read(len(_PDF_MAGIC)).startswith(_PDF_MAGIC):
-                raise UnsupportedDocument(
-                    REASON_UNSUPPORTED_FORMAT,
-                    "Not a PDF file; only PDF documents are supported",
-                )
-    except OSError as exc:
-        # Losing access between hashing and format inspection is retryable;
-        # it says nothing about whether this document's format is supported.
-        raise _source_read_failure(pdf_path, exc) from exc
-
-    raw_pages = _read_pages(pdf_path)
-
-    # Hashing the bytes and parsing them are two separate reads of the file, and
-    # a write can land between them. Without this check the text of the new
-    # bytes would be published under the hash of the old ones - exactly what
-    # this module promises never happens. An independent reviewer reproduced
-    # that window at roughly 44 ms on a 1 MB document.
-    after_sha256, _ = file_identity(pdf_path)
-    if after_sha256 != content_sha256:
-        raise SourceChanged(
-            REASON_SOURCE_CHANGED,
-            "The file was written while it was being read",
-        )
+    _verify_pdf_source(pdf_path, content_sha256)
 
     pages = tuple(
         PageText(page_number=index, text=text)
@@ -205,12 +212,13 @@ def _extract_pdf_document(path: str | Path) -> ExtractedDocument:
     )
 
     if not pages:
-        raise UnsupportedDocument(REASON_CORRUPT, "PDF has no pages")
+        raise UnsupportedDocument(REASON_CORRUPT, "PDF has no pages", content_sha256=content_sha256)
 
     if not any(page.text.strip() for page in pages):
         raise UnsupportedDocument(
             REASON_NO_TEXT_LAYER,
             "PDF has no extractable text (likely a scan without OCR)",
+            content_sha256=content_sha256,
         )
 
     return ExtractedDocument(

@@ -134,28 +134,28 @@ def test_clean_scan_automatically_persists_direct_relation_evidence(
 
 
 @pytest.mark.parametrize(
-    ("word_namespace", "relationship_base"),
+    ("word_namespace", "office_namespace"),
     [
         (
             "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
-            "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
+            "http://schemas.openxmlformats.org/officeDocument/2006",
         ),
         (
             "http://purl.oclc.org/ooxml/wordprocessingml/main",
-            "http://purl.oclc.org/ooxml/officeDocument/relationships",
+            "http://purl.oclc.org/ooxml/officeDocument",
         ),
     ],
     ids=["transitional-docx", "strict-docx"],
 )
 def test_fresh_text_formats_flow_from_scan_to_search_and_evidence(
-    db_session: Session, monkeypatch, tmp_path: Path, word_namespace, relationship_base
+    db_session: Session, monkeypatch, tmp_path: Path, word_namespace, office_namespace
 ):
     source_root = _mount_source(db_session, monkeypatch, tmp_path)
     corpus = source_root / "text-corpus"
     corpus.mkdir()
     txt_text = "database-\nready\n    indented note\n"
     markdown_text = "# Markdown\n\n    publish example\n"
-    docx_text = "Quarterly\nplanning\tpassage"
+    docx_text = "Quarterly\nplanning\tpassage Margin Ruby Compatible"
     (corpus / "notes.txt").write_text(txt_text, encoding="utf-8")
     (corpus / "notes.md").write_text(markdown_text, encoding="utf-8")
     docx = corpus / "notes.docx"
@@ -171,15 +171,25 @@ def test_fresh_text_formats_flow_from_scan_to_search_and_evidence(
             "_rels/.rels",
             '<Relationships xmlns="http://schemas.openxmlformats.org/package/'
             '2006/relationships"><Relationship Id="rId1" '
-            f'Type="{relationship_base}/officeDocument" '
+            f'Type="{office_namespace}/relationships/officeDocument" '
             'Target="word/document.xml"/></Relationships>',
         )
         archive.writestr(
             "word/document.xml",
-            f'<w:document xmlns:w="{word_namespace}"><w:body><w:p>'
+            f'<w:document xmlns:w="{word_namespace}" xmlns:m="{office_namespace}/math" '
+            'xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" '
+            'xmlns:future="urn:unsupported-extension"><w:body><w:p>'
             '<w:pPr><w:tabs><w:tab w:val="left" w:pos="720"/></w:tabs></w:pPr>'
             "<w:r><w:t>Quarterly</w:t><w:cr/><w:t>planning</w:t>"
-            "<w:tab/><w:t>passage</w:t></w:r></w:p></w:body></w:document>",
+            '<w:tab/><w:t xml:space="preserve">passage </w:t></w:r>'
+            '<m:oMath><m:r><w:t xml:space="preserve">Margin </w:t></m:r></m:oMath>'
+            "<w:r><w:ruby><w:rt><w:r><w:t>Annotation</w:t></w:r></w:rt>"
+            '<w:rubyBase><w:r><w:t xml:space="preserve">Ruby </w:t></w:r></w:rubyBase>'
+            "</w:ruby></w:r>"
+            '<mc:AlternateContent><mc:Choice Requires="future">'
+            "<w:r><w:t>Unsupported</w:t></w:r></mc:Choice>"
+            "<mc:Fallback><w:r><w:t>Compatible</w:t></w:r></mc:Fallback>"
+            "</mc:AlternateContent></w:p></w:body></w:document>",
         )
 
     root = AuthorizedRoot(
@@ -215,6 +225,9 @@ def test_fresh_text_formats_flow_from_scan_to_search_and_evidence(
         ("ready", "notes.txt", txt_text),
         ("publish", "notes.md", markdown_text),
         ("planning", "notes.docx", docx_text),
+        ("margin", "notes.docx", docx_text),
+        ("ruby", "notes.docx", docx_text),
+        ("compatible", "notes.docx", docx_text),
     ):
         result = search_chunks(
             db_session,
@@ -236,10 +249,11 @@ def test_fresh_text_formats_flow_from_scan_to_search_and_evidence(
         assert evidence.ordinal == hit.ordinal == 1
         assert evidence.text == passage
 
-    concatenated = search_chunks(
-        db_session,
-        SearchRequest(query="quarterlyplanning", mode="keyword", root_id=root.id),
-        settings,
-        None,
-    )
-    assert not concatenated.results
+    for query in ("quarterlyplanning", "annotation", "unsupported"):
+        result = search_chunks(
+            db_session,
+            SearchRequest(query=query, mode="keyword", root_id=root.id),
+            settings,
+            None,
+        )
+        assert not result.results, query

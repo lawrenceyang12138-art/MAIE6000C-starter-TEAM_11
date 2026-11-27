@@ -14,8 +14,10 @@ Four things matter here:
    produces a hash of what was actually read. If it differs from the hash the
    version was created with, the bytes on disk are no longer the version we
    were asked to process, so the chunks are discarded rather than stored
-   against the wrong content. A native parser rejection is tied to that same
+   against the wrong content. A parser rejection is tied to that same
    identity so a newer file cannot leave the original version unsupported.
+   Before publishing native text, also recheck the path in case it was
+   replaced after the snapshot was taken.
 3. **Relations are part of a successful parse.** Chunks, rule-based entity
    candidates, their source evidence and the `basic_ready` result commit
    together. An incomplete relation batch must not look like a usable document.
@@ -41,12 +43,13 @@ from services.parsing.pdf import (
 )
 from services.parsing.persist import persist_chunks, persist_relations
 from services.parsing.relations import candidate_relations
+from services.parsing.text import verify_native_source
 from services.search.keyword_index import prepare_keyword_indexes
 
 # Stamped onto every version this handler processes, so chunks can be traced
 # back to the parser that produced them. Bump it when the parsing behaviour
 # changes, otherwise a re-parse is indistinguishable from the first parse.
-PARSER_REVISION = "parsing-v3"
+PARSER_REVISION = "parsing-v4"
 
 # Recorded when the work itself fails rather than the document: a database
 # error while storing, for instance. The version must not be left saying it is
@@ -103,6 +106,7 @@ def handle_extract_file(
         raise LookupError(f"unknown file version {version_id}")
 
     expected_sha256 = version.content_sha256
+    expected_byte_size = version.byte_size
 
     # A worker can lose its claim between selecting this path and entering the
     # parser. Check before the first write and commit before the file read, so
@@ -152,12 +156,20 @@ def handle_extract_file(
         version.parser_revision = PARSER_REVISION
         version.status = VersionStatus.BASIC_READY.value
         version.error_code = None
+        if document.source_kind in {"text", "markdown", "docx"}:
+            # Parsing uses a stable in-memory snapshot. The path can still be
+            # atomically replaced while that snapshot is being read or decoded.
+            # Recheck after staging rows but just before commit; on mismatch,
+            # the failure handler rolls back all staged chunks and indexes.
+            verify_native_source(
+                source_path, content_sha256=expected_sha256, byte_size=expected_byte_size
+            )
         # Chunks, relation candidates and the ready status publish only while
         # this attempt still owns the job: a stale parse would replace rows that
         # a newer attempt already published.
         _commit_if_owned(db, version_id, guard=guard)
     except UnsupportedDocument as exc:
-        if exc.content_sha256 is not None and exc.content_sha256 != expected_sha256:
+        if exc.content_sha256 is None or exc.content_sha256 != expected_sha256:
             return _finish(
                 db, version_id, VersionStatus.FAILED.value, REASON_SOURCE_CHANGED,
                 guard=guard,
@@ -166,16 +178,10 @@ def handle_extract_file(
             db, version_id, VersionStatus.UNSUPPORTED.value, exc.reason_code,
             guard=guard,
         )
-    except SourceMissing as exc:
-        # The file was there when it was scanned and has gone since. That is a
-        # property of the folder, not of the document, and it is retryable, so
-        # it is failed rather than unsupported.
-        return _finish(
-            db, version_id, VersionStatus.FAILED.value, exc.reason_code,
-            guard=guard,
-        )
-    except SourceChanged as exc:
-        # The file was written while it was being read.
+    except (SourceMissing, SourceChanged) as exc:
+        # Source access/change failures are retryable. Discard any staged
+        # parse and indexes before committing the failure status.
+        db.rollback()
         return _finish(
             db, version_id, VersionStatus.FAILED.value, exc.reason_code,
             guard=guard,

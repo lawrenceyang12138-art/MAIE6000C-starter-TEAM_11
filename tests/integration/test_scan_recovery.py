@@ -12,17 +12,20 @@ fixtures unchanged.
 
 from __future__ import annotations
 
+import io
 import os
 import shutil
+import zipfile
 from pathlib import Path
 
 import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from services.api.app import main as api_main
+from services.common.config import get_settings
 from services.common.db import make_session_factory
 from services.common.models import (
+    ChunkSearchIndex,
     FilePresence,
     FileRecord,
     FileVersion,
@@ -32,7 +35,12 @@ from services.common.models import (
     SourceChunk,
     VersionStatus,
 )
-from services.parsing.pdf import REASON_FILE_MISSING, REASON_SOURCE_CHANGED
+from services.parsing.pdf import (
+    REASON_ENCRYPTED,
+    REASON_FILE_MISSING,
+    REASON_NO_TEXT_LAYER,
+    REASON_SOURCE_CHANGED,
+)
 from services.parsing.text import REASON_TEXT_EMPTY, REASON_TEXT_TOO_LARGE
 from services.scan import handler as scan_handler
 from services.worker.app import main as worker_main
@@ -41,9 +49,31 @@ FIXTURE_PDF = Path(__file__).resolve().parents[1] / "fixtures" / "parsing" / "no
 DOCUMENT = "lecture.pdf"
 
 
-class _Settings:
-    def __init__(self, source_mounts: dict[str, str]) -> None:
-        self.source_mounts = source_mounts
+def _docx_with_text(text: str) -> bytes:
+    buffer = io.BytesIO()
+    # Store the XML as-is so equal-length passages yield equal-size files.
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr(
+            "[Content_Types].xml",
+            '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+            '<Override PartName="/word/document.xml" ContentType="application/'
+            'vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
+            "</Types>",
+        )
+        archive.writestr(
+            "_rels/.rels",
+            '<Relationships xmlns="http://schemas.openxmlformats.org/package/'
+            '2006/relationships"><Relationship Id="rId1" Type="http://schemas.'
+            'openxmlformats.org/officeDocument/2006/relationships/officeDocument" '
+            'Target="word/document.xml"/></Relationships>',
+        )
+        archive.writestr(
+            "word/document.xml",
+            '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/'
+            '2006/main"><w:body><w:p><w:r><w:t>'
+            f"{text}</w:t></w:r></w:p></w:body></w:document>",
+        )
+    return buffer.getvalue()
 
 
 @pytest.fixture()
@@ -52,10 +82,8 @@ def source_mount(tmp_path, monkeypatch, db_session: Session):
     root = tmp_path / "corpus"
     root.mkdir()
 
-    settings = _Settings({"corpus": str(root)})
-    # The API validates and the worker resolves through the same allowlist.
-    monkeypatch.setattr(api_main, "get_settings", lambda: settings)
-    monkeypatch.setattr(scan_handler, "get_settings", lambda: settings)
+    # Search, scan and the worker must see the same allowlisted source.
+    monkeypatch.setattr(get_settings(), "source_mounts", {"corpus": str(root)})
 
     factory = make_session_factory(db_session.get_bind())
     monkeypatch.setattr(worker_main, "get_session_factory", lambda: factory)
@@ -254,8 +282,11 @@ def test_a_retry_while_the_file_is_still_gone_fails_again_and_stays_retryable(
 
 @pytest.mark.parametrize(
     "replacement",
-    [b"", b"\xff" * len(b"restore this passage"), b"x" * 129],
-    ids=["empty", "same-size-invalid-utf8", "too-large"],
+    [
+        b"", b"\xff" * len(b"restore this passage"), b"x" * 129,
+        FIXTURE_PDF.with_name("no_text_layer.pdf"), FIXTURE_PDF.with_name("encrypted.pdf"),
+    ],
+    ids=["empty", "same-size-invalid-utf8", "too-large", "image-pdf", "encrypted-pdf"],
 )
 def test_a_changed_text_rejection_can_retry_the_original_version(
     client, text_source, db_session, replacement
@@ -268,6 +299,8 @@ def test_a_changed_text_rejection_can_retry_the_original_version(
     (job,) = _extract_jobs(db_session, version_id)
     extract_job_id = job.id
 
+    if isinstance(replacement, Path):
+        replacement = replacement.read_bytes()
     text_source.write_bytes(replacement)
     _run_next_job(db_session)
 
@@ -294,17 +327,24 @@ def test_a_changed_text_rejection_can_retry_the_original_version(
     assert client.get(f"/jobs/{extract_job_id}").json()["attempts"] == 2
     chunk = db_session.query(SourceChunk).filter_by(version_id=version_id).one()
     assert chunk.text == original.decode()
+    response = client.post("/search", json={"query": "restore", "mode": "keyword"})
+    assert response.status_code == 200
+    assert [hit["version_id"] for hit in response.json()["results"]] == [version_id]
 
 
 @pytest.mark.parametrize(
     ("content", "reason_code"),
-    [(b"", REASON_TEXT_EMPTY), (b"x" * 1024, REASON_TEXT_TOO_LARGE)],
-    ids=["empty", "too-large"],
+    [
+        (b"", REASON_TEXT_EMPTY), (b"x" * 1024, REASON_TEXT_TOO_LARGE),
+        (FIXTURE_PDF.with_name("no_text_layer.pdf"), REASON_NO_TEXT_LAYER),
+        (FIXTURE_PDF.with_name("encrypted.pdf"), REASON_ENCRYPTED),
+    ],
+    ids=["empty", "too-large", "image-pdf", "encrypted-pdf"],
 )
 def test_unchanged_rejected_text_remains_unsupported(
     client, text_source, db_session, content, reason_code
 ):
-    text_source.write_bytes(content)
+    text_source.write_bytes(content.read_bytes() if isinstance(content, Path) else content)
     root_id, scan_job_id = _authorize(client)
     worker_main.process_job(scan_job_id)
     version_id = _version_of(db_session, _only_file(db_session)).id
@@ -319,6 +359,95 @@ def test_unchanged_rejected_text_remains_unsupported(
     assert row["error_code"] == reason_code
     assert client.get(f"/jobs/{extract_job_id}").json()["status"] == JobStatus.COMPLETED.value
     assert client.post(f"/jobs/{extract_job_id}/retry").status_code == 409
+
+
+@pytest.mark.parametrize("extension", ["txt", "md", "docx"])
+@pytest.mark.parametrize("replace_at", ["reader_return", "index_stage"])
+def test_replaced_native_source_is_not_published(
+    client, source_mount, db_session, monkeypatch, tmp_path, extension, replace_at
+):
+    monkeypatch.setenv("TEXT_PARSING_ENABLED", "true")
+    monkeypatch.setenv("DOCX_PARSING_ENABLED", "true")
+    monkeypatch.setenv("TEXT_MAX_BYTES", "4096")
+    source = source_mount / f"notes.{extension}"
+    original_text = "original searchable passage"
+    replacement_text = "modified searchable passage"
+    if extension == "docx":
+        original = _docx_with_text(original_text)
+        replacement = _docx_with_text(replacement_text)
+    else:
+        original = original_text.encode()
+        replacement = replacement_text.encode()
+    assert len(original) == len(replacement)
+    source.write_bytes(original)
+
+    root_id, scan_job_id = _authorize(client)
+    worker_main.process_job(scan_job_id)
+    version_id = _version_of(db_session, _only_file(db_session)).id
+    (extract_job,) = _extract_jobs(db_session, version_id)
+
+    import services.parsing.docx as docx_module
+    import services.parsing.handler as handler_module
+    import services.parsing.text as text_module
+
+    real_read = text_module.read_native_source
+    real_prepare_indexes = handler_module.prepare_keyword_indexes
+    replacement_path = tmp_path / f"replacement.{extension}"
+    replaced = False
+
+    def replace_source():
+        nonlocal replaced
+        if not replaced:
+            replacement_path.write_bytes(replacement)
+            replacement_path.replace(source)
+            replaced = True
+
+    def read_then_replace(path, **kwargs):
+        snapshot = real_read(path, **kwargs)
+        if replace_at == "reader_return" and Path(path) == source:
+            # Replace after acquiring the bytes but before returning the
+            # snapshot. Windows does not allow renaming its open handle.
+            replace_source()
+        return snapshot
+
+    def index_then_replace(db, target_version_id):
+        real_prepare_indexes(db, target_version_id)
+        if replace_at == "index_stage":
+            assert db.query(ChunkSearchIndex).count() == 1
+            replace_source()
+
+    monkeypatch.setattr(text_module, "read_native_source", read_then_replace)
+    monkeypatch.setattr(docx_module, "read_native_source", read_then_replace)
+    monkeypatch.setattr(handler_module, "prepare_keyword_indexes", index_then_replace)
+    _run_next_job(db_session)
+    assert replaced
+
+    db_session.expire_all()
+    version = db_session.get(FileVersion, version_id)
+    job = client.get(f"/jobs/{extract_job.id}").json()
+    assert version.status == VersionStatus.FAILED.value
+    assert version.error_code == job["error_code"] == REASON_SOURCE_CHANGED
+    assert job["status"] == JobStatus.FAILED.value
+    assert db_session.query(SourceChunk).filter_by(version_id=version_id).count() == 0
+    assert db_session.query(ChunkSearchIndex).count() == 0
+    assert not db_session.query(Job).filter_by(
+        version_id=version_id, job_type=RootJobType.EMBED_FILE.value
+    ).count()
+    files = client.get("/files", params={"root_id": root_id}).json()
+    assert len(files) == 1
+    assert (files[0]["status"], files[0]["error_code"]) == (
+        VersionStatus.FAILED.value, REASON_SOURCE_CHANGED
+    )
+
+    source.write_bytes(original)
+    assert client.post(f"/jobs/{extract_job.id}/retry").status_code == 202
+    _run_next_job(db_session)
+    db_session.expire_all()
+    version = db_session.get(FileVersion, version_id)
+    assert version.status == VersionStatus.BASIC_READY.value
+    assert client.get(f"/jobs/{extract_job.id}").json()["attempts"] == 2
+    chunk = db_session.query(SourceChunk).filter_by(version_id=version_id).one()
+    assert chunk.text == original_text
 
 
 def test_repeated_scans_after_success_create_nothing_new(client, corpus, db_session):

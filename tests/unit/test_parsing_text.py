@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import shutil
 from pathlib import Path
 
@@ -19,9 +20,12 @@ from services.parsing.text import (
     REASON_TEXT_TOO_LARGE,
     TEXT_MAX_BYTES,
     TextParsingPolicy,
+    verify_native_source,
 )
 from services.parsing.pdf import (
+    REASON_SOURCE_CHANGED,
     REASON_UNSUPPORTED_FORMAT,
+    SourceChanged,
     UnsupportedDocument,
     extract_document,
 )
@@ -123,6 +127,31 @@ def test_invalid_utf8_has_an_explicit_reason(tmp_path):
     path = _write(tmp_path / "binary-encoding.txt", b"valid prefix \xff")
 
     assert _reason(path) == REASON_TEXT_ENCODING
+
+
+def test_native_source_replaced_during_final_recheck_is_not_accepted(tmp_path, monkeypatch):
+    original = b"old passage"
+    path = _write(tmp_path / "notes.txt", original)
+    replacement = _write(tmp_path / "replacement.txt", b"new passage")
+    real_stat = Path.stat
+    replaced = False
+
+    def stat_after_replacement(candidate, **kwargs):
+        nonlocal replaced
+        if candidate == path and not replaced:
+            # The verifier has read the old bytes by the time it checks the path.
+            replacement.replace(path)
+            replaced = True
+        return real_stat(candidate, **kwargs)
+
+    monkeypatch.setattr(Path, "stat", stat_after_replacement)
+    with pytest.raises(SourceChanged) as excinfo:
+        verify_native_source(
+            path, content_sha256=hashlib.sha256(original).hexdigest(), byte_size=len(original)
+        )
+
+    assert replaced
+    assert excinfo.value.reason_code == REASON_SOURCE_CHANGED
 
 
 def test_nul_and_control_bytes_are_treated_as_binary(tmp_path):

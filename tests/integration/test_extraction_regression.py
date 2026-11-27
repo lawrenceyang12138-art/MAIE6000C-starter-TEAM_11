@@ -92,7 +92,7 @@ def test_twelve_normal_documents_extract_with_correct_pages(
 def test_three_abnormal_documents_report_distinct_reasons(
     db_session: Session, make_file_version, path: Path, expected_reason: str
 ):
-    version_id = make_file_version(sha256="f" * 64)
+    version_id = make_file_version(source_path=path)
 
     status = handle_extract_file(db_session, version_id, path)
 
@@ -104,7 +104,7 @@ def test_three_abnormal_documents_report_distinct_reasons(
 def test_a_non_pdf_is_reported_as_unsupported_rather_than_corrupt(
     db_session: Session, make_file_version
 ):
-    version_id = make_file_version(sha256="e" * 64)
+    version_id = make_file_version(source_path=UNSUPPORTED)
 
     status = handle_extract_file(db_session, version_id, UNSUPPORTED)
 
@@ -126,9 +126,7 @@ def test_a_mix_of_files_is_processed_without_stopping(
         outcomes[path.name] = handle_extract_file(db_session, version_id, path)
 
     for path, _ in ABNORMAL:
-        # A distinct but arbitrary hash: these versions are only used to hold
-        # the outcome, not to match the file on disk.
-        version_id = make_file_version(sha256=(path.stem * 64)[:64])
+        version_id = make_file_version(source_path=path)
         outcomes[path.name] = handle_extract_file(db_session, version_id, path)
 
     assert sum(1 for status in outcomes.values() if status == "basic_ready") == 12
