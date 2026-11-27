@@ -21,9 +21,10 @@ chunks before selecting each file's best evidence and applying the file candidat
 cap. It adds no score bonus and does not identify a file from document ordinals
 or evaluation answers. The complete original query still goes to PPLX.
 
-New pure-model and navigation-assisted results belong in
-[`submissions/week07/evidence/C/20261030-page-navigation/`](../submissions/week07/evidence/C/20261030-page-navigation/).
-Read the raw reports there for actual results; this guide does not declare that
+The published pure-model and navigation-assisted results are in the
+[2026-10-30 navigation evidence](../submissions/week07/evidence/C/20261030-page-navigation/).
+Keep that snapshot unchanged; use a new dated evidence directory for new runs.
+Read the raw reports for the recorded results; this guide does not declare that
 the candidate gate passed. The C semantic target remains **at least 4/5**, and
 is **not a team-frozen acceptance threshold**. B's human gold review remains
 `pending`. Navigation-assisted success demonstrates location handling, not an

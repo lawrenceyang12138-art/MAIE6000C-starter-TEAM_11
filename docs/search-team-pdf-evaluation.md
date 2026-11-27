@@ -10,9 +10,13 @@ Prepared by C on 2026-10-29; model replacement updated 2026-10-30.
 The [E5](../submissions/week07/evidence/C/team-pdf-20261029/README.md),
 [PPLX](../submissions/week07/evidence/C/20261030-pplx/README.md), and
 [page navigation](../submissions/week07/evidence/C/20261030-page-navigation/README.md)
-reports record the exact snapshots used for those runs. Those commits are
-reachable from `feat/c-team-pdf-evaluation`; use the recorded commit for
-reproduction, not the tip of that branch.
+reports record the exact source snapshots used for those runs. Use
+`feat/c-team-pdf-evaluation` to obtain the recorded commits, then check out the
+commit for the specific run rather than the branch tip. The branch names in the
+archived reports are execution metadata, not current checkout instructions.
+Keep the archived READMEs and raw reports byte-for-byte intact for checksum
+verification. Some E5 artifact digests use CRLF checkout bytes rather than
+the Git-normalized LF bytes.
 The integration baseline was `7522287126061da8977c253256e8f807143ab8b5`,
 which included the observed remote `develop` at
 `047b2ac8b6c584b366c3db8f211125a6b9febe4f`.
@@ -23,9 +27,9 @@ each input retains a matrix of 128-dimensional token vectors and search computes
 MaxSim. It is not a late-chunking model and is not pooled into a single dense
 vector. The previous E5 weights are retired. Their dated reports in
 `submissions/week07/evidence/C/team-pdf-20261029/` and the older manual-chunk
-reports remain unchanged. Record new results separately in
-`submissions/week07/evidence/C/20261030-pplx/`; never infer a new score from an
-old model's report.
+reports remain unchanged. Store results from a new run in a new dated evidence
+directory, not in an existing snapshot. Never infer a new score from an old
+model's report.
 
 ## Answers, identity, and score interpretation
 
