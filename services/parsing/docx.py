@@ -7,7 +7,6 @@ import zipfile
 from pathlib import Path
 from xml.etree import ElementTree
 
-from services.parsing.chunking import clean_page_text
 from services.parsing.pdf import (
     REASON_FILE_MISSING,
     REASON_UNREADABLE,
@@ -37,6 +36,7 @@ _PARAGRAPH = f"{{{_WORDPROCESSING}}}p"
 _TEXT = f"{{{_WORDPROCESSING}}}t"
 _TAB = f"{{{_WORDPROCESSING}}}tab"
 _BREAK = f"{{{_WORDPROCESSING}}}br"
+_TEXTBOX = f"{{{_WORDPROCESSING}}}txbxContent"
 
 
 def is_docx_path(path: str | Path) -> bool:
@@ -97,6 +97,37 @@ def _validate_package_relationships(data: bytes) -> None:
     )
 
 
+def _iter_body_paragraphs(node):
+    """Yield body/table paragraphs once, skipping text-box subtrees."""
+    for child in node:
+        if child.tag == _TEXTBOX:
+            continue
+        if child.tag == _PARAGRAPH:
+            yield child
+        else:
+            yield from _iter_body_paragraphs(child)
+
+
+def _paragraph_text(paragraph) -> str:
+    pieces: list[str] = []
+
+    def collect(node) -> None:
+        for child in node:
+            if child.tag == _TEXTBOX:
+                continue
+            if child.tag == _TEXT and child.text:
+                pieces.append(child.text)
+            elif child.tag == _TAB:
+                pieces.append("\t")
+            elif child.tag == _BREAK:
+                pieces.append("\n")
+            else:
+                collect(child)
+
+    collect(paragraph)
+    return "".join(pieces)
+
+
 def _body_text(document_xml: bytes) -> str:
     try:
         root = ElementTree.fromstring(document_xml)
@@ -114,17 +145,7 @@ def _body_text(document_xml: bytes) -> str:
             REASON_DOCX_STRUCTURE, "DOCX document has no body"
         )
 
-    paragraphs: list[str] = []
-    for paragraph in body.iter(_PARAGRAPH):
-        pieces: list[str] = []
-        for node in paragraph.iter():
-            if node.tag == _TEXT and node.text:
-                pieces.append(node.text)
-            elif node.tag == _TAB:
-                pieces.append("\t")
-            elif node.tag == _BREAK:
-                pieces.append("\n")
-        paragraphs.append("".join(pieces))
+    paragraphs = [_paragraph_text(paragraph) for paragraph in _iter_body_paragraphs(body)]
     return "\n".join(paragraphs)
 
 
@@ -196,8 +217,8 @@ def extract_docx_document(
             REASON_DOCX_CORRUPT, "DOCX package is damaged"
         ) from exc
 
-    text = clean_page_text(_body_text(document_xml))
-    if not text:
+    text = _body_text(document_xml).replace("\r\n", "\n").replace("\r", "\n")
+    if not text.strip():
         raise UnsupportedDocument("empty_text", "DOCX contains no body text")
     return ExtractedDocument(
         content_sha256=content_sha256,

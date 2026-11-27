@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from services.common.models import Relationship, SourceChunk, VersionStatus
 from services.parsing.handler import handle_extract_file
+from services.parsing.chunking import chunk_document
 from services.parsing.text import (
     REASON_TEXT_BINARY,
     REASON_TEXT_EMPTY,
@@ -71,6 +73,28 @@ def test_markdown_is_plain_text_and_html_is_not_rendered(tmp_path):
     assert document.source_kind == "markdown"
     assert "<script" in document.pages[0].text
     assert "https://example.invalid" in document.pages[0].text
+
+
+def test_native_chunking_preserves_hyphen_line_breaks_and_indentation(tmp_path):
+    path = _write(
+        tmp_path / "code.md",
+        b"feature-\nready\n    indented code\n",
+    )
+
+    chunks = chunk_document(extract_document(path, text_policy=POLICY))
+
+    assert chunks[0].text == "feature-\nready\n    indented code\n"
+
+
+def test_pdf_signature_wins_over_an_enabled_text_suffix(tmp_path):
+    source = Path(__file__).resolve().parents[1] / "fixtures" / "parsing" / "normal.pdf"
+    disguised_pdf = tmp_path / "renamed.txt"
+    shutil.copyfile(source, disguised_pdf)
+
+    document = extract_document(disguised_pdf, text_policy=POLICY)
+
+    assert document.source_kind == "pdf"
+    assert document.page_count == 3
 
 
 def test_empty_text_has_an_explicit_reason(tmp_path):

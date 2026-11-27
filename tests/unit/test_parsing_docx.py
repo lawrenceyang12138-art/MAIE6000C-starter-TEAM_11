@@ -76,6 +76,21 @@ def test_docx_extracts_paragraph_text_without_pages(tmp_path):
     assert document.pages[0].text == "First paragraph\nSecond paragraph"
 
 
+def test_docx_text_box_does_not_interrupt_or_duplicate_body_text(tmp_path):
+    body = (
+        "<w:p><w:r><w:t>Before</w:t></w:r>"
+        "<w:r><w:txbxContent><w:p><w:r><w:t>Sidebar</w:t></w:r></w:p>"
+        "</w:txbxContent></w:r><w:r><w:t>After</w:t></w:r></w:p>"
+        "<w:p><w:r><w:t>Next paragraph</w:t></w:r></w:p>"
+    )
+    path = _write_docx(tmp_path / "text-box.docx", body)
+
+    document = extract_document(path, text_policy=POLICY)
+
+    assert document.pages[0].text == "BeforeAfter\nNext paragraph"
+    assert "Sidebar" not in document.pages[0].text
+
+
 def test_missing_ooxml_declarations_are_rejected(tmp_path):
     path = _write_docx(
         tmp_path / "missing-parts.docx",
