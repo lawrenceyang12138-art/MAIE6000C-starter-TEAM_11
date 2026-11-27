@@ -103,6 +103,42 @@ Then follow progress with `GET /jobs/{job_id}`, and read the folder with
 file with its current version status). `POST /roots/{root_id}/scans` queues
 another scan; it answers `409 active_job_exists` while one is still running.
 
+## 4b. Optional formats (TXT, Markdown, DOCX)
+
+PDF is the only format that is on by default. Two switches enable the text
+family per group, both read by the worker from its process environment:
+
+| Switch | Enables | Default |
+| --- | --- | --- |
+| `TEXT_PARSING_ENABLED` | `.txt`, `.md` (strict UTF-8) | `false` |
+| `DOCX_PARSING_ENABLED` | `.docx` (OOXML body text) | `false` |
+
+```bash
+# turn both on for one run without editing .env
+TEXT_PARSING_ENABLED=true DOCX_PARSING_ENABLED=true \
+  docker compose up -d --force-recreate worker
+```
+
+Behaviour that matters when you operate this:
+
+- With both switches off, extraction is exactly the PDF path; the regression
+  corpus still reports 12 readable + 1 unsupported.
+- With them on, the same corpus reports 13 readable: only `unsupported.txt`
+  changes state, every PDF result is untouched.
+- Text and DOCX documents have no pages. `page_number` is `null` in search hits
+  and evidence; the UI must not render "page 1" for them.
+- The switches are read when a version is extracted. Flipping them does not
+  re-classify versions that already reached a terminal status: an `unsupported`
+  row stays unsupported until its content changes, and a readable row stays
+  readable after you turn the switch off.
+- `TEXT_MAX_BYTES` caps the bytes read for one document; oversized input is
+  rejected as unsupported rather than truncated.
+- Relation candidates remain a PDF-only feature; TXT/Markdown/DOCX publish
+  chunks and keyword indexes without entity candidates.
+
+Rollback: set both switches to `false` and recreate the worker. No migration is
+involved and no parsed data is rewritten.
+
 ## 5. Failures and retry
 
 A damaged, encrypted or unsupported document is **not** a failed job. It is a
