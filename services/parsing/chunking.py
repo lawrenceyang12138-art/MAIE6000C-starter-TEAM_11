@@ -180,7 +180,7 @@ def _chunk_page_text(text: str, *, preserve_whitespace: bool = False) -> list[st
         end = hard_end if hard_end >= length else _find_break(text, start, hard_end)
 
         piece = text[start:end] if preserve_whitespace else text[start:end].strip()
-        if piece:
+        if piece.strip():
             pieces.append(piece)
 
         if end >= length:
