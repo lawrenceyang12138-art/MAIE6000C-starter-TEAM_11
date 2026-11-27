@@ -21,3 +21,5 @@
 /tests/fixtures/**/*.docx -text
 /tests/fixtures/**/*.json -text
 /fixtures/search/*.json -text
+/tests/fixtures/regression/** -text
+/fixtures/search/w13-v1/*.md -text
