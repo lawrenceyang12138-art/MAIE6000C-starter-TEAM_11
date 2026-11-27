@@ -229,10 +229,15 @@ def extract_document(
     this module and all text-specific rules in ``services.parsing.text``.
     """
     from services.parsing.text import TextParsingPolicy, is_text_path
+    from services.parsing.docx import is_docx_path
 
     policy = text_policy or TextParsingPolicy.from_environment()
     if policy.enabled and is_text_path(path):
         from services.parsing.text import extract_text_document
 
         return extract_text_document(path, policy)
+    if policy.enabled and is_docx_path(path):
+        from services.parsing.docx import extract_docx_document
+
+        return extract_docx_document(path, policy)
     return _extract_pdf_document(path)

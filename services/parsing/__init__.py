@@ -80,6 +80,14 @@ from services.parsing.text import (
     extract_text_document,
     is_text_path,
 )
+from services.parsing.docx import (
+    REASON_DOCX_CORRUPT,
+    REASON_DOCX_STRUCTURE,
+    REASON_DOCX_TOO_LARGE,
+    REASON_DOCX_UNPACKED_TOO_LARGE,
+    extract_docx_document,
+    is_docx_path,
+)
 from services.parsing.persist import (
     InvalidChunkSet,
     InvalidRelationEvidence,
@@ -124,6 +132,10 @@ __all__ = [
     "REASON_TEXT_EMPTY",
     "REASON_TEXT_ENCODING",
     "REASON_TEXT_TOO_LARGE",
+    "REASON_DOCX_CORRUPT",
+    "REASON_DOCX_STRUCTURE",
+    "REASON_DOCX_TOO_LARGE",
+    "REASON_DOCX_UNPACKED_TOO_LARGE",
     "REASON_VERSION_SUPERSEDED",
     "TEXT_MAX_BYTES",
     "CandidateRelation",
@@ -146,10 +158,12 @@ __all__ = [
     "effective_decision",
     "extract_document",
     "extract_text_document",
+    "extract_docx_document",
     "file_identity",
     "find_mentions",
     "handle_extract_file",
     "is_text_path",
+    "is_docx_path",
     "persist_chunks",
     "persist_relations",
     "read_evidence",
