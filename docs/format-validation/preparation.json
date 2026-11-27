@@ -1,0 +1,32 @@
+{
+  "kind": "preparation only; not candidate acceptance",
+  "observed_utc": "2026-11-27T07:00:10+00:00",
+  "preparation_baseline": "16251df8b1167a740d7f29863144a3859a65e4b9",
+  "candidate_sha": null,
+  "candidate_config": null,
+  "archive_sha256": "aac269e5a410f4d4c2860c56be799f63e94a442f308e76da2d82e0dbf2d485d9",
+  "manifest_sha256": "d8a4408b1f0601ea8dffbfaba8c9340fd02fb564af1b9051b8dd19058c9b6a0d",
+  "staged_files": 12,
+  "positive_sources": 8,
+  "negative_sources": 4,
+  "expected_positive_queries": 10,
+  "postgresql_preflight": {
+    "database": "c_format_gate",
+    "postgres_version": "16.15 (Debian 16.15-1.pgdg12+2)",
+    "public_tables": 0,
+    "has_roots_table": false,
+    "project": "team11-c-format-prep",
+    "volume": "team11-c-format-prep_data",
+    "volume_created_utc": "2026-11-27T06:46:28Z",
+    "running_services_at_probe": [
+      "db"
+    ]
+  },
+  "candidate_results": {
+    "txt": "UNVERIFIED",
+    "md": "UNVERIFIED",
+    "docx": "UNVERIFIED",
+    "pdf": "UNVERIFIED"
+  },
+  "browser_retest": "UNVERIFIED"
+}
