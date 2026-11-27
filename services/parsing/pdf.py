@@ -59,21 +59,24 @@ _PDF_MAGIC = b"%PDF-"
 class UnsupportedDocument(Exception):
     """A document we cannot turn into text, with a reason we can show.
 
-    Callers should record ``reason_code`` against the file version and move on
-    to the next file.
+    Native readers also report the hash of the snapshot they rejected, so a
+    rejection can be recorded only against the matching file version.
     """
 
-    def __init__(self, reason_code: str, message: str) -> None:
+    def __init__(
+        self, reason_code: str, message: str, *, content_sha256: str | None = None
+    ) -> None:
         super().__init__(message)
         self.reason_code = reason_code
         self.message = message
+        self.content_sha256 = content_sha256
 
 
 @dataclass(frozen=True)
 class PageText:
     """The text of one page, with the 1-based page number a reader sees."""
 
-    page_number: int
+    page_number: int | None
     text: str
 
 
@@ -85,6 +88,7 @@ class ExtractedDocument:
     byte_size: int
     page_count: int
     pages: tuple[PageText, ...]
+    source_kind: str = "pdf"
 
 
 def _source_read_failure(path: Path, exc: OSError) -> SourceMissing:
@@ -155,7 +159,7 @@ def _read_pages(path: Path) -> list[str]:
     return pages
 
 
-def extract_document(path: str | Path) -> ExtractedDocument:
+def _extract_pdf_document(path: str | Path) -> ExtractedDocument:
     """Extract per-page text and the file identity from one PDF.
 
     Raises UnsupportedDocument when the file cannot yield text. A file that
@@ -215,3 +219,43 @@ def extract_document(path: str | Path) -> ExtractedDocument:
         page_count=len(pages),
         pages=pages,
     )
+
+
+def _has_pdf_magic(path: str | Path) -> bool:
+    try:
+        with Path(path).open("rb") as handle:
+            return handle.read(len(_PDF_MAGIC)).startswith(_PDF_MAGIC)
+    except OSError:
+        # The selected extractor will return the appropriate missing/unreadable
+        # error. Do not let a suffix win over a missing file.
+        return False
+
+
+def extract_document(
+    path: str | Path,
+    *,
+    text_policy=None,
+) -> ExtractedDocument:
+    """Extract a PDF, or an enabled UTF-8 TXT/Markdown file.
+
+    The local import avoids a module cycle while keeping all PDF behaviour in
+    this module and all text-specific rules in ``services.parsing.text``.
+    """
+    from services.parsing.text import TextParsingPolicy, is_text_path
+    from services.parsing.docx import is_docx_path
+
+    # A PDF is identified by its bytes, not by a possibly misleading suffix.
+    # Keep the existing PDF behavior when a PDF-like file is named .txt/.md.
+    if _has_pdf_magic(path):
+        return _extract_pdf_document(path)
+
+    policy = text_policy or TextParsingPolicy.from_environment()
+    if policy.enabled and is_text_path(path):
+        from services.parsing.text import extract_text_document
+
+        return extract_text_document(path, policy)
+    if policy.docx_enabled and is_docx_path(path):
+        from services.parsing.docx import extract_docx_document
+
+        return extract_docx_document(path, policy)
+    return _extract_pdf_document(path)

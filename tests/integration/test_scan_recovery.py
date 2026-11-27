@@ -6,10 +6,8 @@ worker dispatch, against a real (temporary) corpus and a real database. Only
 the worker's session factory and the mount allowlist are pointed at the test
 double; nothing in the pipeline is stubbed.
 
-Fault injection is confined to a copy of a fixture PDF under ``tmp_path``. The
-repository fixtures are never modified: the broken state is produced by removing
-the copy, which is what "the source went away for a moment" looks like to the
-scanner.
+Fault injection is confined to files under ``tmp_path``, leaving the repository
+fixtures unchanged.
 """
 
 from __future__ import annotations
@@ -34,7 +32,8 @@ from services.common.models import (
     SourceChunk,
     VersionStatus,
 )
-from services.parsing.pdf import REASON_FILE_MISSING
+from services.parsing.pdf import REASON_FILE_MISSING, REASON_SOURCE_CHANGED
+from services.parsing.text import REASON_TEXT_EMPTY, REASON_TEXT_TOO_LARGE
 from services.scan import handler as scan_handler
 from services.worker.app import main as worker_main
 
@@ -48,11 +47,10 @@ class _Settings:
 
 
 @pytest.fixture()
-def corpus(tmp_path, monkeypatch, db_session: Session):
-    """A writable copy of one real PDF, served as the allowlisted mount."""
+def source_mount(tmp_path, monkeypatch, db_session: Session):
+    """A writable, allowlisted directory shared by the API, scanner and worker."""
     root = tmp_path / "corpus"
     root.mkdir()
-    shutil.copyfile(FIXTURE_PDF, root / DOCUMENT)
 
     settings = _Settings({"corpus": str(root)})
     # The API validates and the worker resolves through the same allowlist.
@@ -62,6 +60,20 @@ def corpus(tmp_path, monkeypatch, db_session: Session):
     factory = make_session_factory(db_session.get_bind())
     monkeypatch.setattr(worker_main, "get_session_factory", lambda: factory)
     return root
+
+
+@pytest.fixture()
+def corpus(source_mount):
+    """A writable copy of one real PDF, served as the allowlisted mount."""
+    shutil.copyfile(FIXTURE_PDF, source_mount / DOCUMENT)
+    return source_mount
+
+
+@pytest.fixture()
+def text_source(source_mount, monkeypatch):
+    monkeypatch.setenv("TEXT_PARSING_ENABLED", "true")
+    monkeypatch.setenv("TEXT_MAX_BYTES", "128")
+    return source_mount / "notes.txt"
 
 
 def _authorize(client) -> tuple[str, int]:
@@ -238,6 +250,75 @@ def test_a_retry_while_the_file_is_still_gone_fails_again_and_stays_retryable(
 
     # A third explicit retry is still accepted, so the loop never dead-ends.
     assert client.post(f"/jobs/{extract_job_id}/retry").status_code == 202
+
+
+@pytest.mark.parametrize(
+    "replacement",
+    [b"", b"\xff" * len(b"restore this passage"), b"x" * 129],
+    ids=["empty", "same-size-invalid-utf8", "too-large"],
+)
+def test_a_changed_text_rejection_can_retry_the_original_version(
+    client, text_source, db_session, replacement
+):
+    original = b"restore this passage"
+    text_source.write_bytes(original)
+    root_id, scan_job_id = _authorize(client)
+    worker_main.process_job(scan_job_id)
+    version_id = _version_of(db_session, _only_file(db_session)).id
+    (job,) = _extract_jobs(db_session, version_id)
+    extract_job_id = job.id
+
+    text_source.write_bytes(replacement)
+    _run_next_job(db_session)
+
+    db_session.expire_all()
+    version = db_session.get(FileVersion, version_id)
+    job = client.get(f"/jobs/{extract_job_id}").json()
+    assert version.status == VersionStatus.FAILED.value
+    assert version.error_code == job["error_code"] == REASON_SOURCE_CHANGED
+    assert job["status"] == JobStatus.FAILED.value
+    assert db_session.query(SourceChunk).filter_by(version_id=version_id).count() == 0
+
+    text_source.write_bytes(original)
+    worker_main.process_job(_scan_and_collect(db_session, client, root_id))
+    db_session.expire_all()
+    assert _only_file(db_session).current_version_id == version_id
+    assert [job.id for job in _extract_jobs(db_session, version_id)] == [extract_job_id]
+    assert client.post(f"/jobs/{extract_job_id}/retry").status_code == 202
+    _run_next_job(db_session)
+
+    db_session.expire_all()
+    version = db_session.get(FileVersion, version_id)
+    assert version.status == VersionStatus.BASIC_READY.value
+    assert version.error_code is None
+    assert client.get(f"/jobs/{extract_job_id}").json()["attempts"] == 2
+    chunk = db_session.query(SourceChunk).filter_by(version_id=version_id).one()
+    assert chunk.text == original.decode()
+
+
+@pytest.mark.parametrize(
+    ("content", "reason_code"),
+    [(b"", REASON_TEXT_EMPTY), (b"x" * 1024, REASON_TEXT_TOO_LARGE)],
+    ids=["empty", "too-large"],
+)
+def test_unchanged_rejected_text_remains_unsupported(
+    client, text_source, db_session, content, reason_code
+):
+    text_source.write_bytes(content)
+    root_id, scan_job_id = _authorize(client)
+    worker_main.process_job(scan_job_id)
+    version_id = _version_of(db_session, _only_file(db_session)).id
+    (job,) = _extract_jobs(db_session, version_id)
+    extract_job_id = job.id
+    _run_next_job(db_session)
+
+    db_session.expire_all()
+    (row,) = client.get("/files", params={"root_id": root_id}).json()
+    assert row["version_id"] == version_id
+    assert row["status"] == VersionStatus.UNSUPPORTED.value
+    assert row["error_code"] == reason_code
+    assert client.get(f"/jobs/{extract_job_id}").json()["status"] == JobStatus.COMPLETED.value
+    assert client.post(f"/jobs/{extract_job_id}/retry").status_code == 409
 
 
 def test_repeated_scans_after_success_create_nothing_new(client, corpus, db_session):

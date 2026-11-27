@@ -48,7 +48,7 @@ class Chunk:
     """One searchable piece of text, located by page."""
 
     ordinal: int
-    page_number: int
+    page_number: int | None
     text: str
 
 
@@ -166,7 +166,7 @@ def _find_break(text: str, start: int, hard_end: int) -> int:
     return hard_end
 
 
-def _chunk_page_text(text: str) -> list[str]:
+def _chunk_page_text(text: str, *, preserve_whitespace: bool = False) -> list[str]:
     """Split one page of cleaned text into overlapping pieces."""
     if len(text) <= CHUNK_SIZE_CHARS:
         return [text] if text.strip() else []
@@ -179,8 +179,8 @@ def _chunk_page_text(text: str) -> list[str]:
         hard_end = min(start + CHUNK_SIZE_CHARS, length)
         end = hard_end if hard_end >= length else _find_break(text, start, hard_end)
 
-        piece = text[start:end].strip()
-        if piece:
+        piece = text[start:end] if preserve_whitespace else text[start:end].strip()
+        if piece.strip():
             pieces.append(piece)
 
         if end >= length:
@@ -203,13 +203,25 @@ def _chunk_page_text(text: str) -> list[str]:
 
 def chunk_document(document: ExtractedDocument) -> list[Chunk]:
     """Clean, de-header, and chunk a parsed document in reading order."""
-    cleaned = [clean_page_text(page.text) for page in document.pages]
-    cleaned = strip_running_headers_footers(cleaned)
+    if document.source_kind == "pdf":
+        cleaned = [clean_page_text(page.text) for page in document.pages]
+        cleaned = strip_running_headers_footers(cleaned)
+        preserve_native_whitespace = False
+    else:
+        # Native text must not receive PDF dehyphenation, CJK spacing repair or
+        # header/footer removal. Keep Markdown/code indentation and line breaks.
+        cleaned = [
+            page.text.replace("\r\n", "\n").replace("\r", "\n")
+            for page in document.pages
+        ]
+        preserve_native_whitespace = True
 
     chunks: list[Chunk] = []
     ordinal = 0
     for page, page_text in zip(document.pages, cleaned, strict=True):
-        for piece in _chunk_page_text(page_text):
+        for piece in _chunk_page_text(
+            page_text, preserve_whitespace=preserve_native_whitespace
+        ):
             ordinal += 1
             chunks.append(
                 Chunk(ordinal=ordinal, page_number=page.page_number, text=piece)
