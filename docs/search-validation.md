@@ -135,5 +135,5 @@ compose.search-validation.yaml down` stops only the default validation project
 and preserves its volume. If you used `-p`, use the same project name when
 stopping it. The model cache and local reports are reusable and are not tracked.
 
-See the [C technical brief](../submissions/week13/sections/C.md) for the dated
-run, gaps, and interpretation.
+See the [Role C validation results](../submissions/week13/sections/C-validation.json)
+for the recorded run.
