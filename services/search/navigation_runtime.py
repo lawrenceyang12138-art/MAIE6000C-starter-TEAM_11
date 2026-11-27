@@ -35,6 +35,11 @@ class PageNavigation:
     def allows(self, db, chunk, version, source_file) -> bool:
         if not self.active:
             return True
+        # Native text is unpaged. Keep numbered PDFs navigable even under a text suffix.
+        if chunk.page_number is None and source_file.relative_path.casefold().endswith(
+            (".txt", ".md", ".docx")
+        ):
+            return True
         decision = self.by_version.get(version.id)
         if decision is None:
             count, metadata_status = load_page_metadata(db, version)

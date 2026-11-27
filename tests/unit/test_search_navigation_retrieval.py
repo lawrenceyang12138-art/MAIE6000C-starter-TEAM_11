@@ -228,6 +228,38 @@ def test_search_never_opens_pdf_and_keyword_mode_does_not_apply_navigation(db_se
     assert diagnostic["not_applied_reason"] == "keyword_mode"
 
 
+@pytest.mark.parametrize("suffix", ["txt", "MD", "docx"])
+def test_navigation_skips_unpaged_text_but_keeps_numbered_pdf_with_text_suffix(
+    db_session, monkeypatch, suffix,
+):
+    backend = ScoredBackend()
+    # The fixture import adapter predates unpaged text: use the canonical chunk shape.
+    note = index_document(db_session, file_id="note", name=f"note.{suffix}", path=f"note.{suffix}",
+                          chunks=[{"text": "archive score=0.8", "page_number": 1}], backend=backend)
+    chunk = db_session.scalar(select(SourceChunk).where(SourceChunk.version_id == note.id))
+    chunk.page_number = None
+    materialize_search_source(db_session, note)
+    pdf = document(db_session, backend)
+    file = db_session.get(FileRecord, pdf.file_id)
+    file.name = file.relative_path = "renamed.txt"  # The parser recognizes PDFs by their bytes.
+
+    from services.search import navigation_runtime
+
+    reads = []
+    original = navigation_runtime.load_page_metadata
+
+    def record(db, version):
+        reads.append(version.id)
+        return original(db, version)
+
+    monkeypatch.setattr(navigation_runtime, "load_page_metadata", record)
+    response, diagnostic = search(db_session, backend)
+    hits = {hit.version_id: hit for hit in response.results}
+    assert reads == [pdf.id] and hits[pdf.id].page == 3
+    assert hits[note.id].page is None and "page navigation" not in hits[note.id].reason
+    assert [decision["version_id"] for decision in diagnostic["files"]] == [pdf.id]
+
+
 @pytest.mark.parametrize("state", ["revoked", "missing", "superseded"])
 def test_navigation_does_not_read_metadata_outside_eligible_current_scope(
     db_session, monkeypatch, state,
