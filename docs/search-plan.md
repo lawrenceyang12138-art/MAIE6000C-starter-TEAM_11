@@ -18,9 +18,9 @@ team semantic-threshold approval remain pending.
 
 Updated: 2026-10-30 for the PPLX token-vector replacement. Initial standalone model and
 evaluation evidence was recorded on 2026-10-15. The
-[integration handoff](search-integration-handoff.md) describes the current
-boundaries, and the [schema adaptation record](search-contract-differences.md)
-explains how C now uses B's file, version, and chunk tables.
+[shared integration contract](team11-w7-shared-contract.md) describes the
+cross-role boundaries. The [schema adaptation record](search-contract-differences.md)
+explains how C uses B's file, version, and chunk tables.
 
 ## Implementation
 

@@ -224,7 +224,6 @@ submissions/*
 submissions/week13/*
 !submissions/week13/sections/
 submissions/week13/sections/*
-!submissions/week13/sections/C.md
 !submissions/week13/sections/C-validation.json
 !submissions/week07/
 submissions/week07/*
