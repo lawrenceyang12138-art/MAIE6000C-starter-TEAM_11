@@ -7,16 +7,11 @@ requeues missing current-source vectors when the model becomes ready. Manual
 recovery commands and the historical observations below retain their original scope.
 
 Prepared by C on 2026-10-29; model replacement updated 2026-10-30.
-The [E5](../submissions/week07/evidence/C/team-pdf-20261029/README.md),
-[PPLX](../submissions/week07/evidence/C/20261030-pplx/README.md), and
-[page navigation](../submissions/week07/evidence/C/20261030-page-navigation/README.md)
-reports record the exact source snapshots used for those runs. Use
-`feat/c-team-pdf-evaluation` to obtain the recorded commits, then check out the
-commit for the specific run rather than the branch tip. The branch names in the
-archived reports are execution metadata, not current checkout instructions.
-Keep the archived READMEs and raw reports byte-for-byte intact for checksum
-verification. Some E5 artifact digests use CRLF checkout bytes rather than
-the Git-normalized LF bytes.
+The [archived evaluation index](../submissions/week07/evidence/C/archived-search-evaluations.md)
+links to the original E5, PPLX, and page-navigation reports. Use
+`feat/c-team-pdf-evaluation` to obtain the tested commits listed in the reports,
+then check out the commit for the specific run rather than the branch tip. The
+branch names in the reports are execution metadata, not checkout instructions.
 The integration baseline was `7522287126061da8977c253256e8f807143ab8b5`,
 which included the observed remote `develop` at
 `047b2ac8b6c584b366c3db8f211125a6b9febe4f`.
@@ -25,9 +20,9 @@ The active model is now `perplexity-ai/pplx-embed-v2-late-0.6b` at fixed revisio
 `7bba8e7cf2075dec747fa8557f41eb90e70361ed`. This is ColBERT late interaction:
 each input retains a matrix of 128-dimensional token vectors and search computes
 MaxSim. It is not a late-chunking model and is not pooled into a single dense
-vector. The previous E5 weights are retired. Their dated reports in
-`submissions/week07/evidence/C/team-pdf-20261029/` and the older manual-chunk
-reports remain unchanged. Store results from a new run in a new dated evidence
+vector. The previous E5 weights are retired. The
+[E5 archive](../submissions/week07/evidence/C/archived-search-evaluations.md#e5-team-pdf) and the older manual-chunk
+reports describe historical runs. Store results from a new run in a separate
 directory, not in an existing snapshot. Never infer a new score from an old
 model's report.
 
@@ -265,8 +260,8 @@ hit or establish a semantic-quality acceptance claim.
    shared models, Alembic migrations, API assembly or Worker dispatch. The PDF
    handler runner does not replace integrated queue/restart/deployment checks.
 
-The dated raw JSON and final validation summary are under
-`submissions/week07/evidence/C/team-pdf-20261029/`. Each query records unchanged
+The [E5 archive](../submissions/week07/evidence/C/archived-search-evaluations.md#e5-team-pdf)
+links to the dated raw JSON and final validation summary. Each query records unchanged
 expected locations, resolved current IDs, actual ranks/pages/chunks, degradation
 and evidence. A failed candidate gate, B pending, corpus classification differences
 and any unrun environment check must remain visible in the final report.
@@ -326,4 +321,4 @@ bytes. Final tests: **374 passed, 2 skipped** for Windows symlink privileges;
 all five PostgreSQL tests ran, Ruff and `pip check` passed. Offline model
 preparation also passed against the verified files. Exact commands, configuration,
 query rows, failure analysis and A/B/D handoff are in the
-[PPLX evidence README](../submissions/week07/evidence/C/20261030-pplx/README.md).
+[PPLX archive](../submissions/week07/evidence/C/archived-search-evaluations.md#pplx-local-model).

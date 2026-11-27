@@ -93,7 +93,7 @@ routes and future queue architecture are distinguished in the acceptance matrix.
 | [Current acceptance matrix](../../docs/w7-acceptance.md) | Requirement sources, test entries and current-run results |
 | [2026-10-31 verification summary](evidence/20261031-w7/README.md) | Commands, 18-gate results, tested-tree identity, browser/API/DB/model/restart outcomes and failure-to-fix summary; raw reports and machine logs stay local |
 | [B pipeline and relation evidence](evidence/B/README.md) | Historical real Compose/API/Worker and direct relation/review checks |
-| [C navigation evidence](evidence/C/20261030-page-navigation/README.md) | Historical local-model SQLite/PostgreSQL evaluation and HTTP recovery |
+| [C search evaluation archive](evidence/C/archived-search-evaluations.md) | Historical local-model SQLite/PostgreSQL evaluation, navigation, and HTTP recovery |
 | [C startup evidence](evidence/C/20261030-startup/README.md) | Historical first-start verification; retain its stated limits |
 | `evidence/1016-D/`, `evidence/1019-D/` | Historical intercepted HTTP-contract and explicit mock browser checks; not product acceptance |
 | [M1 checklist](m1-checklist.md) | Three real scenarios and human sign-off status |
@@ -163,4 +163,4 @@ and broader graph exploration. Move/rename/undo remain stretch capabilities.
 AI assisted the requirement audit, implementation review, bug fixes, test execution
 and documentation. Claims of successful execution require recorded command output
 and evidence. No human gold review or teammate approval is generated on behalf of
-another person. Earlier disclosures remain in their dated evidence records.
+another person. See the [AI use statement](ai-use-statement.md) for the tools, scope, and verification.

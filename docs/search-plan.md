@@ -173,9 +173,10 @@ The historical E5 run achieved keyword 5/5 and semantic 4/5 with no duplicate fi
 so it remains a failure. These small synthetic results do not establish quality
 on team PDFs or acceptance of the complete product. The separate 2026-10-29 real
 PDF E5 run scored keyword 5/5 and semantic/hybrid 3/5 on D's ordinal placeholders.
-Both remain historical after the model replacement. New PPLX results belong in
-`submissions/week07/evidence/C/20261030-pplx/`, using the original frozen answers
-and corpus hashes. B's gold review stays pending and the C 4/5 semantic target
+Both remain historical after the model replacement. The
+[PPLX archive](../submissions/week07/evidence/C/archived-search-evaluations.md#pplx-local-model)
+records the frozen answers and corpus hashes used for the local-model run. Save
+new runs separately. B's gold review stays pending and the C 4/5 semantic target
 remains a candidate, not a team-frozen acceptance threshold.
 
 Committed fixture and evidence JSON now uses ASCII Unicode escapes. Decoding
@@ -237,8 +238,9 @@ PostgreSQL tests, before making a new integrated acceptance claim.
 The [page-navigation operation guide](search-page-navigation.md) describes the
 optional PPLX location layer, explicit schema/page-count preparation, scoped
 backfill, unchanged model parameters and separate pure-model/assisted evaluation.
-The historical pure PPLX semantic result stays 3/5; new results belong in
-`submissions/week07/evidence/C/20261030-page-navigation/`. B review and team
-threshold/corpus approval remain pending. C's
+The historical pure PPLX semantic result stays 3/5; see the
+[page-navigation archive](../submissions/week07/evidence/C/archived-search-evaluations.md#page-navigation)
+for the separate assisted results. B review and team threshold/corpus approval
+remain pending. C's
 `version_page_search_metadata` and token-vector sidecars are now created by
 shared migration `20261030_0005`.

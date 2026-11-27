@@ -1,37 +1,22 @@
 # AI Use Statement
 
-Team 11 · W07 midterm milestone · 2026-10-29
+Team 11 | Week 7 midterm milestone | 2026-10-29
 
-## Tools used
+## Tools and scope
 
-Generative AI assistants were used by team members during this milestone:
+Team members used DeepSeek, ChatGPT, Kimi, Codex, and WorkBuddy for scaffolding
+and refactoring routes, schemas, and tests; debugging row locking, concurrency,
+and test isolation; editing documentation; and reviewing the shared contract.
+The affected areas include `tests/` and the Week 7 report, per-role sections,
+and evidence. For Role C, Codex also assisted with requirements review, search
+implementation (Python, SQLAlchemy, and FastAPI), tests, documentation, and
+SQLite, PostgreSQL/pgvector, local-model, and HTTP checks.
 
-- DeepSeek
-- ChatGPT
-- Kimi
-- Codex
-- WorkBuddy
+## Verification and responsibility
 
-## Purpose of use
-
-- code scaffolding and refactoring suggestions (routes, schemas, tests)
-- debugging suggestions (row locking, concurrency tests, test isolation)
-- documentation drafting and editing
-- checking our own claims against the shared contract
-
-## Materially affected areas
-
-- tests — `tests/` (unit, integration and PostgreSQL concurrency cases)
-- milestone materials — `submissions/week07/` (README, report, per-role sections, evidence)
-
-## Verification performed
-
-- **correctness checks**: every number in this folder comes from a command run in this
-  repository. Queue invariants were mutation-checked: removing the guard must turn the
-  concurrency tests red.
-- **limitations noticed**: AI produced no number that a human did not run; no commit was made
-  without tests being run locally; nothing generated was committed unread.
-
-## Responsibility statement
+The Week 7 submission records that its numbers came from executed repository
+commands. Its queue mutation check requires the concurrency tests to fail without
+the guard. It states that local tests were run before commits and generated
+material was read before committing.
 
 We confirm that we understand and can explain all submitted work associated with this statement.

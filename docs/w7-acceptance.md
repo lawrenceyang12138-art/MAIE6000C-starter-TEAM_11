@@ -44,9 +44,10 @@ current single-worker W7 scope, not a claim that the present worker has leases.
 
 Historical artifacts retain their original identities. In particular,
 `submissions/week07/evidence/B/` records B's earlier combined pipeline and relation
-checks, and `evidence/C/20261030-page-navigation/` and `20261030-startup/` record
-C's earlier model/navigation/startup checks. They are supporting history, not a
-substitute for executing the current combined tree.
+checks, and the [search evaluation archive](../submissions/week07/evidence/C/archived-search-evaluations.md)
+and [startup summary](../submissions/week07/evidence/C/20261030-startup/README.md)
+record C's earlier model, navigation, and startup checks. They are supporting
+history, not a substitute for executing the current combined tree.
 
 A subsequent Node-only check at `2b975a0` passed **62/62 tests**: the 56 existing
 contracts plus 6 browser-launcher regressions, using the same three modules as CI.

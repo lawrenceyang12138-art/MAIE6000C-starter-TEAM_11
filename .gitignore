@@ -222,7 +222,7 @@ work/
 submissions/*
 !submissions/week13/
 submissions/week13/*
-!submissions/week13/role-c-ai-use.md
+!submissions/week13/ai-use-statement.md
 !submissions/week13/sections/
 submissions/week13/sections/*
 !submissions/week13/sections/C-validation.json
@@ -244,6 +244,10 @@ submissions/week07/evidence/**/*.png
 /submissions/week07/evidence/C/20261030-startup/**
 !/submissions/week07/evidence/C/20261030-startup/README.md
 !/submissions/week07/evidence/C/20261030-startup/validation-summary.json
+# Retired search result copies are linked from the archive index.
+/submissions/week07/evidence/C/team-pdf-20261029/
+/submissions/week07/evidence/C/20261030-pplx/
+/submissions/week07/evidence/C/20261030-page-navigation/
 
 # Ruff stuff:
 .ruff_cache/

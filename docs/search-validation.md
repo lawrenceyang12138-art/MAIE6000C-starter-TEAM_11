@@ -219,4 +219,4 @@ latency on a large, diverse corpus. Retrieval uses exact token MaxSim, not ANN.
 The results above come from executed checks and measurements. Development
 assistance is documented separately in the
 [Week 7 team statement](../submissions/week07/ai-use-statement.md) and the
-[Week 13 Role C record](../submissions/week13/role-c-ai-use.md).
+[Week 13 Role C statement](../submissions/week13/ai-use-statement.md).
