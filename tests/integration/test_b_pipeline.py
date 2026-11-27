@@ -138,12 +138,11 @@ def test_fresh_text_formats_flow_from_scan_to_search_and_evidence(
     source_root = _mount_source(db_session, monkeypatch, tmp_path)
     corpus = source_root / "text-corpus"
     corpus.mkdir()
-    (corpus / "notes.txt").write_text(
-        "database-\nready\n    indented note\n", encoding="utf-8"
-    )
-    (corpus / "notes.md").write_text(
-        "# Markdown\n\n    indented code\n", encoding="utf-8"
-    )
+    txt_text = "database-\nready\n    indented note\n"
+    markdown_text = "# Markdown\n\n    publish example\n"
+    docx_text = "Quarterly planning passage"
+    (corpus / "notes.txt").write_text(txt_text, encoding="utf-8")
+    (corpus / "notes.md").write_text(markdown_text, encoding="utf-8")
     docx = corpus / "notes.docx"
     with zipfile.ZipFile(docx, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.writestr(
@@ -163,8 +162,8 @@ def test_fresh_text_formats_flow_from_scan_to_search_and_evidence(
         archive.writestr(
             "word/document.xml",
             '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/'
-            '2006/main"><w:body><w:p><w:r><w:t>DOCX passage</w:t></w:r></w:p>'
-            "</w:body></w:document>",
+            '2006/main"><w:body><w:p><w:r>'
+            f"<w:t>{docx_text}</w:t></w:r></w:p></w:body></w:document>",
         )
 
     root = AuthorizedRoot(
@@ -196,16 +195,27 @@ def test_fresh_text_formats_flow_from_scan_to_search_and_evidence(
         )
 
     settings = get_settings()
-    for query in ("ready", "indented", "DOCX"):
+    for query, file_name, passage in (
+        ("ready", "notes.txt", txt_text),
+        ("publish", "notes.md", markdown_text),
+        ("quarterly", "notes.docx", docx_text),
+    ):
         result = search_chunks(
             db_session,
             SearchRequest(query=query, mode="keyword", root_id=root.id),
             settings,
             None,
         )
-        assert result.results, query
-        hit = result.results[0]
+        assert len(result.results) == 1, query
+        (hit,) = result.results
+        assert hit.file_name == file_name
         assert hit.page is None
+        assert hit.text == passage
         evidence = read_evidence(db_session, hit.chunk_id)
+        assert evidence.chunk_id == hit.chunk_id
+        assert evidence.file_id == hit.file_id
+        assert evidence.version_id == hit.version_id
+        assert evidence.relative_path == hit.file_path == file_name
         assert evidence.page_number is None
-        assert evidence.ordinal == hit.ordinal
+        assert evidence.ordinal == hit.ordinal == 1
+        assert evidence.text == passage

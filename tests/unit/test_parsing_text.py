@@ -10,8 +10,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from services.common.models import Relationship, SourceChunk, VersionStatus
+from services.parsing.chunking import CHUNK_SIZE_CHARS, chunk_document
 from services.parsing.handler import handle_extract_file
-from services.parsing.chunking import chunk_document
 from services.parsing.text import (
     REASON_TEXT_BINARY,
     REASON_TEXT_EMPTY,
@@ -84,6 +84,22 @@ def test_native_chunking_preserves_hyphen_line_breaks_and_indentation(tmp_path):
     chunks = chunk_document(extract_document(path, text_policy=POLICY))
 
     assert chunks[0].text == "feature-\nready\n    indented code\n"
+
+
+@pytest.mark.parametrize("prefix", ["", "Opening line\n"], ids=["leading", "interior"])
+def test_native_chunking_skips_blank_slices_without_trimming_passages(tmp_path, prefix):
+    closing = "    indented code\n"
+    text = prefix + "\n" * (2 * CHUNK_SIZE_CHARS) + closing
+    path = _write(tmp_path / "notes.md", text.encode("utf-8"))
+
+    chunks = chunk_document(extract_document(path, text_policy=POLICY))
+
+    assert chunks
+    assert all(chunk.text.strip() for chunk in chunks)
+    assert [chunk.ordinal for chunk in chunks] == list(range(1, len(chunks) + 1))
+    assert chunks[-1].text.endswith(closing)
+    if prefix:
+        assert chunks[0].text.startswith(prefix + "\n")
 
 
 def test_pdf_signature_wins_over_an_enabled_text_suffix(tmp_path):
