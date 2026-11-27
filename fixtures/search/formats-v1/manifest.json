@@ -1,0 +1,178 @@
+{
+  "suite": "team11-c-formats-v1",
+  "archive_sha256": "aac269e5a410f4d4c2860c56be799f63e94a442f308e76da2d82e0dbf2d485d9",
+  "absent_keyword": "sundialquartznotpresent",
+  "files": [
+    {
+      "path": "docx/01-en.docx",
+      "kind": "positive",
+      "sha256": "43974aa736a8fc3abe3bd5dec9a52f6390f9c4d9c44f8f8fba18c483ef194b17",
+      "byte_size": 36716,
+      "language": "en",
+      "page_count": null,
+      "queries": [
+        {
+          "keyword": "jadesprocket",
+          "quote": "The cabinet label reads\njadesprocket in blue ink.",
+          "page": null
+        }
+      ]
+    },
+    {
+      "path": "docx/02-bad.docx",
+      "kind": "negative",
+      "sha256": "a1831db1b40634fa918fbe18d43a0187b89f567bb683e612389ff46cc83a3e53",
+      "byte_size": 40,
+      "defect": "Not a ZIP / OOXML package.",
+      "expected_errors": [
+        "docx_corrupt"
+      ]
+    },
+    {
+      "path": "docx/03-zh.docx",
+      "kind": "positive",
+      "sha256": "9c100a5e5cff24fe3a8db79fb510e44226782b50cbef2abc39bf9e99419d8fe8",
+      "byte_size": 36774,
+      "language": "zh",
+      "page_count": null,
+      "queries": [
+        {
+          "keyword": "\u94f6\u6749\u58a8\u76d2",
+          "quote": "\u8bb0\u5f55\u5458\u7528\u94f6\u6749\u58a8\u76d2\u6807\u8bb0\u5f52\u6863\u4fe1\u5c01\u3002",
+          "page": null
+        }
+      ]
+    },
+    {
+      "path": "md/01-en.md",
+      "kind": "positive",
+      "sha256": "088bca12f91829c6a6dc947c59bae71bf08809c07bf8fa63273a10eb1a5d6b97",
+      "byte_size": 81,
+      "language": "en",
+      "page_count": null,
+      "queries": [
+        {
+          "keyword": "amberquill",
+          "quote": "when amberquill is logged:\n    retain the lens cap",
+          "page": null
+        }
+      ]
+    },
+    {
+      "path": "md/02-bad.md",
+      "kind": "negative",
+      "sha256": "67c471bb3ba443740303bd41b3d6685d2976e7803be3c77bb32fbd22f4e28dcb",
+      "byte_size": 6,
+      "defect": "Whitespace only; no searchable Markdown content.",
+      "expected_errors": [
+        "empty_text"
+      ]
+    },
+    {
+      "path": "md/03-zh.md",
+      "kind": "positive",
+      "sha256": "81ba80bf51566b379708286c213aa1bff69d44285e6923da4d519a7599552fb6",
+      "byte_size": 64,
+      "language": "zh",
+      "page_count": null,
+      "queries": [
+        {
+          "keyword": "\u96fe\u6e2f\u94dc\u54e8",
+          "quote": "\u503c\u73ed\u5458\u628a\u96fe\u6e2f\u94dc\u54e8\u653e\u5165\u53f3\u4fa7\u62bd\u5c49\u3002",
+          "page": null
+        }
+      ]
+    },
+    {
+      "path": "pdf/01-en.pdf",
+      "kind": "positive",
+      "sha256": "33d4e4e9a0b199dc15d7bc56c469909af56b3e68ee365fa2b3d90d17906feb7c",
+      "byte_size": 2494,
+      "language": "en",
+      "page_count": 3,
+      "queries": [
+        {
+          "keyword": "willowprism",
+          "quote": "The survey begins at the willowprism station.",
+          "page": 1
+        },
+        {
+          "keyword": "onyxlantern",
+          "quote": "The return ticket carries the onyxlantern stamp.",
+          "page": 3
+        }
+      ]
+    },
+    {
+      "path": "pdf/02-bad.pdf",
+      "kind": "negative",
+      "sha256": "e5c62df5dab5c87b6a015ef3d43597074d1eec433b15f51aec63b8582d0e4ab4",
+      "byte_size": 9,
+      "defect": "Truncated after PDF header; no pages or trailer.",
+      "expected_errors": [
+        "corrupt"
+      ]
+    },
+    {
+      "path": "pdf/03-zh.pdf",
+      "kind": "positive",
+      "sha256": "905c158c9592a4dd8f9e2bb75aa9c1dfc2ec2b949362903049e62ebf226cd208",
+      "byte_size": 3104,
+      "language": "zh",
+      "page_count": 2,
+      "queries": [
+        {
+          "keyword": "\u7425\u73c0\u6f6e\u5c3a",
+          "quote": "\u6cb3\u5cb8\u6837\u65b9\u4ee5\u7425\u73c0\u6f6e\u5c3a\u4e3a\u51c6\u3002",
+          "page": 1
+        },
+        {
+          "keyword": "\u84dd\u9e6d\u6c99\u949f",
+          "quote": "\u56de\u7a0b\u8bb0\u5f55\u7531\u84dd\u9e6d\u6c99\u949f\u8ba1\u65f6\u3002",
+          "page": 2
+        }
+      ]
+    },
+    {
+      "path": "txt/01-en.txt",
+      "kind": "positive",
+      "sha256": "cb9ea8748a2415b742977b0c2ed4b5341f9338206da33f319a7d46f10d870ce2",
+      "byte_size": 59,
+      "language": "en",
+      "page_count": null,
+      "queries": [
+        {
+          "keyword": "cobaltspindle",
+          "quote": "The stencil reads north-\ncobaltspindle on the spare crate.",
+          "page": null
+        }
+      ]
+    },
+    {
+      "path": "txt/02-bad.txt",
+      "kind": "negative",
+      "sha256": "d83470f5f9fed23a58eb266d700cd49eaeb750cb35fb5119da38be8e6f3370b4",
+      "byte_size": 7,
+      "defect": "Binary bytes with NULs and invalid UTF-8; no text.",
+      "expected_errors": [
+        "invalid_encoding",
+        "binary_file"
+      ]
+    },
+    {
+      "path": "txt/03-zh.txt",
+      "kind": "positive",
+      "sha256": "76d09295f4f135f9fc315fa5d09fab6f5df5e3335316a19eb9c7b2b412d7a992",
+      "byte_size": 50,
+      "language": "zh",
+      "page_count": null,
+      "queries": [
+        {
+          "keyword": "\u9752\u74f7\u98ce\u94c3",
+          "quote": "\u5de1\u68c0\u5458\u5c06\u9752\u74f7\u98ce\u94c3\u6302\u5728\u5317\u4fa7\u56de\u5eca\u3002",
+          "page": null
+        }
+      ]
+    }
+  ]
+}
