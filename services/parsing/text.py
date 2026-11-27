@@ -27,7 +27,9 @@ from services.parsing.pdf import (
     PageText,
     SourceChanged,
     SourceMissing,
+    SourceSnapshot,
     UnsupportedDocument,
+    read_source_snapshot,
 )
 
 REASON_TEXT_EMPTY = "empty_text"
@@ -38,7 +40,6 @@ REASON_TEXT_TOO_LARGE = "text_too_large"
 TEXT_MAX_BYTES = 2 * 1024 * 1024
 TEXT_EXTENSIONS = frozenset({".txt", ".md"})
 _DISALLOWED_CONTROL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
-_HASH_BLOCK_SIZE = 1024 * 1024
 
 
 @dataclass(frozen=True)
@@ -75,32 +76,6 @@ def _as_bool(value: str) -> bool:
 
 def is_text_path(path: str | Path) -> bool:
     return Path(path).suffix.casefold() in TEXT_EXTENSIONS
-
-
-def read_native_source(
-    path: Path, *, max_bytes: int, too_large_code: str, too_large_message: str
-) -> tuple[bytes, str]:
-    """Return a bounded snapshot and the hash of exactly those bytes."""
-    try:
-        with path.open("rb") as stream:
-            # Explicit policies can bypass environment validation; never pass
-            # a negative size to read(), which would read without a limit.
-            raw = stream.read(max(0, max_bytes + 1))
-            digest = hashlib.sha256(raw)
-            if len(raw) > max_bytes:
-                # Do not parse or buffer the rest of an oversized file. Hash
-                # it in blocks so this rejection describes the full snapshot,
-                # not a prefix that cannot be compared with the scanned hash.
-                while block := stream.read(_HASH_BLOCK_SIZE):
-                    digest.update(block)
-                raise UnsupportedDocument(
-                    too_large_code, too_large_message, content_sha256=digest.hexdigest()
-                )
-    except (FileNotFoundError, IsADirectoryError) as exc:
-        raise SourceMissing(REASON_FILE_MISSING, f"No such file: {path}") from exc
-    except OSError as exc:
-        raise SourceMissing(REASON_UNREADABLE, f"Cannot read file: {path}") from exc
-    return raw, digest.hexdigest()
 
 
 def _source_stamp(stat: os.stat_result) -> tuple[int, int, int, int, int]:
@@ -166,15 +141,17 @@ def _decode_text(raw: bytes) -> str:
 def extract_text_document(
     path: str | Path,
     policy: TextParsingPolicy,
+    *,
+    snapshot: SourceSnapshot | None = None,
 ) -> ExtractedDocument:
     """Read one TXT/MD file as strict UTF-8 plain text."""
     source_path = Path(path)
     limit = min(policy.max_bytes, TEXT_MAX_BYTES)
-    raw, content_sha256 = read_native_source(
-        source_path,
-        max_bytes=limit,
-        too_large_code=REASON_TEXT_TOO_LARGE,
-        too_large_message=f"Text file exceeds the {limit} byte limit",
+    if snapshot is None:
+        snapshot = read_source_snapshot(source_path, native_limit=limit, keep_pdf=False)
+    content_sha256 = snapshot.content_sha256
+    raw = snapshot.native_bytes(
+        limit, REASON_TEXT_TOO_LARGE, f"Text file exceeds the {limit} byte limit",
     )
     try:
         normalized = _decode_text(raw)

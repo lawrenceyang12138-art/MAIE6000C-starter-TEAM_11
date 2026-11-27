@@ -49,7 +49,7 @@ from services.search.keyword_index import prepare_keyword_indexes
 # Stamped onto every version this handler processes, so chunks can be traced
 # back to the parser that produced them. Bump it when the parsing behaviour
 # changes, otherwise a re-parse is indistinguishable from the first parse.
-PARSER_REVISION = "parsing-v4"
+PARSER_REVISION = "parsing-v5"
 
 # Recorded when the work itself fails rather than the document: a database
 # error while storing, for instance. The version must not be left saying it is

@@ -148,14 +148,14 @@ def test_clean_scan_automatically_persists_direct_relation_evidence(
     ids=["transitional-docx", "strict-docx"],
 )
 def test_fresh_text_formats_flow_from_scan_to_search_and_evidence(
-    db_session: Session, monkeypatch, tmp_path: Path, word_namespace, office_namespace
+    client, db_session: Session, monkeypatch, tmp_path: Path, word_namespace, office_namespace
 ):
     source_root = _mount_source(db_session, monkeypatch, tmp_path)
     corpus = source_root / "text-corpus"
     corpus.mkdir()
     txt_text = "database-\nready\n    indented note\n"
     markdown_text = "# Markdown\n\n    publish example\n"
-    docx_text = "Quarterly\nplanning\tpassage Margin Ruby Compatible"
+    docx_text = "Quarterly\nplanning\tpassage Margin Ruby Compatible Ratio: 1/2"
     (corpus / "notes.txt").write_text(txt_text, encoding="utf-8")
     (corpus / "notes.md").write_text(markdown_text, encoding="utf-8")
     docx = corpus / "notes.docx"
@@ -189,7 +189,9 @@ def test_fresh_text_formats_flow_from_scan_to_search_and_evidence(
             '<mc:AlternateContent><mc:Choice Requires="future">'
             "<w:r><w:t>Unsupported</w:t></w:r></mc:Choice>"
             "<mc:Fallback><w:r><w:t>Compatible</w:t></w:r></mc:Fallback>"
-            "</mc:AlternateContent></w:p></w:body></w:document>",
+            "</mc:AlternateContent><w:r><w:t> Ratio: </w:t></w:r><m:oMath><m:f>"
+            "<m:num><m:r><m:t>1</m:t></m:r></m:num><m:den><m:r><m:t>2</m:t></m:r></m:den>"
+            "</m:f></m:oMath></w:p></w:body></w:document>",
         )
 
     root = AuthorizedRoot(
@@ -221,6 +223,19 @@ def test_fresh_text_formats_flow_from_scan_to_search_and_evidence(
         )
 
     settings = get_settings()
+
+    def keyword(query):
+        response = client.post("/search", json={"query": query, "mode": "keyword"})
+        assert response.status_code == 200
+        return response.json()["results"]
+
+    assert not keyword("12")
+    (ratio,) = keyword("1/2")
+    assert ratio["text"] == docx_text
+    evidence_response = client.get(f"/evidence/{ratio['chunk_id']}")
+    assert evidence_response.status_code == 200
+    assert evidence_response.json()["text"] == docx_text
+
     for query, file_name, passage in (
         ("ready", "notes.txt", txt_text),
         ("publish", "notes.md", markdown_text),

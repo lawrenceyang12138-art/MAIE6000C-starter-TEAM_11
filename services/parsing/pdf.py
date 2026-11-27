@@ -106,34 +106,51 @@ def file_identity(path: str | Path) -> tuple[str, int]:
     The hash is what lets us say "this text came from these exact bytes" and
     detect that a file changed underneath us.
     """
-    return _read_source_identity(Path(path))
+    source = read_source_snapshot(Path(path), native_limit=0, keep_pdf=False)
+    return source.content_sha256, source.byte_size
 
 
-def _read_source_identity(path: Path, *, pdf_snapshot: BytesIO | None = None) -> tuple[str, int]:
-    """Hash the source and, only for PDF bytes, keep the same stream for pypdf."""
+@dataclass(frozen=True)
+class SourceSnapshot:
+    content_sha256: str
+    byte_size: int
+    data: bytes | None  # None: hashed to EOF but too large to keep.
+
+    def native_bytes(self, limit: int, reason: str, message: str) -> bytes:
+        if self.byte_size > limit or self.data is None:
+            raise UnsupportedDocument(reason, message, content_sha256=self.content_sha256)
+        return self.data
+
+
+def read_source_snapshot(path: Path, *, native_limit: int, keep_pdf: bool = True) -> SourceSnapshot:
+    """Open once. Even when the native size limit is exceeded, hash the entire source."""
     digest = hashlib.sha256()
     size = 0
+    saved = BytesIO()
+    retain = True
+    is_pdf = False
     try:
         with path.open("rb") as handle:
             while True:
                 block = handle.read(_CHUNK_SIZE)
                 if not block:
                     break
-                if pdf_snapshot is not None:
-                    if size == 0 and not block.startswith(_PDF_MAGIC):
-                        # A disabled or unknown format still needs a full hash,
-                        # but should never be buffered as a PDF.
-                        pdf_snapshot = None
-                    else:
-                        pdf_snapshot.write(block)
+                if size == 0:
+                    is_pdf = keep_pdf and block.startswith(_PDF_MAGIC)
                 size += len(block)
                 digest.update(block)
+                if retain:
+                    if is_pdf or size <= native_limit:
+                        saved.write(block)
+                    else:
+                        saved.close()
+                        retain = False
     except OSError as exc:
         # External disks and network mounts can fail after open succeeded.
         # Keep those source failures on the same explicit refusal/retry path
         # as an unreadable file instead of leaking an HTTP 500 from evidence.
         raise _source_read_failure(path, exc) from exc
-    return digest.hexdigest(), size
+    return SourceSnapshot(digest.hexdigest(), size, saved.getvalue() if retain else None)
 
 
 def _read_pages(snapshot: BytesIO) -> list[str]:
@@ -176,7 +193,7 @@ def _verify_pdf_source(path: Path, expected_sha256: str) -> None:
         raise SourceChanged(REASON_SOURCE_CHANGED, "The file was written while it was being read")
 
 
-def _extract_pdf_document(path: str | Path) -> ExtractedDocument:
+def _extract_pdf_document(pdf_path: Path, source: SourceSnapshot) -> ExtractedDocument:
     """Extract per-page text and the file identity from one PDF.
 
     Raises UnsupportedDocument when the file cannot yield text. A file that
@@ -184,17 +201,8 @@ def _extract_pdf_document(path: str | Path) -> ExtractedDocument:
     is also unsupported: reporting "0 chunks" would look like an empty
     document rather than a missing text layer.
     """
-    pdf_path = Path(path)
-    # Parse the very bytes we hash: reading the path again in PdfReader
-    # would allow a transient replacement to supply another version's error.
-    with BytesIO() as snapshot:
-        content_sha256, byte_size = _read_source_identity(pdf_path, pdf_snapshot=snapshot)
-        if not snapshot.tell():
-            raise UnsupportedDocument(
-                REASON_UNSUPPORTED_FORMAT, "Not a PDF file; only PDF documents are supported",
-                content_sha256=content_sha256,
-            )
-        snapshot.seek(0)
+    content_sha256, byte_size = source.content_sha256, source.byte_size
+    with BytesIO(source.data) as snapshot:
         try:
             raw_pages = _read_pages(snapshot)
         except UnsupportedDocument as exc:
@@ -229,16 +237,6 @@ def _extract_pdf_document(path: str | Path) -> ExtractedDocument:
     )
 
 
-def _has_pdf_magic(path: str | Path) -> bool:
-    try:
-        with Path(path).open("rb") as handle:
-            return handle.read(len(_PDF_MAGIC)).startswith(_PDF_MAGIC)
-    except OSError:
-        # The selected extractor will return the appropriate missing/unreadable
-        # error. Do not let a suffix win over a missing file.
-        return False
-
-
 def extract_document(
     path: str | Path,
     *,
@@ -249,21 +247,26 @@ def extract_document(
     The local import avoids a module cycle while keeping all PDF behaviour in
     this module and all text-specific rules in ``services.parsing.text``.
     """
-    from services.parsing.text import TextParsingPolicy, is_text_path
+    from services.parsing.text import TEXT_MAX_BYTES, TextParsingPolicy, is_text_path
     from services.parsing.docx import is_docx_path
 
-    # A PDF is identified by its bytes, not by a possibly misleading suffix.
-    # Keep the existing PDF behavior when a PDF-like file is named .txt/.md.
-    if _has_pdf_magic(path):
-        return _extract_pdf_document(path)
-
+    path = Path(path)
     policy = text_policy or TextParsingPolicy.from_environment()
-    if policy.enabled and is_text_path(path):
+    text = policy.enabled and is_text_path(path)
+    docx = policy.docx_enabled and is_docx_path(path)
+    limit = min(policy.max_bytes, TEXT_MAX_BYTES) if text or docx else 0
+    source = read_source_snapshot(path, native_limit=limit)
+    if source.data is not None and source.data.startswith(_PDF_MAGIC):
+        return _extract_pdf_document(path, source)
+    if text:
         from services.parsing.text import extract_text_document
 
-        return extract_text_document(path, policy)
-    if policy.docx_enabled and is_docx_path(path):
+        return extract_text_document(path, policy, snapshot=source)
+    if docx:
         from services.parsing.docx import extract_docx_document
 
-        return extract_docx_document(path, policy)
-    return _extract_pdf_document(path)
+        return extract_docx_document(path, policy, snapshot=source)
+    raise UnsupportedDocument(
+        REASON_UNSUPPORTED_FORMAT, "Not a PDF file; no native parser enabled for this suffix",
+        content_sha256=source.content_sha256,
+    )

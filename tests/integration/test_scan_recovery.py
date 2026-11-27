@@ -40,6 +40,7 @@ from services.parsing.pdf import (
     REASON_FILE_MISSING,
     REASON_NO_TEXT_LAYER,
     REASON_SOURCE_CHANGED,
+    REASON_UNREADABLE,
 )
 from services.parsing.text import REASON_TEXT_EMPTY, REASON_TEXT_TOO_LARGE
 from services.scan import handler as scan_handler
@@ -361,6 +362,63 @@ def test_unchanged_rejected_text_remains_unsupported(
     assert client.post(f"/jobs/{extract_job_id}/retry").status_code == 409
 
 
+@pytest.mark.parametrize("original_is_pdf", [False, True], ids=["txt", "pdf-named-txt"])
+@pytest.mark.parametrize("fault", ["replacement", "open-error", "read-error"])
+def test_format_detection_uses_the_parser_snapshot_and_is_retryable(
+    client, text_source, db_session, monkeypatch, original_is_pdf, fault
+):
+    pdf = FIXTURE_PDF.read_bytes()
+    txt = b"restorable document"
+    original, other = (pdf, txt) if original_is_pdf else (txt, pdf)
+    text_source.write_bytes(original)
+    root_id, scan_job_id = _authorize(client)
+    worker_main.process_job(scan_job_id)
+    version_id = _version_of(db_session, _only_file(db_session)).id
+    (job,) = _extract_jobs(db_session, version_id)
+    job_id = job.id
+
+    monkeypatch.setenv("TEXT_MAX_BYTES", str(max(len(pdf), len(txt))))
+    real_open = Path.open
+    injected = False
+
+    class InterruptedRead(io.BytesIO):
+        def read(self, size=-1):
+            raise OSError("temporary mount read failure")
+
+    def open_once(path, mode="r", *args, **kwargs):
+        nonlocal injected
+        if path == text_source and mode == "rb" and not injected:
+            injected = True
+            if fault == "open-error":
+                raise PermissionError("temporary mount open failure")
+            if fault == "read-error":
+                return InterruptedRead()
+            # A handle on the displaced file; subsequent opens see the restored original.
+            return io.BytesIO(other)
+        return real_open(path, mode, *args, **kwargs)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "open", open_once)
+        _run_next_job(db_session)
+    assert injected
+    db_session.expire_all()
+    version = db_session.get(FileVersion, version_id)
+    job = client.get(f"/jobs/{job_id}").json()
+    expected = REASON_SOURCE_CHANGED if fault == "replacement" else REASON_UNREADABLE
+    assert (version.status, version.error_code) == (VersionStatus.FAILED.value, expected)
+    assert (job["status"], job["error_code"]) == (JobStatus.FAILED.value, expected)
+    assert not db_session.query(SourceChunk).filter_by(version_id=version_id).count()
+
+    worker_main.process_job(_scan_and_collect(db_session, client, root_id))
+    assert [j.id for j in _extract_jobs(db_session, version_id)] == [job_id]
+    assert client.post(f"/jobs/{job_id}/retry").status_code == 202
+    _run_next_job(db_session)
+    query = "alpha" if original_is_pdf else "restorable"
+    result = client.post("/search", json={"query": query, "mode": "keyword"})
+    assert result.status_code == 200
+    assert [hit["version_id"] for hit in result.json()["results"]] == [version_id]
+
+
 @pytest.mark.parametrize("extension", ["txt", "md", "docx"])
 @pytest.mark.parametrize("replace_at", ["reader_return", "index_stage"])
 def test_replaced_native_source_is_not_published(
@@ -386,11 +444,10 @@ def test_replaced_native_source_is_not_published(
     version_id = _version_of(db_session, _only_file(db_session)).id
     (extract_job,) = _extract_jobs(db_session, version_id)
 
-    import services.parsing.docx as docx_module
     import services.parsing.handler as handler_module
-    import services.parsing.text as text_module
+    import services.parsing.pdf as pdf_module
 
-    real_read = text_module.read_native_source
+    real_read = pdf_module.read_source_snapshot
     real_prepare_indexes = handler_module.prepare_keyword_indexes
     replacement_path = tmp_path / f"replacement.{extension}"
     replaced = False
@@ -416,8 +473,7 @@ def test_replaced_native_source_is_not_published(
             assert db.query(ChunkSearchIndex).count() == 1
             replace_source()
 
-    monkeypatch.setattr(text_module, "read_native_source", read_then_replace)
-    monkeypatch.setattr(docx_module, "read_native_source", read_then_replace)
+    monkeypatch.setattr(pdf_module, "read_source_snapshot", read_then_replace)
     monkeypatch.setattr(handler_module, "prepare_keyword_indexes", index_then_replace)
     _run_next_job(db_session)
     assert replaced

@@ -129,6 +129,28 @@ def test_docx_extracts_office_math_and_ruby_base_not_annotation(tmp_path):
     assert document.pages[0].text == "Operating Margin + 1; ruby: 漢字"
 
 
+@pytest.mark.parametrize(
+    ("numerator", "denominator", "kind", "expected"),
+    [
+        ("a+b", "2", "bar", "(a+b)/2"),
+        ("1", "<m:f><m:num><m:r><m:t>2</m:t></m:r></m:num>"
+         "<m:den><m:r><m:t>3</m:t></m:r></m:den></m:f>", "lin", "1/(2/3)"),
+        ("1", "2", "noBar", "1 2"),
+    ],
+)
+def test_fraction_operands_preserve_grouping(tmp_path, numerator, denominator, kind, expected):
+    def operand(value):
+        return value if value.startswith("<") else f"<m:r><m:t>{value}</m:t></m:r>"
+
+    body = (
+        '<w:p><m:oMath xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math">'
+        f'<m:f><m:fPr><m:type m:val="{kind}"/></m:fPr><m:num>{operand(numerator)}</m:num>'
+        f'<m:den>{operand(denominator)}</m:den></m:f></m:oMath></w:p>'
+    )
+    path = _write_docx(tmp_path / "fraction.docx", body)
+    assert extract_document(path, text_policy=POLICY).pages[0].text == expected
+
+
 def test_docx_alternate_content_chooses_one_supported_branch(tmp_path):
     body = (
         '<mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/'

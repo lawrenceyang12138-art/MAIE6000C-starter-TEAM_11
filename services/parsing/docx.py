@@ -12,9 +12,11 @@ from xml.etree import ElementTree
 from services.parsing.pdf import (
     ExtractedDocument,
     PageText,
+    SourceSnapshot,
     UnsupportedDocument,
+    read_source_snapshot,
 )
-from services.parsing.text import TEXT_MAX_BYTES, TextParsingPolicy, read_native_source
+from services.parsing.text import TEXT_MAX_BYTES, TextParsingPolicy
 
 REASON_DOCX_CORRUPT = "docx_corrupt"
 REASON_DOCX_STRUCTURE = "docx_structure"
@@ -34,6 +36,7 @@ _MATH_NAMESPACES = frozenset({
     "http://schemas.openxmlformats.org/officeDocument/2006/math",
     "http://purl.oclc.org/ooxml/officeDocument/math",
 })
+_FRACTIONS = {f"{{{ns}}}f" for ns in _MATH_NAMESPACES}
 _MARKUP_COMPATIBILITY = "{http://schemas.openxmlformats.org/markup-compatibility/2006}"
 _ALTERNATE_CONTENT = f"{_MARKUP_COMPATIBILITY}AlternateContent"
 _ALTERNATE_CHOICE = f"{_MARKUP_COMPATIBILITY}Choice"
@@ -147,6 +150,36 @@ def _select_alternate_branch(
     return fallback
 
 
+def _mark_fraction_boundaries(fraction: ElementTree.Element) -> None:
+    """Insert linear-text delimiters before the ordinary visible-run walk.
+
+    Child fractions are visited first. Parenthesize compound operands so a
+    nested fraction or an expression does not change meaning when flattened.
+    """
+    ns = fraction.tag.removesuffix("f")  # Clark namespace prefix, including the closing brace
+    numerator, denominator = fraction.find(ns + "num"), fraction.find(ns + "den")
+    if numerator is None or denominator is None:
+        return
+
+    def marker(text: str) -> ElementTree.Element:
+        token = ElementTree.Element(ns + "t")
+        token.text = text
+        return token
+
+    for operand in (numerator, denominator):
+        simple = (
+            len(operand) == 1 and operand[0].tag == ns + "r"
+            and "".join(t.text or "" for t in operand[0] if t.tag in _TEXT).isalnum()
+        )
+        if not simple:
+            operand.insert(0, marker("("))
+            operand.append(marker(")"))
+    kind = fraction.find(f"{ns}fPr/{ns}type")
+    # A barless stack (e.g. a binomial) is not a division.
+    barless = kind is not None and kind.get(ns + "val") == "noBar"
+    denominator.insert(0, marker(" " if barless else "/"))
+
+
 def _parse_document_xml(
     data: bytes,
 ) -> tuple[ElementTree.Element, set[ElementTree.Element]]:
@@ -174,6 +207,8 @@ def _parse_document_xml(
                 ):
                     supported_choices.add(value)
         else:
+            if value.tag in _FRACTIONS:
+                _mark_fraction_boundaries(value)
             # Undo only the declarations introduced on this element. This
             # also restores prefixes shadowed by a different local binding.
             for prefix, previous in reversed(scope_stack.pop()):
@@ -259,14 +294,16 @@ def _decode_docx(raw: bytes) -> str:
 def extract_docx_document(
     path: str | Path,
     policy: TextParsingPolicy,
+    *,
+    snapshot: SourceSnapshot | None = None,
 ) -> ExtractedDocument:
     """Extract paragraphs from one DOCX without unpacking to disk."""
     limit = min(policy.max_bytes, TEXT_MAX_BYTES)
-    raw, content_sha256 = read_native_source(
-        Path(path),
-        max_bytes=limit,
-        too_large_code=REASON_DOCX_TOO_LARGE,
-        too_large_message=f"DOCX container exceeds the {limit} byte limit",
+    if snapshot is None:
+        snapshot = read_source_snapshot(Path(path), native_limit=limit, keep_pdf=False)
+    content_sha256 = snapshot.content_sha256
+    raw = snapshot.native_bytes(
+        limit, REASON_DOCX_TOO_LARGE, f"DOCX container exceeds the {limit} byte limit",
     )
     try:
         text = _decode_docx(raw)
