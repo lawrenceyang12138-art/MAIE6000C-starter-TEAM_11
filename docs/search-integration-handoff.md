@@ -128,10 +128,10 @@ deployment still require team-level verification.
 
 ## Development AI use
 
-Codex assisted with reading requirements, designing and implementing the
-Python/SQLAlchemy/FastAPI code, writing tests and documentation, and running
-SQLite, PostgreSQL/pgvector, local-model, and HTTP checks. This records tool use;
-it does not sign a personal declaration or submit a course statement for a member.
+See the [Role C development record][role-c-development-record] and the
+[Week 7 team AI Use Statement][week-7-team-ai-use] for the recorded assistance.
+This handoff does not sign a personal declaration or submit a course statement
+for a member.
 C remains responsible for understanding tokenization, E5 prefixes and pooling,
 vector compatibility, ranking, page-aware evaluation, and fallback behavior.
 
@@ -139,3 +139,6 @@ The product's local E5 feature is separate from development assistance. The
 evaluation corpus is synthetic and contains no private customer files. D must
 assemble and verify the final team AI Use Statement against actual member usage
 and the course format.
+
+[role-c-development-record]: https://github.com/lawrenceyang12138-art/MAIE6000C-starter-TEAM_11/blob/088af8b2f4532476da7359b00e36d7721facd788/docs/search-integration-handoff.md#development-ai-use
+[week-7-team-ai-use]: https://github.com/lawrenceyang12138-art/MAIE6000C-starter-TEAM_11/blob/develop/submissions/week07/ai-use-statement.md
