@@ -3,7 +3,12 @@
 Project: File Management Assistant - MAIE 6000C Team 11  
 Prepared: 2026-10-10
 
-This document uses the [project brief](../README.md), [architecture proposal](architecture.md), and [Week 4 project plan](../submissions/week04/README.md) to answer the interface questions from the in-class screenshot.
+This document uses the [project brief](../README.md),
+[architecture proposal](architecture.md), and the archived
+[Week 4 project plan][week-4-proposal] to answer the interface questions from the
+in-class screenshot.
+
+[week-4-proposal]: https://github.com/lawrenceyang12138-art/MAIE6000C-starter-TEAM_11/blob/9e42e44d376c074083c4ebf2ca2b8e6ce6a5bf5e/submissions/week04/README.md
 
 Scope: this document describes the target product design, not implemented endpoints. The current code is still the course starter case-triage flow; folder authorization, scanning, search, graph views, and human review are not implemented. The current implementation check is at the end. Exact request/response JSON, error-code enums, and success codes that are not yet agreed must be confirmed when the W5 contract is frozen.
 
