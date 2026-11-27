@@ -6,6 +6,7 @@ import shutil
 import zipfile
 from pathlib import Path
 
+import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -132,15 +133,29 @@ def test_clean_scan_automatically_persists_direct_relation_evidence(
         assert relation.quote.split()[0].casefold() in evidence.text.casefold()
 
 
+@pytest.mark.parametrize(
+    ("word_namespace", "relationship_base"),
+    [
+        (
+            "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
+            "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
+        ),
+        (
+            "http://purl.oclc.org/ooxml/wordprocessingml/main",
+            "http://purl.oclc.org/ooxml/officeDocument/relationships",
+        ),
+    ],
+    ids=["transitional-docx", "strict-docx"],
+)
 def test_fresh_text_formats_flow_from_scan_to_search_and_evidence(
-    db_session: Session, monkeypatch, tmp_path: Path
+    db_session: Session, monkeypatch, tmp_path: Path, word_namespace, relationship_base
 ):
     source_root = _mount_source(db_session, monkeypatch, tmp_path)
     corpus = source_root / "text-corpus"
     corpus.mkdir()
     txt_text = "database-\nready\n    indented note\n"
     markdown_text = "# Markdown\n\n    publish example\n"
-    docx_text = "Quarterly planning passage"
+    docx_text = "Quarterly\nplanning\tpassage"
     (corpus / "notes.txt").write_text(txt_text, encoding="utf-8")
     (corpus / "notes.md").write_text(markdown_text, encoding="utf-8")
     docx = corpus / "notes.docx"
@@ -155,15 +170,16 @@ def test_fresh_text_formats_flow_from_scan_to_search_and_evidence(
         archive.writestr(
             "_rels/.rels",
             '<Relationships xmlns="http://schemas.openxmlformats.org/package/'
-            '2006/relationships"><Relationship Id="rId1" Type="http://schemas.'
-            'openxmlformats.org/officeDocument/2006/relationships/officeDocument" '
+            '2006/relationships"><Relationship Id="rId1" '
+            f'Type="{relationship_base}/officeDocument" '
             'Target="word/document.xml"/></Relationships>',
         )
         archive.writestr(
             "word/document.xml",
-            '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/'
-            '2006/main"><w:body><w:p><w:r>'
-            f"<w:t>{docx_text}</w:t></w:r></w:p></w:body></w:document>",
+            f'<w:document xmlns:w="{word_namespace}"><w:body><w:p>'
+            '<w:pPr><w:tabs><w:tab w:val="left" w:pos="720"/></w:tabs></w:pPr>'
+            "<w:r><w:t>Quarterly</w:t><w:cr/><w:t>planning</w:t>"
+            "<w:tab/><w:t>passage</w:t></w:r></w:p></w:body></w:document>",
         )
 
     root = AuthorizedRoot(
@@ -198,7 +214,7 @@ def test_fresh_text_formats_flow_from_scan_to_search_and_evidence(
     for query, file_name, passage in (
         ("ready", "notes.txt", txt_text),
         ("publish", "notes.md", markdown_text),
-        ("quarterly", "notes.docx", docx_text),
+        ("planning", "notes.docx", docx_text),
     ):
         result = search_chunks(
             db_session,
@@ -219,3 +235,11 @@ def test_fresh_text_formats_flow_from_scan_to_search_and_evidence(
         assert evidence.page_number is None
         assert evidence.ordinal == hit.ordinal == 1
         assert evidence.text == passage
+
+    concatenated = search_chunks(
+        db_session,
+        SearchRequest(query="quarterlyplanning", mode="keyword", root_id=root.id),
+        settings,
+        None,
+    )
+    assert not concatenated.results

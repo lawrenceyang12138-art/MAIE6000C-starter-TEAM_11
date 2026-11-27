@@ -3,23 +3,26 @@
 from __future__ import annotations
 
 import zipfile
+import zlib
 from pathlib import Path
 
 import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from services.common.models import Relationship, SourceChunk, VersionStatus
+from services.common.models import FileVersion, Relationship, SourceChunk, VersionStatus
 from services.parsing.handler import handle_extract_file
 from services.parsing.docx import (
     REASON_DOCX_CORRUPT,
     REASON_DOCX_STRUCTURE,
     REASON_DOCX_UNPACKED_TOO_LARGE,
 )
-from services.parsing.pdf import UnsupportedDocument, extract_document
+from services.parsing.pdf import REASON_SOURCE_CHANGED, UnsupportedDocument, extract_document
 from services.parsing.text import TextParsingPolicy
 
 POLICY = TextParsingPolicy(enabled=True, docx_enabled=True)
+TRANSITIONAL_WORD_NAMESPACE = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+STRICT_WORD_NAMESPACE = "http://purl.oclc.org/ooxml/wordprocessingml/main"
 
 CONTENT_TYPES = b"""\
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -36,22 +39,28 @@ RELATIONSHIPS = b"""\
 """
 
 
-def _document(body: str) -> bytes:
+def _document(body: str, namespace: str) -> bytes:
     return f"""\
-<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:document xmlns:w="{namespace}">
   <w:body>{body}</w:body>
 </w:document>
 """.encode()
 
 
-def _write_docx(path: Path, body: str, *, content_types=CONTENT_TYPES,
-                relationships=RELATIONSHIPS) -> Path:
+def _write_docx(
+    path: Path,
+    body: str,
+    *,
+    content_types=CONTENT_TYPES,
+    relationships=RELATIONSHIPS,
+    namespace=TRANSITIONAL_WORD_NAMESPACE,
+) -> Path:
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as archive:
         if content_types is not None:
             archive.writestr("[Content_Types].xml", content_types)
         if relationships is not None:
             archive.writestr("_rels/.rels", relationships)
-        archive.writestr("word/document.xml", _document(body))
+        archive.writestr("word/document.xml", _document(body, namespace))
     return path
 
 
@@ -74,6 +83,44 @@ def test_docx_extracts_paragraph_text_without_pages(tmp_path):
     assert document.page_count == 1
     assert document.pages[0].page_number is None
     assert document.pages[0].text == "First paragraph\nSecond paragraph"
+
+
+@pytest.mark.parametrize(
+    "namespace",
+    [TRANSITIONAL_WORD_NAMESPACE, STRICT_WORD_NAMESPACE],
+    ids=["transitional", "strict"],
+)
+def test_docx_preserves_run_layout_but_ignores_paragraph_tab_stops(tmp_path, namespace):
+    relationships = RELATIONSHIPS
+    if namespace == STRICT_WORD_NAMESPACE:
+        relationships = relationships.replace(
+            b"http://schemas.openxmlformats.org/officeDocument/2006/relationships/",
+            b"http://purl.oclc.org/ooxml/officeDocument/relationships/",
+        )
+    path = _write_docx(
+        tmp_path / "layout.docx",
+        '<w:p><w:pPr><w:tabs><w:tab w:val="left" w:pos="720"/></w:tabs></w:pPr>'
+        "<w:r><w:t>Before</w:t><w:cr/><w:t>Middle</w:t><w:br/>"
+        "<w:tab/><w:t>After</w:t></w:r>"
+        '<w:hyperlink w:anchor="bookmark"><w:r><w:t xml:space="preserve"> link</w:t>'
+        "</w:r></w:hyperlink></w:p>",
+        relationships=relationships,
+        namespace=namespace,
+    )
+
+    document = extract_document(path, text_policy=POLICY)
+
+    assert document.pages[0].text == "Before\nMiddle\n\tAfter link"
+
+
+def test_docx_rejects_unrecognized_word_namespace(tmp_path):
+    path = _write_docx(
+        tmp_path / "foreign-namespace.docx",
+        "<w:p><w:r><w:t>body</w:t></w:r></w:p>",
+        namespace="urn:test:lookalike-wordprocessing",
+    )
+
+    assert _reason(path) == REASON_DOCX_STRUCTURE
 
 
 def test_docx_text_box_does_not_interrupt_or_duplicate_body_text(tmp_path):
@@ -116,6 +163,35 @@ def test_corrupt_zip_is_reported_as_corrupt(tmp_path):
     path.write_bytes(b"not a zip package")
 
     assert _reason(path) == REASON_DOCX_CORRUPT
+
+
+def test_corrupt_docx_member_is_reported_as_corrupt(tmp_path, monkeypatch):
+    path = _write_docx(tmp_path / "damaged-member.docx", "<w:p/>")
+    real_read = zipfile.ZipFile.read
+
+    def read_member(archive, name, pwd=None):
+        if name == "word/document.xml":
+            raise zlib.error("invalid compressed contents")
+        return real_read(archive, name, pwd)
+
+    monkeypatch.setattr(zipfile.ZipFile, "read", read_member)
+
+    assert _reason(path) == REASON_DOCX_CORRUPT
+
+
+def test_a_corrupt_replacement_does_not_reject_the_original_version(
+    db_session: Session, make_file_version, tmp_path
+):
+    path = _write_docx(
+        tmp_path / "replaced.docx", "<w:p><w:r><w:t>Original passage</w:t></w:r></w:p>"
+    )
+    version_id = make_file_version(source_path=path)
+    path.write_bytes(b"not a zip package")
+
+    status = handle_extract_file(db_session, version_id, path, text_policy=POLICY)
+
+    assert status == VersionStatus.FAILED.value
+    assert db_session.get(FileVersion, version_id).error_code == REASON_SOURCE_CHANGED
 
 
 def test_uncompressed_size_limit_is_enforced(tmp_path, monkeypatch):

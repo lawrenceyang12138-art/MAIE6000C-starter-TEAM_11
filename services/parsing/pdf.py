@@ -59,14 +59,17 @@ _PDF_MAGIC = b"%PDF-"
 class UnsupportedDocument(Exception):
     """A document we cannot turn into text, with a reason we can show.
 
-    Callers should record ``reason_code`` against the file version and move on
-    to the next file.
+    Native readers also report the hash of the snapshot they rejected, so a
+    rejection can be recorded only against the matching file version.
     """
 
-    def __init__(self, reason_code: str, message: str) -> None:
+    def __init__(
+        self, reason_code: str, message: str, *, content_sha256: str | None = None
+    ) -> None:
         super().__init__(message)
         self.reason_code = reason_code
         self.message = message
+        self.content_sha256 = content_sha256
 
 
 @dataclass(frozen=True)

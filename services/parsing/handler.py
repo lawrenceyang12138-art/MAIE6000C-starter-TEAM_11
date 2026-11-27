@@ -4,7 +4,7 @@ This is the seam between the worker's dispatch loop (owned by A) and the
 parsing workstream (owned by B). The worker hands over a version id and a path;
 this module decides the outcome and records it on the version.
 
-Three things matter here:
+Four things matter here:
 
 1. **A bad document must not raise.** An encrypted, damaged, or image-only file
    is an ordinary result. It is recorded against the version and returns
@@ -14,7 +14,8 @@ Three things matter here:
    produces a hash of what was actually read. If it differs from the hash the
    version was created with, the bytes on disk are no longer the version we
    were asked to process, so the chunks are discarded rather than stored
-   against the wrong content.
+   against the wrong content. A native parser rejection is tied to that same
+   identity so a newer file cannot leave the original version unsupported.
 3. **Relations are part of a successful parse.** Chunks, rule-based entity
    candidates, their source evidence and the `basic_ready` result commit
    together. An incomplete relation batch must not look like a usable document.
@@ -45,7 +46,7 @@ from services.search.keyword_index import prepare_keyword_indexes
 # Stamped onto every version this handler processes, so chunks can be traced
 # back to the parser that produced them. Bump it when the parsing behaviour
 # changes, otherwise a re-parse is indistinguishable from the first parse.
-PARSER_REVISION = "parsing-v2"
+PARSER_REVISION = "parsing-v3"
 
 # Recorded when the work itself fails rather than the document: a database
 # error while storing, for instance. The version must not be left saying it is
@@ -156,6 +157,11 @@ def handle_extract_file(
         # a newer attempt already published.
         _commit_if_owned(db, version_id, guard=guard)
     except UnsupportedDocument as exc:
+        if exc.content_sha256 is not None and exc.content_sha256 != expected_sha256:
+            return _finish(
+                db, version_id, VersionStatus.FAILED.value, REASON_SOURCE_CHANGED,
+                guard=guard,
+            )
         return _finish(
             db, version_id, VersionStatus.UNSUPPORTED.value, exc.reason_code,
             guard=guard,

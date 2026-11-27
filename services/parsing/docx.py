@@ -4,20 +4,17 @@ from __future__ import annotations
 
 import io
 import zipfile
+import zlib
+from collections.abc import Iterator
 from pathlib import Path
 from xml.etree import ElementTree
 
 from services.parsing.pdf import (
-    REASON_FILE_MISSING,
-    REASON_UNREADABLE,
     ExtractedDocument,
     PageText,
-    SourceChanged,
-    SourceMissing,
     UnsupportedDocument,
-    file_identity,
 )
-from services.parsing.text import TEXT_MAX_BYTES, TextParsingPolicy
+from services.parsing.text import TEXT_MAX_BYTES, TextParsingPolicy, read_native_source
 
 REASON_DOCX_CORRUPT = "docx_corrupt"
 REASON_DOCX_STRUCTURE = "docx_structure"
@@ -29,24 +26,14 @@ DOCX_EXTENSIONS = frozenset({".docx"})
 
 _CONTENT_TYPES = "{http://schemas.openxmlformats.org/package/2006/content-types}"
 _RELATIONSHIPS = "{http://schemas.openxmlformats.org/package/2006/relationships}"
-_WORDPROCESSING = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
-_DOCUMENT = f"{{{_WORDPROCESSING}}}document"
-_BODY = f"{{{_WORDPROCESSING}}}body"
-_PARAGRAPH = f"{{{_WORDPROCESSING}}}p"
-_TEXT = f"{{{_WORDPROCESSING}}}t"
-_TAB = f"{{{_WORDPROCESSING}}}tab"
-_BREAK = f"{{{_WORDPROCESSING}}}br"
-_TEXTBOX = f"{{{_WORDPROCESSING}}}txbxContent"
+_WORDPROCESSING_NAMESPACES = frozenset({
+    "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
+    "http://purl.oclc.org/ooxml/wordprocessingml/main",
+})
 
 
 def is_docx_path(path: str | Path) -> bool:
     return Path(path).suffix.casefold() in DOCX_EXTENSIONS
-
-
-def _missing_or_unreadable(path: Path, exc: OSError) -> SourceMissing:
-    if isinstance(exc, (FileNotFoundError, IsADirectoryError)):
-        return SourceMissing(REASON_FILE_MISSING, f"No such file: {path}")
-    return SourceMissing(REASON_UNREADABLE, f"Cannot read DOCX file: {path}")
 
 
 def _validate_content_types(data: bytes) -> None:
@@ -97,34 +84,38 @@ def _validate_package_relationships(data: bytes) -> None:
     )
 
 
-def _iter_body_paragraphs(node):
-    """Yield body/table paragraphs once, skipping text-box subtrees."""
-    for child in node:
-        if child.tag == _TEXTBOX:
+def _iter_word_elements(
+    node: ElementTree.Element, tag: str, *, skip: str
+) -> Iterator[ElementTree.Element]:
+    """Yield matches in document order without descending into them or text boxes."""
+    levels = [iter(node)]
+    while levels:
+        child = next(levels[-1], None)
+        if child is None:
+            levels.pop()
+        elif child.tag == skip:
             continue
-        if child.tag == _PARAGRAPH:
+        elif child.tag == tag:
             yield child
         else:
-            yield from _iter_body_paragraphs(child)
+            levels.append(iter(child))
 
 
-def _paragraph_text(paragraph) -> str:
+def _paragraph_text(paragraph: ElementTree.Element, prefix: str) -> str:
     pieces: list[str] = []
-
-    def collect(node) -> None:
-        for child in node:
-            if child.tag == _TEXTBOX:
-                continue
-            if child.tag == _TEXT and child.text:
+    text_tag = f"{prefix}t"
+    tab_tag = f"{prefix}tab"
+    breaks = {f"{prefix}br", f"{prefix}cr"}
+    for run in _iter_word_elements(paragraph, f"{prefix}r", skip=f"{prefix}txbxContent"):
+        # Only direct run content is visible: w:pPr/w:tabs/w:tab is a
+        # paragraph tab stop, not a character in the passage.
+        for child in run:
+            if child.tag == text_tag and child.text:
                 pieces.append(child.text)
-            elif child.tag == _TAB:
+            elif child.tag == tab_tag:
                 pieces.append("\t")
-            elif child.tag == _BREAK:
+            elif child.tag in breaks:
                 pieces.append("\n")
-            else:
-                collect(child)
-
-    collect(paragraph)
     return "".join(pieces)
 
 
@@ -135,61 +126,26 @@ def _body_text(document_xml: bytes) -> str:
         raise UnsupportedDocument(
             REASON_DOCX_CORRUPT, "DOCX document XML is malformed"
         ) from exc
-    if root.tag != _DOCUMENT:
+    namespace, _, name = root.tag.rpartition("}")
+    if name != "document" or namespace[1:] not in _WORDPROCESSING_NAMESPACES:
         raise UnsupportedDocument(
             REASON_DOCX_STRUCTURE, "DOCX document root is invalid"
         )
-    body = root.find(_BODY)
+    prefix = namespace + "}"
+    body = root.find(f"{prefix}body")
     if body is None:
         raise UnsupportedDocument(
             REASON_DOCX_STRUCTURE, "DOCX document has no body"
         )
 
-    paragraphs = [_paragraph_text(paragraph) for paragraph in _iter_body_paragraphs(body)]
+    paragraphs = (
+        _paragraph_text(paragraph, prefix)
+        for paragraph in _iter_word_elements(body, f"{prefix}p", skip=f"{prefix}txbxContent")
+    )
     return "\n".join(paragraphs)
 
 
-def extract_docx_document(
-    path: str | Path,
-    policy: TextParsingPolicy,
-) -> ExtractedDocument:
-    """Extract paragraphs from one DOCX without unpacking to disk."""
-    source_path = Path(path)
-    limit = min(policy.max_bytes, TEXT_MAX_BYTES)
-    try:
-        if source_path.stat().st_size > limit:
-            raise UnsupportedDocument(
-                REASON_DOCX_TOO_LARGE,
-                f"DOCX container exceeds the {limit} byte limit",
-            )
-    except UnsupportedDocument:
-        raise
-    except OSError as exc:
-        raise _missing_or_unreadable(source_path, exc) from exc
-
-    content_sha256, byte_size = file_identity(source_path)
-    if byte_size > limit:
-        raise UnsupportedDocument(
-            REASON_DOCX_TOO_LARGE,
-            f"DOCX container exceeds the {limit} byte limit",
-        )
-    try:
-        with source_path.open("rb") as stream:
-            raw = stream.read(limit + 1)
-    except OSError as exc:
-        raise _missing_or_unreadable(source_path, exc) from exc
-    if len(raw) > limit:
-        raise UnsupportedDocument(
-            REASON_DOCX_TOO_LARGE,
-            f"DOCX container exceeds the {limit} byte limit",
-        )
-
-    after_sha256, after_size = file_identity(source_path)
-    if after_sha256 != content_sha256 or after_size != byte_size:
-        raise SourceChanged(
-            "source_changed", "The DOCX file was written while it was being read"
-        )
-
+def _decode_docx(raw: bytes) -> str:
     try:
         with zipfile.ZipFile(io.BytesIO(raw)) as archive:
             infos = archive.infolist()
@@ -210,9 +166,7 @@ def extract_docx_document(
             _validate_content_types(archive.read("[Content_Types].xml"))
             _validate_package_relationships(archive.read("_rels/.rels"))
             document_xml = archive.read("word/document.xml")
-    except UnsupportedDocument:
-        raise
-    except (zipfile.BadZipFile, OSError, RuntimeError, EOFError) as exc:
+    except (zipfile.BadZipFile, OSError, RuntimeError, EOFError, zlib.error) as exc:
         raise UnsupportedDocument(
             REASON_DOCX_CORRUPT, "DOCX package is damaged"
         ) from exc
@@ -220,9 +174,29 @@ def extract_docx_document(
     text = _body_text(document_xml).replace("\r\n", "\n").replace("\r", "\n")
     if not text.strip():
         raise UnsupportedDocument("empty_text", "DOCX contains no body text")
+    return text
+
+
+def extract_docx_document(
+    path: str | Path,
+    policy: TextParsingPolicy,
+) -> ExtractedDocument:
+    """Extract paragraphs from one DOCX without unpacking to disk."""
+    limit = min(policy.max_bytes, TEXT_MAX_BYTES)
+    raw, content_sha256 = read_native_source(
+        Path(path),
+        max_bytes=limit,
+        too_large_code=REASON_DOCX_TOO_LARGE,
+        too_large_message=f"DOCX container exceeds the {limit} byte limit",
+    )
+    try:
+        text = _decode_docx(raw)
+    except UnsupportedDocument as exc:
+        exc.content_sha256 = content_sha256
+        raise
     return ExtractedDocument(
         content_sha256=content_sha256,
-        byte_size=byte_size,
+        byte_size=len(raw),
         page_count=1,
         pages=(PageText(page_number=None, text=text),),
         source_kind="docx",
