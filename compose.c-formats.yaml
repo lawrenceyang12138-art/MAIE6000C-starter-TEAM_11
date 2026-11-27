@@ -1,0 +1,62 @@
+# Role C only. Run under a fresh project named team11-c-format-<run>.
+# The database can be prepared by itself; there is deliberately no AI service.
+name: team11-c-format-prep
+
+x-app: &app
+  image: ${C_FORMAT_IMAGE:-team11-c-format-candidate:unset}
+  pull_policy: never
+  env_file:
+    - path: ${C_FORMAT_FLAGS:-./fixtures/search/formats-v1/no-extra-flags.env}
+      required: true
+  environment:
+    DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/c_format_gate
+    SOURCE_MOUNTS: '{"c-formats-v1":"/source/c-formats"}'
+    EMBEDDING_ENABLED: 'false'
+    EMBEDDING_AUTO_PREPARE: 'false'
+    HF_HUB_OFFLINE: '1'
+    TRANSFORMERS_OFFLINE: '1'
+    SEARCH_PAGE_NAVIGATION_ENABLED: 'true'
+    WORKER_POLL_SECONDS: '0.15'
+  volumes:
+    - type: bind
+      source: ./work/c-format-validation/sources
+      target: /source/c-formats
+      read_only: true
+      bind: {create_host_path: false}
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: c_format_gate
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '127.0.0.1:${C_FORMAT_DB_PORT:-15486}:5432'
+    volumes:
+      - data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U postgres -d c_format_gate']
+      interval: 2s
+      timeout: 2s
+      retries: 25
+  api:
+    <<: *app
+    command: ['/bin/sh', '-c', 'alembic upgrade head && exec uvicorn services.api.app.main:app --host 0.0.0.0 --port 8000']
+    depends_on:
+      db: {condition: service_healthy}
+    ports:
+      - '127.0.0.1:${C_FORMAT_API_PORT:-18086}:8000'
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready')"]
+      interval: 3s
+      timeout: 3s
+      retries: 25
+  worker:
+    <<: *app
+    command: [python, -m, services.worker.app.main]
+    depends_on:
+      api: {condition: service_healthy}
+
+volumes:
+  data:
