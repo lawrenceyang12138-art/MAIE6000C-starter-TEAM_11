@@ -19,7 +19,7 @@ from services.parsing.docx import (
 from services.parsing.pdf import UnsupportedDocument, extract_document
 from services.parsing.text import TextParsingPolicy
 
-POLICY = TextParsingPolicy(enabled=True)
+POLICY = TextParsingPolicy(enabled=True, docx_enabled=True)
 
 CONTENT_TYPES = b"""\
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -121,6 +121,35 @@ def test_docx_without_body_text_is_an_explicit_empty_result(tmp_path):
     path = _write_docx(tmp_path / "empty.docx", "<w:p/>")
 
     assert _reason(path) == "empty_text"
+
+
+def test_docx_has_its_own_switch(tmp_path):
+    path = _write_docx(
+        tmp_path / "disabled.docx",
+        "<w:p><w:r><w:t>body</w:t></w:r></w:p>",
+    )
+
+    with pytest.raises(UnsupportedDocument) as excinfo:
+        extract_document(
+            path,
+            text_policy=TextParsingPolicy(enabled=True, docx_enabled=False),
+        )
+
+    assert excinfo.value.reason_code == "unsupported_format"
+
+
+def test_docx_environment_switch_is_independent(tmp_path, monkeypatch):
+    path = _write_docx(
+        tmp_path / "environment.docx",
+        "<w:p><w:r><w:t>body</w:t></w:r></w:p>",
+    )
+    monkeypatch.delenv("TEXT_PARSING_ENABLED", raising=False)
+    monkeypatch.delenv("PARSING_TEXT_ENABLED", raising=False)
+    monkeypatch.setenv("DOCX_PARSING_ENABLED", "true")
+
+    document = extract_document(path)
+
+    assert document.source_kind == "docx"
 
 
 def test_docx_handler_uses_null_pages_and_skips_relations(

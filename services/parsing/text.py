@@ -3,10 +3,11 @@
 Text files are deliberately treated as plain text. Markdown is not rendered,
 HTML is not executed, and no external resource is loaded.
 
-The feature is off by default so existing PDF-only deployments keep their
-previous behaviour. A can enable it with ``TEXT_PARSING_ENABLED=true`` or pass
-an explicit ``TextParsingPolicy`` from its settings layer. The initial size
-limit is 2 MiB.
+TXT/Markdown and DOCX have separate switches. Both are off by default so
+existing PDF-only deployments keep their previous behaviour. A can enable
+plain text with ``TEXT_PARSING_ENABLED=true`` and DOCX independently with
+``DOCX_PARSING_ENABLED=true``, or pass an explicit ``TextParsingPolicy`` from
+its settings layer. The initial size limit is 2 MiB.
 """
 
 from __future__ import annotations
@@ -43,6 +44,7 @@ class TextParsingPolicy:
     """The part of A's configuration that affects text extraction."""
 
     enabled: bool = False
+    docx_enabled: bool = False
     max_bytes: int = TEXT_MAX_BYTES
 
     @classmethod
@@ -53,6 +55,7 @@ class TextParsingPolicy:
         enabled = _as_bool(
             values.get("TEXT_PARSING_ENABLED", values.get("PARSING_TEXT_ENABLED", "false"))
         )
+        docx_enabled = _as_bool(values.get("DOCX_PARSING_ENABLED", "false"))
         raw_limit = values.get("TEXT_MAX_BYTES", str(TEXT_MAX_BYTES))
         try:
             max_bytes = int(raw_limit)
@@ -61,7 +64,7 @@ class TextParsingPolicy:
         if max_bytes < 1:
             max_bytes = TEXT_MAX_BYTES
         max_bytes = min(max_bytes, TEXT_MAX_BYTES)
-        return cls(enabled=enabled, max_bytes=max_bytes)
+        return cls(enabled=enabled, docx_enabled=docx_enabled, max_bytes=max_bytes)
 
 
 def _as_bool(value: str) -> bool:

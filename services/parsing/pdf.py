@@ -236,7 +236,7 @@ def extract_document(
         from services.parsing.text import extract_text_document
 
         return extract_text_document(path, policy)
-    if policy.enabled and is_docx_path(path):
+    if policy.docx_enabled and is_docx_path(path):
         from services.parsing.docx import extract_docx_document
 
         return extract_docx_document(path, policy)
