@@ -19,7 +19,9 @@ def test_create_and_read_case_and_job(client):
 
     payload = create_response.json()
     case_id = payload["case"]["id"]
-    job_id = payload["job"]["id"]
+    # Contract 6.3 names the public identifier `job_id`; the database column
+    # stays `jobs.id`.
+    job_id = payload["job"]["job_id"]
 
     assert payload["case"]["status"] == "queued"
     assert payload["job"]["status"] == "pending"

@@ -1,0 +1,344 @@
+{
+  "schema_version": "b-live-compose-review-v1",
+  "reviewed_on": "2026-10-30",
+  "images": {
+    "api": "sha256:4811dd33fb8a14dd5d3a6a08843fc2efa5b1bc3d6de6ec75dac05a6cec2cc49f",
+    "worker": "sha256:325f318e01a15e3abf324eabfc5dc56732e7a1babb4afe23d8c531b89b520775",
+    "postgres": "sha256:f40e48eca747184a758d8f04b465186c04f1c9d7c2bee3935cc38cebdaf52326",
+    "postgres_version": "postgres (PostgreSQL) 16.15 (Debian 16.15-1.pgdg12+2)"
+  },
+  "live_scan": {
+    "root_id": "928dde49-bed1-4be4-b954-057bbb4d5f0f",
+    "file_counts": {
+      "total": 16,
+      "discovered": 0,
+      "extracting": 0,
+      "basic_ready": 12,
+      "enriched": 0,
+      "failed": 0,
+      "unsupported": 4
+    },
+    "files": [
+      {
+        "relative_path": "abnormal/corrupt.pdf",
+        "version_id": "96ff75fe-a408-40af-9d51-d19967808ca0",
+        "status": "unsupported",
+        "error_code": "corrupt"
+      },
+      {
+        "relative_path": "abnormal/encrypted.pdf",
+        "version_id": "76db817c-b4ab-4489-94c9-2e8757fcc198",
+        "status": "unsupported",
+        "error_code": "encrypted"
+      },
+      {
+        "relative_path": "abnormal/no_text_layer.pdf",
+        "version_id": "15d5009b-663f-493a-8118-c2f6d2396903",
+        "status": "unsupported",
+        "error_code": "no_text_layer"
+      },
+      {
+        "relative_path": "regression/group-a/doc01.pdf",
+        "version_id": "30a5289c-ee5a-4f9a-a68e-0cd4331b3615",
+        "status": "basic_ready",
+        "error_code": null
+      },
+      {
+        "relative_path": "regression/group-a/doc02.pdf",
+        "version_id": "69043001-1db7-470f-a878-4ba0a5b68a2f",
+        "status": "basic_ready",
+        "error_code": null
+      },
+      {
+        "relative_path": "regression/group-a/doc03.pdf",
+        "version_id": "d2849733-f662-4190-8cb0-c6327139f844",
+        "status": "basic_ready",
+        "error_code": null
+      },
+      {
+        "relative_path": "regression/group-a/doc04.pdf",
+        "version_id": "731f547b-73a6-4fac-8eb8-8260f70e9ef1",
+        "status": "basic_ready",
+        "error_code": null
+      },
+      {
+        "relative_path": "regression/group-a/doc05.pdf",
+        "version_id": "2c9fcd56-3148-4fee-a53b-2a3260e9b0fc",
+        "status": "basic_ready",
+        "error_code": null
+      },
+      {
+        "relative_path": "regression/group-a/doc06.pdf",
+        "version_id": "2ea4df79-5526-4e2c-a1d0-1562645d0c78",
+        "status": "basic_ready",
+        "error_code": null
+      },
+      {
+        "relative_path": "regression/group-b/doc07.pdf",
+        "version_id": "bb78fd02-8657-4438-b276-2a902e1038b0",
+        "status": "basic_ready",
+        "error_code": null
+      },
+      {
+        "relative_path": "regression/group-b/doc08.pdf",
+        "version_id": "210dc10f-246b-40d9-976d-7c2433aa12dd",
+        "status": "basic_ready",
+        "error_code": null
+      },
+      {
+        "relative_path": "regression/group-b/doc09.pdf",
+        "version_id": "2b4caff5-6eab-4db4-9e7b-354219002edf",
+        "status": "basic_ready",
+        "error_code": null
+      },
+      {
+        "relative_path": "regression/group-b/doc10.pdf",
+        "version_id": "7ea22bea-3b35-4860-a9fc-22ac116f212f",
+        "status": "basic_ready",
+        "error_code": null
+      },
+      {
+        "relative_path": "regression/group-b/doc11.pdf",
+        "version_id": "9ed10b71-06cd-4aff-97b4-4a621364e15b",
+        "status": "basic_ready",
+        "error_code": null
+      },
+      {
+        "relative_path": "regression/group-b/doc12.pdf",
+        "version_id": "fffe3bae-58b0-49d5-b280-708e261bba1a",
+        "status": "basic_ready",
+        "error_code": null
+      },
+      {
+        "relative_path": "regression/unsupported.txt",
+        "version_id": "a2a55d0a-4087-44b8-853c-6127b14a5386",
+        "status": "unsupported",
+        "error_code": "unsupported_format"
+      }
+    ],
+    "evidence_checks": [
+      {
+        "file_id": "64a915df-76c7-446e-ab76-c7c1bfe2f765",
+        "version_id": "30a5289c-ee5a-4f9a-a68e-0cd4331b3615",
+        "chunk_id": "b38592b1-b6b1-4f20-a088-db6b073a17ed",
+        "page_number": 1,
+        "relationship_count": 0
+      },
+      {
+        "file_id": "050daf28-1604-46d1-b4b8-265a25af2ab7",
+        "version_id": "69043001-1db7-470f-a878-4ba0a5b68a2f",
+        "chunk_id": "e3d654f5-623e-4978-ae7e-7e46366880ff",
+        "page_number": 1,
+        "relationship_count": 0
+      },
+      {
+        "file_id": "02891b90-019a-4e4a-8967-72da90494b4c",
+        "version_id": "d2849733-f662-4190-8cb0-c6327139f844",
+        "chunk_id": "bf848bc7-ae32-4791-8acc-38924b36f5fc",
+        "page_number": 1,
+        "relationship_count": 0
+      },
+      {
+        "file_id": "5f9453de-7e57-4a23-a42f-588ef6309205",
+        "version_id": "731f547b-73a6-4fac-8eb8-8260f70e9ef1",
+        "chunk_id": "c517637b-086f-4d1a-abcd-71e56eff598e",
+        "page_number": 1,
+        "relationship_count": 0
+      },
+      {
+        "file_id": "d2cb228e-6b6e-4a31-a65b-d55e2db61846",
+        "version_id": "2c9fcd56-3148-4fee-a53b-2a3260e9b0fc",
+        "chunk_id": "c30c686f-893e-409b-a8d4-6bb7af5d6a58",
+        "page_number": 1,
+        "relationship_count": 0
+      },
+      {
+        "file_id": "7490b281-a08a-4803-a235-5f06a5e5dde0",
+        "version_id": "2ea4df79-5526-4e2c-a1d0-1562645d0c78",
+        "chunk_id": "0f8a9add-8aad-4024-85d9-22655c7cb209",
+        "page_number": 1,
+        "relationship_count": 0
+      },
+      {
+        "file_id": "c648b307-b0de-4dca-81d9-356c500c961c",
+        "version_id": "bb78fd02-8657-4438-b276-2a902e1038b0",
+        "chunk_id": "fa92ce73-d275-4ed9-a2f2-57c1313b59ec",
+        "page_number": 1,
+        "relationship_count": 0
+      },
+      {
+        "file_id": "b7d4f3c7-03be-4377-8084-bbb389dc8bdd",
+        "version_id": "210dc10f-246b-40d9-976d-7c2433aa12dd",
+        "chunk_id": "e6eb75b1-3fec-4ae3-a681-9ec9b7eed4c7",
+        "page_number": 1,
+        "relationship_count": 0
+      },
+      {
+        "file_id": "19b48516-3d4b-488d-aa3b-280965718c22",
+        "version_id": "2b4caff5-6eab-4db4-9e7b-354219002edf",
+        "chunk_id": "3851b0fb-9384-4f00-83dd-7a0cd95c0d5b",
+        "page_number": 1,
+        "relationship_count": 0
+      },
+      {
+        "file_id": "2d6eedf3-e3f7-46b7-8c4e-4347a95dc67f",
+        "version_id": "7ea22bea-3b35-4860-a9fc-22ac116f212f",
+        "chunk_id": "c5eee078-3018-4439-96e4-f83107ef1a08",
+        "page_number": 1,
+        "relationship_count": 0
+      },
+      {
+        "file_id": "3770d1b0-56d8-4369-9730-021f57d3f691",
+        "version_id": "9ed10b71-06cd-4aff-97b4-4a621364e15b",
+        "chunk_id": "0ba0924f-06a2-4ec7-b45a-e0653e151b68",
+        "page_number": 1,
+        "relationship_count": 0
+      },
+      {
+        "file_id": "58e93277-118b-4180-8b15-12185a0e732d",
+        "version_id": "fffe3bae-58b0-49d5-b280-708e261bba1a",
+        "chunk_id": "f8fd0b09-30e9-4667-a351-1549336f531b",
+        "page_number": 1,
+        "relationship_count": 0
+      }
+    ]
+  },
+  "live_source_revalidation": {
+    "root_id": "48ade7d7-b2fc-47c9-a52a-59c7f53b0e93",
+    "job_id": 36,
+    "chunk_id": "91dc1651-5c1b-4dfd-852c-147a304d95ce",
+    "healthy_status": 200,
+    "modified_host_sha256": "eb613cb5f61c6ac15c652245deab28a333a1364b47d07fb1470e4e6cafb291b6",
+    "modified_container_sha256": "eb613cb5f61c6ac15c652245deab28a333a1364b47d07fb1470e4e6cafb291b6",
+    "original_host_sha256": "cf136f2dca47a4f8d3dc00bf4061f4ef746287ee7a92e8eea4bc391ba8e48483",
+    "restored_container_sha256": "cf136f2dca47a4f8d3dc00bf4061f4ef746287ee7a92e8eea4bc391ba8e48483",
+    "changed_status": 409,
+    "changed_code": "source_changed",
+    "restored_status": 200,
+    "missing_status": 404,
+    "missing_code": "file_missing"
+  },
+  "live_relation_sample": {
+    "root_id": "790aa11a-519b-41db-8ec6-1e76d600edaf",
+    "job_id": 39,
+    "file": {
+      "file_id": "2945d60f-1b1d-4037-9d0b-d6598de1301c",
+      "root_id": "790aa11a-519b-41db-8ec6-1e76d600edaf",
+      "version_id": "b94fffb2-ee38-4e2a-b32c-bb9d3ab23bae",
+      "display_name": "entities.pdf",
+      "relative_path": "entities.pdf",
+      "presence_status": "present",
+      "status": "basic_ready",
+      "error_code": null,
+      "updated_at": "2026-10-29T18:40:53.257510Z"
+    },
+    "relation_response": [
+      {
+        "relationship_id": "98dbc535-7fa5-4cae-971e-c42e4720fedc",
+        "entity_type": "person",
+        "label": "Chen",
+        "relation_type": "mentions",
+        "kind": "source_supported",
+        "origin": "rule",
+        "producer_revision": "relations-rules-v1",
+        "chunk_id": "00e3f295-cad7-40a5-ada2-01317bc0c62e",
+        "page_number": 1,
+        "quote": "Notes page 1 The File Management Assistant indexes documents. Dr. Chen reviewed the first prototype. Schema Design appears throughout this document. T",
+        "evidence_missing": false,
+        "decision": null,
+        "corrected_entity_id": null,
+        "decision_revision": 0
+      },
+      {
+        "relationship_id": "6271a0e5-6c28-4880-9b61-a850f3f23be2",
+        "entity_type": "project",
+        "label": "File Management Assistant",
+        "relation_type": "mentions",
+        "kind": "source_supported",
+        "origin": "rule",
+        "producer_revision": "relations-rules-v1",
+        "chunk_id": "00e3f295-cad7-40a5-ada2-01317bc0c62e",
+        "page_number": 1,
+        "quote": "Notes page 1 The File Management Assistant indexes documents. Dr. Chen reviewed the first prototype. Schema Design appears",
+        "evidence_missing": false,
+        "decision": null,
+        "corrected_entity_id": null,
+        "decision_revision": 0
+      },
+      {
+        "relationship_id": "e2f38132-7081-4ea0-94ab-4c9835eb2150",
+        "entity_type": "topic",
+        "label": "Schema Design",
+        "relation_type": "mentions",
+        "kind": "source_supported",
+        "origin": "rule",
+        "producer_revision": "relations-rules-v1",
+        "chunk_id": "00e3f295-cad7-40a5-ada2-01317bc0c62e",
+        "page_number": 1,
+        "quote": "Management Assistant indexes documents. Dr. Chen reviewed the first prototype. Schema Design appears throughout this document. The File Management Assistant reads PDF files",
+        "evidence_missing": false,
+        "decision": null,
+        "corrected_entity_id": null,
+        "decision_revision": 0
+      }
+    ],
+    "evidence_by_chunk_id": {
+      "00e3f295-cad7-40a5-ada2-01317bc0c62e": {
+        "chunk_id": "00e3f295-cad7-40a5-ada2-01317bc0c62e",
+        "file_id": "2945d60f-1b1d-4037-9d0b-d6598de1301c",
+        "version_id": "b94fffb2-ee38-4e2a-b32c-bb9d3ab23bae",
+        "relative_path": "entities.pdf",
+        "page_number": 1,
+        "ordinal": 1,
+        "text": "Notes page 1\nThe File Management Assistant indexes documents.\nDr. Chen reviewed the first prototype.\nSchema Design appears throughout this document.\nThe File Management Assistant reads PDF files.",
+        "content_sha256": "33daacaa43636d1491391f4dcc7f90ebf91a85ba1975b5d3910870fac12dc683"
+      }
+    }
+  },
+  "live_review_write": {
+    "root_id": "7a185a0d-d157-443b-b9fd-6ba182927e22",
+    "job_id": 42,
+    "version_id": "a7781c8b-c524-4915-98ba-f7384071269b",
+    "reviews": [
+      {
+        "relationship_id": "38b064d6-f52b-4250-a3ff-d781a1b2ede2",
+        "decision": "confirmed",
+        "decision_revision": 1
+      },
+      {
+        "relationship_id": "4ce3f55d-fd22-473c-887a-bacf05772060",
+        "decision": "corrected",
+        "decision_revision": 1
+      },
+      {
+        "relationship_id": "0983ec91-2de9-415c-b276-cbc6b0cb009f",
+        "decision": "rejected",
+        "decision_revision": 1
+      }
+    ],
+    "latest_decisions": [
+      {
+        "relationship_id": "38b064d6-f52b-4250-a3ff-d781a1b2ede2",
+        "decision": "confirmed",
+        "decision_revision": 1,
+        "corrected_entity_id": null
+      },
+      {
+        "relationship_id": "4ce3f55d-fd22-473c-887a-bacf05772060",
+        "decision": "corrected",
+        "decision_revision": 1,
+        "corrected_entity_id": "373dcbfe-119b-4e55-807f-d580185a6aa5"
+      },
+      {
+        "relationship_id": "0983ec91-2de9-415c-b276-cbc6b0cb009f",
+        "decision": "rejected",
+        "decision_revision": 1,
+        "corrected_entity_id": null
+      }
+    ],
+    "stale_status": 409,
+    "stale_code": "review_conflict",
+    "review_history_count_for_test_database": 3,
+    "relationship_count_for_test_database": 6
+  }
+}

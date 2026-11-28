@@ -1,0 +1,226 @@
+{
+  "schema": "team11-search-gold-v1",
+  "queries": [
+    {
+      "id": "K01",
+      "kind": "source_smoke",
+      "language": "en",
+      "query": "Marker01P1",
+      "expected": [
+        {
+          "path": "regression/group-a/doc01.pdf",
+          "page": 1,
+          "quote": "Marker01P1"
+        }
+      ]
+    },
+    {
+      "id": "K02",
+      "kind": "source_smoke",
+      "language": "en",
+      "query": "Marker02P2",
+      "expected": [
+        {
+          "path": "regression/group-a/doc02.pdf",
+          "page": 2,
+          "quote": "Marker02P2"
+        }
+      ]
+    },
+    {
+      "id": "K03",
+      "kind": "source_smoke",
+      "language": "en",
+      "query": "Marker06P3",
+      "expected": [
+        {
+          "path": "regression/group-a/doc06.pdf",
+          "page": 3,
+          "quote": "Marker06P3"
+        }
+      ]
+    },
+    {
+      "id": "K04",
+      "kind": "source_smoke",
+      "language": "en",
+      "query": "Marker09P2",
+      "expected": [
+        {
+          "path": "regression/group-b/doc09.pdf",
+          "page": 2,
+          "quote": "Marker09P2"
+        }
+      ]
+    },
+    {
+      "id": "K05",
+      "kind": "source_smoke",
+      "language": "en",
+      "query": "Marker12P3",
+      "expected": [
+        {
+          "path": "regression/group-b/doc12.pdf",
+          "page": 3,
+          "quote": "Marker12P3"
+        }
+      ]
+    },
+    {
+      "id": "T01",
+      "kind": "topical",
+      "language": "en",
+      "query": "How do we prove that our records can be recovered when the whole office is unavailable?",
+      "expected": [
+        {
+          "path": "topics/north/atlas.pdf",
+          "page": 2,
+          "quote": "During the quarterly drill, restore an encrypted offsite copy to an isolated host."
+        }
+      ]
+    },
+    {
+      "id": "T02",
+      "kind": "topical",
+      "language": "en",
+      "query": "How do we avoid paying someone twice when the confirmation from the processor never comes back?",
+      "expected": [
+        {
+          "path": "topics/west/cedar.pdf",
+          "page": 2,
+          "quote": "Use the same idempotency key whenever an uncertain payout is retried."
+        }
+      ]
+    },
+    {
+      "id": "T03",
+      "kind": "topical",
+      "language": "en",
+      "query": "What measurement removes the electronic background from the light reading?",
+      "expected": [
+        {
+          "path": "topics/east/flint.pdf",
+          "page": 2,
+          "quote": "Collect a dark frame with the shutter closed before measuring the reference sample."
+        }
+      ]
+    },
+    {
+      "id": "T04",
+      "kind": "topical",
+      "language": "en",
+      "query": "What should the duty staff do when water is discovered underneath the ventilation equipment?",
+      "expected": [
+        {
+          "path": "topics/north/moss.pdf",
+          "page": 2,
+          "quote": "A leak below the air handler triggers closure of upstream isolation valve V14 and notification of the duty engineer."
+        }
+      ]
+    },
+    {
+      "id": "T05",
+      "kind": "topical",
+      "language": "en",
+      "query": "Once an overlay is dismissed, where should a person navigating without a mouse continue?",
+      "expected": [
+        {
+          "path": "topics/west/opal.pdf",
+          "page": 2,
+          "quote": "When the dialog closes, return keyboard focus to the control that opened it."
+        }
+      ]
+    },
+    {
+      "id": "T06",
+      "kind": "topical",
+      "language": "en",
+      "query": "Should a coach be allowed to leave a checkpoint before passengers expect it to go?",
+      "expected": [
+        {
+          "path": "topics/east/river.pdf",
+          "page": 2,
+          "quote": "Hold any outbound bus that reaches the timepoint ahead of its announced departure."
+        }
+      ]
+    },
+    {
+      "id": "T07",
+      "kind": "topical",
+      "language": "zh",
+      "query": "\u603b\u90e8\u65e0\u6cd5\u4f7f\u7528\u65f6\uff0c\u600e\u6837\u5728\u9694\u79bb\u8bbe\u5907\u4e0a\u9a8c\u8bc1\u5f02\u5730\u4fdd\u5b58\u7684\u8d44\u6599\u53ef\u4ee5\u8fd8\u539f\uff1f",
+      "expected": [
+        {
+          "path": "topics/north/atlas.pdf",
+          "page": 2,
+          "quote": "Match its checksums against the signed catalog before anyone reconnects the host to the shared network."
+        }
+      ]
+    },
+    {
+      "id": "T08",
+      "kind": "topical",
+      "language": "zh",
+      "query": "\u8f6c\u8d26\u56de\u6267\u4e22\u4e86\uff0c\u91cd\u65b0\u53d1\u8d77\u8bf7\u6c42\u65f6\u600e\u6837\u907f\u514d\u91cd\u590d\u6263\u6b3e\uff1f",
+      "expected": [
+        {
+          "path": "topics/west/cedar.pdf",
+          "page": 2,
+          "quote": "The original key lets the provider return the existing transfer instead of initiating another one."
+        }
+      ]
+    },
+    {
+      "id": "T09",
+      "kind": "topical",
+      "language": "zh",
+      "query": "\u76f8\u673a\u6ca1\u6709\u63a5\u6536\u5149\u7ebf\u65f6\u7684\u8bfb\u6570\uff0c\u600e\u6837\u4ece\u5b9e\u9645\u4fe1\u53f7\u91cc\u6263\u6389\uff1f",
+      "expected": [
+        {
+          "path": "topics/east/flint.pdf",
+          "page": 2,
+          "quote": "Subtract this baseline so that camera readout and fixed detector offset do not appear as light from the specimen."
+        }
+      ]
+    },
+    {
+      "id": "T10",
+      "kind": "topical",
+      "language": "zh",
+      "query": "\u7a7a\u8c03\u673a\u7ec4\u4e0b\u65b9\u6f0f\u6c34\u540e\uff0c\u5e94\u8be5\u5207\u65ad\u54ea\u5904\u4f9b\u6c34\u5e76\u901a\u77e5\u8c01\uff1f",
+      "expected": [
+        {
+          "path": "topics/north/moss.pdf",
+          "page": 2,
+          "quote": "A leak below the air handler triggers closure of upstream isolation valve V14 and notification of the duty engineer."
+        }
+      ]
+    },
+    {
+      "id": "T11",
+      "kind": "topical",
+      "language": "zh",
+      "query": "\u952e\u76d8\u7528\u6237\u5173\u95ed\u5f39\u7a97\u540e\uff0c\u5149\u6807\u5e94\u8be5\u56de\u5230\u54ea\u4e2a\u63a7\u4ef6\uff1f",
+      "expected": [
+        {
+          "path": "topics/west/opal.pdf",
+          "page": 2,
+          "quote": "When the dialog closes, return keyboard focus to the control that opened it."
+        }
+      ]
+    },
+    {
+      "id": "T12",
+      "kind": "topical",
+      "language": "zh",
+      "query": "\u516c\u4ea4\u8f66\u63d0\u524d\u5230\u7ad9\uff0c\u600e\u6837\u907f\u514d\u6309\u65f6\u5230\u8fbe\u7684\u4e58\u5ba2\u8d76\u4e0d\u4e0a\u8f66\uff1f",
+      "expected": [
+        {
+          "path": "topics/east/river.pdf",
+          "page": 2,
+          "quote": "Releasing a vehicle before its scheduled slot strands riders who arrive on time."
+        }
+      ]
+    }
+  ]
+}

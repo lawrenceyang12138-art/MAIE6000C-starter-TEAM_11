@@ -1,43 +1,238 @@
 # Operations Notes
 
-## Local startup
+Operating the W7 build: a read-only corpus, an API that accepts work, a worker
+that does it, and a local AI service that can be absent without taking search
+down. The starter's case-triage demo still runs, but the folder flow below is
+the main path.
 
-1. copy `.env.example` to `.env`
-2. run `docker compose up --build`
-3. open the API docs if desired
-4. submit a case through the API
-5. confirm the worker processes the job
+## 1. Prepare
 
-## Health endpoints
+1. Install/start Docker Desktop with Compose v2, then run
+   `python scripts/start.py` from this branch's repository root. The standard-library
+   launcher preserves any existing `.env`, builds dependency images when needed,
+   and starts the real API frontend. On first start the local AI task downloads,
+   verifies and warms the pinned model while the terminal and UI show progress.
+   See [the first-start guide](model-startup.md) for failure/retry and offline modes.
+   Review `SOURCE_MOUNTS` (the allowlist the browser can choose from),
+   `DATABASE_URL`, and host port overrides deliberately; do not replace `.env`.
+2. On Windows choose a local folder from the frontend, review its path, and
+   confirm read-only authorization. The launcher manages API/Worker mounts and
+   preserves their stable IDs across starts. See [local folder setup](local-folders.md).
+   For manually configured deployments, put the corpus where `compose.yaml` mounts it.
+   The default mount points at
+   `tests/fixtures` and is **demo data only** - a real corpus is mounted from
+   wherever the operator keeps it, read-only.
+3. Model preparation is automatic in the Docker startup flow. The explicit
+   `python -m scripts.search_tools download-model` command remains available for
+   manual/offline preparation. Shared migration `20261030_0005` creates the C token
+   and page-metadata sidecars during API startup; normal deployment no longer needs
+   a separate `prepare-token-index` invocation.
+   This model uses 128-dimensional token vectors and MaxSim. Its weights and
+   token index are described in `docs/search-team-pdf-evaluation.md`.
+   Without it, keyword search still works and semantic results degrade visibly.
 
-- API live: `/health/live`
-- API ready: `/health/ready`
-- AI live: `/health/live`
-- AI ready: `/health/ready`
+   The synthetic C chunk fixture uses an isolated, generated source tree:
 
-## Metrics
+   ```bash
+   python -m scripts.search_tools seed --fixture-root work/search-fixtures
+   python -m scripts.search_tools evaluate --fixture-root work/search-fixtures
+   ```
 
-- API metrics: `/metrics`
-- AI metrics: `/metrics`
-- Prometheus: enable the `observability` profile
+   The API HTTP verifier sets `search-fixtures` to the same default root. For a
+   separately started API, set `SOURCE_MOUNTS` to
+   `{"search-fixtures":"<absolute fixture root>"}`. These generated text bytes
+   are identity fixtures for hand-authored chunks, not parsed-PDF evidence.
 
-## Common useful commands
+## 2. Start, stop, reset
 
-- run tests: `pytest -q`
-- run smoke tests: `SMOKE_BASE_URL=http://localhost:8000 pytest tests/smoke -q`
-- run migrations: `docker compose run --rm api alembic upgrade head`
-- seed demo data: `docker compose run --rm api python scripts/seed_demo_data.py`
+```bash
+python scripts/start.py          # installs/builds as needed; displays model preparation
+docker compose ps                # wait for api/ai healthy, db healthy
+# Code changes need an explicit rebuild; `up -d` reuses the existing image.
+docker compose up -d --build
+docker compose logs -f worker    # watch job processing
+docker compose down              # stop, keep data (postgres_data volume)
+docker compose down -v           # stop and DELETE the database volume
+```
 
-## Failure handling in the starter
+Host ports default to api `8000`, db `15432` (5432 sits in a Windows reserved
+range), ai `8100`, frontend `3000`; all published ports bind to loopback only.
 
-If AI processing fails:
+## 2b. Frontend mode
 
-- the job is marked failed
-- the case is marked failed
-- the error is recorded on the job row
+The UI is a static Vite build behind nginx; `/api` is proxied to the api
+service, so the browser never needs a second origin. The mode is a **build
+argument**, not a runtime switch:
 
-## Resetting local state
+```bash
+# new installs: real stack plus preparation progress
+docker compose up -d --build
 
-To remove local database state:
+# explicit labelled simulation, for UI-only demonstrations
+FRONTEND_DATA_MODE=mock docker compose build frontend
+FRONTEND_DATA_MODE=mock docker compose up -d frontend
+```
 
-- `docker compose down -v --remove-orphans`
+Every route the adapter calls is assembled (mounts, roots, rescans, jobs and
+retry by A; files, evidence, relations by B), so `api` mode is a working path.
+API failures surface as errors; they never fall back to mock data.
+
+## 3. Health and capability
+
+- `GET /health/live`, `GET /health/ready` - process and database readiness.
+- `GET /metrics` - Prometheus counters and latency histograms.
+- AI readiness is separate: `/health/ready` on the ai service. The API and
+  worker do not require it, and search degrades to keyword mode without it.
+- `GET /setup` reports real download, verification and warmup progress; only
+  successful warmup makes the local model ready. `POST /setup/retry` retries a
+  failed preparation. Liveness remains available while the model is preparing.
+
+## 4. The main path
+
+```bash
+curl -s localhost:8000/mounts
+curl -s "localhost:8000/mounts/corpus/directories?relative_path=."
+curl -s -X POST localhost:8000/roots \
+  -H 'content-type: application/json' \
+  -d '{"mount_id":"corpus","relative_path":"."}'
+# -> {"root_id": "...", "job_id": 34, "status": "pending"}
+```
+
+Then follow progress with `GET /jobs/{job_id}`, and read the folder with
+`GET /roots/{root_id}` (stage counts) and `GET /files?root_id=...` (one row per
+file with its current version status). `POST /roots/{root_id}/scans` queues
+another scan; it answers `409 active_job_exists` while one is still running.
+
+## 4b. Optional formats (TXT, Markdown, DOCX)
+
+PDF is the only format that is on by default. Two switches enable the text
+family per group, both read by the worker from its process environment:
+
+| Switch | Enables | Default |
+| --- | --- | --- |
+| `TEXT_PARSING_ENABLED` | `.txt`, `.md` (strict UTF-8) | `false` |
+| `DOCX_PARSING_ENABLED` | `.docx` (OOXML body text) | `false` |
+
+```bash
+# turn both on for one run without editing .env
+TEXT_PARSING_ENABLED=true DOCX_PARSING_ENABLED=true \
+  docker compose up -d --force-recreate worker
+```
+
+Behaviour that matters when you operate this:
+
+- With both switches off, extraction is exactly the PDF path; the regression
+  corpus still reports 12 readable + 1 unsupported.
+- With them on, the same corpus reports 13 readable: only `unsupported.txt`
+  changes state, every PDF result is untouched.
+- Text and DOCX documents have no pages. `page_number` is `null` in search hits
+  and evidence; the UI must not render "page 1" for them.
+- The switches are read when a version is extracted. Flipping them does not
+  re-classify versions that already reached a terminal status: an `unsupported`
+  row stays unsupported until its content changes, and a readable row stays
+  readable after you turn the switch off.
+- `TEXT_MAX_BYTES` caps the bytes read for one document; oversized input is
+  rejected as unsupported rather than truncated.
+- Relation candidates remain a PDF-only feature; TXT/Markdown/DOCX publish
+  chunks and keyword indexes without entity candidates.
+
+Rollback: set both switches to `false` and recreate the worker. No migration is
+involved and no parsed data is rewritten.
+
+## 5. Failures and retry
+
+A damaged, encrypted or unsupported document is **not** a failed job. It is a
+completed job whose version is marked `unsupported` with a reason code
+(`corrupt`, `encrypted`, `no_text_layer`, `unsupported_format`), visible in
+`GET /files`. Other files keep processing.
+
+A file whose bytes could not be read is a different answer, and it is visible
+too: `GET /files` reports `presence_status` (`missing` / `unavailable`) plus
+`presence_reason` (`file_missing`, `unreadable`, `not_a_regular_file`). A file
+that was readable last scan and is not readable now stops being `present`; its
+`version_id` still points at the last content that was read. Only `missing` means
+the file is gone - a directory the scan could not list, or refused to enter,
+leaves its files `unavailable` / `unreadable` instead, and the worker log says so
+(`directories_unreadable`, `directories_skipped`). One bad file never blocks the
+others.
+
+A version that could not be processed **this time** (`failed`: the file was
+gone, changed while being read, or the store errored) fails its job as well. That
+is what makes recovery possible:
+
+```bash
+# 1. the source is back with the same bytes; a rescan just marks it present
+curl -s -X POST localhost:8000/roots/{root_id}/scans
+# 2. retry the failed extraction explicitly
+curl -s -X POST localhost:8000/jobs/{job_id}/retry
+```
+
+Only `failed` jobs are retryable, `attempts` is kept across retries, and a live
+job on the same target is refused with `409 active_job_exists`. A scan is not an
+implicit retry: a permanently broken file does not generate one new job per scan.
+
+A `claimed` job owns a lease that the worker renews every 20 seconds (60-second
+expiry). If the worker is killed, the lease lapses and the next poll claims the
+same row again — no operator action and no manual SQL. Every terminal write is
+guarded by the attempt number, so a worker that wakes up after losing its claim
+cannot fail the job, publish case data, or clear the new owner's lease.
+
+Upgrading from a build without leases: stop or drain the old worker first
+(`docker compose stop worker`), then start the stack. Migration `20261119_0007`
+gives any row still `claimed` an expired deadline so the new worker picks it up;
+running both versions against one database would let the new worker reclaim a
+job the old one is still executing. `attempts` counts the
+recovery, so a job that keeps dying is visible in `GET /jobs/{job_id}`. To watch
+for it:
+
+```bash
+docker compose exec -T db psql -U postgres -d maie6000c -c   "select id, job_type, attempts, lease_owner, lease_expires_at
+     from jobs where status='claimed' order by lease_expires_at;"
+```
+
+Inspect with `GET /jobs/{job_id}`: `status` plus `error_code` (the handler's
+reason, e.g. `file_missing`, or `job_failed` when there is no recorded reason).
+Diagnostic text stays in the database and is never returned.
+
+## 6. Persistence check
+
+```bash
+docker compose restart db api worker
+# or: docker compose down && docker compose up -d   (no -v: keeps the volume)
+curl -s localhost:8000/roots
+```
+
+The same roots, the same stage counts and the same jobs must come back. If they
+do not, check `docker volume ls | grep postgres_data` before assuming data was
+lost. `down -v` deleting the database is expected, not a bug.
+
+## 7. Common problems
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| `404 unknown_mount` on `POST /roots` | mount id not in `SOURCE_MOUNTS` | add it to `.env` and restart api |
+| `403 path_out_of_scope` | absolute path, `..`, or a symlink/junction resolving outside the mount | send a relative path inside the mount |
+| `404 source_unavailable` on `POST /roots` | the path is not a directory inside the mount | check `GET /mounts/{id}/directories` |
+| `409 active_job_exists` | a scan for that folder is still running | wait, or watch the existing `job_id` |
+| file stuck at `discovered` | worker not running or cannot read the mount | `docker compose logs worker` |
+| file `present` but no text | content is unreadable or unsupported | check `presence_reason` and `error_code` in `GET /files` |
+| semantic results missing | model is preparing/unavailable, or document vectors are missing | inspect `GET /setup` and `degraded` in `POST /search`; keyword search remains |
+| api unhealthy after start | migration failed | `docker compose logs api` for the alembic error |
+
+## 8. Tests
+
+```bash
+pytest tests/unit tests/integration -q     # no stack needed
+ruff check .
+SMOKE_BASE_URL=http://localhost:8000 pytest tests/smoke -q   # needs the stack
+```
+
+Smoke tests and the postgres-marked tests are skipped without a stack; report
+the skip reason rather than counting them as passes.
+
+## 9. Evidence
+
+`scripts/w7_evidence_probe.py` runs the scan path against a live stack and
+writes JSON plus a Markdown summary: first scan, repeat scan, originals' hash
+before and after. Use it to regenerate `submissions/week07/evidence/` after any
+change to scanning.

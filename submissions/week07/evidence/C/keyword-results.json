@@ -1,0 +1,233 @@
+{
+  "data_kind": "synthetic",
+  "source": "search-eval-postgres.json",
+  "queries": [
+    {
+      "id": "kw-1",
+      "kind": "keyword",
+      "query": "reimbursement",
+      "expected_file_id": "fixture-expenses",
+      "expected_page": 1,
+      "hit": true,
+      "seconds": 0.0476,
+      "response": {
+        "query": "reimbursement",
+        "mode": "keyword",
+        "effective_mode": "keyword",
+        "results": [
+          {
+            "file_id": "fixture-expenses",
+            "file_name": "Employee_Expenses.pdf",
+            "file_path": "synthetic/hr/Employee_Expenses.pdf",
+            "version_id": "fixture-expenses-v1",
+            "version_number": 1,
+            "chunk_id": "169a57f8-6835-4fa9-aa89-58275b54c434",
+            "chunk_index": 0,
+            "page_start": 1,
+            "page_end": 1,
+            "text": "Employee travel reimbursement policy. Staff may claim business trip costs by uploading receipts within thirty days. Meals are limited to sixty dollars per day. \u5458\u5de5\u5dee\u65c5\u62a5\u9500\uff1a\u63d0\u4ea4\u53d1\u7968\u4e0e\u5ba1\u6279\u8bb0\u5f55\uff0c\u51fa\u5dee\u7ed3\u675f\u540e\u4e09\u5341\u5929\u5185\u7533\u8bf7\u3002",
+            "reason": "keyword: reimbursement",
+            "score": 1.0,
+            "keyword_score": 1.0,
+            "semantic_score": 0.0
+          }
+        ],
+        "total": 1,
+        "degraded": false,
+        "degradation_reason": null,
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 1,
+        "candidate_limit": 200
+      }
+    },
+    {
+      "id": "kw-2",
+      "kind": "keyword",
+      "query": "Password reset",
+      "expected_file_id": "fixture-access",
+      "expected_page": 1,
+      "hit": true,
+      "seconds": 0.007,
+      "response": {
+        "query": "Password reset",
+        "mode": "keyword",
+        "effective_mode": "keyword",
+        "results": [
+          {
+            "file_id": "fixture-access",
+            "file_name": "Account_Access.pdf",
+            "file_path": "synthetic/it/Account_Access.pdf",
+            "version_id": "fixture-access-v1",
+            "version_number": 1,
+            "chunk_id": "fc433d5f-2a18-4686-a0fc-63a64bd82060",
+            "chunk_index": 0,
+            "page_start": 1,
+            "page_end": 1,
+            "text": "Password reset guide. To regain access to a locked account, use the recovery link and verify your identity with a one-time code. \u8054\u7cfb\u670d\u52a1\u53f0\u89e3\u9501\u8d26\u6237\uff0c\u4f7f\u7528\u8eab\u4efd\u9a8c\u8bc1\u7801\u91cd\u8bbe\u5bc6\u7801\u3002",
+            "reason": "keyword: password, reset",
+            "score": 1.0,
+            "keyword_score": 1.0,
+            "semantic_score": 0.0
+          }
+        ],
+        "total": 1,
+        "degraded": false,
+        "degradation_reason": null,
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 1,
+        "candidate_limit": 200
+      }
+    },
+    {
+      "id": "kw-3",
+      "kind": "keyword",
+      "query": "Database backup",
+      "expected_file_id": "fixture-backup",
+      "expected_page": 2,
+      "hit": true,
+      "seconds": 0.0037,
+      "response": {
+        "query": "Database backup",
+        "mode": "keyword",
+        "effective_mode": "keyword",
+        "results": [
+          {
+            "file_id": "fixture-backup",
+            "file_name": "Backup_Recovery.pdf",
+            "file_path": "synthetic/it/Backup_Recovery.pdf",
+            "version_id": "fixture-backup-v1",
+            "version_number": 1,
+            "chunk_id": "11cd0e22-12af-4f4d-a690-3299cbc202fc",
+            "chunk_index": 0,
+            "page_start": 2,
+            "page_end": 3,
+            "text": "Database backup and recovery procedure. A nightly snapshot preserves the database. After accidental deletion, restore the latest verified snapshot and replay the transaction log. \u6570\u636e\u5e93\u5907\u4efd\u6bcf\u5929\u591c\u95f4\u6267\u884c\uff1b\u8bef\u5220\u540e\u4ece\u5df2\u9a8c\u8bc1\u5feb\u7167\u6062\u590d\u5e76\u91cd\u653e\u4e8b\u52a1\u65e5\u5fd7\u3002",
+            "reason": "keyword: backup, database",
+            "score": 1.0,
+            "keyword_score": 1.0,
+            "semantic_score": 0.0
+          }
+        ],
+        "total": 1,
+        "degraded": false,
+        "degradation_reason": null,
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 1,
+        "candidate_limit": 200
+      }
+    },
+    {
+      "id": "kw-4",
+      "kind": "keyword",
+      "query": "\u4e2a\u4eba\u4fe1\u606f\u4fdd\u7559\u671f\u9650",
+      "expected_file_id": "fixture-retention",
+      "expected_page": 2,
+      "hit": true,
+      "seconds": 0.012,
+      "response": {
+        "query": "\u4e2a\u4eba\u4fe1\u606f\u4fdd\u7559\u671f\u9650",
+        "mode": "keyword",
+        "effective_mode": "keyword",
+        "results": [
+          {
+            "file_id": "fixture-retention",
+            "file_name": "Retention_Policy.pdf",
+            "file_path": "synthetic/compliance/Retention_Policy.pdf",
+            "version_id": "fixture-retention-v1",
+            "version_number": 1,
+            "chunk_id": "0d834888-f9da-4807-9af0-572a55691f78",
+            "chunk_index": 0,
+            "page_start": 2,
+            "page_end": 2,
+            "text": "\u4e2a\u4eba\u4fe1\u606f\u4fdd\u7559\u671f\u9650\uff1a\u5ba2\u6237\u5408\u540c\u5230\u671f\u540e\uff0c\u4e2a\u4eba\u8d44\u6599\u6700\u591a\u4fdd\u7559\u4e5d\u5341\u5929\uff0c\u968f\u540e\u5b89\u5168\u5220\u9664\u3002Data retention policy: personal customer records are kept for ninety days after a contract ends, then securely erased.",
+            "reason": "keyword: \u4e2a\u4eba, \u4eba\u4fe1, \u4fdd\u7559, \u4fe1\u606f, \u606f\u4fdd, \u671f\u9650, \u7559\u671f",
+            "score": 1.0,
+            "keyword_score": 1.0,
+            "semantic_score": 0.0
+          }
+        ],
+        "total": 1,
+        "degraded": false,
+        "degradation_reason": null,
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 1,
+        "candidate_limit": 200
+      }
+    },
+    {
+      "id": "kw-5",
+      "kind": "keyword",
+      "query": "Attendance policy",
+      "expected_file_id": "fixture-attendance",
+      "expected_page": 3,
+      "hit": true,
+      "seconds": 0.0069,
+      "response": {
+        "query": "Attendance policy",
+        "mode": "keyword",
+        "effective_mode": "keyword",
+        "results": [
+          {
+            "file_id": "fixture-attendance",
+            "file_name": "Course_Attendance.pdf",
+            "file_path": "synthetic/course/Course_Attendance.pdf",
+            "version_id": "fixture-attendance-v1",
+            "version_number": 1,
+            "chunk_id": "a80eddbf-4be4-4986-8ae0-017f4cccd7af",
+            "chunk_index": 0,
+            "page_start": 3,
+            "page_end": 3,
+            "text": "Attendance policy. A student who misses a class because of illness must provide a medical certificate within seven days to request an excused absence. \u5b66\u751f\u56e0\u75c5\u7f3a\u8bfe\u987b\u5728\u4e03\u5929\u5185\u63d0\u4f9b\u533b\u751f\u8bc1\u660e\uff0c\u7533\u8bf7\u75c5\u5047\u8c41\u514d\u3002",
+            "reason": "keyword: attendance, policy",
+            "score": 1.0,
+            "keyword_score": 1.0,
+            "semantic_score": 0.0
+          },
+          {
+            "file_id": "fixture-expenses",
+            "file_name": "Employee_Expenses.pdf",
+            "file_path": "synthetic/hr/Employee_Expenses.pdf",
+            "version_id": "fixture-expenses-v1",
+            "version_number": 1,
+            "chunk_id": "169a57f8-6835-4fa9-aa89-58275b54c434",
+            "chunk_index": 0,
+            "page_start": 1,
+            "page_end": 1,
+            "text": "Employee travel reimbursement policy. Staff may claim business trip costs by uploading receipts within thirty days. Meals are limited to sixty dollars per day. \u5458\u5de5\u5dee\u65c5\u62a5\u9500\uff1a\u63d0\u4ea4\u53d1\u7968\u4e0e\u5ba1\u6279\u8bb0\u5f55\uff0c\u51fa\u5dee\u7ed3\u675f\u540e\u4e09\u5341\u5929\u5185\u7533\u8bf7\u3002",
+            "reason": "keyword: policy",
+            "score": 0.4,
+            "keyword_score": 0.4,
+            "semantic_score": 0.0
+          },
+          {
+            "file_id": "fixture-retention",
+            "file_name": "Retention_Policy.pdf",
+            "file_path": "synthetic/compliance/Retention_Policy.pdf",
+            "version_id": "fixture-retention-v1",
+            "version_number": 1,
+            "chunk_id": "0d834888-f9da-4807-9af0-572a55691f78",
+            "chunk_index": 0,
+            "page_start": 2,
+            "page_end": 2,
+            "text": "\u4e2a\u4eba\u4fe1\u606f\u4fdd\u7559\u671f\u9650\uff1a\u5ba2\u6237\u5408\u540c\u5230\u671f\u540e\uff0c\u4e2a\u4eba\u8d44\u6599\u6700\u591a\u4fdd\u7559\u4e5d\u5341\u5929\uff0c\u968f\u540e\u5b89\u5168\u5220\u9664\u3002Data retention policy: personal customer records are kept for ninety days after a contract ends, then securely erased.",
+            "reason": "keyword: policy",
+            "score": 0.4,
+            "keyword_score": 0.4,
+            "semantic_score": 0.0
+          }
+        ],
+        "total": 3,
+        "degraded": false,
+        "degradation_reason": null,
+        "embedding_model": null,
+        "embedding_dimensions": null,
+        "candidate_count": 3,
+        "candidate_limit": 200
+      }
+    }
+  ]
+}

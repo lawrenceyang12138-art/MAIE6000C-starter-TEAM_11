@@ -1,0 +1,60 @@
+{
+  "schema_version": "team11-gold-v1",
+  "frozen_on": "2026-10-16",
+  "corpus_manifest": "fixtures/manifest.json",
+  "scope": "Source-location smoke tests for the existing synthetic corpus; not a semantic-quality benchmark.",
+  "answer_policy": "Do not tune expected files or pages after seeing retrieval output. Corpus changes require a new version and B review.",
+  "human_review": { "owner": "B", "status": "pending", "reviewed_by": null, "reviewed_at": null },
+  "queries": [
+    {
+      "query_id": "K01", "kind": "keyword", "language": "en",
+      "query": "Team 11 synthetic document 01",
+      "expected": [{ "file_id": "file-001", "version_id": "version-001-v1", "relative_path": "normal/team-alpha/team11-demo-01.pdf", "page": 1, "excerpt": "Team 11 synthetic document 01 | synthetic page 1 of 1" }]
+    },
+    {
+      "query_id": "K02", "kind": "keyword", "language": "zh",
+      "query": "查找包含 Team 11 synthetic document 02 的文件",
+      "expected": [{ "file_id": "file-002", "version_id": "version-002-v1", "relative_path": "normal/team-alpha/team11-demo-02.pdf", "page": 1, "excerpt": "Team 11 synthetic document 02 | synthetic page 1 of 1" }]
+    },
+    {
+      "query_id": "K03", "kind": "keyword", "language": "en",
+      "query": "Team 11 synthetic document 03",
+      "expected": [{ "file_id": "file-003", "version_id": "version-003-v1", "relative_path": "normal/team-alpha/team11-demo-03.pdf", "page": 1, "excerpt": "Team 11 synthetic document 03 | synthetic page 1 of 1" }]
+    },
+    {
+      "query_id": "K04", "kind": "keyword", "language": "en",
+      "query": "Team 11 synthetic document 07",
+      "expected": [{ "file_id": "file-007", "version_id": "version-007-v1", "relative_path": "normal/team-beta/team11-demo-07.pdf", "page": 1, "excerpt": "Team 11 synthetic document 07 | synthetic page 1 of 1" }]
+    },
+    {
+      "query_id": "K05", "kind": "keyword", "language": "zh",
+      "query": "查找包含 Team 11 synthetic document 08 的文件",
+      "expected": [{ "file_id": "file-008", "version_id": "version-008-v1", "relative_path": "normal/team-beta/team11-demo-08.pdf", "page": 1, "excerpt": "Team 11 synthetic document 08 | synthetic page 1 of 1" }]
+    },
+    {
+      "query_id": "S01", "kind": "semantic_description", "language": "en", "avoids_source_keywords": true,
+      "query": "Show the middle leaf in the ninth sample.",
+      "expected": [{ "file_id": "file-009", "version_id": "version-009-v1", "relative_path": "normal/team-beta/team11-demo-09.pdf", "page": 2, "excerpt": "Team 11 synthetic document 09 | synthetic page 2 of 3" }]
+    },
+    {
+      "query_id": "S02", "kind": "semantic_description", "language": "zh", "avoids_source_keywords": true,
+      "query": "打开第十份资料的最后一页",
+      "expected": [{ "file_id": "file-010", "version_id": "version-010-v1", "relative_path": "normal/team-beta/team11-demo-10.pdf", "page": 3, "excerpt": "Team 11 synthetic document 10 | synthetic page 3 of 3" }]
+    },
+    {
+      "query_id": "S03", "kind": "semantic_description", "language": "en", "avoids_source_keywords": true,
+      "query": "Locate the opening leaf in the eleventh sample.",
+      "expected": [{ "file_id": "file-011", "version_id": "version-011-v1", "relative_path": "normal/team-beta/team11-demo-11.pdf", "page": 1, "excerpt": "Team 11 synthetic document 11 | synthetic page 1 of 3" }]
+    },
+    {
+      "query_id": "S04", "kind": "semantic_description", "language": "zh", "avoids_source_keywords": true,
+      "query": "查看第十二份资料正中间的那一页",
+      "expected": [{ "file_id": "file-012", "version_id": "version-012-v1", "relative_path": "normal/team-beta/team11-demo-12.pdf", "page": 2, "excerpt": "Team 11 synthetic document 12 | synthetic page 2 of 3" }]
+    },
+    {
+      "query_id": "S05", "kind": "semantic_description", "language": "zh", "avoids_source_keywords": true,
+      "query": "找出第六份只有一页的资料",
+      "expected": [{ "file_id": "file-006", "version_id": "version-006-v1", "relative_path": "normal/team-alpha/team11-demo-06.pdf", "page": 1, "excerpt": "Team 11 synthetic document 06 | synthetic page 1 of 1" }]
+    }
+  ]
+}

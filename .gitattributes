@@ -1,0 +1,27 @@
+# Preserve the bytes used by D's frozen synthetic corpus and answer hashes.
+/fixtures/normal/**/*.pdf -text
+/fixtures/abnormal/*.pdf -text
+/fixtures/unsupported/* -text
+/fixtures/manifest.json text eol=lf
+/submissions/week07/gold-queries.json text eol=lf
+/submissions/week07/gold-queries.freeze.json text eol=lf
+/fixtures/search/page-navigation-v1.json text eol=lf
+/fixtures/search/page-navigation-v1.freeze.json text eol=lf
+
+# W13 source hashes use exact Git bytes on every host.
+/tests/fixtures/regression/** -text
+/tests/fixtures/parsing/corrupt.pdf -text
+/tests/fixtures/parsing/encrypted.pdf -text
+/tests/fixtures/parsing/no_text_layer.pdf -text
+/fixtures/search/w13-v1/**/*.pdf binary
+/fixtures/search/w13-v1/*.json text eol=lf
+
+# Frozen fixtures are hashed byte-for-byte (C and D freeze them).
+/tests/fixtures/**/*.pdf -text
+/tests/fixtures/**/*.docx -text
+/tests/fixtures/**/*.json -text
+/fixtures/search/*.json -text
+/tests/fixtures/regression/** -text
+/fixtures/search/w13-v1/*.md -text
+# Preserve the exact offsets and provenance of generated PDF fallback artifacts.
+/output/pdf/*.pdf binary

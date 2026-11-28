@@ -1,0 +1,340 @@
+TAP version 13
+# Subtest: API is the default; explicit mock construction works and invalid mode fails
+ok 1 - API is the default; explicit mock construction works and invalid mode fails
+  ---
+  duration_ms: 84.3488
+  type: 'test'
+  ...
+# Subtest: authorization sends only mount/path, checks actual HTTP 202 and preserves service IDs
+ok 2 - authorization sends only mount/path, checks actual HTTP 202 and preserves service IDs
+  ---
+  duration_ms: 19.2145
+  type: 'test'
+  ...
+# Subtest: rescan posts to the existing root action and validates the accepted job
+ok 3 - rescan posts to the existing root action and validates the accepted job
+  ---
+  duration_ms: 1.3507
+  type: 'test'
+  ...
+# Subtest: rejects HTTP 200 masquerading as 202
+ok 4 - rejects HTTP 200 masquerading as 202
+  ---
+  duration_ms: 0.3727
+  type: 'test'
+  ...
+# Subtest: rejects missing identifiers
+ok 5 - rejects missing identifiers
+  ---
+  duration_ms: 0.8019
+  type: 'test'
+  ...
+# Subtest: rejects premature completion
+ok 6 - rejects premature completion
+  ---
+  duration_ms: 0.3331
+  type: 'test'
+  ...
+# Subtest: HTTP 403 is not converted to mock or empty success
+ok 7 - HTTP 403 is not converted to mock or empty success
+  ---
+  duration_ms: 0.4544
+  type: 'test'
+  ...
+# Subtest: HTTP 404 is not converted to mock or empty success
+ok 8 - HTTP 404 is not converted to mock or empty success
+  ---
+  duration_ms: 0.7461
+  type: 'test'
+  ...
+# Subtest: HTTP 409 is not converted to mock or empty success
+ok 9 - HTTP 409 is not converted to mock or empty success
+  ---
+  duration_ms: 0.5102
+  type: 'test'
+  ...
+# Subtest: HTTP 422 is not converted to mock or empty success
+ok 10 - HTTP 422 is not converted to mock or empty success
+  ---
+  duration_ms: 0.4266
+  type: 'test'
+  ...
+# Subtest: HTTP 500 is not converted to mock or empty success
+ok 11 - HTTP 500 is not converted to mock or empty success
+  ---
+  duration_ms: 0.3063
+  type: 'test'
+  ...
+# Subtest: HTTP 503 is not converted to mock or empty success
+ok 12 - HTTP 503 is not converted to mock or empty success
+  ---
+  duration_ms: 0.8466
+  type: 'test'
+  ...
+# Subtest: structured FastAPI errors are mapped to safe, actionable messages
+ok 13 - structured FastAPI errors are mapped to safe, actionable messages
+  ---
+  duration_ms: 0.2841
+  type: 'test'
+  ...
+# Subtest: network failure is explicit and authorization is never replayed
+ok 14 - network failure is explicit and authorization is never replayed
+  ---
+  duration_ms: 0.1941
+  type: 'test'
+  ...
+# Subtest: timeout aborts a request and explains acceptance uncertainty
+ok 15 - timeout aborts a request and explains acceptance uncertainty
+  ---
+  duration_ms: 3.2194
+  type: 'test'
+  ...
+# Subtest: successful HTML or invalid JSON is a contract failure, not zero mounts
+ok 16 - successful HTML or invalid JSON is a contract failure, not zero mounts
+  ---
+  duration_ms: 0.6022
+  type: 'test'
+  ...
+# Subtest: mount and directory reads validate contract and URL-encode identifiers
+ok 17 - mount and directory reads validate contract and URL-encode identifiers
+  ---
+  duration_ms: 1.2194
+  type: 'test'
+  ...
+# Subtest: job and root reads reject wrong-scope IDs and starter integer-job schema
+ok 18 - job and root reads reject wrong-scope IDs and starter integer-job schema
+  ---
+  duration_ms: 0.938
+  type: 'test'
+  ...
+# Subtest: file reads validate scope; evidence is file/version/page-bound
+ok 19 - file reads validate scope; evidence is file/version/page-bound
+  ---
+  duration_ms: 3.3302
+  type: 'test'
+  ...
+# Subtest: 12/3/1 counters derive from root file stages, never the scan-job percent
+ok 20 - 12/3/1 counters derive from root file stages, never the scan-job percent
+  ---
+  duration_ms: 0.3289
+  type: 'test'
+  ...
+# Subtest: discovery completion continues polling while files are pending
+ok 21 - discovery completion continues polling while files are pending
+  ---
+  duration_ms: 0.1365
+  type: 'test'
+  ...
+# Subtest: missing/invalid counters stay unknown (undefined)
+ok 22 - missing/invalid counters stay unknown (undefined)
+  ---
+  duration_ms: 0.056
+  type: 'test'
+  ...
+# Subtest: missing/invalid counters stay unknown ({})
+ok 23 - missing/invalid counters stay unknown ({})
+  ---
+  duration_ms: 0.0299
+  type: 'test'
+  ...
+# Subtest: missing/invalid counters stay unknown ({"total":-1,"basic_ready":12,"enriched":0,"failed":3,"unsupported":1})
+ok 24 - missing/invalid counters stay unknown ({"total":-1,"basic_ready":12,"enriched":0,"failed":3,"unsupported":1})
+  ---
+  duration_ms: 0.031
+  type: 'test'
+  ...
+# Subtest: missing/invalid counters stay unknown ({"total":16,"basic_ready":12,"enriched":0,"failed":2.5,"unsupported":1})
+ok 25 - missing/invalid counters stay unknown ({"total":16,"basic_ready":12,"enriched":0,"failed":2.5,"unsupported":1})
+  ---
+  duration_ms: 0.0297
+  type: 'test'
+  ...
+# Subtest: missing/invalid counters stay unknown ({"total":10,"basic_ready":12,"enriched":0,"failed":3,"unsupported":1})
+ok 26 - missing/invalid counters stay unknown ({"total":10,"basic_ready":12,"enriched":0,"failed":3,"unsupported":1})
+  ---
+  duration_ms: 0.0257
+  type: 'test'
+  ...
+# Subtest: missing/invalid counters stay unknown ({"total":"16","basic_ready":12,"enriched":0,"failed":3,"unsupported":1})
+ok 27 - missing/invalid counters stay unknown ({"total":"16","basic_ready":12,"enriched":0,"failed":3,"unsupported":1})
+  ---
+  duration_ms: 0.0226
+  type: 'test'
+  ...
+# Subtest: empty is distinct from failed read and unknown counters
+ok 28 - empty is distinct from failed read and unknown counters
+  ---
+  duration_ms: 0.1496
+  type: 'test'
+  ...
+# Subtest: duplicate file/version rows collapse; a new version is not confused with the old
+ok 29 - duplicate file/version rows collapse; a new version is not confused with the old
+  ---
+  duration_ms: 0.1873
+  type: 'test'
+  ...
+# Subtest: mock root counters, missing source and keyword-only states remain explicitly synthetic
+ok 30 - mock root counters, missing source and keyword-only states remain explicitly synthetic
+  ---
+  duration_ms: 103.6282
+  type: 'test'
+  ...
+# Subtest: mock rejects cached evidence from historical versions
+ok 31 - mock rejects cached evidence from historical versions
+  ---
+  duration_ms: 14.7789
+  type: 'test'
+  ...
+# Subtest: explicit missing-source flag is classified as unsafe for current evidence
+ok 32 - explicit missing-source flag is classified as unsafe for current evidence
+  ---
+  duration_ms: 0.227
+  type: 'test'
+  ...
+# Subtest: stale, missing and unreadable file states override an outdated available flag
+ok 33 - stale, missing and unreadable file states override an outdated available flag
+  ---
+  duration_ms: 0.0891
+  type: 'test'
+  ...
+# Subtest: source-unavailable and stale-version evidence errors invalidate previously cached passages
+ok 34 - source-unavailable and stale-version evidence errors invalidate previously cached passages
+  ---
+  duration_ms: 0.0615
+  type: 'test'
+  ...
+# Subtest: evidence must match the selected source path and its real page bound
+ok 35 - evidence must match the selected source path and its real page bound
+  ---
+  duration_ms: 0.0869
+  type: 'test'
+  ...
+# Subtest: malformed evidence entries and invalid page-count metadata fail closed
+ok 36 - malformed evidence entries and invalid page-count metadata fail closed
+  ---
+  duration_ms: 0.1621
+  type: 'test'
+  ...
+# Subtest: search posts canonical scope/mode and preserves explicit keyword degradation
+ok 37 - search posts canonical scope/mode and preserves explicit keyword degradation
+  ---
+  duration_ms: 18.6138
+  type: 'test'
+  ...
+# Subtest: empty search is a valid success, while HTTP 503 remains an error
+ok 38 - empty search is a valid success, while HTTP 503 remains an error
+  ---
+  duration_ms: 0.957
+  type: 'test'
+  ...
+# Subtest: search rejects wrong root
+ok 39 - search rejects wrong root
+  ---
+  duration_ms: 0.4008
+  type: 'test'
+  ...
+# Subtest: search rejects wrong file filter
+ok 40 - search rejects wrong file filter
+  ---
+  duration_ms: 0.3431
+  type: 'test'
+  ...
+# Subtest: search rejects absolute path
+ok 41 - search rejects absolute path
+  ---
+  duration_ms: 0.3531
+  type: 'test'
+  ...
+# Subtest: search rejects invalid page
+ok 42 - search rejects invalid page
+  ---
+  duration_ms: 0.2965
+  type: 'test'
+  ...
+# Subtest: search rejects invalid score
+ok 43 - search rejects invalid score
+  ---
+  duration_ms: 0.234
+  type: 'test'
+  ...
+# Subtest: search rejects missing chunk
+ok 44 - search rejects missing chunk
+  ---
+  duration_ms: 0.8326
+  type: 'test'
+  ...
+# Subtest: search rejects duplicated files and silent mode changes
+ok 45 - search rejects duplicated files and silent mode changes
+  ---
+  duration_ms: 0.7467
+  type: 'test'
+  ...
+# Subtest: chunk evidence uses canonical route and matches file/version/page/ordinal/path
+ok 46 - chunk evidence uses canonical route and matches file/version/page/ordinal/path
+  ---
+  duration_ms: 0.6429
+  type: 'test'
+  ...
+# Subtest: lowercase source refusals suppress cached source text
+ok 47 - lowercase source refusals suppress cached source text
+  ---
+  duration_ms: 0.9367
+  type: 'test'
+  ...
+# Subtest: canonical integer jobs work without accepting the starter job envelope
+ok 48 - canonical integer jobs work without accepting the starter job envelope
+  ---
+  duration_ms: 0.5074
+  type: 'test'
+  ...
+# Subtest: failed job retry posts once and requires the same job/root in a 202 pending receipt
+ok 49 - failed job retry posts once and requires the same job/root in a 202 pending receipt
+  ---
+  duration_ms: 0.6728
+  type: 'test'
+  ...
+# Subtest: mock failed-job retry keeps identity and returns the same job to pending
+ok 50 - mock failed-job retry keeps identity and returns the same job to pending
+  ---
+  duration_ms: 76.6929
+  type: 'test'
+  ...
+# Subtest: unprocessed files can have a null version
+ok 51 - unprocessed files can have a null version
+  ---
+  duration_ms: 0.6523
+  type: 'test'
+  ...
+# Subtest: relation collection stays bounded and preserves unreviewed candidates
+ok 52 - relation collection stays bounded and preserves unreviewed candidates
+  ---
+  duration_ms: 0.5004
+  type: 'test'
+  ...
+# Subtest: reviews post expected revision, correction target and reviewer without replay
+ok 53 - reviews post expected revision, correction target and reviewer without replay
+  ---
+  duration_ms: 0.5634
+  type: 'test'
+  ...
+# Subtest: revision conflict is distinct and no review is retried automatically
+ok 54 - revision conflict is distinct and no review is retried automatically
+  ---
+  duration_ms: 0.3019
+  type: 'test'
+  ...
+# Subtest: explicit mock search reports keyword simulation and resolves its version-bound chunk
+ok 55 - explicit mock search reports keyword simulation and resolves its version-bound chunk
+  ---
+  duration_ms: 186.8493
+  type: 'test'
+  ...
+1..55
+# tests 55
+# suites 0
+# pass 55
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 388.4134

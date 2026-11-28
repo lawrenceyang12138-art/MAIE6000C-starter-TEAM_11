@@ -1,0 +1,142 @@
+{
+  "created_at": "2026-10-30T02:44:35.939844+00:00",
+  "product_code_sha": "e364f5b1954847e9f78a1b10e32bf47dcb2ba2be",
+  "files": {
+    ".gitattributes": {
+      "bytes": 29,
+      "sha256": "730a35ae3d558080083c3103d9ac8100c3f6561678092abe341701dfa331eb1d"
+    },
+    "http-recovery-command.json": {
+      "bytes": 5603,
+      "sha256": "16d4e8f67e1e3a0a8c07d89e64380fa7b80762a45a52f5d37358d908d44cf9e1"
+    },
+    "http-recovery.json": {
+      "bytes": 213323,
+      "sha256": "c2684483d6098bb1688631c4b90c3b786ef1232e423c4e38165dee674f4c0e0b"
+    },
+    "metadata-root-command.json": {
+      "bytes": 11705,
+      "sha256": "6855cda478ee208582cc5445dd2d5201b85d413bf8346d85f8ce5b5dd52c699f"
+    },
+    "metadata-root-final-command.json": {
+      "bytes": 13176,
+      "sha256": "8d7e7bd364f7a39e69146f741c3d75ba54eb4f620717f6e4aafd6442f1b78b92"
+    },
+    "metadata-root-final.json": {
+      "bytes": 7058,
+      "sha256": "056d2ca18fe700e0bdbe9f52e0c4db8af3464403a5f6a617b63d8590af029d91"
+    },
+    "metadata-root.json": {
+      "bytes": 6330,
+      "sha256": "ae8ccd0bb8b08b45bfa28e7a360756f8d8fc2fa2165d4baca2d18f6449e5c2b8"
+    },
+    "metadata-version-command.json": {
+      "bytes": 10087,
+      "sha256": "7d8fe1c7c7341c5765a88b72356815f2a02c1f40256dfd91b01a4c8af14d7ac0"
+    },
+    "metadata-version.json": {
+      "bytes": 4896,
+      "sha256": "45ce6879a8dffe37442f1c5630280b8f5404eea7209c6fe75840a26996aa9bc8"
+    },
+    "model-config.json": {
+      "bytes": 3824,
+      "sha256": "29d182b91be33156e94dabb58d07d7b9bf2314bd70d0917149a6096069f466c8"
+    },
+    "navigation-regression-postgres-command.json": {
+      "bytes": 5817,
+      "sha256": "41ea000a4a4e20738e5e8f3a45b76cf65b3adf6cfa86347f9582295602ae7d89"
+    },
+    "navigation-regression-postgres.json": {
+      "bytes": 533254,
+      "sha256": "237113e39204307c3cf9184ef9fecb5ff7cd927655c2b8c45726c1a666990060"
+    },
+    "navigation-regression-sqlite-command.json": {
+      "bytes": 4106,
+      "sha256": "7fd4f5fb732b9427792651870e89a0ee1ea0d43c50a409462bd07fb94cf30a56"
+    },
+    "navigation-regression-sqlite.json": {
+      "bytes": 532895,
+      "sha256": "41c216bae74c4f19f9d559e40fcb3cd3463c0ca3fe025e025491981da816a59e"
+    },
+    "postgres-model-only-command.json": {
+      "bytes": 6212,
+      "sha256": "92c738929008c919829619a0ca57c5caa7f674da97b0f8e75f74284a72b73d9b"
+    },
+    "postgres-model-only.json": {
+      "bytes": 203567,
+      "sha256": "3056d49dae6e030d7614309cf0a49a6af07b2a3918bf6f494bb684d854f66b4a"
+    },
+    "postgres-navigation-command.json": {
+      "bytes": 6659,
+      "sha256": "e0672f89448b1ea60e784b013db36c4b44d81b86d9aac5877194d54b94a38683"
+    },
+    "postgres-navigation.json": {
+      "bytes": 274815,
+      "sha256": "331f3ebac7b7c93b40ea306b19d238837cbc2503e3edf6c0c4cf9d6e4dd83e1d"
+    },
+    "prepare-search-schema-command.json": {
+      "bytes": 4567,
+      "sha256": "794dddbe2fe366e708d4e70520d6f985a861aa40066c3ec243067e742e30ee17"
+    },
+    "profile-comparison.json": {
+      "bytes": 272109,
+      "sha256": "93a6eb8f3e81787f8a92f5ffa81c02c34f30fa48c15715384821f4425818f14a"
+    },
+    "pytest-command.json": {
+      "bytes": 6161,
+      "sha256": "00f750643761db862b2151cfacc68922eb436904907dd1af72ef3b4da2220d54"
+    },
+    "pytest-final-command.json": {
+      "bytes": 7644,
+      "sha256": "67fc6c861b02a6f04ebc090151d83d9ad81cdd014aebf25c99ef4b59d9d6593e"
+    },
+    "pytest-final-results.xml": {
+      "bytes": 76827,
+      "sha256": "04970eeb3a0122f78b36b07954e7cd063ce3bb63c7c20791de7bacc6b3ea89ca"
+    },
+    "pytest-results.xml": {
+      "bytes": 76349,
+      "sha256": "07214300b7a3dce3e3fed15b06d7f262a171374e37dc83e64a20e53edbe6782b"
+    },
+    "README.md": {
+      "bytes": 37265,
+      "sha256": "7429055f0ccda580415033b5f672a44998f5a691a9d17d2c04f96ca839a52cc4"
+    },
+    "ruff-command.json": {
+      "bytes": 4159,
+      "sha256": "d5b6fced50269b2390b89fa505115f54eb53f452ae05abb7d00403b19c13e041"
+    },
+    "ruff-final-command.json": {
+      "bytes": 5739,
+      "sha256": "2685a3da486f3f7025741e679bbc7b0c504de592e1f81e38d206ef5587be1c2e"
+    },
+    "runtime-bootstrap-command.json": {
+      "bytes": 5952,
+      "sha256": "95ff76a1488d3a105a12cf9486a6e4299d9c87fe74eeb594bdb7b85d839a701a"
+    },
+    "runtime-bootstrap.json": {
+      "bytes": 146373,
+      "sha256": "16f42261baf793675ecd4207a02ec244ce1a53c832a0a422e5f131a7ec85442c"
+    },
+    "sqlite-model-only-command.json": {
+      "bytes": 5982,
+      "sha256": "419b0f050cda21e09da2e16c3e75ebb62b469b06af22a50b215898b8552adb6a"
+    },
+    "sqlite-model-only.json": {
+      "bytes": 204704,
+      "sha256": "ac3fc4cd481a4073317c9a8fe3cd40d47688b3838edfa21e584e388dbd28c5f3"
+    },
+    "sqlite-navigation-command.json": {
+      "bytes": 6367,
+      "sha256": "459eaeba34b003cec0ff98b362847e3d491b798773035d765786503e4193b246"
+    },
+    "sqlite-navigation.json": {
+      "bytes": 275381,
+      "sha256": "2782946eaa919a1eeb004d0347a813b7361e135d65d097469eb7ecc54c7bec97"
+    },
+    "verification-summary.json": {
+      "bytes": 31074,
+      "sha256": "dd749bb0665f0878bccb113c2a999b85eac3643468f27a99d5b3ed1f6a9bb1eb"
+    }
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "root_id": "dc70538c-f5de-489a-85f7-e363d8cbaacc",
+  "selected_current_versions": 12,
+  "ready_versions": 12,
+  "error_versions": 0,
+  "versions": [
+    {
+      "version_id": "0f28272f-3930-42ea-9039-9ba9c71d5cba",
+      "page_count": 1,
+      "error": null
+    },
+    {
+      "version_id": "84ea61a6-c79a-4285-a004-28f6d17ddae4",
+      "page_count": 1,
+      "error": null
+    },
+    {
+      "version_id": "1a63e5ae-0d1f-4978-a4d7-7741d367d856",
+      "page_count": 1,
+      "error": null
+    },
+    {
+      "version_id": "028d8a6a-76d3-4c27-b9f4-b180a16d74b4",
+      "page_count": 1,
+      "error": null
+    },
+    {
+      "version_id": "9afa7292-b5d4-4706-bddc-4ac6c9ceb123",
+      "page_count": 1,
+      "error": null
+    },
+    {
+      "version_id": "06b962f4-e419-451b-8c93-d4941a154015",
+      "page_count": 1,
+      "error": null
+    },
+    {
+      "version_id": "6429b113-73a2-403b-a1b2-f41322918e8e",
+      "page_count": 1,
+      "error": null
+    },
+    {
+      "version_id": "67508b74-156f-4cb0-ad44-fb26816fcf62",
+      "page_count": 1,
+      "error": null
+    },
+    {
+      "version_id": "c227fb7c-a048-41fd-a6e2-8484c4805ffe",
+      "page_count": 3,
+      "error": null
+    },
+    {
+      "version_id": "7667c3cb-b722-446c-b2b8-1963a618a8d7",
+      "page_count": 3,
+      "error": null
+    },
+    {
+      "version_id": "1094ea09-aa00-4da0-9b48-36aa8b3f4195",
+      "page_count": 3,
+      "error": null
+    },
+    {
+      "version_id": "601121dd-ddbf-4dca-9348-3bb6fcf59d8c",
+      "page_count": 3,
+      "error": null
+    }
+  ],
+  "passed": true,
+  "command": [
+    "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\.venv-pplx\\Scripts\\python.exe",
+    "-m",
+    "scripts.search_tools",
+    "page-metadata",
+    "--database-url",
+    "postgresql+psycopg://postgres:***@127.0.0.1:55432/team11_c_pdf",
+    "--root-id",
+    "dc70538c-f5de-489a-85f7-e363d8cbaacc",
+    "--output",
+    "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\submissions\\week07\\evidence\\C\\20261030-page-navigation\\metadata-root.json"
+  ],
+  "git": {
+    "sha": "e364f5b1954847e9f78a1b10e32bf47dcb2ba2be",
+    "branch": "codex/c-team-pdf-evaluation",
+    "working_tree_status": "?? submissions/week07/evidence/C/20261030-page-navigation/metadata-version-command.json\n?? submissions/week07/evidence/C/20261030-page-navigation/metadata-version.json\n?? submissions/week07/evidence/C/20261030-page-navigation/navigation-regression-postgres-command.json\n?? submissions/week07/evidence/C/20261030-page-navigation/navigation-regression-postgres.json\n?? submissions/week07/evidence/C/20261030-page-navigation/navigation-regression-sqlite-command.json\n?? submissions/week07/evidence/C/20261030-page-navigation/navigation-regression-sqlite.json\n?? submissions/week07/evidence/C/20261030-page-navigation/postgres-model-only-command.json\n?? submissions/week07/evidence/C/20261030-page-navigation/postgres-model-only.json\n?? submissions/week07/evidence/C/20261030-page-navigation/postgres-navigation-command.json\n?? submissions/week07/evidence/C/20261030-page-navigation/postgres-navigation.json\n?? submissions/week07/evidence/C/20261030-page-navigation/prepare-search-schema-command.json\n?? submissions/week07/evidence/C/20261030-page-navigation/pytest-command.json\n?? submissions/week07/evidence/C/20261030-page-navigation/pytest-results.xml\n?? submissions/week07/evidence/C/20261030-page-navigation/ruff-command.json\n?? submissions/week07/evidence/C/20261030-page-navigation/runtime-bootstrap-command.json\n?? submissions/week07/evidence/C/20261030-page-navigation/runtime-bootstrap.json\n?? submissions/week07/evidence/C/20261030-page-navigation/sqlite-model-only-command.json\n?? submissions/week07/evidence/C/20261030-page-navigation/sqlite-model-only.json\n?? submissions/week07/evidence/C/20261030-page-navigation/sqlite-navigation-command.json\n?? submissions/week07/evidence/C/20261030-page-navigation/sqlite-navigation.json",
+    "tracked_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_sha256": {
+      "services/search/__init__.py": "bda5e68032cd868115b66539032f460543adb90b1f8c73e97abb98eebba7166e",
+      "services/search/embeddings.py": "ccdc4fad57a94931e80aaaf70793be3cd123459a068871ea09eaca282e959723",
+      "services/search/evaluation.py": "1bcd7a24c94acd066f54b2b62d928fa1d01c527e373a1abf5e77563b44b79b1d",
+      "services/search/evaluation_sources.py": "9f374153de4c3dce81d40839ed743f7e3a5db2dc524ea3d40c015c83ba35017d",
+      "services/search/indexing.py": "984d281a9f9a636caf325defbb99f9f9de1f14a07436b6ef945b373ec01fcd9d",
+      "services/search/navigation_runtime.py": "17257ffb8e61d7e8f10f5fb0749c160da06d7e9e09eec4e9165754fe298c9c3a",
+      "services/search/page_metadata.py": "7b9ffbb00caaa9965bedd703c1fef1129e31b26c4516da6cbbbe28899876e2e0",
+      "services/search/page_navigation.py": "272e860fd75500dc4fc07ef602ef650f630f1d4d4192a75b2e69bbb042e2d3ae",
+      "services/search/retrieval.py": "a2388f9f9c3e19f2308bd0be70beeac21eac04b85701e608573330c9441efe79",
+      "services/search/schemas.py": "0d6deaee34c9d21783cca8213284e4dba3a489ecd65d64e10f71a3a2317138c5",
+      "services/search/text.py": "8a7ccb3876fdbc87301a86af4fb0abe8d883e3dd36295007f4a69ccc8e7878ce",
+      "services/search/token_store.py": "6f70ed87f0f710476242fbd149cab1c4fed008a21026d4c5d807cd8e03d753dd",
+      "scripts/evaluate_team_pdf.py": "6889b0d1fbd332a61320913d146474512b867112573a3d342e08371830ac9d67",
+      "scripts/search_tools.py": "1ed8dad03cf16279fd76e00c3014bd1ac32da15c3070bff5e073f43d3ce10c31",
+      "scripts/verify_team_search_runtime.py": "8f6b9f0f178dfcd8340dcf76993254c05f7b16432079ac88de2a75e07f1f6026",
+      "services/ai/app/main.py": "2355e2c049130de87b328c922d87aabef5647a8bd79e66494cd50ef6d76a795c",
+      "services/common/config.py": "d0893829764880cbfe2980fffc263ddf7065c98ab8f2246b71b915ea1042b8b2",
+      "pyproject.toml": "4e7f01c9de0e55e93cf7853037f5278b566430e999f2ed0f160dfd0376e35e55",
+      "compose.yaml": "f76d589d5b29248b5c63bbe181443f748672b1a44892b76973196f79e71645ef",
+      ".env.example": "4106e67969c9f929cc41e8c867484692e6bfe3f8ee86a501757e9b81265ef961"
+    }
+  }
+}

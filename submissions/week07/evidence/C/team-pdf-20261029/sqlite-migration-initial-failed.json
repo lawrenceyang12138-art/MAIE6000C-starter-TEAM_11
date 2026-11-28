@@ -1,0 +1,98 @@
+{
+  "evaluated_at": "2026-10-29T15:05:14.044820+00:00",
+  "command": [
+    "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\.venv\\Scripts\\python.exe",
+    "-m",
+    "scripts.evaluate_team_pdf",
+    "--backend",
+    "off",
+    "--output",
+    "submissions/week07/evidence/C/team-pdf-20261029/sqlite-off.json"
+  ],
+  "git": {
+    "sha": "7522287126061da8977c253256e8f807143ab8b5",
+    "branch": "codex/c-team-pdf-evaluation",
+    "working_tree_status": "M scripts/search_tools.py\n M services/search/embeddings.py\n M services/search/evaluation.py\n M services/search/retrieval.py\n M services/search/text.py\n M tests/integration/test_search_postgres.py\n M tests/unit/test_search_embeddings.py\n?? scripts/evaluate_team_pdf.py\n?? scripts/verify_team_search_runtime.py\n?? services/search/evaluation_sources.py\n?? tests/integration/test_team_pdf_evaluation.py\n?? tests/unit/test_search_degradation.py\n?? tests/unit/test_search_evaluation.py\n?? tests/unit/test_search_model_preparation.py",
+    "tracked_diff_sha256": "b927885bf84814bdbc97431835b45ea2ae154b57f2d6e6d5ffde7d2208ecb788",
+    "source_sha256": {
+      "services/search/__init__.py": "bda5e68032cd868115b66539032f460543adb90b1f8c73e97abb98eebba7166e",
+      "services/search/embeddings.py": "26ce7b756f91befa9947dcfcb20fe62a56d1b3284642703e81de34b80abde4c0",
+      "services/search/evaluation.py": "2ea54fbdbc6723d82ff18dd7a87e6fc3a56c1542636d97c380f4c2fbedf80440",
+      "services/search/evaluation_sources.py": "f7c502e0029a2010dd45b8a96443c83baf9ecc0f321e43084bd28837205eff33",
+      "services/search/indexing.py": "6730a36f856c885f792f70a07ea94e8a2cc461a91641be09636ad1e196da5540",
+      "services/search/retrieval.py": "d9f7204d31a18c0527e5537b228d4e9ed0dac013c4e55aef28729cde867d1e6b",
+      "services/search/text.py": "0e07d2a3502a49eb7e3e9eba40120c3c6016baa60c585b3d6acd2871fe210b03",
+      "scripts/evaluate_team_pdf.py": "63f9402cb11ba8715b6dd58b28279b3b2754d4b4e50a8edce524de0c890007c2",
+      "scripts/search_tools.py": "d1f3145c1c86a699301e50f6597b4c6f8c3e7b5f9a245db006998810ad19c159",
+      "scripts/verify_team_search_runtime.py": "360b6554435b73e2948a5c7af46bc762b598b2e1634dbf0e0b7b08cdea7f13b4"
+    }
+  },
+  "runtime": {
+    "python": "3.11.5",
+    "packages": {
+      "sqlalchemy": "2.0.43",
+      "pypdf": "6.20.1",
+      "pgvector": "0.4.1",
+      "torch": "2.0.0+cpu",
+      "transformers": "4.32.1",
+      "httpx": "0.28.1"
+    }
+  },
+  "database": {
+    "url": "sqlite:///work/team-pdf-evaluation.db"
+  },
+  "passed": false,
+  "answer_version": {
+    "schema_version": "team11-gold-v1",
+    "freeze": {
+      "freeze_version": "team11-gold-freeze-v1",
+      "frozen_on": "2026-10-16",
+      "gold_path": "submissions/week07/gold-queries.json",
+      "gold_sha256": "d1d7b7daf285ed8ad596546dc1cacb28bca7b23cd26edc748e7636e1a23db053",
+      "manifest_sha256": "3ad53b3f8ccdc7ac6b84457fcedf9a735fe0ddf7ceb8004eb97b46ab17e3280f",
+      "human_B_review": "pending",
+      "policy": "Validator is read-only. A deliberate corpus/answer revision needs a new freeze version and documented B approval; never rewrite expected answers to improve measured scores."
+    },
+    "gold_sha256": "d1d7b7daf285ed8ad596546dc1cacb28bca7b23cd26edc748e7636e1a23db053",
+    "manifest_sha256": "3ad53b3f8ccdc7ac6b84457fcedf9a735fe0ddf7ceb8004eb97b46ab17e3280f",
+    "freeze_sha256": "2a1ca7744c3176cb9e4df69adaf2f13d087f3fe88d73cb71604a82a3fe88114d",
+    "human_B_review": "pending"
+  },
+  "configuration": {
+    "backend": "off",
+    "model": "intfloat/multilingual-e5-small@614241f622f53c4eeff9890bdc4f31cfecc418b3",
+    "revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+    "dimensions": 384,
+    "model_path": null,
+    "model_manifest_sha256": null,
+    "query_prefix": "query: ",
+    "passage_prefix": "passage: ",
+    "maximum_text_characters": 2000,
+    "maximum_model_tokens": 512,
+    "maximum_query_characters": 500,
+    "maximum_query_search_tokens": 64,
+    "batch_size": 16,
+    "cpu_threads": 4,
+    "keyword_weight": 0.65,
+    "semantic_weight": 0.35,
+    "candidate_limit_per_channel": 200,
+    "evaluation_top_k": 3,
+    "keyword_acceptance_top_k": 1,
+    "api_default_top_k": 10,
+    "api_maximum_top_k": 50,
+    "pooling": "attention_mask_mean_then_l2_normalize",
+    "ai_request_timeout_seconds": 10.0,
+    "local_in_process_timeout": null,
+    "parser_chunk_characters": 700,
+    "parser_chunk_overlap": 120,
+    "parser_minimum_chunk_characters": 80,
+    "network_at_inference": "local_only_no_cloud_fallback"
+  },
+  "status": "execution_failed",
+  "diagnostics": [
+    {
+      "code": "database_unavailable",
+      "exception_type": "OperationalError"
+    }
+  ]
+}

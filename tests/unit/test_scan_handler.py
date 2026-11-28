@@ -1,0 +1,749 @@
+"""Tests for the scan handler's observation and versioning rules.
+
+The scan is the write side of the read-files pipeline: it observes what is
+on disk, records versions for new content, moves the current-version
+pointer, and dispatches extraction - all in one transaction. These tests
+cover the rules that make repeated scans safe: idempotency, the pointer
+semantics for changed and missing files, and containment of the root inside
+its mount. The mount is served from a temporary directory through a patched
+allowlist, so the filesystem is real.
+"""
+
+from __future__ import annotations
+
+import os
+import shutil
+import stat
+from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
+from sqlalchemy import delete, func, select
+from sqlalchemy.orm import Session
+
+from services.common.models import (
+    AuthorizedRoot,
+    FilePresence,
+    FileRecord,
+    FileVersion,
+    Job,
+    JobStatus,
+    RootJobType,
+    RootStatus,
+    VersionStatus,
+)
+from services.parsing.pdf import REASON_FILE_MISSING, REASON_UNREADABLE, SourceMissing
+from services.scan import handler as scan_handler
+from services.scan.handler import PathEscapesRoot, handle_scan_root, resolve_source_path
+
+
+class _Settings:
+    def __init__(self, source_mounts: dict[str, str]) -> None:
+        self.source_mounts = source_mounts
+
+
+@pytest.fixture()
+def corpus(tmp_path):
+    """A stand-in for the read-only corpus mount, with one hidden entry."""
+    root = tmp_path / "corpus"
+    (root / "regression").mkdir(parents=True)
+    (root / "abnormal").mkdir(parents=True)
+    (root / "regression" / "doc01.pdf").write_bytes(b"%PDF-1.4 doc one")
+    (root / "regression" / "doc02.pdf").write_bytes(b"%PDF-1.4 doc two")
+    (root / "abnormal" / "corrupt.pdf").write_bytes(b"not a real pdf")
+    (root / "notes.txt").write_text("plain text notes")
+    (root / ".hidden").write_text("must be skipped")
+    return root
+
+
+@pytest.fixture()
+def mounted(corpus, monkeypatch):
+    """Serve the temporary corpus as the allowlisted 'corpus' mount."""
+    monkeypatch.setattr(
+        scan_handler, "get_settings", lambda: _Settings({"corpus": str(corpus)})
+    )
+    return corpus
+
+
+def _make_root(
+    db: Session,
+    mount_id: str = "corpus",
+    relative_path: str = ".",
+    status: str = RootStatus.ACTIVE.value,
+) -> str:
+    root = AuthorizedRoot(
+        mount_id=mount_id, relative_path=relative_path, status=status
+    )
+    db.add(root)
+    db.commit()
+    db.refresh(root)
+    return root.id
+
+
+def _count(db: Session, model) -> int:
+    return db.execute(select(func.count()).select_from(model)).scalar_one()
+
+
+def _record(db: Session, relative_path: str) -> FileRecord:
+    return db.execute(
+        select(FileRecord).where(FileRecord.relative_path == relative_path)
+    ).scalars().one()
+
+
+def test_a_first_scan_records_files_versions_and_dispatches_jobs(mounted, db_session):
+    root_id = _make_root(db_session)
+
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["outcome"] == "scanned"
+    # Four visible files; the dotfile is not one of them.
+    assert summary["files_seen"] == 4
+    assert summary["files_created"] == 4
+    assert summary["versions_created"] == 4
+    assert summary["jobs_dispatched"] == 4
+    assert summary["files_missing"] == 0
+
+    assert _count(db_session, FileRecord) == 4
+    assert _count(db_session, FileVersion) == 4
+    assert _count(db_session, Job) == 4
+
+    pointed = db_session.execute(
+        select(func.count())
+        .select_from(FileRecord)
+        .where(FileRecord.current_version_id.is_not(None))
+    ).scalar_one()
+    assert pointed == 4
+
+    pending = db_session.execute(
+        select(func.count())
+        .select_from(Job)
+        .where(Job.status == JobStatus.PENDING.value)
+    ).scalar_one()
+    assert pending == 4
+
+    root = db_session.get(AuthorizedRoot, root_id)
+    assert root.last_successful_scan_at is not None
+
+
+def test_a_repeated_scan_creates_nothing_new(mounted, db_session):
+    root_id = _make_root(db_session)
+    handle_scan_root(db_session, root_id)
+
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["files_seen"] == 4
+    assert summary["files_created"] == 0
+    assert summary["versions_created"] == 0
+    assert summary["jobs_dispatched"] == 0
+    assert summary["files_missing"] == 0
+    assert _count(db_session, FileVersion) == 4
+    assert _count(db_session, Job) == 4
+
+
+def test_changed_content_versions_anew_and_moves_the_pointer(mounted, db_session):
+    root_id = _make_root(db_session)
+    handle_scan_root(db_session, root_id)
+    first_version_id = _record(db_session, "regression/doc01.pdf").current_version_id
+
+    (mounted / "regression" / "doc01.pdf").write_bytes(b"%PDF-1.4 doc one, revised")
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["files_seen"] == 4
+    assert summary["files_created"] == 0
+    assert summary["versions_created"] == 1
+    assert summary["jobs_dispatched"] == 1
+
+    record = _record(db_session, "regression/doc01.pdf")
+    assert record.current_version_id != first_version_id
+    # The old row stays: history is never rewritten, only pointed past.
+    assert _count(db_session, FileVersion) == 5
+
+
+def test_reverting_to_earlier_content_moves_the_pointer_back(mounted, db_session):
+    """A revert to content we already hold must point at the bytes on disk.
+
+    Without this, ``current_version_id`` keeps naming the revised version, so
+    evidence for the version actually on disk answers ``409 version_superseded``
+    while evidence for the superseded version answers 200 with text the file no
+    longer contains (D1: the pointer means latest observed content).
+    """
+    root_id = _make_root(db_session)
+    handle_scan_root(db_session, root_id)
+    original = _record(db_session, "regression/doc01.pdf").current_version_id
+
+    (mounted / "regression" / "doc01.pdf").write_bytes(b"%PDF-1.4 doc one, revised")
+    handle_scan_root(db_session, root_id)
+    assert _record(db_session, "regression/doc01.pdf").current_version_id != original
+
+    (mounted / "regression" / "doc01.pdf").write_bytes(b"%PDF-1.4 doc one")
+    summary = handle_scan_root(db_session, root_id)
+
+    assert _record(db_session, "regression/doc01.pdf").current_version_id == original
+    assert summary["versions_created"] == 0
+    assert summary["pointers_restored"] == 1
+    # No new row: the reverted content is the version we already had.
+    assert _count(db_session, FileVersion) == 5
+
+
+def test_a_revert_does_not_redispatch_a_processed_version(mounted, db_session):
+    """Reverting is pointer bookkeeping, not new work (§3.4.6 idempotency)."""
+    root_id = _make_root(db_session)
+    handle_scan_root(db_session, root_id)
+    original = _record(db_session, "regression/doc01.pdf").current_version_id
+
+    (mounted / "regression" / "doc01.pdf").write_bytes(b"%PDF-1.4 doc one, revised")
+    handle_scan_root(db_session, root_id)
+
+    version = db_session.get(FileVersion, original)
+    version.status = VersionStatus.BASIC_READY.value
+    db_session.commit()
+
+    (mounted / "regression" / "doc01.pdf").write_bytes(b"%PDF-1.4 doc one")
+    summary = handle_scan_root(db_session, root_id)
+
+    assert _record(db_session, "regression/doc01.pdf").current_version_id == original
+    assert summary["jobs_dispatched"] == 0
+    # Four first-scan jobs plus the one for the revised version; the revert adds none.
+    assert _count(db_session, Job) == 5
+
+
+def test_a_revert_redispatches_a_version_that_never_finished(mounted, db_session):
+    """A ``discovered`` version with no live job is recovered, not orphaned."""
+    root_id = _make_root(db_session)
+    handle_scan_root(db_session, root_id)
+    original = _record(db_session, "regression/doc01.pdf").current_version_id
+
+    (mounted / "regression" / "doc01.pdf").write_bytes(b"%PDF-1.4 doc one, revised")
+    handle_scan_root(db_session, root_id)
+
+    # Simulate a lost extract job: the version is still discovered, the job is gone.
+    db_session.execute(delete(Job).where(Job.version_id == original))
+    db_session.commit()
+
+    (mounted / "regression" / "doc01.pdf").write_bytes(b"%PDF-1.4 doc one")
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["versions_created"] == 0
+    assert summary["jobs_dispatched"] == 1
+    live = db_session.execute(
+        select(Job).where(
+            Job.version_id == original,
+            Job.job_type == "extract_file",
+            Job.status == JobStatus.PENDING.value,
+        )
+    ).scalars().all()
+    assert len(live) == 1
+
+
+def test_a_missing_file_keeps_the_pointer_on_the_last_observed_version(
+    mounted, db_session
+):
+    root_id = _make_root(db_session)
+    handle_scan_root(db_session, root_id)
+    version_id = _record(db_session, "regression/doc02.pdf").current_version_id
+
+    (mounted / "regression" / "doc02.pdf").unlink()
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["files_missing"] == 1
+    record = _record(db_session, "regression/doc02.pdf")
+    assert record.presence_status == FilePresence.MISSING.value
+    assert record.current_version_id == version_id
+
+
+def test_a_revoked_root_refuses_to_scan(mounted, db_session):
+    root_id = _make_root(db_session, status=RootStatus.REVOKED.value)
+
+    with pytest.raises(ValueError):
+        handle_scan_root(db_session, root_id)
+
+
+@pytest.mark.parametrize("relative_path", ["..", "/etc", "regression/../../escape"])
+def test_a_root_pointing_outside_the_mount_is_rejected(
+    mounted, db_session, relative_path: str
+):
+    root_id = _make_root(db_session, relative_path=relative_path)
+
+    with pytest.raises(PathEscapesRoot):
+        handle_scan_root(db_session, root_id)
+
+
+def test_a_second_scan_of_a_live_root_is_skipped(mounted, db_session):
+    """The job id lets the handler stand down when another scan is unfinished.
+
+    Without this, two queued scans of one folder would walk it twice and the
+    later one could publish a summary from a half-changed tree.
+    """
+    root_id = _make_root(db_session)
+    db_session.add(
+        Job(
+            root_id=root_id,
+            job_type=RootJobType.SCAN_ROOT.value,
+            status=JobStatus.PENDING.value,
+        )
+    )
+    db_session.commit()
+    mine = Job(
+        root_id=root_id,
+        job_type=RootJobType.SCAN_ROOT.value,
+        status=JobStatus.CLAIMED.value,
+    )
+    db_session.add(mine)
+    db_session.commit()
+
+    summary = handle_scan_root(db_session, root_id, mine.id)
+
+    assert summary["outcome"] == "skipped"
+    assert summary["root_id"] == root_id
+    # Nothing was observed, versioned or dispatched.
+    assert _count(db_session, FileRecord) == 0
+    assert _count(db_session, FileVersion) == 0
+    assert _count(db_session, Job) == 2
+
+
+def test_a_symlinked_directory_inside_the_root_is_not_followed(
+    mounted, tmp_path, db_session, make_directory_link
+):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "secret.pdf").write_bytes(b"%PDF-1.4 outside the mount")
+    make_directory_link(mounted / "linked", outside)
+
+    root_id = _make_root(db_session)
+    summary = handle_scan_root(db_session, root_id)
+
+    # The four real files are still seen; the link is neither entered nor read.
+    assert summary["files_seen"] == 4
+    paths = {
+        record.relative_path
+        for record in db_session.execute(select(FileRecord)).scalars()
+    }
+    assert paths == {
+        "regression/doc01.pdf",
+        "regression/doc02.pdf",
+        "abnormal/corrupt.pdf",
+        "notes.txt",
+    }
+
+
+def test_a_root_that_is_a_symlink_outside_the_mount_is_rejected(
+    mounted, tmp_path, db_session, make_directory_link
+):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "secret.pdf").write_bytes(b"%PDF-1.4 outside the mount")
+    make_directory_link(mounted / "escape", outside)
+
+    root_id = _make_root(db_session, relative_path="escape")
+
+    with pytest.raises(PathEscapesRoot):
+        handle_scan_root(db_session, root_id)
+
+
+def test_a_file_that_vanishes_between_walk_and_hash_is_recorded_as_missing(
+    mounted, db_session, monkeypatch
+):
+    """A file seen by the walk but unreadable still gets an explainable row.
+
+    It used to be skipped silently: the path was counted as seen, so the
+    missing-file pass never touched it, and a brand new path left no trace at
+    all. Now it is recorded with ``missing`` and the reason, while the healthy
+    files keep being versioned.
+    """
+    root_id = _make_root(db_session)
+    real_identity = scan_handler.file_identity
+
+    def flaky_identity(path):
+        if Path(path).name == "doc02.pdf":
+            raise SourceMissing(REASON_FILE_MISSING, "vanished mid-scan")
+        return real_identity(path)
+
+    monkeypatch.setattr(scan_handler, "file_identity", flaky_identity)
+
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["files_seen"] == 4
+    # Three readable files plus the row kept for the one that vanished.
+    assert summary["files_created"] == 4
+    assert summary["versions_created"] == 3
+    assert summary["jobs_dispatched"] == 3
+    assert summary["files_missing"] == 1
+    assert summary["files_unavailable"] == 0
+    assert _count(db_session, FileRecord) == 4
+    assert _count(db_session, FileVersion) == 3
+    assert _count(db_session, Job) == 3
+
+    vanished = _record(db_session, "regression/doc02.pdf")
+    assert vanished.presence_status == FilePresence.MISSING.value
+    assert vanished.presence_reason == REASON_FILE_MISSING
+    # Nothing was read, so there is no version and no pointer to one.
+    assert vanished.current_version_id is None
+    assert vanished.last_seen_at is None
+
+
+def test_an_unreadable_file_is_recorded_as_unavailable(mounted, db_session, monkeypatch):
+    """``unavailable`` and ``missing`` are different answers for the user."""
+    root_id = _make_root(db_session)
+    real_identity = scan_handler.file_identity
+
+    def flaky_identity(path):
+        if Path(path).name == "doc01.pdf":
+            raise SourceMissing(REASON_UNREADABLE, "permission denied")
+        return real_identity(path)
+
+    monkeypatch.setattr(scan_handler, "file_identity", flaky_identity)
+
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["files_unavailable"] == 1
+    assert summary["files_missing"] == 0
+    unreadable = _record(db_session, "regression/doc01.pdf")
+    assert unreadable.presence_status == FilePresence.UNAVAILABLE.value
+    assert unreadable.presence_reason == REASON_UNREADABLE
+    # The other three files were processed normally.
+    assert summary["versions_created"] == 3
+
+
+def test_an_os_error_while_reading_does_not_abort_the_scan(mounted, db_session, monkeypatch):
+    """An I/O failure is recorded, not raised: one bad file must not stop the rest."""
+    root_id = _make_root(db_session)
+    real_identity = scan_handler.file_identity
+
+    def flaky_identity(path):
+        if Path(path).name == "doc02.pdf":
+            raise PermissionError(13, "Permission denied", str(path))
+        return real_identity(path)
+
+    monkeypatch.setattr(scan_handler, "file_identity", flaky_identity)
+
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["files_unavailable"] == 1
+    assert summary["versions_created"] == 3
+    unreadable = _record(db_session, "regression/doc02.pdf")
+    assert unreadable.presence_status == FilePresence.UNAVAILABLE.value
+    assert unreadable.presence_reason == REASON_UNREADABLE
+
+
+def test_a_non_regular_entry_is_recorded_and_never_opened(mounted, db_session, monkeypatch):
+    """A FIFO or socket has no bytes to version; opening one would block."""
+    root_id = _make_root(db_session)
+    monkeypatch.setattr(
+        scan_handler, "_is_regular_file", lambda path: path.name != "doc02.pdf"
+    )
+
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["files_unavailable"] == 1
+    assert summary["versions_created"] == 3
+    skipped = _record(db_session, "regression/doc02.pdf")
+    assert skipped.presence_reason == scan_handler.PRESENCE_REASON_NOT_REGULAR
+    assert skipped.current_version_id is None
+
+
+def test_a_previously_indexed_file_stops_being_present_when_it_vanishes(
+    mounted, db_session, monkeypatch
+):
+    """The row must not keep saying ``present`` for a file we could not read.
+
+    This is the difference between "we still have this file" and "we failed to
+    read it this time": the pointer to the last observed version is kept, but
+    presence and its reason describe the failed read.
+    """
+    root_id = _make_root(db_session)
+    handle_scan_root(db_session, root_id)
+    version_id = _record(db_session, "regression/doc02.pdf").current_version_id
+    assert _record(db_session, "regression/doc02.pdf").presence_status == "present"
+
+    real_identity = scan_handler.file_identity
+
+    def flaky_identity(path):
+        if Path(path).name == "doc02.pdf":
+            raise SourceMissing(REASON_FILE_MISSING, "vanished mid-scan")
+        return real_identity(path)
+
+    monkeypatch.setattr(scan_handler, "file_identity", flaky_identity)
+
+    summary = handle_scan_root(db_session, root_id)
+
+    record = _record(db_session, "regression/doc02.pdf")
+    assert record.presence_status == FilePresence.MISSING.value
+    assert record.presence_reason == REASON_FILE_MISSING
+    # History is not thrown away: the pointer stays on the last read content.
+    assert record.current_version_id == version_id
+    assert summary["files_created"] == 0
+    assert summary["versions_created"] == 0
+    assert _count(db_session, FileRecord) == 4
+
+
+def test_a_recovered_file_becomes_present_again_without_a_new_version(
+    mounted, db_session, monkeypatch
+):
+    """Recovery is a presence change; the content was already known."""
+    root_id = _make_root(db_session)
+    handle_scan_root(db_session, root_id)
+    original = _record(db_session, "regression/doc02.pdf").current_version_id
+
+    real_identity = scan_handler.file_identity
+
+    def flaky_identity(path):
+        if Path(path).name == "doc02.pdf":
+            raise SourceMissing(REASON_UNREADABLE, "permission denied")
+        return real_identity(path)
+
+    monkeypatch.setattr(scan_handler, "file_identity", flaky_identity)
+    handle_scan_root(db_session, root_id)
+    assert _record(db_session, "regression/doc02.pdf").presence_reason == REASON_UNREADABLE
+
+    monkeypatch.setattr(scan_handler, "file_identity", real_identity)
+    summary = handle_scan_root(db_session, root_id)
+
+    record = _record(db_session, "regression/doc02.pdf")
+    assert record.presence_status == FilePresence.PRESENT.value
+    assert record.presence_reason is None
+    assert record.current_version_id == original
+    assert summary["files_unavailable"] == 0
+    # The same bytes were already versioned; recovery adds no row and no job.
+    assert summary["versions_created"] == 0
+    assert _count(db_session, FileVersion) == 4
+    assert _count(db_session, Job) == 4
+
+
+def test_an_unlistable_directory_marks_its_files_unavailable_not_missing(
+    mounted, db_session, monkeypatch
+):
+    """A directory we could not list is unknown ground, not proof of deletion.
+
+    Before this, every file under it was reported `missing` / `file_missing`:
+    the walk never saw them, so the trailing pass assumed they were gone, even
+    though the same summary said one directory was unreadable.
+    """
+    root_id = _make_root(db_session)
+    first = handle_scan_root(db_session, root_id)
+    assert first["files_missing"] == 0
+    scanned_at = db_session.get(AuthorizedRoot, root_id).last_successful_scan_at
+    assert scanned_at is not None
+
+    real_scandir = os.scandir
+
+    def failing_scandir(path="."):
+        if Path(path).name == "regression":
+            raise PermissionError(13, "Permission denied", str(path))
+        return real_scandir(path)
+
+    monkeypatch.setattr(scan_handler.os, "scandir", failing_scandir)
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["directories_unreadable"] == 1
+    assert summary["unreadable_directories"] == ["regression"]
+    # The two files in that directory are unknown, not gone.
+    assert summary["files_missing"] == 0
+    assert summary["files_unavailable"] == 2
+    for relative_path in ("regression/doc01.pdf", "regression/doc02.pdf"):
+        record = _record(db_session, relative_path)
+        assert record.presence_status == FilePresence.UNAVAILABLE.value
+        assert record.presence_reason == REASON_UNREADABLE
+    # Everything the walk did reach is untouched.
+    assert _record(db_session, "notes.txt").presence_status == FilePresence.PRESENT.value
+    # The scan did not cover the tree, so it is not recorded as successful.
+    db_session.refresh(db_session.get(AuthorizedRoot, root_id))
+    assert db_session.get(AuthorizedRoot, root_id).last_successful_scan_at == scanned_at
+
+
+def test_a_directory_replaced_by_a_link_keeps_its_files_unavailable(
+    mounted, tmp_path, db_session, make_directory_link
+):
+    """A directory the walk refuses to enter is not evidence of deletion either."""
+    root_id = _make_root(db_session)
+    handle_scan_root(db_session, root_id)
+
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    (elsewhere / "corrupt.pdf").write_bytes(b"%PDF-1.4 a different file")
+    shutil.rmtree(mounted / "abnormal")
+    make_directory_link(mounted / "abnormal", elsewhere)
+
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["directories_skipped"] == 1
+    assert summary["skipped_directories"] == ["abnormal"]
+    assert summary["files_missing"] == 0
+    record = _record(db_session, "abnormal/corrupt.pdf")
+    assert record.presence_status == FilePresence.UNAVAILABLE.value
+    assert record.presence_reason == REASON_UNREADABLE
+
+
+@pytest.mark.skipif(os.name == "nt", reason="file symlinks need a privilege on Windows")
+def test_a_file_replaced_by_a_link_is_recorded_not_reported_missing(mounted, db_session):
+    """A path that is now a link exists; saying "missing" would be a lie."""
+    root_id = _make_root(db_session)
+    handle_scan_root(db_session, root_id)
+
+    target = mounted / "notes.txt"
+    link = mounted / "regression" / "doc02.pdf"
+    link.unlink()
+    link.symlink_to(target)
+
+    summary = handle_scan_root(db_session, root_id)
+
+    record = _record(db_session, "regression/doc02.pdf")
+    assert record.presence_status == FilePresence.UNAVAILABLE.value
+    assert record.presence_reason == scan_handler.PRESENCE_REASON_NOT_REGULAR
+    assert summary["files_missing"] == 0
+
+
+@pytest.mark.skipif(os.name == "nt", reason="FIFOs do not exist on Windows")
+def test_a_fifo_is_recorded_without_being_opened(mounted, db_session):
+    """A real non-regular entry: no bytes to version, and reading it would block."""
+    os.mkfifo(mounted / "abnormal" / "pipe")
+    root_id = _make_root(db_session)
+
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["files_unavailable"] == 1
+    assert summary["versions_created"] == 4
+    record = _record(db_session, "abnormal/pipe")
+    assert record.presence_reason == scan_handler.PRESENCE_REASON_NOT_REGULAR
+    assert record.current_version_id is None
+
+
+def test_link_like_detects_a_reparse_point_without_is_symlink():
+    """The Windows junction branch, which no CI platform can create natively.
+
+    ``Path.is_symlink()`` is False for a junction, so this branch is the only
+    thing standing between a junction and the walk entering it. Linux CI would
+    otherwise never execute it.
+    """
+    reparse = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+
+    class _Entry:
+        def __init__(self, *, symlink: bool, attributes: int) -> None:
+            self._symlink = symlink
+            self._attributes = attributes
+
+        def is_symlink(self) -> bool:
+            return self._symlink
+
+        def lstat(self):
+            return SimpleNamespace(st_file_attributes=self._attributes)
+
+    assert scan_handler._is_link_like(_Entry(symlink=False, attributes=reparse)) is True
+    assert scan_handler._is_link_like(_Entry(symlink=False, attributes=0x10)) is False
+    assert scan_handler._is_link_like(_Entry(symlink=True, attributes=0)) is True
+
+
+def test_a_file_unavailable_last_scan_and_gone_now_is_missing(
+    mounted, db_session, monkeypatch
+):
+    """A stale "could not read it" must not survive the file being deleted.
+
+    Otherwise the user is sent looking for a permission problem on a path that
+    no longer exists.
+    """
+    root_id = _make_root(db_session)
+    real_identity = scan_handler.file_identity
+
+    def flaky_identity(path):
+        if Path(path).name == "doc02.pdf":
+            raise SourceMissing(REASON_UNREADABLE, "permission denied")
+        return real_identity(path)
+
+    monkeypatch.setattr(scan_handler, "file_identity", flaky_identity)
+    handle_scan_root(db_session, root_id)
+    assert _record(db_session, "regression/doc02.pdf").presence_status == (
+        FilePresence.UNAVAILABLE.value
+    )
+
+    monkeypatch.setattr(scan_handler, "file_identity", real_identity)
+    (mounted / "regression" / "doc02.pdf").unlink()
+    summary = handle_scan_root(db_session, root_id)
+
+    record = _record(db_session, "regression/doc02.pdf")
+    assert record.presence_status == FilePresence.MISSING.value
+    assert record.presence_reason == REASON_FILE_MISSING
+    assert summary["files_missing"] == 1
+    assert summary["files_unavailable"] == 0
+
+
+def test_a_scan_with_both_healthy_and_broken_files_records_both(
+    mounted, db_session, monkeypatch
+):
+    """Mixed input: nothing blocks anything, and every file has an answer."""
+    root_id = _make_root(db_session)
+    real_identity = scan_handler.file_identity
+
+    def flaky_identity(path):
+        name = Path(path).name
+        if name == "doc01.pdf":
+            raise SourceMissing(REASON_FILE_MISSING, "gone")
+        if name == "doc02.pdf":
+            raise SourceMissing(REASON_UNREADABLE, "denied")
+        return real_identity(path)
+
+    monkeypatch.setattr(scan_handler, "file_identity", flaky_identity)
+
+    summary = handle_scan_root(db_session, root_id)
+
+    assert summary["files_seen"] == 4
+    assert summary["versions_created"] == 2
+    assert summary["jobs_dispatched"] == 2
+    assert summary["files_missing"] == 1
+    assert summary["files_unavailable"] == 1
+
+    statuses = {
+        record.relative_path: (record.presence_status, record.presence_reason)
+        for record in db_session.execute(select(FileRecord)).scalars()
+    }
+    assert statuses["regression/doc01.pdf"] == (FilePresence.MISSING.value, "file_missing")
+    assert statuses["regression/doc02.pdf"] == (FilePresence.UNAVAILABLE.value, "unreadable")
+    assert statuses["abnormal/corrupt.pdf"] == (FilePresence.PRESENT.value, None)
+    assert statuses["notes.txt"] == (FilePresence.PRESENT.value, None)
+
+
+def _set_root_status(db: Session, root_id: str, status: str) -> None:
+    root = db.get(AuthorizedRoot, root_id)
+    root.status = status
+    db.commit()
+
+
+def _version_id_of(db: Session, relative_path: str) -> str:
+    return _record(db, relative_path).current_version_id
+
+
+def test_resolving_a_source_path_allows_a_paused_root_for_reads(mounted, db_session):
+    """Pausing stops new jobs; it does not hide content that is already indexed."""
+    root_id = _make_root(db_session)
+    handle_scan_root(db_session, root_id)
+    version_id = _version_id_of(db_session, "regression/doc01.pdf")
+    _set_root_status(db_session, root_id, RootStatus.PAUSED.value)
+
+    resolved = resolve_source_path(db_session, version_id, for_write=False)
+
+    assert resolved == (mounted / "regression" / "doc01.pdf").resolve()
+
+
+def test_resolving_a_source_path_refuses_a_paused_root_for_new_work(
+    mounted, db_session
+):
+    root_id = _make_root(db_session)
+    handle_scan_root(db_session, root_id)
+    version_id = _version_id_of(db_session, "regression/doc01.pdf")
+    _set_root_status(db_session, root_id, RootStatus.PAUSED.value)
+
+    with pytest.raises(PathEscapesRoot):
+        resolve_source_path(db_session, version_id)
+
+
+@pytest.mark.parametrize(
+    "status", [RootStatus.REVOKING.value, RootStatus.REVOKED.value]
+)
+def test_resolving_a_source_path_refuses_a_revoked_root_for_reads(
+    mounted, db_session, status: str
+):
+    root_id = _make_root(db_session)
+    handle_scan_root(db_session, root_id)
+    version_id = _version_id_of(db_session, "regression/doc01.pdf")
+    _set_root_status(db_session, root_id, status)
+
+    with pytest.raises(PathEscapesRoot):
+        resolve_source_path(db_session, version_id, for_write=False)

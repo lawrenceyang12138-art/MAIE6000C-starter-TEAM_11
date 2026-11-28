@@ -1,3 +1,6 @@
+# skills
+.codex
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -151,6 +154,8 @@ activemq-data/
 .env
 .envrc
 .venv
+.venv-clean/
+.venv-pplx/
 env/
 venv/
 ENV/
@@ -199,9 +204,59 @@ cython_debug/
 #   that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
 #   and can be added to the global gitignore or merged into this file. However, if you prefer, 
 #   you could uncomment the following to ignore the entire vscode folder
-# .vscode/
+# Visual Studio Code
+.vscode/settings.json
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
+models/
+work/
+# Local Chrome debugging endpoint; never a project input.
+/.cdp-active-port
+
+# Frontend source is not a Python build library.
+!frontend/src/lib/
+!frontend/src/lib/**
+
+# Retain the existing submission ignore while versioning the D handoff.
+!submissions/
+submissions/*
+!submissions/week13/
+submissions/week13/*
+!submissions/week13/README.md
+!submissions/week13/final-technical-brief.md
+!submissions/week13/ai-use-statement.md
+!submissions/week13/demo-runbook.md
+!submissions/week13/release-handoff.md
+!submissions/week13/evidence/
+submissions/week13/evidence/*
+!submissions/week13/evidence/README.md
+!submissions/week13/evidence/d-browser-20261128.md
+!submissions/week13/tools/
+submissions/week13/tools/*
+!submissions/week13/tools/build_pdf_demo_card.py
+!submissions/week13/tools/stage_mixed_fixtures.py
+!submissions/week13/sections/
+submissions/week13/sections/*
+!submissions/week13/sections/C.md
+!submissions/week13/sections/C-validation.json
+!submissions/week07/
+submissions/week07/*
+!submissions/week07/*.md
+!submissions/week07/gold-queries.json
+!submissions/week07/gold-queries.freeze.json
+# Allow the whole directory: a per-file allowlist silently ignored every new
+# evidence or section file added after it was written.
+!submissions/week07/sections/
+!submissions/week07/evidence/
+# Evidence screenshots stay local (5.9 MB); scripts/capture_*.mjs regenerates them.
+submissions/week07/evidence/**/*.png
+# Dated verification runs keep only reviewable summaries in Git.
+/submissions/week07/evidence/20261031-w7/**
+!/submissions/week07/evidence/20261031-w7/README.md
+!/submissions/week07/evidence/20261031-w7/final-validation.json
+/submissions/week07/evidence/C/20261030-startup/**
+!/submissions/week07/evidence/C/20261030-startup/README.md
+!/submissions/week07/evidence/C/20261030-startup/validation-summary.json
 
 # Ruff stuff:
 .ruff_cache/
@@ -216,3 +271,22 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local scratch corpus for the read-only source mount (official fixtures land in tests/fixtures via the parsing branch)
+/corpus
+
+# Personal C drafts retained locally
+/submissions/week07/AI-Use-C.md
+/submissions/week07/C-branch-review.md
+/submissions/week07/C-final-check.md
+/submissions/week07/C-fixes.md
+/submissions/week07/C-requirements-review.md
+/submissions/week07/C-notes.md
+/submissions/week07/C-qa.md
+/submissions/week07/C-slides.md
+/submissions/week07/sections/C.md
+/submissions/week07/degrade.md
+/submissions/week07/m1-search.md
+/submissions/week07/offline-check.md
+/submissions/week07/search-eval-final.md
+/tmp/npm-browser-cache/

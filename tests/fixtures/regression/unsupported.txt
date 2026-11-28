@@ -1,0 +1,2 @@
+This is a plain text note, not a PDF.
+It exists to exercise the unsupported-format path.

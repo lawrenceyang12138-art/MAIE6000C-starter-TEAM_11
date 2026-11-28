@@ -1,0 +1,2 @@
+# Keep recorded evidence SHA-256 values stable across Git checkouts.
+* -text whitespace=cr-at-eol

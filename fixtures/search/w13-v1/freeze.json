@@ -1,0 +1,8 @@
+{
+  "schema": "team11-search-freeze-v1",
+  "manifest_sha256": "36fe4d62388e61a00c4ddd6ad5775a6765ce8272ccada37762e0491a6def76c0",
+  "queries_sha256": "fe54eaa5c4f7360f14090775da94226b986ce077d9273c1390cf09d0f3bc15bf",
+  "human_b_review": "pending",
+  "team_threshold": null,
+  "scope": "Synthetic editorial candidate; no independent human sign-off."
+}

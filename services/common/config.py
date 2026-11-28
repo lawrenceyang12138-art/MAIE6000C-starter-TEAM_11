@@ -2,9 +2,13 @@ from __future__ import annotations
 
 import logging
 from functools import lru_cache
+from typing import Literal
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pythonjsonlogger import jsonlogger
+
+from services.search.text import MODEL_DIRECTORY, MODEL_ID, TOKEN_DIMENSIONS
 
 
 class Settings(BaseSettings):
@@ -14,6 +18,29 @@ class Settings(BaseSettings):
     ai_service_url: str = "http://ai:8100"
     worker_poll_seconds: float = 2.0
     worker_request_timeout_seconds: float = 20.0
+    # Server-side allowlist of read-only source mounts: mount_id -> container path.
+    # The UI may only select folders beneath these mounts; an unknown mount_id is
+    # rejected. Spec: week04 docs/architecture.md "Folder access and local
+    # deployment boundary" (adding a mount requires config change + restart).
+    source_mounts: dict[str, str] = {"corpus": "/source/corpus"}
+    api_allowed_hosts: list[str] = ["localhost", "127.0.0.1", "::1", "api"]
+    api_allowed_origins: list[str] = [
+        "http://localhost:3000", "http://127.0.0.1:3000",
+        "http://localhost:5173", "http://127.0.0.1:5173",
+    ]
+    embedding_enabled: bool = True
+    embedding_model: Literal[MODEL_ID] = MODEL_ID
+    embedding_dimensions: Literal[TOKEN_DIMENSIONS] = TOKEN_DIMENSIONS
+    embedding_model_path: str = MODEL_DIRECTORY
+    embedding_cpu_threads: int = Field(default=4, ge=1, le=32)
+    embedding_auto_prepare: bool = True
+    embedding_download_timeout_seconds: float = Field(default=30, ge=1, le=300)
+    embedding_download_retries: int = Field(default=3, ge=1, le=10)
+    search_request_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
+    search_keyword_weight: float = Field(default=0.65, gt=0, le=1)
+    search_semantic_weight: float = Field(default=0.35, gt=0, le=1)
+    search_max_candidates: int = Field(default=200, ge=50, le=2000)
+    search_page_navigation_enabled: bool = True
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

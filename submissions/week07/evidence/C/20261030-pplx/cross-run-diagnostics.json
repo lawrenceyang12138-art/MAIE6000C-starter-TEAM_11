@@ -1,0 +1,49 @@
+{
+  "checked_at": "2026-10-29T17:45:39.337686+00:00",
+  "audit_schema": "c-pplx-cross-run-v1",
+  "passed": true,
+  "all_executions_completed": true,
+  "primary_reference": "postgres-local.json",
+  "expected_answers": {
+    "gold_sha256": "d1d7b7daf285ed8ad596546dc1cacb28bca7b23cd26edc748e7636e1a23db053",
+    "manifest_sha256": "3ad53b3f8ccdc7ac6b84457fcedf9a735fe0ddf7ceb8004eb97b46ab17e3280f",
+    "freeze_sha256": "2a1ca7744c3176cb9e4df69adaf2f13d087f3fe88d73cb71604a82a3fe88114d"
+  },
+  "runtime_expected_input": {
+    "artifact": "postgres-runtime-before.json",
+    "sha256": "2b828e889b361d230c4a3d99e7832e81e03ba8778cbd78582dfea114c5868420"
+  },
+  "run_states": {
+    "postgres-local.json": {
+      "execution_completed": true,
+      "status": "evaluated",
+      "quality_gate_passed": false,
+      "backend": "local"
+    },
+    "sqlite-local.json": {
+      "execution_completed": true,
+      "status": "evaluated",
+      "quality_gate_passed": false,
+      "backend": "local"
+    },
+    "postgres-runtime-before.json": {
+      "execution_completed": true,
+      "status": "evaluated",
+      "quality_gate_passed": false,
+      "backend": "off"
+    },
+    "http-runtime.json": {
+      "execution_completed": true,
+      "passed": true,
+      "stage": "complete"
+    },
+    "pytest-run.json": {
+      "execution_completed": true,
+      "returncode": 0
+    },
+    "model-download.json": {
+      "execution_completed": true
+    }
+  },
+  "diagnostics": []
+}

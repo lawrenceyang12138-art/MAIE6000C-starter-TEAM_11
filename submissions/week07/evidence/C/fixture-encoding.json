@@ -1,0 +1,23 @@
+{
+  "change": "Unicode escape serialization only; decoded fixtures are unchanged",
+  "historical_evidence": "Existing fixture_sha256 and gold_sha256 values describe the original UTF-8 serialization. They remain historical evidence and are not rewritten.",
+  "canonicalization": "json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(',', ':'))",
+  "files": [
+    {
+      "path": "fixtures/search/mock-chunks.json",
+      "canonical_json_sha256": "eb9ed38b47947603c37cc093c8f019d00e22ba9bfcd7d9626902f02c04f52d45",
+      "decoded_values_identical": true,
+      "original_git_blob_sha256": "17f88c41c32a17e7a9ab3e62a9c761df13b40cc7199aee2e0bcda14a106ebae6",
+      "ascii_git_blob_sha256": "80e595ce78d22a43fd0733b123d6a0f1cbdbdd4c5728c04d4cc532e34bcbe71d"
+    },
+    {
+      "path": "fixtures/search/gold-queries.json",
+      "canonical_json_sha256": "4a0f0059dce7cd0fe14737cf9c79adef342544747480810f1e7a92a4447286ee",
+      "decoded_values_identical": true,
+      "original_git_blob_sha256": "27c871e04d00491c6e07bce16081257d5a9c38d32b9da50bf93a32a2ff9816a6",
+      "ascii_git_blob_sha256": "78e84e2abf5d02effb3049e62abf58681ba97e2882d1c7a39457fdc2f9f9b7eb"
+    }
+  ],
+  "baseline_commit": "84503aa026ba58427cf987a9ce2f04a2c51ae691",
+  "hash_basis": "SHA-256 of Git blob bytes with repository LF line endings; independent of CRLF checkout conversion"
+}

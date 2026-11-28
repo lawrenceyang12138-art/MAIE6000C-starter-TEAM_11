@@ -1,0 +1,15 @@
+{
+  "step": "verify_already_downloaded_pinned_files_and_prepare_local_manifest",
+  "shell": "powershell",
+  "environment": {"HF_HUB_OFFLINE": "1"},
+  "command": [".venv-clean/Scripts/python.exe", "-m", "scripts.search_tools", "download-model"],
+  "returncode": 0,
+  "model": "intfloat/multilingual-e5-small",
+  "revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+  "dimensions": 384,
+  "verified_file_count": 6,
+  "weights_bytes": 470641600,
+  "weights_sha256": "1a55775f53449dac10a2bcbc312469fac40b96d53198c407081a831f81c98477",
+  "result": "Prepared local model: models/multilingual-e5-small",
+  "notes": "The files were downloaded from the official pinned Hugging Face revision earlier in this session. This successful offline command reuses the prepared local directory and verifies every file against the fixed trusted hashes; it does not claim a second network download. Clean local inference and HTTP service inference were also verified successfully."
+}

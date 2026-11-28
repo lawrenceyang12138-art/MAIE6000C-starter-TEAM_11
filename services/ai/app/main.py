@@ -1,21 +1,56 @@
 from __future__ import annotations
 
 import logging
+from contextlib import asynccontextmanager
+from functools import lru_cache
 from time import perf_counter
 
-from fastapi import FastAPI, Response
+from fastapi import Depends, FastAPI, HTTPException, Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 
-from services.common.config import configure_logging
-from services.common.schemas import HealthResponse, TriageRequest, TriageResponse
+from services.common.config import configure_logging, get_settings
+from services.common.schemas import (
+    EmbeddingRequest,
+    HealthResponse,
+    TriageRequest,
+    TriageResponse,
+)
+from services.search.embeddings import EmbeddingUnavailable, LocalPplxEmbeddingBackend
+from services.search.schemas import TokenEmbeddingResponse
+from services.search.model_startup import ModelStartup, SetupStatus
 
 configure_logging()
 logger = logging.getLogger("services.ai.main")
 
-app = FastAPI(title="MAIE 6000C Starter AI Service", version="0.1.0")
+@lru_cache(maxsize=1)
+def get_model_startup() -> ModelStartup:
+    return ModelStartup(get_settings())
+
+
+@asynccontextmanager
+async def lifespan(application: FastAPI):
+    startup = get_model_startup()
+    startup.start()
+    try:
+        yield
+    finally:
+        startup.shutdown()
+        get_model_startup.cache_clear()
+
+
+app = FastAPI(title="MAIE 6000C Starter AI Service", version="0.1.0", lifespan=lifespan)
 
 TRIAGE_REQUESTS = Counter("ai_triage_requests_total", "Total triage requests", ["label"])
 TRIAGE_LATENCY = Histogram("ai_triage_duration_seconds", "Triage duration in seconds")
+EMBEDDING_REQUESTS = Counter("ai_embedding_requests_total", "Embedding requests", ["status"])
+
+
+def get_local_embedding_backend() -> LocalPplxEmbeddingBackend:
+    try:
+        return get_model_startup().get_backend()
+    except EmbeddingUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
 
 LABEL_KEYWORDS = {
     "incident": {"error", "outage", "down", "failed", "failure", "broken", "crash", "bug"},
@@ -61,8 +96,21 @@ def health_live() -> HealthResponse:
 
 
 @app.get("/health/ready", response_model=HealthResponse)
-def health_ready() -> HealthResponse:
+def health_ready(response: Response) -> HealthResponse:
+    if not get_model_startup().snapshot()["ready"]:
+        response.status_code = 503
+        return HealthResponse(service="ai", status="not_ready")
     return HealthResponse(service="ai", status="ok")
+
+
+@app.get("/setup", response_model=SetupStatus)
+def setup_status() -> dict:
+    return get_model_startup().snapshot()
+
+
+@app.post("/setup/retry", response_model=SetupStatus, status_code=202)
+def retry_setup() -> dict:
+    return get_model_startup().retry()
 
 
 @app.get("/metrics")
@@ -85,3 +133,19 @@ def triage(payload: TriageRequest) -> TriageResponse:
         },
     )
     return result
+
+
+@app.post("/embeddings", response_model=TokenEmbeddingResponse)
+def embeddings(
+    payload: EmbeddingRequest,
+    backend: LocalPplxEmbeddingBackend = Depends(get_local_embedding_backend),
+) -> TokenEmbeddingResponse:
+    if not get_settings().embedding_enabled:
+        raise HTTPException(status_code=503, detail="ai_disabled")
+    try:
+        vectors = backend.embed(payload.texts, payload.kind)
+    except EmbeddingUnavailable as exc:
+        EMBEDDING_REQUESTS.labels("unavailable").inc()
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    EMBEDDING_REQUESTS.labels("ok").inc()
+    return TokenEmbeddingResponse.encoded(backend.model_id, vectors)

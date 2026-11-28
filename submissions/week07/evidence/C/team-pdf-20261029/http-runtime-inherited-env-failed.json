@@ -1,0 +1,108 @@
+{
+  "created_at": "2026-10-29T15:43:30.119184+00:00",
+  "git": {
+    "sha": "353620b3cd808a1673afe842be22dad4f5836672",
+    "branch": "codex/c-team-pdf-evaluation",
+    "working_tree_status": "?? submissions/week07/evidence/C/team-pdf-20261029/",
+    "tracked_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_sha256": {
+      "services/search/__init__.py": "bda5e68032cd868115b66539032f460543adb90b1f8c73e97abb98eebba7166e",
+      "services/search/embeddings.py": "26ce7b756f91befa9947dcfcb20fe62a56d1b3284642703e81de34b80abde4c0",
+      "services/search/evaluation.py": "78064c2949ab8fc9d4da3e00ed4e6b516a83d11969b50e001f8eb639fea35093",
+      "services/search/evaluation_sources.py": "f7c502e0029a2010dd45b8a96443c83baf9ecc0f321e43084bd28837205eff33",
+      "services/search/indexing.py": "6730a36f856c885f792f70a07ea94e8a2cc461a91641be09636ad1e196da5540",
+      "services/search/retrieval.py": "d9f7204d31a18c0527e5537b228d4e9ed0dac013c4e55aef28729cde867d1e6b",
+      "services/search/text.py": "0e07d2a3502a49eb7e3e9eba40120c3c6016baa60c585b3d6acd2871fe210b03",
+      "scripts/evaluate_team_pdf.py": "d062b7c22802c2aa1bb7b83bc1599df3ce1c4f22f829070f8a198b67e08529d9",
+      "scripts/search_tools.py": "d00e27fdd5d502bc3e4435a178155e509cadc84e14ef69f4ad45a629b8a59477",
+      "scripts/verify_team_search_runtime.py": "1ab53204f128d213f235f5c08773878039c1c5d44d3e418b4d77e65733501e13"
+    }
+  },
+  "runtime": {
+    "python": "3.11.5",
+    "packages": {
+      "sqlalchemy": "2.0.43",
+      "pypdf": "6.20.1",
+      "psycopg": "3.2.9",
+      "pgvector": "0.4.1",
+      "fastapi": "0.116.1",
+      "httpx": "0.28.1",
+      "torch": "2.8.0",
+      "transformers": "4.57.1",
+      "sentencepiece": "0.2.1",
+      "huggingface-hub": "0.36.2"
+    }
+  },
+  "command": [
+    "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\.venv\\Scripts\\python.exe",
+    "-m",
+    "scripts.verify_team_search_runtime",
+    "--database-url",
+    "postgresql+psycopg://postgres:***@127.0.0.1:55432/team11_c_runtime",
+    "--evaluation",
+    "submissions/week07/evidence/C/team-pdf-20261029/postgres-runtime-before.json",
+    "--model-path",
+    "models/multilingual-e5-small",
+    "--timeout",
+    "10",
+    "--output",
+    "submissions/week07/evidence/C/team-pdf-20261029/http-runtime.json"
+  ],
+  "database": "postgresql+psycopg://postgres:***@127.0.0.1:55432/team11_c_runtime",
+  "root_id": "baf956f4-ec18-4666-99c9-7c086368507b",
+  "corpus_directory": "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\work\\team-pdf-corpus",
+  "answer_version": {
+    "schema_version": "team11-gold-v1",
+    "freeze": {
+      "freeze_version": "team11-gold-freeze-v1",
+      "frozen_on": "2026-10-16",
+      "gold_path": "submissions/week07/gold-queries.json",
+      "gold_sha256": "d1d7b7daf285ed8ad596546dc1cacb28bca7b23cd26edc748e7636e1a23db053",
+      "manifest_sha256": "3ad53b3f8ccdc7ac6b84457fcedf9a735fe0ddf7ceb8004eb97b46ab17e3280f",
+      "human_B_review": "pending",
+      "policy": "Validator is read-only. A deliberate corpus/answer revision needs a new freeze version and documented B approval; never rewrite expected answers to improve measured scores."
+    },
+    "gold_sha256": "d1d7b7daf285ed8ad596546dc1cacb28bca7b23cd26edc748e7636e1a23db053",
+    "manifest_sha256": "3ad53b3f8ccdc7ac6b84457fcedf9a735fe0ddf7ceb8004eb97b46ab17e3280f",
+    "freeze_sha256": "2a1ca7744c3176cb9e4df69adaf2f13d087f3fe88d73cb71604a82a3fe88114d",
+    "human_B_review": "pending"
+  },
+  "evaluation_input_sha256": "187dfb1bdd317203c3b72baf8cc95f505761316cba8c2ec32450aecc68112e84",
+  "http_timeout_seconds": 10.0,
+  "timeout_probe_delay_seconds": 10.5,
+  "initial_vector_chunks": 0,
+  "source_identity_sha256": "cfdf843bd8e6592ef13208bc985985e3133d45eebafad88bb3ce2d46f1f4dedc",
+  "quality_results": "See frozen PDF evaluation; protocol checks do not imply quality hits",
+  "passed": false,
+  "stage": "warm_local_model",
+  "failed_index_before_ai": {
+    "command": [
+      "D:\\HKUST AIE\\MAIE6000C\\MAIE6000C-starter-TEAM_11\\tmp\\c-team-pdf-evaluation\\.venv\\Scripts\\python.exe",
+      "-m",
+      "scripts.search_tools",
+      "index",
+      "--database-url",
+      "postgresql+psycopg://postgres:***@127.0.0.1:55432/team11_c_runtime",
+      "--version-id",
+      "214199c2-c5db-4e77-b79b-76adec46682b",
+      "--backend",
+      "http",
+      "--ai-url",
+      "http://127.0.0.1:15741",
+      "--timeout",
+      "10.0"
+    ],
+    "returncode": 1,
+    "result": {
+      "version_id": "214199c2-c5db-4e77-b79b-76adec46682b",
+      "chunk_count": 1,
+      "embedded_count": 0,
+      "embedding_error": "ai_unavailable"
+    },
+    "stderr": ""
+  },
+  "failure": {
+    "exception_type": "ReadTimeout",
+    "message": null
+  }
+}

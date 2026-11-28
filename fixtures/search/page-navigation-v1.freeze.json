@@ -1,0 +1,11 @@
+{
+  "freeze_version": "c-page-navigation-freeze-v1",
+  "frozen_on": "2026-10-30",
+  "fixture_path": "fixtures/search/page-navigation-v1.json",
+  "fixture_sha256": "cc49c7bdcf74337a32350dfbc9548ae63c39c118cdf7968f85869a1610f99bab",
+  "fixture_commit": "77a9af1",
+  "positive_cases": 24,
+  "negative_cases": 12,
+  "scope": "Deterministic navigation regression, not a human-reviewed or blind semantic-quality benchmark",
+  "policy": "Do not rewrite frozen expectations after implementation output; publish a new version for deliberate specification changes."
+}

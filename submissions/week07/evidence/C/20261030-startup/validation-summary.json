@@ -1,0 +1,153 @@
+{
+  "report_kind": "historical_first_start_summary_not_gold_evaluation",
+  "captured_at": "2026-10-30T17:02:28.514Z",
+  "git": {
+    "branch": "feat/c-team-pdf-evaluation",
+    "head": "f6f347abad37345f0119c45b3913ce3ca1b6f5b6",
+    "merged_develop": "f6f347abad37345f0119c45b3913ce3ca1b6f5b6",
+    "implementation_uncommitted": true,
+    "pushed": false
+  },
+  "model": {
+    "id": "perplexity-ai/pplx-embed-v2-late-0.6b",
+    "revision": "7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+    "token_dimensions": 128,
+    "query_prefix": "[Q] ",
+    "passage_prefix": "[D] ",
+    "max_query_model_tokens": 1024,
+    "max_document_model_tokens": 4096,
+    "max_text_characters": 2000,
+    "api_batch_size": 16,
+    "forward_batch_size": 4,
+    "cpu_threads": 4,
+    "inference_local_only": true,
+    "cloud_fallback": false,
+    "files": 14,
+    "payload_bytes": 2397842839
+  },
+  "retrieval_unchanged": {
+    "keyword_weight": 0.65,
+    "semantic_weight": 0.35,
+    "candidate_limit_per_channel": 200,
+    "default_top_k": 10,
+    "max_top_k": 50,
+    "startup_smoke_requested_top_k": 3,
+    "search_timeout_seconds": 10,
+    "page_navigation_enabled": true,
+    "scoring": "native token MaxSim mean"
+  },
+  "preparation": {
+    "auto_prepare": true,
+    "download_timeout_seconds": 30,
+    "download_retries": 3
+  },
+  "installed_runtime": {
+    "python": "3.11.18",
+    "torch": "2.8.0+cpu",
+    "transformers": "5.22.0",
+    "sentence_transformers": "6.2.0",
+    "huggingface_hub": "2.4.0"
+  },
+  "cold_start": {
+    "started_at": "2026-10-30T16:40:02.312437+00:00",
+    "completed_at": "2026-10-30T16:44:06.641559+00:00",
+    "passed": true,
+    "checks": {
+      "live_while_preparing": true,
+      "not_ready_while_preparing": true,
+      "ready_after_warmup": true,
+      "query_inference": true,
+      "passage_inference": true,
+      "automatic_early_scan_recovery": true,
+      "required_download_observed": true,
+      "ready_observed": true,
+      "keyword_during_preparation": true,
+      "explicit_semantic_fallback": true,
+      "original_sources_unchanged": true
+    },
+    "states": [
+      "downloading",
+      "verifying",
+      "loading",
+      "warming_up",
+      "ready"
+    ],
+    "timeline_entries": 34,
+    "hashed_source_entries": 13,
+    "last_observation_error": "RemoteProtocolError",
+    "early_degraded": true,
+    "early_reason": "ai_unavailable",
+    "recovered_degraded": false,
+    "query_shape": [
+      5,
+      128
+    ],
+    "passage_shape": [
+      4,
+      128
+    ]
+  },
+  "browser": {
+    "initial_ready": true,
+    "retry_passed": true,
+    "retry_status": 202,
+    "retry_state": "checking_environment",
+    "retry_get_responses": 113,
+    "page_errors": [],
+    "cold_download_full_ui_recorded": false
+  },
+  "tests": {
+    "postgres": {
+      "tests": 705,
+      "passed": 703,
+      "skipped": 2,
+      "failures": 0,
+      "errors": 0,
+      "seconds": 272.073,
+      "skips": [
+        "Windows file symlink privilege unavailable",
+        "Windows FIFO unsupported"
+      ]
+    },
+    "frontend": {
+      "vitest_passed": 48,
+      "vitest_total": 48,
+      "node_passed": 55,
+      "node_total": 55,
+      "production_build_passed": true
+    }
+  },
+  "cache_reuse": {
+    "model_local_only_reload_verified": true,
+    "dependency_layer_cached_on_source_rebuild": true,
+    "unchanged_launch_no_build": true
+  },
+  "frozen_answers": {
+    "submissions/week07/gold-queries.json": "d1d7b7daf285ed8ad596546dc1cacb28bca7b23cd26edc748e7636e1a23db053",
+    "submissions/week07/gold-queries.freeze.json": "2a1ca7744c3176cb9e4df69adaf2f13d087f3fe88d73cb71604a82a3fe88114d"
+  },
+  "final_setup_snapshot": {
+    "state": "ready",
+    "ready": true,
+    "stage_progress": 100,
+    "progress": 100,
+    "downloaded_bytes": 2397842839,
+    "total_bytes": 2397842839,
+    "completed_files": 14,
+    "total_files": 14,
+    "model": "perplexity-ai/pplx-embed-v2-late-0.6b@7bba8e7cf2075dec747fa8557f41eb90e70361ed",
+    "message": "Local AI is ready. Model integrity and warm-up checks passed.",
+    "error_code": null,
+    "retryable": false,
+    "updated_at": "2026-10-30T16:55:59.469942Z"
+  },
+  "limitations": [
+    "Docker/Compose and Python are host prerequisites; Docker is not silently installed.",
+    "First dependency build progress is visible in terminal; frontend becomes available after its own image exists.",
+    "Browser started after the real cold download; API timeline proves download, browser records prove ready and real failure/retry.",
+    "Intermediate retry screenshot has stage:null due to old built data-state attribute; actual panel and HTTP 202 prove checking_environment.",
+    "B human gold review remains pending; pure-model/navigation evaluation scores are not remeasured by startup smoke.",
+    "Runtime versions recorded, but all transitive dependencies are not a complete lockfile."
+  ],
+  "artifact_policy": "Summary retained in Git. Raw logs, response timelines, machine paths and browser artifacts remain in the local ignored archive; reproduce with scripts/verify_model_startup.py and scripts/verify_startup_browser.mjs."
+}

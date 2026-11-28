@@ -1,0 +1,66 @@
+{
+  "base_url": "http://localhost:8000",
+  "started_at": "2026-10-21T12:27:12+00:00",
+  "finished_at": "2026-10-21T12:27:16+00:00",
+  "health": {
+    "service": "api",
+    "status": "ok"
+  },
+  "request": {
+    "mount_id": "corpus",
+    "relative_path": "regression"
+  },
+  "first_scan": {
+    "root_id": "bec3ef8d-8803-4b87-bd23-738ca36c354c",
+    "job_id": 63,
+    "job_status": "completed",
+    "settled": true,
+    "file_counts": {
+      "total": 13,
+      "discovered": 0,
+      "extracting": 0,
+      "basic_ready": 12,
+      "enriched": 0,
+      "failed": 0,
+      "unsupported": 1
+    },
+    "files_reported": 13,
+    "by_version_status": {
+      "basic_ready": 12,
+      "unsupported": 1
+    },
+    "by_presence": {
+      "present": 13
+    },
+    "by_error_code": {
+      "unsupported_format": 1
+    },
+    "unsupported_or_failed": [
+      "unsupported.txt (unsupported_format)"
+    ]
+  },
+  "repeat_scan": {
+    "job_id": 64,
+    "job_status": "completed",
+    "settled": true,
+    "file_counts": {
+      "total": 13,
+      "discovered": 0,
+      "extracting": 0,
+      "basic_ready": 12,
+      "enriched": 0,
+      "failed": 0,
+      "unsupported": 1
+    },
+    "files_reported": 13,
+    "new_files": 0,
+    "counts_unchanged": true
+  },
+  "originals": {
+    "root": "tests\\fixtures",
+    "checked": 18,
+    "changed": 0,
+    "missing": 0,
+    "changed_paths": []
+  }
+}
