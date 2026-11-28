@@ -27,7 +27,7 @@ Job `33` was the only row added by rescan: a completed `scan_root`, with no new 
 
 D compared C's archive to the separate exact-e7 PDF-off Chrome run. Both markers agreed on relative path, physical page, ordinal, exact indexed passage and original SHA-256. Independent DBs assigned different IDs as expected; C and D did not use identical application image IDs. All 15 PDF fixture hashes and all seven rejection reasons agreed. The two disabled TXT/Markdown probe files had different raw hashes, reproduced by CRLF in C's checkout vs. LF in D's; neither was indexed. This is a same-commit comparison of the PDF fallback configuration, not a bit-identical whole-stack or whole-corpus comparison.
 
-**Joint C/D scope supported by this evidence:** text-layer PDF keyword fallback, with optional parsers and local AI off. **C NOT RUN:** PDF Hybrid, TXT, Markdown and DOCX parsing/search. C did not qualify Semantic-only, OCR, visual models, or audio/video. Any separate D-only results do not expand this C sign-off. This note does not certify the release owner's freeze, tag, or submission.
+**Scope supported by this original evidence:** text-layer PDF keyword fallback, with optional parsers and local AI off. PDF Hybrid and TXT, Markdown and DOCX parsing/search were **not run in this session**; see the [later independently executed C supplement](c-independent-supplement-20261128.md) for those distinct checks. This note does not certify a release freeze, tag, or submission.
 
 ## Archive audit pointers
 

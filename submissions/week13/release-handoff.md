@@ -2,9 +2,9 @@
 
 **Ready for release-owner review:** the [W13 team README](README.md), [technical brief](final-technical-brief.md), [AI Use Statement](ai-use-statement.md), [demo runbook](demo-runbook.md), [offline PDF cue card](../../output/pdf/team11-w13-pdf-demo.pdf), [evidence ledger](evidence/README.md) and [ADRs](../../docs/adrs/). The technical review point is `e7f73d14e112031131d0383d4698d6767fea0c8c`, not the final release SHA. The C/D tests are attributed to that exact checkout. This materials follow-up is documentation only; the final merge and tag still need their own tree/read-back and team approval.
 
-**Freeze recommendation:** only the C/D-verified text-layer PDF keyword fallback. Keep TXT/Markdown, DOCX and embeddings off for that run. C's independent Edge report (Role C/Codex, 13:07 SGT) and D's Chrome report agree on the two real pages, expected rejections, stable rescan and same-volume read-back. C explicitly did not run Hybrid or the optional formats. D's separate non-degraded PDF Hybrid run is eligible as a distinct live AI demonstration when the model is ready, not joint Hybrid verification. The cue card is a fallback explanation, not a live recording.
+**PDF-first release scope:** keep TXT/Markdown, DOCX and embeddings off for the jointly tested text-layer PDF keyword fallback. C and D independently reproduced physical pages 1 and 2, rejections, stable rescan and same-volume read-back. They each ran the separate non-degraded PDF Hybrid demo with the pinned local model ready and the optional parsers off. UTF-8 TXT, literal Markdown and DOCX body text are separately verified keyword-only formats with both optional parsers enabled and AI off; do not turn them on in the PDF fallback stack. The cue card is an offline aid, not a recording.
 
-**Reproduce the tested runtime without a push:** internal `team11-w13-d-package-e7f73d1.bundle` (SHA-256 `a3889cc45b4cdd8ca9c11375c02267b053222676378736eaa16d22d6ca61ffa4`) transfers e7 against A's `7a9fa80` baseline. The [C evidence digest](evidence/c-independent-pdf-20261128.md) pins C's reply separately. Neither the bundle nor an internal evidence ZIP is a Canvas upload or published tag.
+**Reproduce the tested runtime without a push:** internal `team11-w13-d-package-e7f73d1.bundle` (SHA-256 `a3889cc45b4cdd8ca9c11375c02267b053222676378736eaa16d22d6ca61ffa4`) transfers e7 against A's `7a9fa80` baseline. C's [original keyword](evidence/c-independent-pdf-20261128.md) and [supplementary](evidence/c-independent-supplement-20261128.md) digests pin separate runs. Neither the bundle nor an internal evidence ZIP is a Canvas upload or published tag.
 
 ## Course requirement vs. team schedule
 
@@ -17,15 +17,15 @@
 | November 28, SGT | Decision / action | Current record |
 | --- | --- | --- |
 | **10:30** | Publish per-format decisions based on matching C/D evidence. | No announcement evidenced by 10:30; C's PDF result was recorded at 13:07 and is not backdated. |
-| **13:30** | Freeze exact code/materials/evidence, resolved SHA, allowed configuration and demo/rollback path. | PDF-keyword-only recommendation and local materials available; actual team freeze and release SHA not recorded. |
+| **13:30** | Freeze exact code/materials/evidence, resolved SHA, allowed configuration and demo/rollback path. | PDF-first materials were ready locally. C's supplement ran **13:52–14:10**, after this checkpoint. Record the actual SHA and approval time; do not backdate the freeze or add unverified modes. |
 | **15:30** | Team target: finish authorized submission and independently read back. | Pending |
 | **17:30** | Course due / team hard line. | Deadline, not yet submitted |
 
 ## Inputs required to freeze
 
 1. A's [tracked runtime record](../../docs/w13-final-candidate.md) identifies tested `f1091de`, two handoff documents before the integration baseline `7a9fa80`. It does not cover D's locator patch. For technical review use e7, and for approval choose and record the actual reviewed materials and release tree.
-2. The [C/D ledger](evidence/README.md#current-format-gates) now covers PDF keyword only. Do not wait for optional tests to prepare the PDF-only freeze. `TEXT_PARSING_ENABLED` gates TXT and MD **together**; `DOCX_PARSING_ENABLED` is separate. Both stay off. C's Hybrid skip does not invalidate the fallback and may not be replaced by D's result in the C column.
-3. Obtain A/B's actual material AI-use or no-use confirmations; do not infer them from W7 or from the runtime model. B's human gold review is still unconfirmed, so no benchmark is represented as human-approved. Confirm the release/submission owner and explicit permission for remote actions. The owner checks the required paths, actual demo proof and release scope, then approves the exact frozen SHA. Use the resolved tag externally; a commit cannot contain its own hash.
+2. Use the [C/D ledger](evidence/README.md#current-format-gates) for the three proven profiles. `TEXT_PARSING_ENABLED` gates TXT and Markdown **together**; `DOCX_PARSING_ENABLED` is separate. The mixed profile is opt-in only and uses both flags on plus AI off. Keep non-PDF AI and Semantic-only out of the release claims.
+3. The team confirmed Codex, GPT, DeepSeek and `deepseek-harness` for all four roles; the [AI statement](ai-use-statement.md) records actual affected work and verification. B's human gold review is not evidenced, so no benchmark is represented as human-approved. The Git push/PR authorization after notice does not replace branch protection, independent review, or tag/Canvas authorization. Record the final operator, approved SHA and actual demo proof.
 
 ## Integrate on develop, then promote to main
 
@@ -33,7 +33,7 @@ The team integrates on `develop` first. The 2026-11-28 SGT fetch and GitHub ref 
 
 1. Review the local D branch and integrate by approved PR into `develop`. Verify that the only changes from tested `e7f73d1` are the reviewed W13 Markdown and ADRs; executable code, configuration, fixtures and offline PDF must be unchanged for the technical evidence to apply to the same runtime. Rerun affected live gates if those inputs change.
 2. If authorized, promote the reviewed `develop` tree to `main` via the normal PR. The team expects the final checkpoint on `main`, even though Canvas only requires a reachable tag. Compare the promoted tree against the approved materials tree (`git diff --exit-code <reviewed-materials-sha> <promoted-sha>`). Record the actual `main` SHA, recheck the required files and run a real-browser PDF smoke read-back before tag approval. Reapprove against the actual promoted SHA; do not relabel the original C/D reports as having run on it.
-3. Only with explicit approval perform any push, tag or course submission. Resolve the remote tag to its **commit** (the peeled `^{}` ref for an annotated tag), verify the full SHA and its presence on `main`, and open the required repository documents and evidence index at that tag. Save the verified demo and limitation summary for the release owner. No external write or course submission is claimed here.
+3. Announce exact branch push and PR targets before performing authorized Git operations. After actual promotion and explicit tag approval, resolve the remote tag to its **commit** (the peeled `^{}` ref for an annotated tag), verify the full SHA on `main`, and open the required docs and evidence at that tag. Save the verified demo and limitations for the release owner. Canvas submission needs separate authorization and a read-back receipt.
 
 ## Canvas text to fill after freeze
 
