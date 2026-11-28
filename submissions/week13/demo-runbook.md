@@ -1,8 +1,8 @@
 # Week 13 demo and browser acceptance
 
-**Primary plan:** a live text-PDF workflow in API mode. **Fallback:** the same candidate's verified AI-off keyword path, then the [offline PDF cue card](../../output/pdf/team11-w13-pdf-demo.pdf) if the application is unavailable. The card shows actual frozen fixture text; it is not a recording or acceptance evidence. No video recording is claimed. See the [ledger](evidence/README.md) and [D's actual browser runs](evidence/d-browser-20261128.md).
+**Primary plan:** a live text-layer PDF workflow in API mode. Start with [C and D's jointly verified AI-off keyword fallback](evidence/README.md#current-format-gates), then demonstrate the separate local Hybrid step only if the model is ready. If the application is unavailable, the [offline PDF cue card](../../output/pdf/team11-w13-pdf-demo.pdf) shows actual frozen fixture text; it is not a recording or acceptance evidence. No video recording is claimed.
 
-Local rehearsal on the tested host: [PDF keyword, after rescan](http://127.0.0.1:13084/scan/33) and [PDF Hybrid, with model ready at the test time](http://127.0.0.1:13086/scan/1). Choose **View available files and evidence** on either. These are loopback links to isolated Docker Desktop projects, not stable course URLs. Recheck `/health/ready` and `/setup` immediately before presenting. Keep the optional formats out of the demo until C and D clear them together on the actual release candidate.
+Local e7 rehearsal on D's host: [PDF keyword, after rescan](http://127.0.0.1:13087/scan/33) and [PDF Hybrid, with model ready at the test time](http://127.0.0.1:13089/scan/1) (D evidence only). Choose **View available files and evidence** on either. These are loopback links, not course URLs. Recheck `/health/ready` and `/setup` before presenting. Keep the optional formats off.
 
 ## Prepare the isolated PDF stack
 
@@ -52,7 +52,7 @@ Save the emitted JSON with the browser report. Do not run the whole W7 HTTP/DB v
 
 In a model-enabled environment **built from the same candidate**, reuse A's verified pinned model cache (no new model downloads on stage). Check `GET /setup` reports `ready` and the target version has compatible token vectors. Switch the browser to Semantic or Hybrid and save an actual search response with the chosen effective mode, plus the verified original passage. Degradation due to model not ready/disabled/unavailable or incompatible embeddings is not AI success. Save a separate AI-off keyword trace to show resilience. If model proof is missing, report the course AI demo step as unverified; don't rename keyword retrieval as AI.
 
-For the observed Hybrid rehearsal on `corpus/regression`, choose `Marker01P1` and open `group-a/doc01.pdf`, physical page 1. The [D record](evidence/d-browser-20261128.md#integrated-local-text-ai--pdf-hybrid-spot-check) identifies the model/result and an offline cache setup caveat: model preparation needs space for a writable lock and manifest even if weights are pre-cached and read-only. Do not enable downloading to recover the demo; keep the verified keyword path available.
+For the observed Hybrid rehearsal on `corpus/regression`, choose `Marker01P1` and open `group-a/doc01.pdf`, physical page 1. The [D record](evidence/d-browser-20261128.md#exact-review-candidate-fresh-d-runs) identifies the model/result; C's run did not exercise Hybrid. Model preparation needs space for a writable lock and manifest even if weights are pre-cached and read-only. Do not enable downloading to recover the demo; keep the verified keyword path available.
 
 ## Individually gate TXT, MD and DOCX
 
