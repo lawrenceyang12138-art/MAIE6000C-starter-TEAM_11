@@ -230,6 +230,7 @@ submissions/week13/*
 !submissions/week13/evidence/
 submissions/week13/evidence/*
 !submissions/week13/evidence/README.md
+!submissions/week13/evidence/d-browser-20261128.md
 !submissions/week13/tools/
 submissions/week13/tools/*
 !submissions/week13/tools/build_pdf_demo_card.py
