@@ -11,7 +11,7 @@ import {
 import { createAdapter } from "./api/adapter.js";
 import { AdapterError } from "./api/errors.js";
 import { POLL_MAX_ATTEMPTS, dedupeFiles, isEvidenceForVersion, isSourceUnavailable, nextPollDelay, shouldPoll, statusMeta, summarizeProgress } from "./lib/scan.js";
-import { degradationMessage, evidenceMatchesHit, evidenceRecord, searchHitFile } from "./lib/search.js";
+import { degradationMessage, evidenceMatchesHit, evidenceRecord, searchHitFile, sourceLocator } from "./lib/search.js";
 import { useSearch } from "./lib/use-search.js";
 import { RelationsPage } from "./relations-page.jsx";
 import { RescanControl } from "./rescan-control.jsx";
@@ -469,12 +469,17 @@ function Inspector({ data }) {
       </div>
       {tab === "evidence" && (
         <div className="inspector-tab-content">
-          <div className="evidence-section-title"><span>Indexed passage</span><span className="evidence-locator">{file.page_count ? file.page_count + " source pages" : "No locator"}</span></div>
+          <div className="evidence-section-title"><span>Indexed passage</span><span className="evidence-locator">{file.search_hit ? sourceLocator(file.search_hit) : file.page_count ? file.page_count + " source pages" : "No locator"}</span></div>
           <div className="passage-card"><span className="passage-quote">“</span><p>{invalidSource ? "Cached passage hidden until the source is verified." : file.snippet || "No indexed passage available."}</p><small>{file.scan_note}</small></div>
           {invalidSource && <div className="stale-warning"><WarningCircle size={16} /><span>Source file unavailable or changed. Re-check the mounted directory.</span></div>}
           {file.capability_status === "keyword_only" && <div className="fallback-note">Keyword-only mode · semantic enrichment unavailable</div>}
           <div className="evidence-detail-heading"><strong>Version evidence</strong><code>{file.version_id}</code></div>
-          {invalidSource ? <>{evidenceError && <ErrorNotice error={evidenceError} />}<p className="muted-copy">Source evidence is hidden until the current source is verified.</p></> : evidenceLoading ? <div className="loading-line">Loading version-bound evidence…</div> : evidenceError ? <><ErrorNotice error={evidenceError} /><button className="secondary-button" onClick={data.onRetry}>Retry evidence read</button></> : evidence?.length ? evidence.map((item) => <div className="evidence-record" key={item.evidence_id}><span className="page-index">{item.page == null ? "?" : "P" + item.page}</span><div><strong>{item.source_path}</strong><p>{item.excerpt}</p>{item.content_sha256 && <code className="evidence-hash">SHA-256 {item.content_sha256}</code>}</div></div>) : <p className="muted-copy">{file.page_count === 0 ? "No page evidence is available for this file." : "Run a search and select a matched passage to open source evidence."}</p>}
+          {invalidSource ? <>{evidenceError && <ErrorNotice error={evidenceError} />}<p className="muted-copy">Source evidence is hidden until the current source is verified.</p></> : evidenceLoading ? <div className="loading-line">Loading version-bound evidence…</div> : evidenceError ? <><ErrorNotice error={evidenceError} /><button className="secondary-button" onClick={data.onRetry}>Retry evidence read</button></> : evidence?.length ? evidence.map((item) => (
+            <div className="evidence-record" key={item.evidence_id}>
+              <span className="page-index">{sourceLocator(item)}</span>
+              <div><strong>{item.source_path}</strong><p>{item.excerpt}</p>{item.content_sha256 && <code className="evidence-hash">SHA-256 {item.content_sha256}</code>}</div>
+            </div>
+          )) : <p className="muted-copy">Run a search and select a matched passage to open source evidence.</p>}
           <button className="subtle-button" disabled>Open local preview <span>Not available in this adapter</span></button>
         </div>
       )}
@@ -494,7 +499,7 @@ function Inspector({ data }) {
             ["Content version", file.version_id],
             ["Fingerprint", file.sha256],
             ["File status", file.status],
-            ["Pages", String(file.page_count)],
+            ...(file.page_count > 0 ? [["Pages", String(file.page_count)]] : []),
             ["Capability", file.capability_status],
             ["Source", file.source_kind],
             ["Last scan note", file.scan_note],
@@ -522,6 +527,7 @@ function ResultsPage({ rootId, onInspector }) {
   const search = useSearch(adapter, rootId, reload);
   const searchInput = useRef(null);
   const generation = useRef(0);
+  const inFlightEvidence = useRef(new Map());
 
   useEffect(() => {
     let cancelled = false;
@@ -573,9 +579,14 @@ function ResultsPage({ rootId, onInspector }) {
     const requestGeneration = generation.current;
     const key = fileKey(file);
     setSelectedKey(key);
-    if (isSourceUnavailable(file, evidenceErrors[key]) || (!retry && (evidence[key] || evidenceErrors[key])) || file.page_count === 0) return;
-    // The final API contract reads one chunk, never an invented file-evidence list.
-    if (!file.search_hit && adapter.mode === "api") return;
+    if (isSourceUnavailable(file, evidenceErrors[key]) || inFlightEvidence.current.get(key) === requestGeneration) return;
+    // Search hits use the chunk endpoint even when the source has no pages.
+    // Recheck API hits on each open instead of treating cached evidence as current.
+    const liveHit = file.search_hit && adapter.mode === "api";
+    if (!file.search_hit && (adapter.mode === "api" || file.page_count === 0)) return;
+    if (!liveHit && !retry && (evidence[key] || evidenceErrors[key])) return;
+    inFlightEvidence.current.set(key, requestGeneration);
+    if (liveHit) setEvidence((current) => ({ ...current, [key]: null }));
     setEvidenceErrors((current) => ({ ...current, [key]: null }));
     setEvidenceLoading((current) => ({ ...current, [key]: true }));
     try {
@@ -594,6 +605,7 @@ function ResultsPage({ rootId, onInspector }) {
       if (generation.current !== requestGeneration) return;
       setEvidenceErrors((current) => ({ ...current, [key]: caught }));
     } finally {
+      if (inFlightEvidence.current.get(key) === requestGeneration) inFlightEvidence.current.delete(key);
       if (generation.current === requestGeneration) setEvidenceLoading((current) => ({ ...current, [key]: false }));
     }
   }
@@ -682,7 +694,7 @@ function ResultsPage({ rootId, onInspector }) {
                   </button>
                   <div className="file-row-details">
                     <div className="file-match"><span className="match-label">{file.search_hit ? "MATCH REASON" : "FILE STATE"}</span><strong>{invalidSource ? "Source unavailable · refresh current results" : file.search_hit ? file.search_hit.reason : ["basic_ready", "enriched"].includes(file.status) ? "Indexed record · search to locate evidence" : file.status === "failed" ? "Processing stopped · filename remains visible" : file.status === "unsupported" ? "Format not supported · filename remains visible" : "Processing is not yet complete"}</strong>{file.search_hit && <small>Score {file.search_hit.score.toFixed(3)} · ranking, not probability</small>}</div>
-                    <div className="file-passage"><span className="quote-mark">“</span><span>{invalidSource ? "Cached passage hidden until the source is verified." : file.snippet}</span><code className="passage-locator">{file.search_hit ? file.search_hit.page == null ? "Page unknown" : "Page " + file.search_hit.page : file.page_count ? file.page_count + " source pages · inspect to locate passage" : file.expected_error_code || file.error_code || "No page locator"}</code></div>
+                    <div className="file-passage"><span className="quote-mark">“</span><span>{invalidSource ? "Cached passage hidden until the source is verified." : file.snippet}</span><code className="passage-locator">{file.search_hit ? sourceLocator(file.search_hit) : file.page_count ? file.page_count + " source pages · inspect to locate passage" : file.expected_error_code || file.error_code || "No passage locator"}</code></div>
                     <div className="file-meta-line"><span><i className={"tiny-state " + (["basic_ready", "enriched"].includes(file.status) ? "confirmed" : file.status === "failed" ? "failed" : "paused")} />{["basic_ready", "enriched"].includes(file.status) ? "Indexed source" : file.status === "failed" ? "Action needed" : file.status === "unsupported" ? "Unsupported format" : "Processing pending"}</span><span className="file-version">ID {file.file_id} · {file.version_id}</span></div>
                     {(invalidSource || file.capability_status === "keyword_only" || file.expected_error_code || file.error_code) && <div className={"file-warning " + (file.status === "failed" ? "warning-danger" : "")}>{file.expected_error_code || file.error_code || (invalidSource ? "Source file unavailable or changed" : "Keyword-only search capability")}</div>}
                   </div>

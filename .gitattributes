@@ -23,3 +23,5 @@
 /fixtures/search/*.json -text
 /tests/fixtures/regression/** -text
 /fixtures/search/w13-v1/*.md -text
+# Preserve the exact offsets and provenance of generated PDF fallback artifacts.
+/output/pdf/*.pdf binary

@@ -6,13 +6,14 @@ File Management Assistant is a proposed local-first tool for people who accumula
 
 ## Documentation
 
-- [W7 implementation and acceptance](docs/w7-acceptance.md): current integration
+- [Week 13 final project](submissions/week13/README.md): release status, demo sequence, technical brief, and verification evidence.
+- [W7 implementation and acceptance](docs/w7-acceptance.md): earlier integration
   requirements, fixes and reproducible verification; [milestone report](submissions/week07/README.md).
 - [Detailed architecture](docs/architecture.md): workflow, service boundaries, persistence, state transitions, AI processing, failure behavior, and design evidence.
 - [Windows local folder authorization](docs/local-folders.md): system folder selection,
   read-only access to original files, and recovery across Docker reconnects.
-- [Week 4 proposal and project plan](submissions/week04/README.md): milestone summary, scope priorities, risks, artifact index, and AI Use Statement.
-- [Starter operations notes](docs/operations.md): existing service health, metrics, and development commands. These describe the baseline, not the proposed product.
+- [Week 4 proposal and project plan](https://github.com/lawrenceyang12138-art/MAIE6000C-starter-TEAM_11/blob/w04-proposal/submissions/week04/README.md): milestone summary, scope priorities, risks, artifact index, and AI Use Statement.
+- [Operations notes](docs/operations.md): local startup, service health, failure recovery, and metrics.
 
 ## Start the current local application
 
