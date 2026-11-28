@@ -60,6 +60,8 @@ services:
       # time from wherever the operator keeps it; tests/fixtures is not the
       # product's corpus location and must not become one.
       - ./tests/fixtures/regression:/source/corpus/regression:ro
+      # Opt-in format probes (.txt/.md/.docx); parsed only when the worker flags are on.
+      - ./tests/fixtures/formats:/source/corpus/formats:ro
       - ./tests/fixtures/parsing/corrupt.pdf:/source/corpus/abnormal/corrupt.pdf:ro
       - ./tests/fixtures/parsing/encrypted.pdf:/source/corpus/abnormal/encrypted.pdf:ro
       - ./tests/fixtures/parsing/no_text_layer.pdf:/source/corpus/abnormal/no_text_layer.pdf:ro
@@ -80,10 +82,15 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/maie6000c
       AI_SERVICE_URL: http://ai:8100
+      # Format switches, default off; B's parser reads them from the process env.
+      TEXT_PARSING_ENABLED: ${TEXT_PARSING_ENABLED:-false}
+      DOCX_PARSING_ENABLED: ${DOCX_PARSING_ENABLED:-false}
     volumes:
       # Same read-only source mounts as the api service (W7 demo fixtures, not
       # the product's corpus location - see the note under the api volumes).
       - ./tests/fixtures/regression:/source/corpus/regression:ro
+      # Opt-in format probes (.txt/.md/.docx); parsed only when the worker flags are on.
+      - ./tests/fixtures/formats:/source/corpus/formats:ro
       - ./tests/fixtures/parsing/corrupt.pdf:/source/corpus/abnormal/corrupt.pdf:ro
       - ./tests/fixtures/parsing/encrypted.pdf:/source/corpus/abnormal/encrypted.pdf:ro
       - ./tests/fixtures/parsing/no_text_layer.pdf:/source/corpus/abnormal/no_text_layer.pdf:ro
