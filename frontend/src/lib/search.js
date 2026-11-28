@@ -29,6 +29,17 @@ export function evidenceRecord(evidence) {
     source_path: evidence.relative_path, excerpt: evidence.text };
 }
 
+// A page number is only meaningful for page-addressable sources such as PDFs.
+// Text formats deliberately use the persisted chunk ordinal instead of a
+// fabricated page (or a vague "unknown" placeholder). Search and evidence
+// responses use different field names, so accept either shape here.
+export function sourceLocator(source) {
+  const page = source?.page_number ?? source?.page;
+  if (Number.isInteger(page) && page > 0) return `Page ${page}`;
+  if (Number.isInteger(source?.ordinal) && source.ordinal > 0) return `原文片段 #${source.ordinal}`;
+  return "Source passage";
+}
+
 export function degradationMessage(reason) {
   const messages = {
     ai_disabled: "Local AI is disabled. Keyword search remains available.",

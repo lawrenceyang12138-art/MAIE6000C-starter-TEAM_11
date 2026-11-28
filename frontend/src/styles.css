@@ -360,10 +360,10 @@ h1 { margin: 0; color: var(--ink); font-size: clamp(25px, 2.2vw, 31px); font-wei
 .evidence-detail-heading { margin-top: 19px; }
 .evidence-detail-heading code { color: var(--muted); font-size: 8px; }
 .loading-line { margin-top: 11px; color: var(--muted); font-family: "JetBrains Mono", Consolas, monospace; font-size: 9px; }
-.evidence-record { display: grid; grid-template-columns: 27px minmax(0, 1fr); gap: 8px; margin-top: 9px; padding: 9px; background: var(--canvas); border: 1px solid var(--line); }
-.page-index { width: 27px; height: 23px; display: grid; place-items: center; color: #3730a3; background: var(--indigo-soft); font-family: "JetBrains Mono", Consolas, monospace; font-size: 8px; }
+.evidence-record { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px; margin-top: 9px; padding: 9px; background: var(--canvas); border: 1px solid var(--line); }
+.page-index { min-width: 27px; height: 23px; padding-inline: 5px; display: grid; place-items: center; color: #3730a3; background: var(--indigo-soft); font-family: "JetBrains Mono", Consolas, monospace; font-size: 8px; }
 .evidence-record strong { display: block; overflow: hidden; color: var(--ink); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
-.evidence-record p { margin: 4px 0 0; color: var(--muted); font-size: 9px; line-height: 1.45; }
+.evidence-record p { margin: 4px 0 0; color: var(--muted); font-size: 9px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
 .muted-copy { color: var(--muted); font-size: 10px; line-height: 1.5; }
 .subtle-button { width: 100%; min-height: 35px; display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 16px; padding: 0 9px; color: var(--muted); border: 1px solid var(--line); background: var(--canvas); font-size: 9px; text-align: left; }
 .subtle-button span { color: var(--faint); font-size: 8px; }
